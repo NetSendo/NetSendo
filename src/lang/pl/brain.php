@@ -517,4 +517,21 @@ return [
         'no_provider' => 'Żadna z podłączonych integracji AI nie potrafi liczyć wektorów. Dodaj OpenAI, Google Gemini, OpenRouter albo Ollamę (Anthropic i Grok tego nie oferują).',
         'test_failed' => 'Model wektorów nie odpowiedział poprawnie: :error',
     ],
+    // Suggested tasks in the Brain Monitor
+    'suggested' => [
+        'campaign_title' => 'Zaplanuj kampanię dla :count subskrybentów',
+        'campaign_desc' => 'Masz :lists list i :count subskrybentów, a w ostatnich 7 dniach nie było kampanii.',
+        'drip_title' => 'Utwórz sekwencję drip',
+        'drip_desc' => 'Nie ma żadnej automatycznej sekwencji. Zbuduj serię powitalną dla nowych subskrybentów.',
+        'hot_leads_title' => 'Odezwij się do :count gorących leadów',
+        'hot_leads_desc' => ':count kontaktów ma wynik 50+. Zaplanuj spersonalizowany kontakt.',
+        'pipeline_title' => 'Przegląd lejka: :count otwartych dealów',
+        'pipeline_desc' => ':count otwartych dealów. Przeanalizuj lejek i znajdź blokady.',
+        'report_title' => 'Przygotuj raport tygodniowy',
+        'report_desc' => 'W ostatnich 7 dniach nie było raportu.',
+        'hygiene_title' => 'Wyczyść listy kontaktów',
+        'hygiene_desc' => 'Sprawdź :count subskrybentów pod kątem odbić, nieaktywnych i duplikatów.',
+        'segmentation_title' => 'Segmentacja bazy kontaktów',
+        'segmentation_desc' => 'Podziel bazę na segmenty według aktywności, zainteresowań i scoringu.',
+    ],
 ];

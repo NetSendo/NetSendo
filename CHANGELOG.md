@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Changed
+
+- **A global Brain mode applies to every agent.** Choosing Manual, Semi-automatic or Autonomous in *Brain → Settings* (or `/mode` in Telegram) now clears the per-agent modes, and saving the agent modes stores only the agents that differ from the global mode. Saving the agent modes used to store a mode for every agent, freezing the global mode of that moment, so after a later switch the agents kept the old one: on a reviewed instance every agent stayed autonomous while the chat header said semi-automatic. The chat header, the Monitor and the dashboard widget show the mode the agents really work in, or *Mixed*. An agent set to *Advisory* now only advises, also when the global mode is semi-automatic (it used to get plans to approve). See *Upgrading* for the migration.
+- **Every Brain service uses the model chosen for Brain:** the model assigned to the task in *Advanced model settings*, else the Brain model (*Settings → AI model*), else the first usable integration. Goal detection and decomposition, situation analysis, the weekly digest, playbooks, the campaign calendar, campaign lessons, style extraction and agents without an assigned task used whichever integration came first in the database. *Orchestration (intent classification)* and *General conversation* in the advanced settings were never read; they now choose the model for intent classification and for chat answers.
+- Plans made from the chat no longer count towards whichever goal happens to be active; only plans made for a goal do.
+
+### Fixed
+
+- **Brain understands chat commands again.** Intent classification (is a message a question or a task, and for which agent) ran on the first AI integration in the database, not on the model chosen for Brain, and on the reviewed instance it never succeeded. Brain then fell back to keyword matching that sent the agent the word `keyword_match` instead of the request: a question about returns went to the CRM agent ("CRM Agent could not create a plan for: keyword_match"), and a request for a campaign to a test list in manual mode came back as a guide about hot leads taken from an old goal. Classification now uses the *Orchestration* model (or the Brain model) and also reads JSON wrapped in a sentence. When it fails, questions stay in the conversation and an agent is chosen only for a command naming its area. Agents always get the user's own words next to the classified intent, and active goals reach the prompts as background, not as the topic. The revenue, funnel and deliverability agents could never be chosen from the chat, because the classifier listed only the first seven agents. A web-chat message is classified once, not twice. Covered by `BrainReviewFixesTest`.
+- **OpenAI GPT-5 and o-series models work.** The OpenAI provider always sent `max_tokens` and a temperature, and reasoning models reject both. They now get `max_completion_tokens` with room for their hidden reasoning (at least 4,096) and the default temperature. A token limit is sent only when one is set: the old default of 65,536 was more than gpt-4o allows.
+- **Gemini 2.5 no longer answers short tasks with nothing.** Thinking counts against `maxOutputTokens`, so a small limit left no room for the answer. Flash models now skip thinking for answers of up to 4,096 tokens; the other thinking models get 8,192 tokens of room on top of the limit. Thinking tokens are counted in the token usage.
+- **Monitor.**
+  - A plan left "executing" kept the "Brain is working…" bar on for good: one had been at step 2 of 4 since March. A run with no progress for 2 hours is no longer shown as current work, and the hourly `brain:close-stale-plans` marks it failed. The same command fails approved plans that were never run within a day, and cancels drafts and waiting plans older than 7 days that have no open approval. Nothing is deleted.
+  - *Last activity* showed 96 days while Brain had answered minutes before, because the chat did not update the stored time.
+  - A request the agent could not plan counted as a success (100% for the CRM agent).
+  - The plan counters disagreed: 7 active on the tile, 0 in the list.
+  - The activity list showed raw event names and statuses (`brain_start`, `cron_task`). It now shows translated names and, for a failed scheduled task, its reason, which is now stored.
+  - Suggested tasks were in English in every language.
+- Research that found nothing is no longer saved to the knowledge base. Entries such as "the research data is empty" came back in every prompt.
+- A request handled by an agent from the web chat left an empty "Untitled" conversation in the list, because the stream attempt opened one and the fallback opened another. Conversations without messages are not listed.
+- The dashboard open and click rates count each recipient of a message once and never exceed 100%. A live instance showed 114.3%.
+
+### Upgrading (Docker)
+
+- `docker compose pull && docker compose up -d`. One migration normalises the per-agent Brain modes: where the global mode is Manual they are cleared (in the chat they had no effect there), elsewhere the entries equal to the global mode are dropped. Check *Brain → Settings → Agent modes* after the update.
+- Knowledge base entries saved earlier from failed research stay. Delete them in *Brain → Settings → Knowledge base* if you have any.
+
 ## [2.8.1] – Brain answers again after a day over its token limit - 2026-11-08
 
 **Release date:** 2026-11-08

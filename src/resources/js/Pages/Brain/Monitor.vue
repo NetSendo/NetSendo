@@ -1836,8 +1836,8 @@ function trendClass(trend, higherIsBetter = true) {
                                 📋
                                 {{
                                     t(
-                                        "brain.monitor.executed_plans",
-                                        "Wykonane plany",
+                                        "brain.monitor.activity_feed",
+                                        "Aktywność Braina",
                                     )
                                 }}
                             </h3>
@@ -1856,7 +1856,7 @@ function trendClass(trend, higherIsBetter = true) {
                                 <span
                                     class="rounded-full bg-amber-100 px-3 py-1 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                                 >
-                                    ⏳ {{ planStats.pending || 0 }}
+                                    ⏳ {{ planStats.active || 0 }}
                                 </span>
                                 <span
                                     class="rounded-full bg-red-100 px-3 py-1 text-red-700 dark:bg-red-900/30 dark:text-red-400"
@@ -1889,19 +1889,53 @@ function trendClass(trend, higherIsBetter = true) {
                                     <p
                                         class="truncate text-sm font-medium text-gray-900 dark:text-white"
                                     >
-                                        {{ activity.event_type }}
+                                        {{
+                                            t(
+                                                `brain.monitor.events.${activity.event_type}`,
+                                                activity.event_type,
+                                            )
+                                        }}
                                         <span
                                             v-if="activity.agent_name"
                                             class="ml-1 text-xs text-gray-500"
                                             >({{ activity.agent_name }})</span
                                         >
                                     </p>
+                                    <p
+                                        v-if="
+                                            activity.metadata?.error ||
+                                            activity.metadata?.task_title ||
+                                            activity.metadata?.title
+                                        "
+                                        class="truncate text-xs"
+                                        :class="
+                                            activity.metadata?.error
+                                                ? 'text-red-500 dark:text-red-400'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                        "
+                                        :title="
+                                            activity.metadata?.error ||
+                                            activity.metadata?.task_title ||
+                                            activity.metadata?.title
+                                        "
+                                    >
+                                        {{
+                                            activity.metadata?.error ||
+                                            activity.metadata?.task_title ||
+                                            activity.metadata?.title
+                                        }}
+                                    </p>
                                 </div>
                                 <span
                                     class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
                                     :class="statusBadgeClass(activity.status)"
                                 >
-                                    {{ activity.status }}
+                                    {{
+                                        t(
+                                            `brain.monitor.statuses.${activity.status}`,
+                                            activity.status,
+                                        )
+                                    }}
                                 </span>
                                 <span
                                     class="whitespace-nowrap text-xs text-gray-400 dark:text-gray-500"

@@ -230,7 +230,8 @@ class KnowledgeBaseService
      */
     public function autoEnrich(User $user, string $conversationContent, ?string $sourceReference = null): array
     {
-        $integration = $this->aiService->getDefaultIntegration();
+        // The model assigned to this task in the Brain settings, else the Brain model
+        [$integration, $brainModel] = \App\Models\AiBrainSettings::getForUser($user->id)->aiFor('conversation');
         if (!$integration) {
             return [];
         }
@@ -267,7 +268,7 @@ PROMPT;
                 'kb_auto_enrich',
                 AiService::prependDateContext($prompt),
                 $integration,
-                ['max_tokens' => 4000, 'temperature' => 0.3]
+                ['model' => $brainModel, 'max_tokens' => 4000, 'temperature' => 0.3]
             );
 
             $entries = $this->parseEnrichmentResponse($response);
@@ -327,7 +328,8 @@ PROMPT;
 
         $planSummary = json_encode($steps, JSON_UNESCAPED_UNICODE);
 
-        $integration = $this->aiService->getDefaultIntegration();
+        // The model assigned to this task in the Brain settings, else the Brain model
+        [$integration, $brainModel] = \App\Models\AiBrainSettings::getForUser($user->id)->aiFor('content_generation');
         if (!$integration) {
             return;
         }
@@ -357,7 +359,7 @@ PROMPT;
                 'style_extraction',
                 AiService::prependDateContext($prompt),
                 $integration,
-                ['max_tokens' => 500, 'temperature' => 0.3]
+                ['model' => $brainModel, 'max_tokens' => 500, 'temperature' => 0.3]
             );
 
             $response = trim($response);

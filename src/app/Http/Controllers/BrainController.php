@@ -149,13 +149,15 @@ class BrainController extends Controller
             );
 
             if ($stream === null) {
-                // Not streamable (agent request) — fall back to synchronous
+                // Not streamable (agent request) — fall back to synchronous, in the conversation
+                // the stream attempt already opened (a second new one was left empty in the list)
+                $openedId = $this->orchestrator->streamConversationId;
                 $result = $this->orchestrator->processMessage(
                     $message,
                     $user,
                     'web',
-                    $conversationId,
-                    $forceNew,
+                    $openedId ?? $conversationId,
+                    $openedId ? false : $forceNew,
                 );
 
                 echo "data: " . json_encode([
@@ -205,7 +207,9 @@ class BrainController extends Controller
     {
         $user = $request->user();
 
+        // Conversations without a single message are not listed
         $conversations = AiConversation::forUser($user->id)
+            ->whereHas('messages')
             ->orderByDesc('last_activity_at')
             ->with(['messages' => function ($q) {
                 $q->orderByDesc('created_at')->limit(1);
@@ -747,9 +751,19 @@ class BrainController extends Controller
 
         $settings = AiBrainSettings::getForUser($request->user()->id);
 
+        // Choosing a global mode applies it to every agent (per-agent modes are cleared), unless
+        // the same request sets agent modes too
+        if ($request->filled('work_mode')) {
+            if ($request->has('agent_modes')) {
+                $settings->update(['work_mode' => $request->input('work_mode')]);
+            } else {
+                $settings->setWorkMode($request->input('work_mode'));
+            }
+        }
+
         // Standard fields
         $settings->update($request->only([
-            'work_mode', 'preferred_language', 'daily_token_limit',
+            'preferred_language', 'daily_token_limit',
             'telegram_bot_token',
             'perplexity_api_key', 'serpapi_api_key',
             'preferred_model', 'preferred_integration_id',
@@ -916,10 +930,18 @@ class BrainController extends Controller
 
         return response()->json([
             'work_mode' => $settings->work_mode ?? 'semi_auto',
-            'mode_label' => $this->modeController->getModeLabel($settings->work_mode ?? 'semi_auto'),
+            'mode_label' => $this->effectiveModeLabel($settings),
             'knowledge_count' => $knowledgeCount,
             'telegram_connected' => $settings->isTelegramConnected(),
         ]);
+    }
+
+    /** Label key of the mode the agents really work in ("mixed" when per-agent modes differ). */
+    private function effectiveModeLabel(AiBrainSettings $settings): string
+    {
+        $mode = $settings->effectiveMode();
+
+        return $mode === 'mixed' ? 'brain.mode.mixed_label' : $this->modeController->getModeLabel($mode);
     }
 
     /**
@@ -1016,10 +1038,12 @@ class BrainController extends Controller
         // This ensures the activity bar remains visible even after synchronous plan execution
         $isRecentlyActive = $lastActivity && $lastActivity->created_at->diffInSeconds(now()) < 30;
 
-        // Currently executing plan?
+        // Currently executing plan? One that stopped moving hours ago is no current work
+        // (brain:close-stale-plans marks it failed)
         $executingPlan = AiActionPlan::forUser($user->id)
-            ->withStatus('executing')
+            ->running()
             ->with('steps')
+            ->latest('started_at')
             ->first();
 
         $isRunning = $executingPlan !== null || $isRecentlyActive;
@@ -1065,9 +1089,13 @@ class BrainController extends Controller
                 'is_active' => $isActive,
                 'is_running' => $isRunning,
                 'work_mode' => $settings->work_mode ?? 'semi_auto',
-                'mode_label' => $this->modeController->getModeLabel($settings->work_mode ?? 'semi_auto'),
+                // The mode the agents really work in: per-agent modes win over the global one
+                'mode_label' => $this->effectiveModeLabel($settings),
+                'effective_mode' => $settings->effectiveMode(),
                 'dry_run_mode' => (bool) (($settings->preferences ?? [])['dry_run_mode'] ?? false),
-                'last_activity_at' => $settings->last_activity_at ?? $lastActivity?->created_at,
+                // The latest of the stored timestamp (cron runs) and the latest logged AI work
+                // (the chat does not update the stored one)
+                'last_activity_at' => collect([$settings->last_activity_at, $lastActivity?->created_at])->filter()->max(),
                 'is_active_flag' => $settings->is_active,
             ],
             'current_task' => $currentTask,

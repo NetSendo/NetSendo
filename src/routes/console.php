@@ -295,6 +295,12 @@ Schedule::command('brain:run-cron')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/brain-cron.log'));
 
+// Brain plans that stalled or were left waiting are closed, so the Monitor and the activity bar
+// show real work only (every plan, every licence)
+Schedule::command('brain:close-stale-plans')
+    ->hourly()
+    ->withoutOverlapping();
+
 // Semantic knowledge base (GOLD): embed entries that are missing or outdated — saved while the
 // AI provider was down, before GOLD or before an embedding provider was added
 Schedule::command('brain:index-knowledge')

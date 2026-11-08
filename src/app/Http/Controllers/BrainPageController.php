@@ -28,7 +28,9 @@ class BrainPageController extends Controller
         $user = $request->user();
         $settings = AiBrainSettings::getForUser($user->id);
 
+        // Conversations without a single message are not listed
         $conversations = AiConversation::forUser($user->id)
+            ->whereHas('messages')
             ->orderByDesc('last_activity_at')
             ->with(['messages' => function ($q) {
                 $q->orderByDesc('created_at')->limit(1);
@@ -40,6 +42,8 @@ class BrainPageController extends Controller
             'conversations' => $conversations,
             'settings' => [
                 'work_mode' => $settings->work_mode ?? 'semi_auto',
+                // What the agents really do: per-agent modes win over the global one
+                'effective_mode' => $settings->effectiveMode(),
             ],
         ]);
     }
@@ -76,7 +80,7 @@ class BrainPageController extends Controller
             });
 
         // Build agent modes for frontend
-        $agents = ['campaign', 'list', 'message', 'crm', 'analytics', 'segmentation', 'research', 'revenue', 'funnel', 'deliverability'];
+        $agents = array_keys(AiBrainSettings::AGENT_TYPES);
         $agentModes = [];
         foreach ($agents as $agent) {
             $agentModes[$agent] = $settings->getAgentMode($agent);

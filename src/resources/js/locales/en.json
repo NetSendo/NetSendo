@@ -8798,7 +8798,10 @@
             "semi_auto_desc": "AI proposes an action plan. Waits for your approval before execution.",
             "manual": "Advisory",
             "manual_label": "👤 Manual (Advisory)",
-            "manual_desc": "AI analyzes and advises. You execute all actions yourself."
+            "manual_desc": "AI analyzes and advises. You execute all actions yourself.",
+            "mixed": "Mixed",
+            "mixed_hint": "Agents work in different modes — see Settings → Agent modes",
+            "mixed_label": "🔀 Mixed (agents in different modes)"
         },
         "task": {
             "orchestration": "🧠 Orchestration (Intent Classification)",
@@ -9001,7 +9004,38 @@
             "priority_medium": "Medium",
             "priority_low": "Low",
             "execute": "Execute",
-            "executed_plans": "Executed plans"
+            "executed_plans": "Executed plans",
+            "activity_feed": "Brain activity",
+            "events": {
+                "brain_start": "Brain started",
+                "brain_stop": "Brain finished a reply",
+                "agent_dispatch": "Task handed to an agent",
+                "agent_complete": "Agent finished a task",
+                "cron_task": "Scheduled task",
+                "cron_task_dispatch": "Scheduled task handed to an agent",
+                "cron_task_complete": "Scheduled task done",
+                "cron_task_error": "Scheduled task failed",
+                "cron_task_approval_required": "Scheduled task waits for approval",
+                "situation_analysis": "Situation analysis",
+                "plan_execution_started": "Plan run started",
+                "plan_failure_handled": "Failed plan handled",
+                "performance_review": "Performance review",
+                "goal_created": "Goal created",
+                "auto_goal_created": "Brain created a goal",
+                "goal_progress": "Goal progress",
+                "goal_completed": "Goal reached",
+                "goal_metric_evaluated": "Goal metric checked",
+                "goal_sub_plan_executed": "Goal plan run"
+            },
+            "statuses": {
+                "started": "started",
+                "completed": "completed",
+                "success": "success",
+                "failed": "failed",
+                "error": "error",
+                "pending": "pending",
+                "reviewed": "reviewed"
+            }
         },
         "goals": {
             "title": "Goals",

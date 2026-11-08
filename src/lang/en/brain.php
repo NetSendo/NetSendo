@@ -512,4 +512,21 @@ return [
         'no_provider' => 'None of the connected AI integrations can create embeddings. Add OpenAI, Google Gemini, OpenRouter or Ollama (Anthropic and Grok do not offer them).',
         'test_failed' => 'The embedding model did not answer correctly: :error',
     ],
+    // Suggested tasks in the Brain Monitor
+    'suggested' => [
+        'campaign_title' => 'Plan a campaign for :count subscribers',
+        'campaign_desc' => 'You have :lists lists with :count subscribers and no campaigns in the last 7 days.',
+        'drip_title' => 'Create a drip campaign sequence',
+        'drip_desc' => 'No automatic drip sequence exists. Build a welcome series for new subscribers.',
+        'hot_leads_title' => 'Follow up :count hot leads',
+        'hot_leads_desc' => ':count contacts with a score of 50+. Plan personal follow-ups.',
+        'pipeline_title' => 'Pipeline review: :count open deals',
+        'pipeline_desc' => ':count open deals. Analyse the pipeline and find what blocks them.',
+        'report_title' => 'Generate a weekly report',
+        'report_desc' => 'No report in the last 7 days.',
+        'hygiene_title' => 'Clean contact lists',
+        'hygiene_desc' => 'Check :count subscribers for bounces, inactive addresses and duplicates.',
+        'segmentation_title' => 'Contact base segmentation',
+        'segmentation_desc' => 'Divide the base into segments by activity, interests and scoring.',
+    ],
 ];

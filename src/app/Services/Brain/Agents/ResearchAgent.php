@@ -406,10 +406,18 @@ Research data:
 {$langInstruction}
 
 Write a clear, structured summary.
+If the research data holds no actual findings (it is empty, says that nothing was found or only
+reports errors), answer with exactly NO_FINDINGS and nothing else.
 PROMPT;
 
         try {
-            $summary = $this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.3], $user, 'research');
+            $summary = trim($this->callAi($prompt, ['max_tokens' => 2000, 'temperature' => 0.3], $user, 'research'));
+
+            // Research that found nothing is not knowledge: entries such as "the research data is
+            // empty" used to be saved and then came back in every prompt
+            if ($summary === '' || str_contains($summary, 'NO_FINDINGS')) {
+                return ['status' => 'completed', 'message' => __('brain.research.nothing_to_save')];
+            }
 
             $entry = $this->knowledgeBase->addEntry(
                 $user,

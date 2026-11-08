@@ -34,7 +34,8 @@ class GoalPlanner
      */
     public function isGoalRequest(string $message, User $user): ?array
     {
-        $integration = $this->aiService->getDefaultIntegration();
+        // The model assigned to this task in the Brain settings, else the Brain model
+        [$integration, $brainModel] = \App\Models\AiBrainSettings::getForUser($user->id)->aiFor('orchestration');
         if (!$integration) {
             return null;
         }
@@ -75,6 +76,7 @@ PROMPT;
 
         try {
             $response = BrainAi::generate($user, 'goal_detection', $prompt, $integration, [
+                'model' => $brainModel,
                 'max_tokens' => 1000,
                 'temperature' => 0.2,
             ]);
@@ -119,7 +121,8 @@ PROMPT;
      */
     public function decomposeGoal(AiGoal $goal, User $user): array
     {
-        $integration = $this->aiService->getDefaultIntegration();
+        // The model assigned to this task in the Brain settings, else the Brain model
+        [$integration, $brainModel] = \App\Models\AiBrainSettings::getForUser($user->id)->aiFor('orchestration');
         if (!$integration) {
             return [];
         }
@@ -215,6 +218,7 @@ PROMPT;
 
         try {
             $response = BrainAi::generate($user, 'goal_decomposition', $prompt, $integration, [
+                'model' => $brainModel,
                 'max_tokens' => 4000,
                 'temperature' => 0.3,
             ]);
@@ -345,7 +349,8 @@ PROMPT;
             return '';
         }
 
-        $context = "\n\nUSER'S ACTIVE GOALS:\n";
+        // Background only: the user's own request comes first, so an old goal never replaces it
+        $context = "\n\nUSER'S ACTIVE GOALS (background — mention them only when they relate to the current request):\n";
         foreach ($goals as $goal) {
             $context .= "- [{$goal->priority}] {$goal->title} ({$goal->progress_percent}% complete)\n";
             if ($goal->description) {

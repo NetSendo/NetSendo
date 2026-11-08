@@ -8793,7 +8793,10 @@
             "semi_auto_desc": "AI proponuje plan działania. Czeka na Twoje zatwierdzenie przed wykonaniem.",
             "manual": "Doradczy",
             "manual_label": "👤 Manualny (doradzanie)",
-            "manual_desc": "AI analizuje i doradza. Ty wykonujesz wszystkie akcje samodzielnie."
+            "manual_desc": "AI analizuje i doradza. Ty wykonujesz wszystkie akcje samodzielnie.",
+            "mixed": "Mieszany",
+            "mixed_hint": "Agenci pracują w różnych trybach — zobacz Ustawienia → Tryby agentów",
+            "mixed_label": "🔀 Mieszany (agenci w różnych trybach)"
         },
         "task": {
             "orchestration": "🧠 Orkiestracja (klasyfikacja intencji)",
@@ -8996,7 +8999,38 @@
             "priority_medium": "Średni",
             "priority_low": "Niski",
             "execute": "Wykonaj",
-            "executed_plans": "Wykonane plany"
+            "executed_plans": "Wykonane plany",
+            "activity_feed": "Aktywność Braina",
+            "events": {
+                "brain_start": "Brain zaczął pracę",
+                "brain_stop": "Brain skończył odpowiedź",
+                "agent_dispatch": "Zadanie przekazane agentowi",
+                "agent_complete": "Agent wykonał zadanie",
+                "cron_task": "Zadanie automatyczne",
+                "cron_task_dispatch": "Zadanie automatyczne przekazane agentowi",
+                "cron_task_complete": "Zadanie automatyczne wykonane",
+                "cron_task_error": "Błąd zadania automatycznego",
+                "cron_task_approval_required": "Zadanie automatyczne czeka na zgodę",
+                "situation_analysis": "Analiza sytuacji",
+                "plan_execution_started": "Rozpoczęto wykonanie planu",
+                "plan_failure_handled": "Obsłużono nieudany plan",
+                "performance_review": "Przegląd wyników",
+                "goal_created": "Utworzono cel",
+                "auto_goal_created": "Brain utworzył cel",
+                "goal_progress": "Postęp celu",
+                "goal_completed": "Cel osiągnięty",
+                "goal_metric_evaluated": "Sprawdzono metrykę celu",
+                "goal_sub_plan_executed": "Wykonano plan celu"
+            },
+            "statuses": {
+                "started": "rozpoczęte",
+                "completed": "ukończone",
+                "success": "sukces",
+                "failed": "nieudane",
+                "error": "błąd",
+                "pending": "czeka",
+                "reviewed": "sprawdzone"
+            }
         },
         "goals": {
             "title": "Cele",

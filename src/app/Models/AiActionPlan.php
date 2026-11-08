@@ -173,4 +173,32 @@ class AiActionPlan extends Model
     {
         return $query->whereIn('status', ['draft', 'pending_approval', 'approved', 'executing']);
     }
+
+    /**
+     * A run takes minutes (ExecuteBrainPlanJob stops after 10): a plan still "executing" this
+     * long after it started was interrupted and will not finish.
+     */
+    public const STALLED_AFTER_HOURS = 2;
+
+    /** Executing plans that stopped moving (see STALLED_AFTER_HOURS). */
+    public function scopeStalled($query)
+    {
+        return $query->where('status', 'executing')
+            ->where(function ($q) {
+                $cutoff = now()->subHours(self::STALLED_AFTER_HOURS);
+                $q->where('started_at', '<', $cutoff)
+                    ->orWhere(fn ($q) => $q->whereNull('started_at')->where('updated_at', '<', $cutoff));
+            });
+    }
+
+    /** Executing plans that are really running (not stalled). */
+    public function scopeRunning($query)
+    {
+        return $query->where('status', 'executing')
+            ->where(function ($q) {
+                $cutoff = now()->subHours(self::STALLED_AFTER_HOURS);
+                $q->where('started_at', '>=', $cutoff)
+                    ->orWhere(fn ($q) => $q->whereNull('started_at')->where('updated_at', '>=', $cutoff));
+            });
+    }
 }

@@ -512,4 +512,21 @@ return [
         'no_provider' => 'Ninguna de las integraciones de IA conectadas puede crear embeddings. Añade OpenAI, Google Gemini, OpenRouter u Ollama (Anthropic y Grok no los ofrecen).',
         'test_failed' => 'El modelo de embeddings no respondió correctamente: :error',
     ],
+    // Suggested tasks in the Brain Monitor
+    'suggested' => [
+        'campaign_title' => 'Planifica una campaña para :count suscriptores',
+        'campaign_desc' => 'Tienes :lists listas con :count suscriptores y ninguna campaña en los últimos 7 días.',
+        'drip_title' => 'Crea una secuencia de goteo',
+        'drip_desc' => 'No hay ninguna secuencia automática. Crea una serie de bienvenida para los nuevos suscriptores.',
+        'hot_leads_title' => 'Haz seguimiento de :count leads calientes',
+        'hot_leads_desc' => ':count contactos con una puntuación de 50 o más. Planifica un seguimiento personal.',
+        'pipeline_title' => 'Revisión del pipeline: :count oportunidades abiertas',
+        'pipeline_desc' => ':count oportunidades abiertas. Analiza el pipeline y detecta los bloqueos.',
+        'report_title' => 'Genera el informe semanal',
+        'report_desc' => 'No hay ningún informe de los últimos 7 días.',
+        'hygiene_title' => 'Limpia las listas de contactos',
+        'hygiene_desc' => 'Revisa :count suscriptores en busca de rebotes, inactivos y duplicados.',
+        'segmentation_title' => 'Segmentación de la base de contactos',
+        'segmentation_desc' => 'Divide la base en segmentos por actividad, intereses y puntuación.',
+    ],
 ];

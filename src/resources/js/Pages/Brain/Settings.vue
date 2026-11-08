@@ -162,6 +162,10 @@ const saveMode = async (mode) => {
 
     try {
         await axios.put("/brain/api/settings", { work_mode: mode });
+        // The global mode applies to every agent: the server cleared per-agent modes
+        for (const agent of agentList) {
+            agentModesLocal[agent] = mode;
+        }
         modeSaved.value = true;
         setTimeout(() => (modeSaved.value = false), 2000);
     } catch (error) {

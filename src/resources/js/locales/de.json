@@ -8144,7 +8144,10 @@
             "semi_auto_desc": "KI schlägt Aktionsplan vor. Wartet auf Ihre Genehmigung vor Ausführung.",
             "manual": "Beratend",
             "manual_label": "👤 Manuell (Beratung)",
-            "manual_desc": "KI analysiert und berät. Sie führen alle Aktionen selbst aus."
+            "manual_desc": "KI analysiert und berät. Sie führen alle Aktionen selbst aus.",
+            "mixed": "Gemischt",
+            "mixed_hint": "Die Agenten arbeiten in verschiedenen Modi – siehe Einstellungen → Agentenmodi",
+            "mixed_label": "🔀 Gemischt (Agenten in verschiedenen Modi)"
         },
         "task": {
             "orchestration": "🧠 Orchestrierung (Absichtserkennung)",
@@ -8347,7 +8350,38 @@
             "priority_medium": "Mittel",
             "priority_low": "Niedrig",
             "execute": "Ausführen",
-            "executed_plans": "Ausgeführte Pläne"
+            "executed_plans": "Ausgeführte Pläne",
+            "activity_feed": "Brain-Aktivität",
+            "events": {
+                "brain_start": "Brain hat begonnen",
+                "brain_stop": "Brain hat eine Antwort beendet",
+                "agent_dispatch": "Aufgabe an einen Agenten übergeben",
+                "agent_complete": "Agent hat eine Aufgabe erledigt",
+                "cron_task": "Geplante Aufgabe",
+                "cron_task_dispatch": "Geplante Aufgabe an einen Agenten übergeben",
+                "cron_task_complete": "Geplante Aufgabe erledigt",
+                "cron_task_error": "Geplante Aufgabe fehlgeschlagen",
+                "cron_task_approval_required": "Geplante Aufgabe wartet auf Freigabe",
+                "situation_analysis": "Lageanalyse",
+                "plan_execution_started": "Planausführung gestartet",
+                "plan_failure_handled": "Fehlgeschlagener Plan behandelt",
+                "performance_review": "Ergebnisprüfung",
+                "goal_created": "Ziel erstellt",
+                "auto_goal_created": "Brain hat ein Ziel erstellt",
+                "goal_progress": "Zielfortschritt",
+                "goal_completed": "Ziel erreicht",
+                "goal_metric_evaluated": "Zielmetrik geprüft",
+                "goal_sub_plan_executed": "Zielplan ausgeführt"
+            },
+            "statuses": {
+                "started": "gestartet",
+                "completed": "abgeschlossen",
+                "success": "Erfolg",
+                "failed": "fehlgeschlagen",
+                "error": "Fehler",
+                "pending": "wartend",
+                "reviewed": "geprüft"
+            }
         },
         "goals": {
             "title": "Ziele",
