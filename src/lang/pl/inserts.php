@@ -46,4 +46,8 @@ return [
         'gender_form' => 'Odmiana przez płeć',
         'gender_form_desc' => 'Wstawia formę męską lub żeńską (np. zrobiłeś|zrobiłaś)',
     ],
+
+    'created' => 'Wstawka została utworzona',
+    'deleted' => 'Wstawka została usunięta',
+    'updated' => 'Wstawka została zaktualizowana',
 ];

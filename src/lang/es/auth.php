@@ -47,4 +47,8 @@ return [
     'enable_2fa' => 'Activar 2FA',
     'disable_2fa' => 'Desactivar 2FA',
     'verify_code' => 'Verificar Código',
+
+    // Login errors (Laravel's lang/en/auth.php; 'password' above stays a field label)
+    'failed' => 'Estas credenciales no coinciden con nuestros registros.',
+    'throttle' => 'Demasiados intentos de inicio de sesión. Inténtalo de nuevo en :seconds segundos.',
 ];

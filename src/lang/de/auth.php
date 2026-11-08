@@ -47,4 +47,8 @@ return [
     'enable_2fa' => '2FA aktivieren',
     'disable_2fa' => '2FA deaktivieren',
     'verify_code' => 'Code bestätigen',
+
+    // Login errors (Laravel's lang/en/auth.php; 'password' above stays a field label)
+    'failed' => 'Diese Anmeldedaten stimmen nicht mit unseren Daten überein.',
+    'throttle' => 'Zu viele Anmeldeversuche. Bitte versuchen Sie es in :seconds Sekunden erneut.',
 ];

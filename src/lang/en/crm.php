@@ -301,4 +301,117 @@ return [
             ],
         ],
     ],
+
+    // Default lead scoring rules (LeadScoringRule::getDefaultRules())
+    'scoring' => [
+        'defaults' => [
+            'email_opened' => [
+                'name' => 'Email Opened',
+                'description' => 'Points for opening an email',
+            ],
+            'email_clicked' => [
+                'name' => 'Link Clicked',
+                'description' => 'Points for clicking a link in an email',
+            ],
+            'email_replied' => [
+                'name' => 'Email Replied',
+                'description' => 'Bonus for replying to a message',
+            ],
+            'contact_created' => [
+                'name' => 'CRM Contact Created',
+                'description' => 'Starting points when a CRM contact is created',
+            ],
+            'form_submitted' => [
+                'name' => 'Form Submitted',
+                'description' => 'Points for submitting any form',
+            ],
+            'page_visited' => [
+                'name' => 'Page Visited',
+                'description' => 'Points for visiting a page',
+            ],
+            'page_visited_pricing' => [
+                'name' => 'Pricing Page Visit',
+                'description' => 'Bonus for visiting the pricing page',
+            ],
+            'product_viewed' => [
+                'name' => 'Product Viewed',
+                'description' => 'Points for viewing a product page',
+            ],
+            'add_to_cart' => [
+                'name' => 'Added to Cart',
+                'description' => 'Points for adding a product to the cart',
+            ],
+            'checkout_started' => [
+                'name' => 'Checkout Started',
+                'description' => 'Bonus for starting the checkout process',
+            ],
+            'tag_added_hot' => [
+                'name' => 'Tag "hot"',
+                'description' => 'Bonus for receiving the \'hot\' tag',
+            ],
+            'tag_added_vip' => [
+                'name' => 'Tag "vip"',
+                'description' => 'Bonus for receiving the \'vip\' tag',
+            ],
+            'decay_7_days' => [
+                'name' => 'Inactivity 7 Days',
+                'description' => 'Automatic points decay after 7 days of inactivity',
+            ],
+            'decay_30_days' => [
+                'name' => 'Inactivity 30 Days',
+                'description' => 'Large points decay after 30 days of inactivity',
+            ],
+        ],
+    ],
+
+    'cardintel' => [
+        'settings' => [
+            'saved' => 'Saved',
+        ],
+    ],
+    'companies' => [
+        'lookup' => [
+            'invalid_nip' => 'Invalid NIP format',
+            'invalid_regon' => 'Invalid REGON format',
+            'missing_identifier' => 'Enter NIP or REGON',
+            'not_found' => 'Company with this NIP/REGON not found',
+        ],
+    ],
+    'activities' => [
+        'log' => [
+            'email_sent' => 'Email sent: :subject',
+            'task_completed' => 'Task completed: :title',
+        ],
+    ],
+    'notifications' => [
+        'contact_replied' => [
+            'subject' => 'New reply from :name',
+            'greeting' => 'Hello!',
+            'intro' => ':name replied to your message (channel: :channel).',
+            'action' => 'View contact',
+            'outro' => 'Reply while the conversation is fresh.',
+        ],
+        'deal_won' => [
+            'subject' => 'Deal won: :name',
+            'intro' => 'Congratulations! The deal ":name" worth :value was won.',
+        ],
+        'deal_lost' => [
+            'subject' => 'Deal lost: :name',
+            'intro' => 'The deal ":name" was marked as lost.',
+        ],
+        'deal_stage_changed' => [
+            'subject' => 'Deal stage changed: :name',
+            'intro' => 'The deal ":name" moved to another stage.',
+            'greeting' => 'Hello!',
+            'action' => 'View deal',
+        ],
+        'task_overdue' => [
+            'subject' => 'Overdue task: :title',
+            'greeting' => 'Hello!',
+            'intro' => 'The task ":title" is past its due date.',
+            'due_date' => 'Due: :date',
+            'action' => 'View task',
+            'outro' => 'Complete it or set a new due date.',
+        ],
+    ],
 ];

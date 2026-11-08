@@ -1060,8 +1060,13 @@ Route::prefix('subscribe')->name('subscribe.')->group(function () {
 });
 
 // Public Sales Funnel Checkout Routes (no auth)
-Route::get('/checkout/{type}/{product}', [\App\Http\Controllers\Public\SalesFunnelCheckoutController::class, 'checkout'])->name('sales-funnel.checkout');
+// The success route comes first and {type} is limited to the payment providers:
+// otherwise /checkout/success/{funnel} matched {type}/{product} and answered 404.
 Route::get('/checkout/success/{funnel}', [\App\Http\Controllers\Public\SalesFunnelCheckoutController::class, 'success'])->name('sales-funnel.success');
+Route::get('/checkout/{type}/{product}', [\App\Http\Controllers\Public\SalesFunnelCheckoutController::class, 'checkout'])
+    ->whereIn('type', ['stripe', 'polar', 'tpay'])
+    ->whereNumber('product')
+    ->name('sales-funnel.checkout');
 
 // CRON Webhook (public, authenticated via token)
 Route::match(['get', 'post'], '/api/cron/webhook', [\App\Http\Controllers\CronSettingsController::class, 'webhookTrigger'])->name('cron.webhook');
