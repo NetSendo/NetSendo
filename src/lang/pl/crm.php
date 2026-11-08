@@ -301,4 +301,66 @@ return [
             ],
         ],
     ],
+
+    // Default lead scoring rules (LeadScoringRule::getDefaultRules())
+    'scoring' => [
+        'defaults' => [
+            'email_opened' => [
+                'name' => 'Otwarcie emaila',
+                'description' => 'Punkty za otwarcie wiadomości email',
+            ],
+            'email_clicked' => [
+                'name' => 'Kliknięcie w link',
+                'description' => 'Punkty za kliknięcie w link w emailu',
+            ],
+            'email_replied' => [
+                'name' => 'Odpowiedź na email',
+                'description' => 'Bonus za odpowiedź na wiadomość',
+            ],
+            'contact_created' => [
+                'name' => 'Utworzenie kontaktu CRM',
+                'description' => 'Punkty startowe przy utworzeniu kontaktu CRM',
+            ],
+            'form_submitted' => [
+                'name' => 'Wypełnienie formularza',
+                'description' => 'Punkty za wypełnienie dowolnego formularza',
+            ],
+            'page_visited' => [
+                'name' => 'Wizyta na stronie',
+                'description' => 'Punkty za wizytę na stronie',
+            ],
+            'page_visited_pricing' => [
+                'name' => 'Wizyta na stronie cennika',
+                'description' => 'Bonus za wizytę na stronie z cennikiem',
+            ],
+            'product_viewed' => [
+                'name' => 'Przeglądanie produktu',
+                'description' => 'Punkty za obejrzenie strony produktu',
+            ],
+            'add_to_cart' => [
+                'name' => 'Dodanie do koszyka',
+                'description' => 'Punkty za dodanie produktu do koszyka',
+            ],
+            'checkout_started' => [
+                'name' => 'Rozpoczęcie checkout',
+                'description' => 'Bonus za rozpoczęcie procesu zakupowego',
+            ],
+            'tag_added_hot' => [
+                'name' => 'Tag "hot"',
+                'description' => 'Bonus za otrzymanie tagu hot',
+            ],
+            'tag_added_vip' => [
+                'name' => 'Tag "vip"',
+                'description' => 'Bonus za otrzymanie tagu VIP',
+            ],
+            'decay_7_days' => [
+                'name' => 'Brak aktywności 7 dni',
+                'description' => 'Automatyczny spadek punktów po 7 dniach bez aktywności',
+            ],
+            'decay_30_days' => [
+                'name' => 'Brak aktywności 30 dni',
+                'description' => 'Duży spadek punktów po 30 dniach bez aktywności',
+            ],
+        ],
+    ],
 ];
