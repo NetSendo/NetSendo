@@ -130,7 +130,8 @@ class SubscriberController extends Controller
             'status' => 'nullable|in:active,inactive,unsubscribed,bounced',
             'source' => 'nullable|string|max:255',
             'tags' => 'nullable|array',
-            'tags.*' => 'integer|exists:tags,id',
+            // Only the key owner's tags (tags of another account were accepted and returned)
+            'tags.*' => ['integer', Rule::exists('tags', 'id')->where('user_id', $user->id)],
             'custom_fields' => 'nullable|array',
             // User data fields (for proxy scenarios like n8n)
             'ip_address' => 'nullable|ip',

@@ -146,21 +146,11 @@ class SmsController extends Controller
         $message->user_id = auth()->id();
         $message->channel = 'sms';
 
-        // Handle scheduling
         if ($request->time) {
             $message->time_of_day = $request->time;
         }
 
-        if ($request->schedule_date) {
-            $message->send_at = $request->schedule_date;
-            // If scheduling, ensure status is scheduled
-             if ($validated['status'] === 'sent') { // If user clicked "Send/Schedule"
-                $message->status = 'scheduled';
-            }
-        } elseif ($validated['status'] === 'sent') {
-             $message->send_at = now();
-             // In real app, we might dispatch a job here immediately if "Send Now"
-        }
+        $this->applySchedule($message, $validated['status'], $validated['type'], $request->schedule_date);
 
         $message->save();
 
@@ -196,7 +186,9 @@ class SmsController extends Controller
             'type' => $message->type,
             'day' => $message->day,
             'time' => $message->time_of_day,
-            'scheduled_at' => $message->send_at ? $message->send_at->format('Y-m-d\TH:i') : null,
+            'scheduled_at' => $message->send_at
+                ? $message->send_at->copy()->setTimezone(DateHelper::getUserTimezone())->format('Y-m-d\TH:i')
+                : null,
             'status' => $message->status,
         ];
 
@@ -236,19 +228,11 @@ class SmsController extends Controller
 
         $message->fill($validated);
 
-        // Map time to time_of_day if needed
-         if ($request->has('time')) {
+        if ($request->has('time')) {
             $message->time_of_day = $request->time;
         }
 
-        if ($request->schedule_date) {
-            $message->send_at = $request->schedule_date;
-             if ($validated['status'] === 'sent') {
-                $message->status = 'scheduled';
-            }
-        } elseif ($validated['status'] === 'sent' && !$message->send_at) {
-             $message->send_at = now();
-        }
+        $this->applySchedule($message, $validated['status'], $validated['type'], $request->schedule_date);
 
         $message->save();
 
@@ -257,6 +241,43 @@ class SmsController extends Controller
         }
 
         return Redirect::route('sms.index')->with('success', 'SMS Campaign updated.');
+    }
+
+    /**
+     * Status and send time of an SMS campaign saved from the panel.
+     *
+     * The form posts 'draft' or 'sent' ("Send now", "Schedule", "Activate"). The SMS cron
+     * (CronScheduleService) only processes status 'scheduled' whose scheduled_at is empty or
+     * due, so a campaign to send must be stored as 'scheduled' with scheduled_at set: now for
+     * "Send now", the chosen moment (entered in the user's timezone, stored in UTC) for
+     * "Schedule". Queue (autoresponder) messages have no campaign-wide start time; they are
+     * active until switched off. Mirrors MessageController for email.
+     */
+    private function applySchedule(Message $message, string $status, string $type, ?string $scheduleDate): void
+    {
+        if ($status === 'draft') {
+            $message->status = 'draft';
+            $message->is_active = false;
+
+            return;
+        }
+
+        $message->status = 'scheduled';
+        $message->is_active = true;
+
+        if ($type === 'autoresponder') {
+            $message->send_at = null;
+            $message->scheduled_at = null;
+
+            return;
+        }
+
+        $sendAt = $scheduleDate
+            ? \Carbon\Carbon::parse($scheduleDate, DateHelper::getUserTimezone())->setTimezone('UTC')
+            : now();
+
+        $message->send_at = $sendAt;
+        $message->scheduled_at = $sendAt;
     }
 
     /**
@@ -462,13 +483,17 @@ class SmsController extends Controller
 
             $result = $provider->send(
                 to: $validated['phone'],
-                message: '[TEST] ' . $content
+                content: '[TEST] ' . $content
             );
 
             \Log::info('Test SMS result', ['result' => $result]);
 
+            if (!$result->success) {
+                return response()->json(['error' => $result->errorMessage ?: 'The SMS provider rejected the test SMS'], 422);
+            }
+
             return response()->json(['success' => true, 'message' => 'Test SMS sent']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Test SMS failed: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }

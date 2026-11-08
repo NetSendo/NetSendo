@@ -97,7 +97,7 @@ class MailProviderService
         return Mailbox::forUser($userId)
             ->active()
             ->canSend($messageType)
-            ->whereRaw('daily_limit IS NULL OR sent_today < daily_limit')
+            ->whereRaw('(daily_limit IS NULL OR sent_today < daily_limit)')
             ->first();
     }
 

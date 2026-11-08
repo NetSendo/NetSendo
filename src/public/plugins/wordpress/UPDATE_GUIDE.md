@@ -1,11 +1,12 @@
 # NetSendo for WordPress - Update & Version Guide
 
-## Current Version: 1.1.0
+## Current Version: 1.1.2
 
 ## Version History
 
 | Version | Date       | Changes                                                                          |
 | ------- | ---------- | -------------------------------------------------------------------------------- |
+| 1.1.2   | 2026-11-08 | Signups and content-gate unlocks reach the list again: the subscriber request names the list `contact_list_id`, as the API requires; "subscribers only" gates recognise list subscribers |
 | 1.1.0   | 2026-01-12 | Added Pixel tracking with page_view events, collision detection with WooCommerce |
 | 1.0.0   | 2026-01-12 | Initial release with heartbeat, update notifications, forms, content gating      |
 

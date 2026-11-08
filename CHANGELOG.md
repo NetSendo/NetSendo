@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.7.2] – SMS campaigns send again, the WordPress plugin subscribes, accounts stay apart - 2026-11-08
+
+**Release date:** 2026-11-08
+
+### Fixed
+
+- **SMS campaigns from the panel were never sent.** "Send now" stored the campaign with status `sent`, but the SMS cron only processes `scheduled` campaigns, so nothing went out. "Schedule" wrote the chosen date to `send_at`, while the cron reads `scheduled_at`, so a scheduled SMS went out at the next cron run instead of at the chosen time. Queue (autoresponder) SMS saved as active stayed `sent` and never ran either. The panel now stores SMS campaigns like email ones: `scheduled` with `scheduled_at` set to now, or to the chosen time entered in the user's timezone and stored in UTC; queue SMS are `scheduled` and active. The edit form shows a scheduled time in the user's timezone.
+- **"Send test SMS" always failed.** The panel called the SMS providers with a parameter they do not have (`message:` instead of `content:`), so PHP threw an error that the `catch (\Exception)` block did not catch. A test SMS the provider rejects is now reported with the provider's error instead of "Test SMS sent".
+- **The send_sms MCP tool and `POST /api/v1/sms/send`.** The MCP client sends the text as `content`, the endpoint required `message`, so every call from an AI assistant ended in 422. The endpoint now accepts both names, a `subscriber_id` alone is enough (the SMS goes to the subscriber's number), a subscriber of another account answers 404, and a number no contact has answers 422 instead of 500 (a contact without an email address cannot be created). The MCP client now sends `message`.
+- **The WordPress plugin (1.1.2) could not add anyone to a list.** It sent the list as `list_id`, the API requires `contact_list_id`, so every signup and every content-gate unlock ended in "Subscription failed". Its "subscribers only" gates never recognised a subscriber either: the check read the single subscriber the API returns as if it were a list. Both are fixed; *Marketplace → WordPress → Download Plugin* serves 1.1.2, and installed plugins are offered the update.
+
+### Security
+
+- **The fallback mailbox and SMS provider could belong to another user of the instance.** When the default mailbox (or SMS provider) could not be used, NetSendo looked for any other active one under its daily limit with `whereRaw('daily_limit IS NULL OR sent_today < daily_limit')`; without parentheses the `OR` escaped the user condition, so a campaign could go out through another user's mailbox or SMS account. The condition is now grouped.
+- **`POST /api/v1/subscribers` accepted tag IDs of another account** and returned them with the contact. Tags must now belong to the API key's account (as lists already had to).
+- **`POST /api/webhooks/purchase` picked a contact with the given email from any account.** It now looks only in the API key's account.
+
+### Tests
+
+- `SmsCampaignSchedulingTest`, `Api/SmsSendApiTest`, `ProviderFallbackOwnerScopeTest` and `Api/ApiAccountScopeTest`.
+
+### Upgrading (Docker)
+
+- `docker compose pull && docker compose up -d`. No configuration file changes and no migrations since 2.7.1. SMS campaigns saved with status `sent` before this release are not re-sent: save them again (or click **Send** again) to queue them.
+
 ## [2.7.1] – Live Visitors connects to the configured Reverb address - 2026-11-08
 
 **Release date:** 2026-11-08
