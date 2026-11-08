@@ -22,13 +22,21 @@ cd NetSendo
 
 ### 2. Setup with Docker (recommended)
 ```bash
-cp src/.env.example src/.env.docker
-# Edit src/.env.docker — add APP_KEY (php artisan key:generate)
-docker-compose up -d
+cp src/.env.docker src/.env
+docker compose -f docker-compose.dev.yml up -d --build
 ```
+The development stack builds the image from source, mounts `./src`, generates `APP_KEY` into `src/.env`, runs the migrations and serves the app on http://localhost:8080 (Vite HMR on 5173).
+
+### Running the tests
+```bash
+cd src
+php artisan test
+```
+The suite runs on SQLite in memory, so it needs PHP 8.5 with Composer dependencies installed but no Docker. CI runs the same suite on every pull request.
 
 ### 3. Create a Branch
 ```bash
+git checkout main && git pull
 git checkout -b feature/your-feature-name
 # or
 git checkout -b fix/bug-description
@@ -51,30 +59,33 @@ Use our issue templates:
 
 | Layer | Technology |
 |---|---|
-| Backend | PHP 8.5 + Laravel 12 |
-| Frontend | Vue.js 3 + Vite |
-| Database | MySQL 8.0 |
-| Cache/Queue | Redis |
-| Infrastructure | Docker + Docker Compose |
-| Mail | Haraka MTA (self-hosted SMTP) |
-| AI | OpenAI / Claude / Gemini |
+| Backend | PHP 8.5 + Laravel 13 |
+| Frontend | Vue.js 3.5 + Inertia 3 + Vite 8 + Tailwind CSS 4 |
+| Database | MySQL 8.4 LTS |
+| Cache/Queue | Redis 7 + Laravel Reverb (WebSockets) |
+| Infrastructure | Docker + Docker Compose (image `ghcr.io/netsendo/netsendo`, Node.js 24 for the build) |
+| Mail | Haraka MTA (self-hosted SMTP, NMI) |
+| AI | OpenAI / Anthropic / Gemini / Grok, plus OpenRouter and Ollama on GOLD |
 
 ## ✅ PR Checklist
 
 - [ ] My code follows the existing code style
+- [ ] `php artisan test` passes, and new behaviour has a test
 - [ ] I've tested my changes locally with Docker
+- [ ] New user-facing texts are translated in all four languages (en, pl, de, es), see [TRANSLATIONS.md](TRANSLATIONS.md)
 - [ ] I've updated documentation if needed
 - [ ] My commit messages follow [Conventional Commits](https://conventionalcommits.org)
 
 ## 💬 Community
 
-- [Telegram Community](https://t.me/netsendo) — ask questions, share ideas
-- [Forum](https://forum.netsendo.com) — longer discussions
+- [Telegram](https://t.me/netsendo_official) — product updates and announcements
+- [GitHub Issues](https://github.com/NetSendo/NetSendo/issues) — bugs and feature requests
+- Security issues: privately, see [SECURITY.md](SECURITY.md)
 - Email: support@netsendo.com (technical support), contact@netsendo.com (licensing and business)
 
 ## 🙏 Recognition
 
-All contributors are listed in [CHANGELOG.md](CHANGELOG.md). 
+Every merged contribution keeps its author in the git history and on GitHub's [contributors page](https://github.com/NetSendo/NetSendo/graphs/contributors); changes users notice are described in [CHANGELOG.md](CHANGELOG.md).
 Stars ⭐ from contributors are our biggest motivation!
 
 ---
