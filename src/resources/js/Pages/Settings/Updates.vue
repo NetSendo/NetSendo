@@ -124,7 +124,8 @@ const renderReleaseNotes = createSafeMarkdown();
 
 // Release names are "v2.1.3" or "v2.1.3 – Title"; the version is already the card heading
 const releaseTitle = (name, version) => {
-    const title = (name || '').replace(new RegExp(`^v?${version.replace(/\./g, '\\.')}\\s*[–—-]?\\s*`), '');
+    const escapedVersion = version.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const title = (name || '').replace(new RegExp(`^v?${escapedVersion}\\s*[–—-]?\\s*`), '');
     return title.trim();
 };
 
