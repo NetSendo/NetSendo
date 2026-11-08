@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import axios from "axios";
 import InsertPickerModal from "@/Components/InsertPickerModal.vue";
 import ProductPickerModal from "@/Components/ProductPickerModal.vue";
+import TextBlockEditor from "@/Components/TemplateBuilder/TextBlockEditor.vue";
 import { useDateTime } from "@/Composables/useDateTime";
 
 const { t } = useI18n();
@@ -23,28 +24,19 @@ const emit = defineEmits(["update", "delete", "duplicate", "ai-content"]);
 const localContent = ref({ ...props.block?.content });
 const localSettings = ref({ ...props.block?.settings });
 
-// Track current block ID to prevent focus loss
-const currentBlockId = ref(props.block?.id);
+// The text block's rich-text editor (TextBlockEditor), for inserts at its caret
+const textEditor = ref(null);
 
-// Local text content for textarea (extracted from HTML to prevent focus loss)
-const localTextContent = ref(
-    props.block?.content?.html?.replace(/<[^>]*>/g, "") || ""
-);
-
-// Watch for block change - only update text when switching to DIFFERENT block
+// Keep the local copies in step with the block. The text block's editor
+// follows localContent.html: it ignores its own saves coming back and reloads
+// when the HTML was changed elsewhere (AI generate/improve, the AI assistant
+// panel).
 watch(
     () => props.block,
     (newBlock) => {
         if (newBlock) {
             localContent.value = { ...newBlock.content };
             localSettings.value = { ...newBlock.settings };
-
-            // Only update localTextContent when the selected block CHANGES (not on content updates)
-            if (newBlock.id !== currentBlockId.value) {
-                currentBlockId.value = newBlock.id;
-                localTextContent.value =
-                    newBlock.content?.html?.replace(/<[^>]*>/g, "") || "";
-            }
         }
     },
     { deep: true }
@@ -354,9 +346,13 @@ const handleInsert = (data) => {
         // Custom callback for complex handling
         activeInputCallback.value(content);
     } else if (activeInsertField.value === "localText") {
-        // Special case for main text area
-        localTextContent.value += content;
-        updateContent("html", "<p>" + localTextContent.value + "</p>");
+        // Text block: at the editor's caret; a variable as text, a snippet or
+        // signature as HTML
+        if (data?.type === "variable") {
+            textEditor.value?.insertText(content);
+        } else {
+            textEditor.value?.insertHtml(content);
+        }
     } else if (activeInsertField.value) {
         // Standard field update
         const current = localContent.value[activeInsertField.value] || "";
@@ -595,7 +591,7 @@ const handleInsert = (data) => {
         <!-- TEXT BLOCK -->
         <template v-else-if="block.type === 'text'">
             <div class="space-y-4">
-                <!-- Rich text editor (simplified) -->
+                <!-- Rich text editor -->
                 <div>
                     <div class="mb-1 flex items-center justify-between">
                         <label
@@ -609,18 +605,13 @@ const handleInsert = (data) => {
                             {{ $t("template_builder.insert_variable") }}
                         </button>
                     </div>
-                    <textarea
-                        v-model="localTextContent"
-                        @blur="
-                            updateContent(
-                                'html',
-                                '<p>' + localTextContent + '</p>'
-                            )
-                        "
-                        rows="6"
-                        class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    <TextBlockEditor
+                        ref="textEditor"
+                        :key="block.id"
+                        :model-value="localContent.html || ''"
                         :placeholder="$t('template_builder.text_placeholder')"
-                    ></textarea>
+                        @update:model-value="(html) => updateContent('html', html)"
+                    />
                 </div>
 
                 <!-- Alignment -->

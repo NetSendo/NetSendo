@@ -3150,6 +3150,20 @@
     },
     "template_builder": {
         "insert_variable": "Variable einfügen",
+        "text_editor": {
+            "bold": "Fett",
+            "italic": "Kursiv",
+            "underline": "Unterstrichen",
+            "link": "Link",
+            "bullet_list": "Aufzählung",
+            "ordered_list": "Nummerierte Liste",
+            "line_break": "Zeilenumbruch (Umschalt+Enter)",
+            "undo": "Rückgängig",
+            "redo": "Wiederholen",
+            "link_placeholder": "https://… oder [[Platzhalter]]",
+            "link_apply": "Übernehmen",
+            "link_remove": "Link entfernen"
+        },
         "untitled": "Unbenannt",
         "mobile_nav_blocks": "Blöcke",
         "mobile_nav_edit": "Bearbeiten",
