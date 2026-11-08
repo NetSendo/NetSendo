@@ -313,7 +313,10 @@
         "source_placeholder": "Wpisz lub wklej kod HTML...",
         "undo": "Cofnij",
         "redo": "Ponów",
-        "date": "Data"
+        "date": "Data",
+        "adding": "Dodawanie...",
+        "connect": "Połącz",
+        "creating": "Tworzenie..."
     },
     "ab_tests": {
         "enable_testing": "Włącz testy A/B",
@@ -8730,7 +8733,10 @@
             "title": "Status MTA",
             "online": "MTA Online",
             "offline": "MTA Offline",
-            "checking": "Sprawdzanie..."
+            "checking": "Sprawdzanie...",
+            "port25_open": "Port 25 otwarty",
+            "port25_blocked": "Port 25 zablokowany",
+            "port25_blocked_help": "Ten serwer nie może otwierać połączeń wychodzących na porcie 25, więc NetSendo MTA nie dostarczy stąd poczty do serwerów odbiorców. Wielu dostawców chmury blokuje port 25 (Google Cloud zawsze): poproś dostawcę o odblokowanie albo wysyłaj przez innego dostawcę skrzynki (SMTP, SendGrid)."
         },
         "add_ip": {
             "title": "Dodaj adres IP",

@@ -321,11 +321,10 @@ services:
   # NMI - NetSendo Mail Infrastructure (Haraka MTA)
   # =============================================================================
   # Built-in mail transfer agent for sending emails with dedicated IPs.
-  # Only enable if NMI feature is activated.
+  # Only enable if NMI feature is activated (NMI_ENABLED=true, --profile nmi).
+  # Delivers straight to the recipients' mail servers: outgoing port 25 must be open.
   nmi-mta:
-    build:
-      context: ./docker/haraka
-      dockerfile: Dockerfile
+    image: ghcr.io/netsendo/netsendo-mta:${NETSENDO_VERSION:-latest}
     container_name: netsendo-mta
     restart: unless-stopped
     profiles:
@@ -334,7 +333,7 @@ services:
       - "127.0.0.1:${NMI_SMTP_PORT:-2525}:25"
       - "127.0.0.1:${NMI_SUBMISSION_PORT:-2587}:587"
     volumes:
-      - ./docker/haraka/config:/opt/haraka/config:ro
+      # The configuration is part of the image (docker/haraka/config)
       - nmi-queue:/opt/haraka/queue
       - nmi-logs:/opt/haraka/logs
       # Logins written by NetSendo (one per domain with NMI on)
@@ -345,6 +344,8 @@ services:
       - nmi-tls:/opt/haraka/config/tls
     environment:
       - NODE_ENV=production
+      # Name the MTA gives itself to the recipients' servers: the PTR name of the sending IP
+      - NMI_HOSTNAME=${NMI_HOSTNAME:-}
     networks:
       - netsendo-network
     healthcheck:

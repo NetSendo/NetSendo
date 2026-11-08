@@ -44,8 +44,19 @@ Each domain with NMI on has its own login (`nmi-<domain id>-<8 characters>` and 
 
 The file is rewritten when NMI is switched on or off for a domain or a domain is removed, and every 5 minutes by `php artisan nmi:sync-mta-auth` (scheduler). The Haraka plugin `netsendo_auth` (`docker/haraka/plugins/netsendo_auth.js`) reads it at every `AUTH`, so changes need no restart. `AUTH` is offered only to connections from the private Docker network or over TLS. Only a logged-in session may relay; every other outside recipient gets `550`.
 
+### Delivery
+
+The MTA delivers straight to the recipients' mail servers (Haraka outbound, `docker/haraka/config/outbound.ini`): MX lookup, STARTTLS when the receiving server offers it, temporary failures retried for about 40 hours, then a bounce to the sender (the Return-Path, i.e. the bounce mailbox when bounce monitoring is on). Every login, delivery and bounce is in `docker logs netsendo-mta`.
+
+- **Outgoing port 25 must be open.** Many cloud providers block it (Google Compute Engine always does). The Mail Infrastructure dashboard shows *Port 25 open / blocked*: a TCP connection to `NMI_PORT25_CHECK_HOST` (default `gmail-smtp-in.l.google.com`; empty switches the check off), nothing is sent, the answer is kept for 15 minutes.
+- **`NMI_HOSTNAME`** is the name the MTA gives itself to the receiving servers (HELO). Set it to the name the PTR record of the server's IP points to, e.g. `mail.example.com`; without it the MTA uses the container's hostname, which costs deliverability.
+
 > [!WARNING]
-> **The MTA does not deliver to recipients yet.** After the login, Haraka hands mail to `queue/smtp_forward`, for which no `smtp_forward.ini` (forwarding host) is configured: direct delivery to the recipients' mail servers is not set up. Nothing binds outgoing connections to the dedicated IP (on the Docker bridge network they leave from the host's main address), and `install.sh` does not download `docker/haraka`, from which `nmi-mta` is built.
+> **Mail does not leave from the dedicated IP yet.** Nothing binds outgoing connections to it, and on Docker's bridge network the container's traffic leaves from the server's main address. Sending from a dedicated IP needs the IP on the server, host networking (or SNAT) for `nmi-mta` and a PTR record for the IP.
+
+### The MTA image
+
+`docker-compose.yml` uses `ghcr.io/netsendo/netsendo-mta:${NETSENDO_VERSION}`, built from `docker/haraka` with the same tags as the NetSendo image. `docker-compose.dev.yml` builds it from the directory and mounts `docker/haraka/config`.
 
 ---
 
@@ -140,6 +151,9 @@ NMI creates the following persistent volumes:
 | `NMI_MTA_HOST`       | `netsendo-mta` | Haraka container hostname    |
 | `NMI_MTA_PORT`       | `25`           | SMTP port                    |
 | `NMI_MTA_ENCRYPTION` | `none`         | TLS mode (none/starttls/tls) |
+| `NMI_HOSTNAME`       | (empty)        | HELO name of the MTA: the PTR name of the sending IP |
+| `NMI_PORT25_CHECK_HOST` | `gmail-smtp-in.l.google.com` | Server the dashboard connects to on port 25 (empty: no check) |
+| `NMI_MTA_AUTH_FILE`  | `storage/nmi/mta-users.json` | MTA logins written by NetSendo |
 
 ### IP Warming
 

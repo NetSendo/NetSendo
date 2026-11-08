@@ -313,7 +313,10 @@
         "view_all": "Ver todo",
         "undo": "Deshacer",
         "redo": "Rehacer",
-        "date": "Fecha"
+        "date": "Fecha",
+        "adding": "Añadiendo...",
+        "connect": "Conectar",
+        "creating": "Creando..."
     },
     "ab_tests": {
         "enable_testing": "Habilitar pruebas A/B",
@@ -8360,7 +8363,10 @@
             "checking": "Comprobando...",
             "offline": "MTA Offline",
             "online": "MTA Online",
-            "title": "Estado del MTA"
+            "title": "Estado del MTA",
+            "port25_open": "Puerto 25 abierto",
+            "port25_blocked": "Puerto 25 bloqueado",
+            "port25_blocked_help": "Este servidor no puede abrir conexiones salientes en el puerto 25, así que NetSendo MTA no puede entregar el correo a los servidores de los destinatarios desde aquí. Muchos proveedores de nube bloquean el puerto 25 (Google Cloud siempre): pida a su proveedor que lo desbloquee o envíe a través de otro proveedor de cuenta de correo (SMTP, SendGrid)."
         },
         "pool_max_ips_reached": "Este pool ha alcanzado el número máximo de direcciones IP.",
         "provider_not_configured": "Este proveedor no está configurado. Añada una clave API en la configuración de proveedores.",

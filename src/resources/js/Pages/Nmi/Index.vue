@@ -24,6 +24,8 @@ const mtaStatus = ref({
     online: null,
     checking: true,
     message: "",
+    // Outgoing port 25 (delivery to the recipients' servers): true, false or null (not checked)
+    port25: null,
 });
 
 const checkMtaStatus = async () => {
@@ -34,6 +36,7 @@ const checkMtaStatus = async () => {
             online: response.data.data.online,
             message: response.data.data.message,
             checking: false,
+            port25: response.data.data.outbound_port_25 ?? null,
         };
     } catch (error) {
         mtaStatus.value = {
@@ -287,6 +290,17 @@ const removeProvider = async (provider) => {
                         </template>
                     </div>
 
+                    <!-- Outgoing port 25 (delivery to the recipients' servers) -->
+                    <div v-if="!mtaStatus.checking && mtaStatus.port25 !== null" class="flex items-center gap-2">
+                        <div class="h-2.5 w-2.5 rounded-full" :class="mtaStatus.port25 ? 'bg-emerald-500' : 'bg-rose-500'"></div>
+                        <span
+                            class="text-sm font-medium"
+                            :class="mtaStatus.port25 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'"
+                        >
+                            {{ mtaStatus.port25 ? $t("nmi.mta_status.port25_open") : $t("nmi.mta_status.port25_blocked") }}
+                        </span>
+                    </div>
+
                     <!-- Configure Providers Button -->
                     <button
                         @click="openProviderSettings"
@@ -319,6 +333,13 @@ const removeProvider = async (provider) => {
                 feature="mail_infrastructure"
                 :message="$t('license.gating.nmi_locked')"
             />
+
+            <div
+                v-if="mtaStatus.port25 === false"
+                class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-200"
+            >
+                {{ $t("nmi.mta_status.port25_blocked_help") }}
+            </div>
 
             <!-- NMI Disabled Banner -->
             <div

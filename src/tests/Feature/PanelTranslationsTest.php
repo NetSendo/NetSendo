@@ -45,6 +45,7 @@ class PanelTranslationsTest extends TestCase
         'js/Pages/MailingList/Create.vue',
         // NetSendo MTA setup (NmiSetupFlowTest)
         'js/Pages/Nmi/IpDetail.vue',
+        'js/Pages/Nmi/Index.vue',
         'js/Pages/Settings/Mailboxes/Index.vue',
     ];
 

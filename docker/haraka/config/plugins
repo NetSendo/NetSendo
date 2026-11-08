@@ -1,7 +1,6 @@
 # =============================================================================
-# Haraka Plugins for NetSendo Mail Infrastructure (Development)
+# Haraka Plugins for NetSendo Mail Infrastructure (NMI)
 # =============================================================================
-# Minimal plugin set for development - only built-in plugins
 
 # SMTP AUTH with the logins NetSendo writes (one per domain with NMI on); only a
 # logged-in session may relay, every other outside recipient is refused
@@ -10,5 +9,5 @@ netsendo_auth
 # Rate limiting
 limit
 
-# Queue management
-queue/smtp_forward
+# No queue plugin: relayed mail goes to Haraka's outbound, which delivers it
+# straight to the recipients' mail servers (outbound.ini)

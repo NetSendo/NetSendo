@@ -313,7 +313,10 @@
         "source_placeholder": "Type or paste HTML code...",
         "undo": "Undo",
         "redo": "Redo",
-        "date": "Date"
+        "date": "Date",
+        "adding": "Adding...",
+        "connect": "Connect",
+        "creating": "Creating..."
     },
     "ab_tests": {
         "enable_testing": "Enable A/B Testing",
@@ -8735,7 +8738,10 @@
             "title": "MTA Status",
             "online": "MTA Online",
             "offline": "MTA Offline",
-            "checking": "Checking..."
+            "checking": "Checking...",
+            "port25_open": "Port 25 open",
+            "port25_blocked": "Port 25 blocked",
+            "port25_blocked_help": "This server cannot open outgoing connections on port 25, so NetSendo MTA cannot deliver mail to the recipients' servers from here. Many cloud providers block port 25 (Google Cloud always does): ask your provider to unblock it, or send through another mailbox provider (SMTP, SendGrid)."
         },
         "add_ip": {
             "title": "Add IP Address",

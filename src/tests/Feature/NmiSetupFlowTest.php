@@ -694,6 +694,36 @@ class NmiSetupFlowTest extends TestCase
             ->assertJsonPath('data.nmiEnabled', false);
     }
 
+    public function test_the_mta_status_tells_whether_outgoing_port_25_is_open(): void
+    {
+        config(['nmi.mta_host' => '127.0.0.1', 'nmi.mta_port' => 1]);
+        $this->app->instance(\App\Services\Nmi\OutboundPortCheck::class, new class extends \App\Services\Nmi\OutboundPortCheck {
+            public function port25Open(): ?bool
+            {
+                return false;
+            }
+        });
+
+        $this->actingAs($this->user)
+            ->getJson(route('settings.nmi.mta.status'))
+            ->assertOk()
+            ->assertJsonPath('data.online', false)
+            ->assertJsonPath('data.outbound_port_25', false);
+    }
+
+    public function test_the_port_25_check_can_be_switched_off_and_keeps_its_answer(): void
+    {
+        $check = new \App\Services\Nmi\OutboundPortCheck();
+
+        config(['nmi.port25_check_host' => '']);
+        $this->assertNull($check->port25Open());
+
+        // Answered within the last 15 minutes: no new connection
+        config(['nmi.port25_check_host' => 'mx.invalid']);
+        \Illuminate\Support\Facades\Cache::put(\App\Services\Nmi\OutboundPortCheck::CACHE_KEY, true, 900);
+        $this->assertTrue($check->port25Open());
+    }
+
     public function test_an_ip_address_can_be_added_to_a_pool(): void
     {
         $this->activateGold();

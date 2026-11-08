@@ -11,6 +11,7 @@ use App\Services\Nmi\DkimKeyManager;
 use App\Services\Nmi\IpProvisioningService;
 use App\Services\Nmi\IpWarmingService;
 use App\Services\Nmi\NmiSetupService;
+use App\Services\Nmi\OutboundPortCheck;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -458,7 +459,7 @@ class NmiController extends Controller
     /**
      * Check MTA container status
      */
-    public function getMtaStatus(): JsonResponse
+    public function getMtaStatus(OutboundPortCheck $portCheck): JsonResponse
     {
         $host = config('nmi.mta_host', 'netsendo-mta');
         $port = (int) config('nmi.mta_port', 25);
@@ -497,6 +498,8 @@ class NmiController extends Controller
                 'port' => $port,
                 'message' => $message,
                 'checked_at' => now()->toIso8601String(),
+                // The MTA delivers straight to the recipients' servers: port 25 must be open
+                'outbound_port_25' => $portCheck->port25Open(),
             ],
         ]);
     }

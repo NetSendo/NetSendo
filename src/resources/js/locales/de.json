@@ -358,7 +358,10 @@
         "source_placeholder": "HTML-Code eingeben oder einfügen...",
         "undo": "Rückgängig",
         "redo": "Wiederholen",
-        "date": "Datum"
+        "date": "Datum",
+        "adding": "Wird hinzugefügt...",
+        "connect": "Verbinden",
+        "creating": "Wird erstellt..."
     },
     "ab_tests": {
         "enable_testing": "A/B-Tests aktivieren",
@@ -8080,7 +8083,10 @@
             "checking": "Überprüfung...",
             "offline": "MTA Offline",
             "online": "MTA Online",
-            "title": "MTA-Status"
+            "title": "MTA-Status",
+            "port25_open": "Port 25 offen",
+            "port25_blocked": "Port 25 gesperrt",
+            "port25_blocked_help": "Dieser Server kann keine ausgehenden Verbindungen auf Port 25 öffnen, daher kann NetSendo MTA von hier keine E-Mails an die Server der Empfänger zustellen. Viele Cloud-Anbieter sperren Port 25 (Google Cloud immer): Bitten Sie Ihren Anbieter um Freigabe oder senden Sie über einen anderen Postfach-Anbieter (SMTP, SendGrid)."
         },
         "pool_max_ips_reached": "Dieser Pool hat die maximale Anzahl an IP-Adressen erreicht.",
         "provider_not_configured": "Dieser Anbieter ist nicht konfiguriert. Fügen Sie einen API-Schlüssel in den Anbieter-Einstellungen hinzu.",

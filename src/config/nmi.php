@@ -27,6 +27,10 @@ return [
     // the netsendo_auth Haraka plugin. In Docker: the nmi-auth volume, shared with nmi-mta.
     'mta_auth_file' => env('NMI_MTA_AUTH_FILE', storage_path('nmi/mta-users.json')),
 
+    // Public mail server the dashboard connects to on port 25 to see whether outgoing
+    // port 25 is open (nothing is sent). Empty: no check.
+    'port25_check_host' => env('NMI_PORT25_CHECK_HOST', 'gmail-smtp-in.l.google.com'),
+
     /*
     |--------------------------------------------------------------------------
     | IP Provider Settings

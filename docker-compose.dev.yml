@@ -200,6 +200,7 @@ services:
       - nmi-logs:/opt/haraka/logs
     environment:
       - NODE_ENV=development
+      - NMI_HOSTNAME=${NMI_HOSTNAME:-}
     networks:
       - netsendo-network
     healthcheck:
