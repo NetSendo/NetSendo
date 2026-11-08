@@ -27,4 +27,8 @@ return [
     'domain_not_verified' => 'Die Domain :domain ist noch nicht verifiziert. Fügen Sie zuerst ihren CNAME-Eintrag hinzu.',
     'domain_in_use' => 'Postfächer senden über NetSendo MTA dieser Domain (:count). Stellen Sie sie zuerst auf einen anderen Anbieter um.',
     'installation_disabled' => 'NetSendo MTA ist in dieser Installation ausgeschaltet (NMI_ENABLED in .env).',
+    'ip_updated' => 'Der Name der IP ist gespeichert.',
+    'hostname_invalid' => 'Gib einen vollständigen Hostnamen wie mail.example.com ein (keine IP-Adresse).',
+    'ptr_ok' => 'Der PTR-Eintrag von :ip zeigt auf :name, und :name zeigt zurück auf :ip.',
+    'ptr_not_ok' => 'Der PTR-Eintrag von :ip zeigt noch nicht auf :name, oder :name zeigt nicht auf :ip.',
 ];

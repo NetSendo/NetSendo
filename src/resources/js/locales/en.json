@@ -8831,6 +8831,36 @@
             "mailboxes": "Mailboxes sending through NetSendo MTA: {count}",
             "in_use": "Switch these mailboxes to another provider before switching NetSendo MTA off.",
             "next_steps": "Next: assign a dedicated IP, generate its DKIM keys and publish the record, then create a NetSendo MTA mailbox in"
+        },
+        "server_name": {
+            "label": "Mail server name",
+            "none": "none",
+            "ptr_ok": "PTR record OK",
+            "ptr_missing": "PTR record missing",
+            "ok_help": "Receiving servers see this name, and the PTR record of the server's address points to it.",
+            "ptr_help": "Receiving servers (Gmail, Outlook…) check the PTR record of the address mail comes from. At your server provider (in its panel or by a support request) set the PTR record of the address below to {name}. No new subdomain is needed.",
+            "address_ptr": "{ip} → PTR: {ptr}",
+            "no_ptr": "none",
+            "none_help": "The panel's address (APP_URL) is not a domain name, so the mail server has no name. Set APP_URL to the panel's address with its domain, or NMI_HOSTNAME in .env.",
+            "cloudflare": "If the panel's domain goes through the Cloudflare proxy (orange cloud), it points to Cloudflare's addresses, not to your server. Then set NMI_HOSTNAME to a name without the proxy, e.g. mail.example.com."
+        },
+        "sending_ip": {
+            "title": "Sending from this IP",
+            "description": "Mail of the mailboxes using this IP leaves from it under the name below, when the IP is configured on the server.",
+            "name_label": "Name of the IP (for its PTR record)",
+            "name_help": "The mail server introduces itself with this name when it sends from this IP. Any subdomain of your domain will do, e.g. mail1.example.com.",
+            "ptr_label": "PTR record",
+            "ptr_ok": "Matches",
+            "ptr_not_ok": "Not checked or not matching",
+            "verify_ptr": "Check PTR",
+            "ptr_now": "The PTR record now points to: {ptr}",
+            "step_a_record": "In your domain's DNS add an A record: {name} → {ip}.",
+            "step_ptr": "At your server provider set the PTR record of {ip} to {name}. It is not set in the domain's DNS but in the panel of the provider the address belongs to.",
+            "on_server": "The mail server has this address: mail leaves from it.",
+            "not_on_server": "The mail server does not have this address, so mail leaves from the server's main address. The address has to be added to the server at your provider and the mail server run on the server's network (docs/NMI.md).",
+            "server_unknown": "Not known whether the mail server has this address (it does not answer, or it is an older version).",
+            "ipv6": "IPv6 addresses are not used for sending: the mail server delivers over IPv4, from the server's main address.",
+            "ptr_check_failed": "The PTR record could not be checked."
         }
     },
     "high_confidence_data": "High Confidence Data",

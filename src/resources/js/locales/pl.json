@@ -8826,6 +8826,36 @@
             "mailboxes": "Skrzynki wysyłające przez NetSendo MTA: {count}",
             "in_use": "Przełącz te skrzynki na innego dostawcę, zanim wyłączysz NetSendo MTA.",
             "next_steps": "Dalej: przypisz dedykowany adres IP, wygeneruj jego klucze DKIM i opublikuj rekord, a potem utwórz skrzynkę NetSendo MTA w sekcji"
+        },
+        "server_name": {
+            "label": "Nazwa serwera pocztowego",
+            "none": "brak",
+            "ptr_ok": "Rekord PTR w porządku",
+            "ptr_missing": "Brak rekordu PTR",
+            "ok_help": "Serwery odbiorców widzą tę nazwę, a rekord PTR adresu serwera na nią wskazuje.",
+            "ptr_help": "Serwery odbiorców (Gmail, Outlook…) sprawdzają rekord PTR adresu, z którego wychodzi poczta. U dostawcy serwera (w jego panelu albo przez zgłoszenie) ustaw rekord PTR adresu poniżej na {name}. Nowa subdomena nie jest potrzebna.",
+            "address_ptr": "{ip} → PTR: {ptr}",
+            "no_ptr": "brak",
+            "none_help": "Adres panelu (APP_URL) nie jest nazwą domeny, więc serwer poczty nie ma nazwy. Ustaw APP_URL na adres panelu z domeną albo NMI_HOSTNAME w .env.",
+            "cloudflare": "Jeśli domena panelu działa przez proxy Cloudflare (pomarańczowa chmurka), wskazuje na adresy Cloudflare, a nie na Twój serwer. Ustaw wtedy NMI_HOSTNAME na nazwę bez proxy, np. mail.firma.pl."
+        },
+        "sending_ip": {
+            "title": "Wysyłka z tego adresu IP",
+            "description": "Poczta skrzynek korzystających z tego adresu wychodzi z niego pod nazwą poniżej, jeśli adres jest skonfigurowany na serwerze.",
+            "name_label": "Nazwa adresu (dla rekordu PTR)",
+            "name_help": "Pod tą nazwą serwer poczty przedstawia się odbiorcom, gdy wysyła z tego adresu. Może to być dowolna subdomena Twojej domeny, np. mail1.firma.pl.",
+            "ptr_label": "Rekord PTR",
+            "ptr_ok": "Zgodny",
+            "ptr_not_ok": "Niesprawdzony albo niezgodny",
+            "verify_ptr": "Sprawdź PTR",
+            "ptr_now": "Teraz rekord PTR wskazuje na: {ptr}",
+            "step_a_record": "W DNS domeny dodaj rekord A: {name} → {ip}.",
+            "step_ptr": "U dostawcy serwera ustaw rekord PTR adresu {ip} na {name}. Nie ustawia się go w DNS domeny, tylko w panelu dostawcy, do którego należy adres.",
+            "on_server": "Serwer poczty ma ten adres: poczta wychodzi z niego.",
+            "not_on_server": "Serwer poczty nie ma tego adresu, więc poczta wychodzi z głównego adresu serwera. Adres trzeba dodać do serwera u dostawcy i uruchomić serwer poczty w sieci serwera (docs/NMI.md).",
+            "server_unknown": "Nie wiadomo, czy serwer poczty ma ten adres (nie odpowiada albo ma starszą wersję).",
+            "ipv6": "Adresy IPv6 nie są używane do wysyłki: serwer poczty dostarcza przez IPv4, z głównego adresu serwera.",
+            "ptr_check_failed": "Nie udało się sprawdzić rekordu PTR."
         }
     },
     "high_confidence_data": "Dane o wysokim zaufaniu",

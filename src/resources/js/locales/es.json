@@ -8440,6 +8440,36 @@
             "mailboxes": "Cuentas de correo que envían a través de NetSendo MTA: {count}",
             "in_use": "Cambie estas cuentas de correo a otro proveedor antes de desactivar NetSendo MTA.",
             "next_steps": "Siguiente: asigne una IP dedicada, genere sus claves DKIM y publique el registro, y después cree una cuenta de correo NetSendo MTA en"
+        },
+        "server_name": {
+            "label": "Nombre del servidor de correo",
+            "none": "ninguno",
+            "ptr_ok": "Registro PTR correcto",
+            "ptr_missing": "Falta el registro PTR",
+            "ok_help": "Los servidores receptores ven este nombre y el registro PTR de la dirección del servidor apunta a él.",
+            "ptr_help": "Los servidores receptores (Gmail, Outlook…) comprueban el registro PTR de la dirección desde la que sale el correo. En el proveedor de tu servidor (en su panel o con una solicitud de soporte) configura el registro PTR de la dirección de abajo como {name}. No hace falta un subdominio nuevo.",
+            "address_ptr": "{ip} → PTR: {ptr}",
+            "no_ptr": "ninguno",
+            "none_help": "La dirección del panel (APP_URL) no es un nombre de dominio, así que el servidor de correo no tiene nombre. Configura APP_URL con la dirección del panel y su dominio, o NMI_HOSTNAME en el .env.",
+            "cloudflare": "Si el dominio del panel pasa por el proxy de Cloudflare (nube naranja), apunta a direcciones de Cloudflare y no a tu servidor. En ese caso configura NMI_HOSTNAME con un nombre sin proxy, p. ej. mail.example.com."
+        },
+        "sending_ip": {
+            "title": "Envío desde esta IP",
+            "description": "El correo de los buzones que usan esta IP sale desde ella con el nombre de abajo, si la IP está configurada en el servidor.",
+            "name_label": "Nombre de la IP (para su registro PTR)",
+            "name_help": "Con este nombre se presenta el servidor de correo cuando envía desde esta IP. Sirve cualquier subdominio de tu dominio, p. ej. mail1.example.com.",
+            "ptr_label": "Registro PTR",
+            "ptr_ok": "Coincide",
+            "ptr_not_ok": "Sin comprobar o no coincide",
+            "verify_ptr": "Comprobar PTR",
+            "ptr_now": "Ahora el registro PTR apunta a: {ptr}",
+            "step_a_record": "En el DNS de tu dominio añade un registro A: {name} → {ip}.",
+            "step_ptr": "En el proveedor de tu servidor configura el registro PTR de {ip} como {name}. No se configura en el DNS del dominio, sino en el panel del proveedor al que pertenece la dirección.",
+            "on_server": "El servidor de correo tiene esta dirección: el correo sale desde ella.",
+            "not_on_server": "El servidor de correo no tiene esta dirección, así que el correo sale desde la dirección principal del servidor. Hay que añadir la dirección al servidor en tu proveedor y ejecutar el servidor de correo en la red del servidor (docs/NMI.md).",
+            "server_unknown": "No se sabe si el servidor de correo tiene esta dirección (no responde o es una versión anterior).",
+            "ipv6": "Las direcciones IPv6 no se usan para enviar: el servidor de correo entrega por IPv4, desde la dirección principal del servidor.",
+            "ptr_check_failed": "No se pudo comprobar el registro PTR."
         }
     },
     "high_confidence_data": "Datos de alta confianza",

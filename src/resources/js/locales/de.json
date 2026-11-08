@@ -8160,6 +8160,36 @@
             "mailboxes": "Postfächer, die über NetSendo MTA senden: {count}",
             "in_use": "Stellen Sie diese Postfächer auf einen anderen Anbieter um, bevor Sie NetSendo MTA ausschalten.",
             "next_steps": "Weiter: eine dedizierte IP zuweisen, ihre DKIM-Schlüssel generieren und den Eintrag veröffentlichen, dann ein NetSendo-MTA-Postfach anlegen unter"
+        },
+        "server_name": {
+            "label": "Name des Mailservers",
+            "none": "keiner",
+            "ptr_ok": "PTR-Eintrag in Ordnung",
+            "ptr_missing": "PTR-Eintrag fehlt",
+            "ok_help": "Empfangende Server sehen diesen Namen, und der PTR-Eintrag der Serveradresse zeigt auf ihn.",
+            "ptr_help": "Empfangende Server (Gmail, Outlook…) prüfen den PTR-Eintrag der Adresse, von der die Mail kommt. Setze beim Anbieter deines Servers (in dessen Panel oder per Supportanfrage) den PTR-Eintrag der Adresse unten auf {name}. Eine neue Subdomain ist nicht nötig.",
+            "address_ptr": "{ip} → PTR: {ptr}",
+            "no_ptr": "keiner",
+            "none_help": "Die Adresse des Panels (APP_URL) ist kein Domainname, daher hat der Mailserver keinen Namen. Setze APP_URL auf die Adresse des Panels mit seiner Domain oder NMI_HOSTNAME in der .env.",
+            "cloudflare": "Läuft die Domain des Panels über den Cloudflare-Proxy (orange Wolke), zeigt sie auf Adressen von Cloudflare, nicht auf deinen Server. Setze dann NMI_HOSTNAME auf einen Namen ohne Proxy, z. B. mail.example.com."
+        },
+        "sending_ip": {
+            "title": "Versand von dieser IP",
+            "description": "Mails der Postfächer mit dieser IP gehen unter dem Namen unten von ihr aus, wenn die IP auf dem Server eingerichtet ist.",
+            "name_label": "Name der IP (für ihren PTR-Eintrag)",
+            "name_help": "Mit diesem Namen stellt sich der Mailserver vor, wenn er von dieser IP sendet. Jede Subdomain deiner Domain ist möglich, z. B. mail1.example.com.",
+            "ptr_label": "PTR-Eintrag",
+            "ptr_ok": "Stimmt",
+            "ptr_not_ok": "Nicht geprüft oder stimmt nicht",
+            "verify_ptr": "PTR prüfen",
+            "ptr_now": "Der PTR-Eintrag zeigt jetzt auf: {ptr}",
+            "step_a_record": "Lege im DNS deiner Domain einen A-Eintrag an: {name} → {ip}.",
+            "step_ptr": "Setze beim Anbieter deines Servers den PTR-Eintrag von {ip} auf {name}. Er wird nicht im DNS der Domain gesetzt, sondern im Panel des Anbieters, dem die Adresse gehört.",
+            "on_server": "Der Mailserver hat diese Adresse: die Mails gehen von ihr aus.",
+            "not_on_server": "Der Mailserver hat diese Adresse nicht, daher gehen die Mails von der Hauptadresse des Servers aus. Die Adresse muss beim Anbieter zum Server hinzugefügt und der Mailserver im Netzwerk des Servers betrieben werden (docs/NMI.md).",
+            "server_unknown": "Nicht bekannt, ob der Mailserver diese Adresse hat (er antwortet nicht oder ist eine ältere Version).",
+            "ipv6": "IPv6-Adressen werden nicht zum Versand genutzt: der Mailserver liefert über IPv4 von der Hauptadresse des Servers aus.",
+            "ptr_check_failed": "Der PTR-Eintrag konnte nicht geprüft werden."
         }
     },
     "high_confidence_data": "Hohe Datenqualität",

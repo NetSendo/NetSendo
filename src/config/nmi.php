@@ -23,6 +23,11 @@ return [
     'mta_port' => env('NMI_MTA_PORT', 25),
     'mta_encryption' => env('NMI_MTA_ENCRYPTION', 'none'),
 
+    // Name the MTA gives itself to the recipients' mail servers (HELO) when it sends from
+    // the server's main address. Empty: the panel's domain (the host of APP_URL), so no
+    // second subdomain is needed. Mail from a dedicated IP goes out under that IP's name.
+    'hostname' => env('NMI_HOSTNAME'),
+
     // Logins the MTA accepts (one per domain with NMI on), written by NetSendo and read by
     // the netsendo_auth Haraka plugin. In Docker: the nmi-auth volume, shared with nmi-mta.
     'mta_auth_file' => env('NMI_MTA_AUTH_FILE', storage_path('nmi/mta-users.json')),

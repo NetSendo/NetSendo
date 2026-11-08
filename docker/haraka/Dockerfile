@@ -11,8 +11,8 @@ RUN adduser -D -h /opt/haraka haraka \
     && mkdir -p /opt/haraka/logs
 
 # Initialize Haraka. haraka -i writes the build machine's name to config/me, which
-# would be the HELO name of every installation: the entrypoint writes it from
-# NMI_HOSTNAME instead (without it Haraka uses the container's hostname)
+# would be the name of every installation: the entrypoint writes it from
+# NMI_HOSTNAME or APP_URL instead (the name of each message comes from NetSendo)
 WORKDIR /opt/haraka
 RUN haraka -i /opt/haraka \
     && rm -f /opt/haraka/config/me
@@ -24,7 +24,7 @@ COPY plugins/ /opt/haraka/plugins/
 # Logins written by NetSendo (nmi-auth volume, mounted read-only)
 RUN mkdir -p /opt/haraka/auth
 
-# Start-up: the HELO name from NMI_HOSTNAME
+# Start-up: config/me and the listen addresses (NMI_MTA_LISTEN)
 COPY docker-entrypoint.sh /usr/local/bin/netsendo-mta-entrypoint
 RUN chmod 755 /usr/local/bin/netsendo-mta-entrypoint
 

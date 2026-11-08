@@ -14,21 +14,33 @@ use Illuminate\Support\Facades\Log;
  * password: the passwords are 40 random letters and digits, so a hash without salt cannot
  * be reversed by trying.
  *
- *   {"version": 1, "users": {"nmi-3-k2j4h5g6": {"sha256": "…", "domain": "example.com"}}}
+ * It also tells the MTA how to send (decided in NetSendo, nothing is set in the MTA): the
+ * name it gives itself from the server's main address ("helo", MailServerName) and, per
+ * login, the dedicated IPs of the domain with their names. A message names its IP in the
+ * X-NMI-IP header; the netsendo_outbound plugin sends it from that IP when the IP is one of
+ * the login's and is configured on the server, otherwise from the main address.
+ *
+ *   {"version": 1, "helo": "netsendo.example.com", "users": {"nmi-3-k2j4h5g6": {"sha256": "…",
+ *    "domain": "example.com", "ips": {"203.0.113.10": "mail1.example.com"}}}}
  */
 class MtaAuthFile
 {
+    public function __construct(private MailServerName $names)
+    {
+    }
+
     public function path(): string
     {
         return (string) config('nmi.mta_auth_file');
     }
 
     /**
-     * @return array<string, array{sha256: string, domain: string}>
+     * @return array<string, array{sha256: string, domain: string, ips: array<string, ?string>}>
      */
     public function entries(): array
     {
         return DomainConfiguration::query()
+            ->with(['dedicatedIps' => fn ($query) => $query->orderBy('id')])
             ->where('nmi_enabled', true)
             ->whereNotNull('nmi_smtp_username')
             ->whereNotNull('nmi_smtp_password')
@@ -40,9 +52,28 @@ class MtaAuthFile
                 return $password === null ? [] : [$domain->nmi_smtp_username => [
                     'sha256' => hash('sha256', $password),
                     'domain' => $domain->domain,
+                    'ips' => $this->ips($domain),
                 ]];
             })
             ->all();
+    }
+
+    /**
+     * Dedicated IPs of a domain with the name the MTA sends under from each
+     *
+     * @return array<string, ?string>
+     */
+    private function ips(DomainConfiguration $domain): array
+    {
+        $ips = [];
+        foreach ($domain->dedicatedIps as $ip) {
+            $address = MailServerName::normalizeIp((string) $ip->ip_address);
+            if ($address !== null) {
+                $ips[$address] = $this->names->forIp($ip);
+            }
+        }
+
+        return $ips;
     }
 
     /**
@@ -53,7 +84,14 @@ class MtaAuthFile
     {
         $path = $this->path();
         $json = json_encode(
-            ['version' => 1, 'users' => (object) $this->entries()],
+            [
+                'version' => 1,
+                'helo' => $this->names->default(),
+                'users' => (object) array_map(
+                    fn (array $entry) => array_merge($entry, ['ips' => (object) $entry['ips']]),
+                    $this->entries()
+                ),
+            ],
             JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
         ) . "\n";
 

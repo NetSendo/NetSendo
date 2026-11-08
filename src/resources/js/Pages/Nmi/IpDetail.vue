@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router, usePage } from "@inertiajs/vue3";
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
 
@@ -59,6 +59,74 @@ const unassignDomain = () => {
         onFinish: () => (domainProcessing.value = false),
     });
 };
+
+// The name of the IP: the name the mail server gives itself when it sends from this IP,
+// and the one the IP's PTR record has to point to
+const hostnameInput = ref(props.ip.hostname || "");
+watch(
+    () => props.ip.hostname,
+    (hostname) => (hostnameInput.value = hostname || ""),
+);
+const savingHostname = ref(false);
+const hostnameError = computed(() => page.props.errors?.hostname);
+const hostnameChanged = computed(() => hostnameInput.value.trim().toLowerCase() !== (props.ip.hostname || ""));
+
+const saveHostname = () => {
+    savingHostname.value = true;
+    router.patch(
+        route("settings.nmi.ips.update", props.ip.id),
+        { hostname: hostnameInput.value.trim() },
+        {
+            preserveScroll: true,
+            onSuccess: () => (ptrCheck.value = null),
+            onFinish: () => (savingHostname.value = false),
+        },
+    );
+};
+
+// PTR record of the IP (set at the provider of the server): checked on request
+const checkingPtr = ref(false);
+const ptrCheck = ref(null);
+const ptrOk = computed(() => (ptrCheck.value ? ptrCheck.value.ok : props.ip.ptr_verified));
+
+const verifyPtr = async () => {
+    checkingPtr.value = true;
+    ptrCheck.value = null;
+    try {
+        const response = await axios.post(route("settings.nmi.ips.ptr.verify", props.ip.id));
+        ptrCheck.value = response.data.data;
+    } catch (error) {
+        ptrCheck.value = {
+            ok: false,
+            message: error.response?.data?.message || t("nmi.sending_ip.ptr_check_failed"),
+        };
+    } finally {
+        checkingPtr.value = false;
+    }
+};
+
+// Whether the mail server has this address (it reports its addresses): undefined while
+// asking, null when not known
+const mtaAddresses = ref(undefined);
+const isIpv6 = computed(() => (props.ip.ip_address || "").includes(":"));
+const onServer = computed(() =>
+    Array.isArray(mtaAddresses.value) ? mtaAddresses.value.includes(props.ip.normalized_ip) : null,
+);
+
+onMounted(async () => {
+    try {
+        const response = await axios.get(route("settings.nmi.mta.status"));
+        mtaAddresses.value = response.data.data.addresses ?? null;
+    } catch (error) {
+        mtaAddresses.value = null;
+    }
+});
+
+const serverBoxClass = computed(() => {
+    if (mtaAddresses.value === undefined) return "border-gray-200 bg-gray-50 text-gray-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-gray-300";
+    if (!isIpv6.value && onServer.value === true) return "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-200";
+    return "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200";
+});
 
 // Reputation score color
 const getReputationColor = (score) => {
@@ -316,6 +384,90 @@ const copyToClipboard = (text) => {
                     <p v-if="ip.domain && ip.dkim_configured" class="text-xs text-gray-500 dark:text-gray-400">
                         {{ $t("nmi.ip_domain.dkim_note") }}
                     </p>
+                </div>
+            </div>
+
+            <!-- Sending from this IP: its name, PTR record, and whether the mail server has it -->
+            <div class="rounded-xl border bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <div class="border-b border-gray-200 px-6 py-4 dark:border-slate-700">
+                    <h3 class="font-semibold text-gray-900 dark:text-white">{{ $t("nmi.sending_ip.title") }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{{ $t("nmi.sending_ip.description") }}</p>
+                </div>
+                <div class="space-y-6 p-6">
+                    <div>
+                        <label for="ip-hostname" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {{ $t("nmi.sending_ip.name_label") }}
+                        </label>
+                        <div class="mt-1 flex flex-wrap gap-2">
+                            <input
+                                id="ip-hostname"
+                                v-model="hostnameInput"
+                                type="text"
+                                autocomplete="off"
+                                placeholder="mail1.example.com"
+                                class="min-w-0 flex-1 rounded-lg border-gray-300 font-mono text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                                @keydown.enter.prevent="hostnameChanged && saveHostname()"
+                            />
+                            <button
+                                type="button"
+                                @click="saveHostname"
+                                :disabled="savingHostname || !hostnameChanged"
+                                class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                            >
+                                {{ savingHostname ? $t("common.saving") : $t("common.save") }}
+                            </button>
+                        </div>
+                        <p v-if="hostnameError" class="mt-1 text-sm text-rose-600 dark:text-rose-400">{{ hostnameError }}</p>
+                        <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $t("nmi.sending_ip.name_help") }}</p>
+                    </div>
+
+                    <div>
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex items-center gap-2">
+                                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t("nmi.sending_ip.ptr_label") }}</span>
+                                <span
+                                    class="rounded-full px-2 py-0.5 text-xs font-medium"
+                                    :class="
+                                        ptrOk
+                                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                            : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                    "
+                                >
+                                    {{ ptrOk ? $t("nmi.sending_ip.ptr_ok") : $t("nmi.sending_ip.ptr_not_ok") }}
+                                </span>
+                            </div>
+                            <button
+                                type="button"
+                                @click="verifyPtr"
+                                :disabled="checkingPtr || !ip.hostname"
+                                class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700 disabled:opacity-50"
+                            >
+                                {{ checkingPtr ? $t("nmi.checking") : $t("nmi.sending_ip.verify_ptr") }}
+                            </button>
+                        </div>
+                        <p
+                            v-if="ptrCheck?.message"
+                            class="mt-2 text-sm"
+                            :class="ptrCheck.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'"
+                        >
+                            {{ ptrCheck.message }}
+                        </p>
+                        <p v-if="ptrCheck && !ptrCheck.ok && ptrCheck.ptr" class="mt-1 font-mono text-xs text-gray-500 dark:text-gray-400">
+                            {{ $t("nmi.sending_ip.ptr_now", { ptr: ptrCheck.ptr }) }}
+                        </p>
+                        <ol v-if="!ptrOk && ip.hostname" class="mt-3 list-decimal space-y-1 pl-5 text-sm text-gray-600 dark:text-gray-400">
+                            <li>{{ $t("nmi.sending_ip.step_a_record", { name: ip.hostname, ip: ip.ip_address }) }}</li>
+                            <li>{{ $t("nmi.sending_ip.step_ptr", { name: ip.hostname, ip: ip.ip_address }) }}</li>
+                        </ol>
+                    </div>
+
+                    <div class="rounded-lg border p-4 text-sm" :class="serverBoxClass">
+                        <template v-if="mtaAddresses === undefined">{{ $t("nmi.mta_status.checking") }}</template>
+                        <template v-else-if="isIpv6">{{ $t("nmi.sending_ip.ipv6") }}</template>
+                        <template v-else-if="onServer === true">{{ $t("nmi.sending_ip.on_server") }}</template>
+                        <template v-else-if="onServer === false">{{ $t("nmi.sending_ip.not_on_server") }}</template>
+                        <template v-else>{{ $t("nmi.sending_ip.server_unknown") }}</template>
+                    </div>
                 </div>
             </div>
 

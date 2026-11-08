@@ -27,4 +27,8 @@ return [
     'domain_not_verified' => 'Domena :domain nie jest jeszcze zweryfikowana. Najpierw dodaj jej rekord CNAME.',
     'domain_in_use' => 'Przez NetSendo MTA tej domeny wysyłają skrzynki (:count). Najpierw przełącz je na innego dostawcę.',
     'installation_disabled' => 'NetSendo MTA jest wyłączone w tej instalacji (NMI_ENABLED w .env).',
+    'ip_updated' => 'Nazwa adresu IP zapisana.',
+    'hostname_invalid' => 'Wpisz pełną nazwę, np. mail.firma.pl (nie adres IP).',
+    'ptr_ok' => 'Rekord PTR adresu :ip wskazuje na :name, a :name wskazuje z powrotem na :ip.',
+    'ptr_not_ok' => 'Rekord PTR adresu :ip jeszcze nie wskazuje na :name albo :name nie wskazuje na :ip.',
 ];

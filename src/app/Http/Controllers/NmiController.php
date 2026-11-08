@@ -9,7 +9,10 @@ use App\Models\IpProviderSetting;
 use App\Services\Nmi\BlacklistMonitorService;
 use App\Services\Nmi\DkimKeyManager;
 use App\Services\Nmi\IpProvisioningService;
+use App\Services\Deliverability\DnsLookupService;
 use App\Services\Nmi\IpWarmingService;
+use App\Services\Nmi\MailServerName;
+use App\Services\Nmi\MtaProbe;
 use App\Services\Nmi\NmiSetupService;
 use App\Services\Nmi\OutboundPortCheck;
 use Illuminate\Http\JsonResponse;
@@ -351,6 +354,67 @@ class NmiController extends Controller
     }
 
     /**
+     * Change the name of an IP: the name the MTA introduces itself with when it sends from
+     * this IP, and the one the IP's PTR record has to point to
+     */
+    public function updateIp(Request $request, DedicatedIpAddress $ip)
+    {
+        $this->authorizeIp($request, $ip);
+
+        $validated = $request->validate([
+            'hostname' => [
+                'required',
+                'string',
+                'max:253',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if (!MailServerName::isValid((string) $value)) {
+                        $fail(__('nmi.hostname_invalid'));
+                    }
+                },
+            ],
+        ]);
+
+        $hostname = MailServerName::normalize($validated['hostname']);
+        if ($hostname !== $ip->hostname) {
+            // The PTR check was for the old name
+            $ip->update(['hostname' => $hostname, 'ptr_verified' => false, 'ptr_verified_at' => null]);
+        }
+
+        return $this->respond($request, __('nmi.ip_updated'), $this->formatIpForResponse(
+            $ip->fresh()->load('domainConfiguration')->loadCount('mailboxes')
+        ));
+    }
+
+    /**
+     * Check the PTR record of an IP: it has to point to the IP's name, and the name back
+     * to the IP. The PTR record is set at the provider of the server, not in the domain's DNS.
+     */
+    public function verifyPtr(Request $request, DedicatedIpAddress $ip, MailServerName $names, DnsLookupService $dns): JsonResponse
+    {
+        $this->authorizeIp($request, $ip);
+
+        // Asked for: no answer from the cache
+        $dns->forgetAddressRecords((string) MailServerName::normalizeIp((string) $ip->ip_address), (string) $ip->hostname);
+
+        $check = $names->checkIp($ip);
+        $ip->update([
+            'ptr_record' => $check['ptr'],
+            'ptr_verified' => $check['ok'],
+            'ptr_verified_at' => $check['ok'] ? now() : null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $check + [
+                'ip' => $ip->ip_address,
+                'message' => $check['ok']
+                    ? __('nmi.ptr_ok', ['ip' => $ip->ip_address, 'name' => $check['name']])
+                    : __('nmi.ptr_not_ok', ['ip' => $ip->ip_address, 'name' => (string) $check['name']]),
+            ],
+        ]);
+    }
+
+    /**
      * Verify DKIM DNS record
      */
     public function verifyDkim(Request $request, DedicatedIpAddress $ip): JsonResponse
@@ -400,6 +464,8 @@ class NmiController extends Controller
         return [
             'id' => $ip->id,
             'ip_address' => $ip->ip_address,
+            // As the mail server reports its addresses (MtaProbe)
+            'normalized_ip' => MailServerName::normalizeIp((string) $ip->ip_address),
             'hostname' => $ip->hostname,
             'provider' => $ip->provider,
             'warming_status' => $ip->warming_status,
@@ -412,7 +478,9 @@ class NmiController extends Controller
             'total_bounced' => $ip->total_bounced,
             'total_complaints' => $ip->total_complaints,
             'dkim_configured' => $ip->hasDkimKeys(),
-            'ptr_verified' => $ip->ptr_verified,
+            'ptr_verified' => (bool) $ip->ptr_verified,
+            'ptr_record' => $ip->ptr_record,
+            'ptr_verified_at' => $ip->ptr_verified_at?->toIso8601String(),
             'is_active' => $ip->is_active,
             'domain' => $ip->domainConfiguration ? $this->formatDomainForResponse($ip->domainConfiguration) : null,
             'mailboxes_count' => $ip->mailboxes_count ?? $ip->mailboxes()->count(),
@@ -459,47 +527,25 @@ class NmiController extends Controller
     /**
      * Check MTA container status
      */
-    public function getMtaStatus(OutboundPortCheck $portCheck): JsonResponse
+    public function getMtaStatus(OutboundPortCheck $portCheck, MtaProbe $probe, MailServerName $names): JsonResponse
     {
-        $host = config('nmi.mta_host', 'netsendo-mta');
-        $port = (int) config('nmi.mta_port', 25);
-        $timeout = 3; // seconds
-
-        $isOnline = false;
-        $message = '';
-
-        try {
-            $socket = @fsockopen($host, $port, $errno, $errstr, $timeout);
-
-            if ($socket) {
-                // Read the SMTP greeting
-                $response = fgets($socket, 1024);
-                fclose($socket);
-
-                // Check for valid SMTP greeting (starts with 220)
-                if (str_starts_with(trim($response), '220')) {
-                    $isOnline = true;
-                    $message = 'MTA is online and accepting connections';
-                } else {
-                    $message = 'MTA responded but with unexpected greeting';
-                }
-            } else {
-                $message = "Cannot connect to MTA: {$errstr} (error {$errno})";
-            }
-        } catch (\Exception $e) {
-            $message = 'Connection error: ' . $e->getMessage();
-        }
+        $status = $probe->probe();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'online' => $isOnline,
-                'host' => $host,
-                'port' => $port,
-                'message' => $message,
+                'online' => $status['online'],
+                'host' => (string) config('nmi.mta_host', 'netsendo-mta'),
+                'port' => (int) config('nmi.mta_port', 25),
+                'message' => $status['message'],
                 'checked_at' => now()->toIso8601String(),
                 // The MTA delivers straight to the recipients' servers: port 25 must be open
                 'outbound_port_25' => $portCheck->port25Open(),
+                // Addresses of the server the MTA can send from (null: not known); a mailbox
+                // sends from its dedicated IP only when the IP is among them
+                'addresses' => $status['addresses'],
+                // The name the MTA gives itself from the main address, and its PTR record
+                'server_name' => $names->check(),
             ],
         ]);
     }

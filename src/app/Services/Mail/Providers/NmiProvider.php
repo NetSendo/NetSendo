@@ -138,16 +138,11 @@ class NmiProvider implements MailProviderInterface
                 unset($headers['Return-Path']);
             }
 
-            // Add NMI-specific headers
-            $headers['X-NMI-Domain'] = $this->domain->domain;
-            if ($this->dedicatedIp) {
-                $headers['X-NMI-IP'] = $this->dedicatedIp->ip_address;
-            }
-
             // Add custom headers
             foreach ($headers as $name => $value) {
                 $email->getHeaders()->addTextHeader($name, $value);
             }
+            $this->addNmiHeaders($email);
 
             $email->to(new Address($to, $toName))
                 ->subject($subject)
@@ -239,6 +234,9 @@ class NmiProvider implements MailProviderInterface
                 ->subject('NMI Connection Test')
                 ->text('This is a connection test from NetSendo Mail Infrastructure.');
 
+            // Out from the same IP as the mailbox's mail
+            $this->addNmiHeaders($email);
+
             if ($this->dkimSigner) {
                 $email = $this->dkimSigner->sign($email);
             }
@@ -260,6 +258,21 @@ class NmiProvider implements MailProviderInterface
                 'success' => false,
                 'message' => __('mailboxes.nmi.test.failed', ['error' => $e->getMessage()]),
             ];
+        }
+    }
+
+    /**
+     * X-NMI-IP names the dedicated IP the MTA sends from (netsendo_outbound plugin: when the
+     * IP belongs to the domain of the login and is configured on the server)
+     */
+    private function addNmiHeaders(Email $email): void
+    {
+        $headers = $email->getHeaders();
+        $headers->remove('X-NMI-Domain');
+        $headers->remove('X-NMI-IP');
+        $headers->addTextHeader('X-NMI-Domain', $this->domain->domain);
+        if ($this->dedicatedIp) {
+            $headers->addTextHeader('X-NMI-IP', $this->dedicatedIp->ip_address);
         }
     }
 

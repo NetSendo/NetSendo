@@ -26,6 +26,9 @@ const mtaStatus = ref({
     message: "",
     // Outgoing port 25 (delivery to the recipients' servers): true, false or null (not checked)
     port25: null,
+    // Name the mail server gives itself from the main address, with its PTR check:
+    // { name, ok, addresses: [{ ip, ptr }] }
+    serverName: null,
 });
 
 const checkMtaStatus = async () => {
@@ -37,6 +40,7 @@ const checkMtaStatus = async () => {
             message: response.data.data.message,
             checking: false,
             port25: response.data.data.outbound_port_25 ?? null,
+            serverName: response.data.data.server_name ?? null,
         };
     } catch (error) {
         mtaStatus.value = {
@@ -339,6 +343,47 @@ const removeProvider = async (provider) => {
                 class="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-800 dark:bg-rose-900/20 dark:text-rose-200"
             >
                 {{ $t("nmi.mta_status.port25_blocked_help") }}
+            </div>
+
+            <!-- The name of the mail server (from the panel's domain) and its PTR record -->
+            <div
+                v-if="nmiEnabled && !mtaStatus.checking && mtaStatus.serverName"
+                class="rounded-xl border bg-white p-4 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-800"
+            >
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-gray-500 dark:text-gray-400">{{ $t("nmi.server_name.label") }}:</span>
+                    <span class="font-mono font-semibold text-gray-900 dark:text-white">
+                        {{ mtaStatus.serverName.name || $t("nmi.server_name.none") }}
+                    </span>
+                    <span
+                        v-if="mtaStatus.serverName.name"
+                        class="rounded-full px-2 py-0.5 text-xs font-medium"
+                        :class="
+                            mtaStatus.serverName.ok
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                        "
+                    >
+                        {{ mtaStatus.serverName.ok ? $t("nmi.server_name.ptr_ok") : $t("nmi.server_name.ptr_missing") }}
+                    </span>
+                </div>
+                <p v-if="!mtaStatus.serverName.name" class="mt-2 text-gray-600 dark:text-gray-400">
+                    {{ $t("nmi.server_name.none_help") }}
+                </p>
+                <p v-else-if="mtaStatus.serverName.ok" class="mt-2 text-gray-600 dark:text-gray-400">
+                    {{ $t("nmi.server_name.ok_help") }}
+                </p>
+                <template v-else>
+                    <p class="mt-2 text-gray-600 dark:text-gray-400">
+                        {{ $t("nmi.server_name.ptr_help", { name: mtaStatus.serverName.name }) }}
+                    </p>
+                    <ul v-if="mtaStatus.serverName.addresses?.length" class="mt-2 space-y-1 font-mono text-xs text-gray-700 dark:text-gray-300">
+                        <li v-for="address in mtaStatus.serverName.addresses" :key="address.ip">
+                            {{ $t("nmi.server_name.address_ptr", { ip: address.ip, ptr: address.ptr || $t("nmi.server_name.no_ptr") }) }}
+                        </li>
+                    </ul>
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ $t("nmi.server_name.cloudflare") }}</p>
+                </template>
             </div>
 
             <!-- NMI Disabled Banner -->

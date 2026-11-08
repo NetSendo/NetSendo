@@ -27,4 +27,8 @@ return [
     'domain_not_verified' => 'The domain :domain is not verified yet. Add its CNAME record first.',
     'domain_in_use' => 'Mailboxes send through NetSendo MTA of this domain (:count). Switch them to another provider first.',
     'installation_disabled' => 'NetSendo MTA is switched off on this installation (NMI_ENABLED in .env).',
+    'ip_updated' => 'The name of the IP is saved.',
+    'hostname_invalid' => 'Enter a full host name such as mail.example.com (not an IP address).',
+    'ptr_ok' => 'The PTR record of :ip points to :name and :name points back to :ip.',
+    'ptr_not_ok' => 'The PTR record of :ip does not point to :name yet, or :name does not point to :ip.',
 ];

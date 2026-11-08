@@ -100,6 +100,24 @@ class DedicatedIpAddress extends Model
     ];
 
     /**
+     * The MTA login file lists each domain's IPs with their names (MtaAuthFile)
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (self $model) {
+            if ($model->wasChanged(['domain_configuration_id', 'ip_address', 'hostname', 'deleted_at'])
+                || ($model->wasRecentlyCreated && $model->domain_configuration_id)) {
+                app(\App\Services\Nmi\MtaAuthFile::class)->sync();
+            }
+        });
+        static::deleted(function (self $model) {
+            if ($model->domain_configuration_id) {
+                app(\App\Services\Nmi\MtaAuthFile::class)->sync();
+            }
+        });
+    }
+
+    /**
      * Relationships
      */
     public function pool()

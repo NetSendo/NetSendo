@@ -6,6 +6,10 @@
 # logged-in session may relay, every other outside recipient is refused
 netsendo_auth
 
+# The address and the name each message leaves with (dedicated IP when it is
+# configured on the server), as NetSendo decided in the login file
+netsendo_outbound
+
 # Rate limiting
 limit
 

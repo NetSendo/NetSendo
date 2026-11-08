@@ -200,7 +200,11 @@ services:
       - nmi-logs:/opt/haraka/logs
     environment:
       - NODE_ENV=development
+      # Names in the greeting (the name of each message comes from NetSendo)
       - NMI_HOSTNAME=${NMI_HOSTNAME:-}
+      - APP_URL=${APP_URL:-}
+      # Listen addresses for the MTA on the server's own network (docs/NMI.md)
+      - NMI_MTA_LISTEN=${NMI_MTA_LISTEN:-}
     networks:
       - netsendo-network
     healthcheck:
