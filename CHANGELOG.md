@@ -9,9 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.8.1] – Brain answers again after a day over its token limit - 2026-11-08
+
+**Release date:** 2026-11-08
+
 ### Fixed
 
 - **Brain answers again the day after its token limit was reached.** The daily token counter was reset only when tokens were charged, but over the limit no AI call was made, so nothing was charged and the count from the last active day stayed: the chat (web and Telegram) kept answering "Daily AI token limit reached. Try again tomorrow" for good, even with no tokens used that day, and there is no field in the panel to raise the limit. A count from an earlier day no longer counts (`AiBrainSettings::tokensUsedToday()`), and the Telegram `/status` and the Monitor show today's count. Covered by `BrainTokenLimitTest`.
+
+### Upgrading (Docker)
+
+- `docker compose pull && docker compose up -d`. No configuration file changes and no migrations since 2.8.0.
 
 ## [2.8.0] – Translated messages and validation, buyers reach the thank-you page, GOLD for contributors - 2026-11-08
 
