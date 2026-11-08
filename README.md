@@ -324,14 +324,14 @@ REVERB_SCHEME=http
 # Frontend configuration (for browser)
 VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
 VITE_REVERB_HOST=localhost             # Or your domain for production
-VITE_REVERB_PORT=8085
-VITE_REVERB_SCHEME=http
+VITE_REVERB_PORT=8085                  # 443 behind an HTTPS reverse proxy
+VITE_REVERB_SCHEME=http                # https behind an HTTPS reverse proxy
 ```
 
 **Key points:**
 
 - `REVERB_HOST=reverb` - for backend (Docker internal network)
-- `VITE_REVERB_HOST=localhost` - for browser (external access)
+- `VITE_REVERB_HOST=localhost` - for browser (external access); on a public instance behind an HTTPS reverse proxy that forwards `/app/` to port 8085, use your domain with `VITE_REVERB_PORT=443` and `VITE_REVERB_SCHEME=https`
 - Port `8085` is exposed by the `reverb` container
 - The browser gets the `VITE_REVERB_*` values from the server when a page loads, so after changing them run `docker compose up -d`; no frontend rebuild is needed
 
