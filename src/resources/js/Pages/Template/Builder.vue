@@ -516,12 +516,35 @@ onBeforeUnmount(() => {
 });
 
 // Keyboard shortcuts
+//
+// Delete and Escape act on the selected block, so they stay out of the way
+// while the user types in a field (forward delete would otherwise remove the
+// whole block instead of one character) or works in a dialog or slide-over.
+const isEditableTarget = (target) =>
+    target instanceof HTMLElement &&
+    (target.isContentEditable ||
+        ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName));
+
+// The AI assistant, the mobile drawer and the block editor's insert and
+// product pickers each cover the screen with a fixed full-screen layer. Some
+// are teleported to <body> and the drawer is only hidden by CSS on wide
+// screens, so look for a visible layer rather than at component state.
+const isOverlayOpen = () =>
+    Array.from(document.querySelectorAll(".fixed.inset-0")).some(
+        (el) => el.getClientRects().length > 0
+    );
+
 const handleKeyboard = (e) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault();
         saveTemplate();
+        return;
     }
-    if (e.key === "Delete" && selectedBlockId.value) {
+    if (e.key !== "Delete" && e.key !== "Escape") return;
+    if (isEditableTarget(e.target) || isOverlayOpen()) return;
+
+    // In preview the canvas is hidden, so the block would vanish unseen.
+    if (e.key === "Delete" && selectedBlockId.value && !showPreview.value) {
         deleteBlock(selectedBlockId.value);
     }
     if (e.key === "Escape") {
