@@ -74,7 +74,7 @@ class NmiSetupService
      */
     public function enable(DomainConfiguration $domain): void
     {
-        if (!config('nmi.features.enabled')) {
+        if (!NmiSwitch::enabled()) {
             throw ValidationException::withMessages([
                 'domain' => __('nmi.installation_disabled'),
             ]);

@@ -132,8 +132,22 @@ echo -e "${GREEN}✅ Configuration files created${NC}"
 
 echo -e "${BLUE}🚀 Starting NetSendo...${NC}"
 
-docker compose pull
-docker compose up -d
+# NetSendo MTA (own sending server) runs on the server's network and listens on
+# netsendo-network's gateway (10.58.0.1:2525); an active ufw must let the NetSendo
+# containers reach it
+if command -v ufw >/dev/null 2>&1 && ufw status 2>/dev/null | grep -q "Status: active"; then
+    ufw allow from 10.58.0.0/16 to 10.58.0.1 port 2525 proto tcp comment 'NetSendo MTA' >/dev/null 2>&1 || true
+fi
+
+if docker compose pull; then
+    docker compose up -d
+else
+    # NetSendo starts without an image that cannot be downloaded yet (NetSendo MTA)
+    echo -e "${YELLOW}⚠️  Some images could not be downloaded; starting NetSendo without NetSendo MTA.${NC}"
+    echo "   Later: cd $INSTALL_DIR && docker compose pull && docker compose up -d"
+    docker compose pull --ignore-pull-failures || true
+    docker compose up -d $(docker compose config --services | grep -vx nmi-mta)
+fi
 
 echo ""
 echo -e "${BLUE}⏳ Waiting for NetSendo to answer (first start runs the migrations)...${NC}"

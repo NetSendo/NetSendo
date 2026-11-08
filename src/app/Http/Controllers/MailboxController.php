@@ -529,7 +529,7 @@ class MailboxController extends Controller
         if ($changesSetup) {
             app(LicenseService::class)->ensureAllows(Feature::MailInfrastructure);
 
-            if (!config('nmi.features.enabled')) {
+            if (!\App\Services\Nmi\NmiSwitch::enabled()) {
                 throw ValidationException::withMessages(['provider' => __('mailboxes.nmi.disabled')]);
             }
             if (!config('nmi.features.allow_new_mailboxes', true)) {
@@ -602,7 +602,7 @@ class MailboxController extends Controller
             ->get();
 
         return [
-            'enabled' => (bool) config('nmi.features.enabled') && (bool) config('nmi.features.allow_new_mailboxes', true),
+            'enabled' => \App\Services\Nmi\NmiSwitch::enabled() && (bool) config('nmi.features.allow_new_mailboxes', true),
             'domains' => $domains->map(fn (DomainConfiguration $domain) => [
                 'id' => $domain->id,
                 'domain' => $domain->domain,

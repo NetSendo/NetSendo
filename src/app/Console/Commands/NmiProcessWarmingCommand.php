@@ -19,7 +19,7 @@ class NmiProcessWarmingCommand extends Command
 
     public function handle(): int
     {
-        if (!config('nmi.features.enabled')) {
+        if (!\App\Services\Nmi\NmiSwitch::enabled()) {
             $this->info('NMI is disabled. Skipping warming processing.');
             return self::SUCCESS;
         }

@@ -77,19 +77,21 @@ class MtaAuthFile
     }
 
     /**
-     * Write the current logins. Replaces the file in one step (a reader never sees half of
-     * it) and leaves it alone when nothing changed. False when it cannot be written.
+     * Write the current logins, none while NetSendo MTA is switched off for the installation.
+     * Replaces the file in one step (a reader never sees half of it) and leaves it alone when
+     * nothing changed. False when it cannot be written.
      */
     public function write(): bool
     {
         $path = $this->path();
+        $entries = NmiSwitch::enabled() ? $this->entries() : [];
         $json = json_encode(
             [
                 'version' => 1,
                 'helo' => $this->names->default(),
                 'users' => (object) array_map(
                     fn (array $entry) => array_merge($entry, ['ips' => (object) $entry['ips']]),
-                    $this->entries()
+                    $entries
                 ),
             ],
             JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
@@ -120,10 +122,15 @@ class MtaAuthFile
     }
 
     /**
-     * Write the file when NMI is switched on for the installation
+     * Bring the file up to date. While NetSendo MTA is switched off it holds no logins, so the
+     * MTA relays for nobody; an installation that never used it gets no file.
      */
     public function sync(): bool
     {
-        return !config('nmi.features.enabled') || $this->write();
+        if (!NmiSwitch::enabled() && !is_file($this->path())) {
+            return true;
+        }
+
+        return $this->write();
     }
 }

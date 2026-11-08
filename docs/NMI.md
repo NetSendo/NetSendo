@@ -1,38 +1,76 @@
-# NetSendo Mail Infrastructure (NMI)
+# NetSendo Mail Infrastructure (NMI): your own sending server
 
-Professional email sending infrastructure with dedicated IP management, intelligent IP warming, DKIM signing, and real-time blacklist monitoring.
+NetSendo MTA sends your mail itself, straight to the recipients' mail servers, from your server's addresses and under your names, with DKIM signing, IP warming and blacklist monitoring. No SMTP relay or API provider is involved. It is a GOLD feature.
 
-## Quick Start
+It is set up and run from the panel: *Mail Infrastructure* has a step-by-step guide in which every step checks itself. Nothing is edited on the server for it; the sending server (Haraka) ships in `docker-compose.yml` and starts with NetSendo.
 
-### 1. Enable in `.env`
+**What you need**
 
-```bash
-NMI_ENABLED=true
-```
+- NetSendo with a GOLD licence, installed with the current `docker-compose.yml`.
+- A server whose provider lets **outgoing port 25** through. Many cloud providers block it; Google Cloud always does. See [Choosing a server provider](#choosing-a-server-provider).
+- Access to the **PTR record** of the server's address (set at the provider) and to the DNS of your sending domain.
+- Optional: **additional IPv4 addresses** from the same provider, to send each domain or mailbox from its own address.
 
-### 2. Run Migrations
+## Choosing a server provider
 
-```bash
-docker compose exec app php artisan migrate
-```
+A provider fits when it
 
-### 3. Start NMI Service
+1. lets outgoing port 25 through (open, or opened on request),
+2. sells additional IPv4 addresses for an existing server, from which outgoing traffic can leave, and
+3. lets you set the PTR record of each address.
 
-```bash
-docker compose --profile nmi up -d
-```
+From the providers' own documentation, terms and price pages, as of 2026-11-08. Terms and prices change: check them with the provider before you buy. "Not stated" means the provider's pages do not say; ask its support.
 
-### 4. Access Dashboard
+| Provider | Port 25 out | Additional IPv4 | PTR record | Notes |
+| --- | --- | --- | --- | --- |
+| **OVHcloud** VPS, Dedicated | Open (blocked in Public Cloud, and automatically when spam is detected) | Additional IP, €1.99 a month; up to 16 per VPS, 256 per dedicated server | Panel and API | The only provider whose docs say port 25 is open by default; [guide for mail senders](https://docs.ovhcloud.com/en/guides/bare-metal-cloud/dedicated-servers/mail-sending-optimization) |
+| **Scaleway** Elastic Metal, Instances | You enable it in the console after an identity check | Flexible IP, €0.005 an hour; up to 5 per Instance, 64 on Elastic Metal | Console | PTR included |
+| **Hetzner** Dedicated (Robot) | Not stated | Additional IP, €1.70 a month + €4.90 once; needs a technical reason | Robot and API | Ask support about port 25 before buying |
+| **Hetzner Cloud** | Blocked; request after a month and a first paid invoice, case by case | Floating IP, €3.00 a month | Console and API | Floating IPs need configuring on the server |
+| **netcup** root servers, VPS | Not stated | Additional IPv4, €2.00 incl. VAT | Panel and API | Routed to the main address |
+| **Akamai (Linode)** | Request with your details, use case and domains | Needs a justification; price by region | Cloud Manager and API | Explicitly allows opt-in marketing mail |
+| **UpCloud** | Request with proof of identity or payment | Up to 5 IPv4 | Panel and API | Each address is a separate interface: routing to configure |
+| **Vultr** | Request describing use and volume; not guaranteed | Additional IPv4 (price not stated) | Console and API | Adding an address restarts the server |
+| **IONOS** VPS, Cloud Server | Opened by phone once the server has a name, PTR and SPF | €5 a month incl. VAT (DE) | Panel, when the address is created | |
+| **home.pl** VPS Linux | Not stated | 3–31 additional IPv4 by plan (price not stated) | Customer panel | |
+| **AWS** EC2 | Request form, per region | Elastic IP, $0.005 an hour | Console and API | The AWS policy bans unsolicited mass email |
+| **Contabo** VPS, VDS | Not stated | Additional IPv4, €3.50 a month; 1 on a VPS | Panel and API | About 25 emails a minute: not for bulk mail |
+| **nazwa.pl** VPS | Not stated | None | Paid add-on, 40 PLN a month | |
+| **DigitalOcean** | Blocked on all Droplets, no exceptions | Reserved IP, no PTR | None | Not for mail |
+| **Google Cloud** Compute Engine | Blocked, no request process | | Primary interface | Not for mail: a sending server there cannot deliver |
+| **Microsoft Azure** | Blocked except Enterprise (EA, MCA-E) subscriptions | Public IP | CLI / PowerShell only | Not for mail on standard subscriptions |
 
-Navigate to **Settings → Mail Infrastructure** in the UI.
+The same comparison, with links to each provider's instructions, is in the panel (*Mail Infrastructure → Where to get a server and IP addresses*). When you add an IP, choose its provider: the IP page then links to that provider's guides for adding the address to the server and setting its PTR record.
 
-### 5. Set up a NetSendo MTA mailbox (GOLD)
+## Step by step
 
-1. **Domain** — *Deliverability Shield → Add domain*, publish the CNAME record and verify the domain. On the domain page, in the **NetSendo MTA (NMI)** card, click **Switch on NetSendo MTA**. NetSendo generates the domain's login on the MTA (the password is stored encrypted and never shown).
-2. **Dedicated IP** — *Mail Infrastructure → pool → Add IP*, open the IP and, under **Sending domain**, assign it to the domain (only your own domains are offered). Click **Generate DKIM keys** and publish the TXT record shown under `<selector>._domainkey.<domain>`; **Verify DKIM** checks it.
-3. **Mailbox** — *Settings → Mailboxes → Add Mailbox → NetSendo MTA*, choose the domain and the IP. The sender address must be on the domain or one of its subdomains, so the DKIM signature (`d=` the domain) aligns.
+The guide on the *Mail Infrastructure* dashboard shows these steps with their live state (done, to do, to fix, blocks sending). **Check again** runs the checks once more.
 
-The mailbox is refused while the domain is not verified, NMI is off for it, the IP belongs to another domain or has no DKIM keys. An IP a mailbox sends through cannot be moved, removed from its domain or deleted, and NMI cannot be switched off for a domain whose mailboxes use it. Without GOLD the setup stays readable, existing NMI mailboxes keep working and can be edited or switched off; setting NMI up for a new mailbox, assigning IPs and switching NMI on need GOLD.
+1. **Switch the sending server on.** An admin of the account clicks **Switch the sending server on** (GOLD). Until then the MTA relays for nobody. *Switch off* takes all logins away from the MTA at once; domains, IPs and mailboxes stay. `NMI_ENABLED=true` in `.env`, as set up before the switch existed, keeps it on.
+2. **The sending server is running.** NetSendo connects to it at `netsendo-mta:2525`. If it does not answer: in the NetSendo folder on the server take the current `docker-compose.yml` and run `docker compose pull && docker compose up -d`; with the ufw firewall active also `ufw allow from 10.58.0.0/16 to 10.58.0.1 port 2525 proto tcp`.
+3. **Port 25 is open.** NetSendo connects to Gmail's mail server on port 25 (nothing is sent). Blocked: ask the provider to open it, or move to a provider that allows it.
+4. **The server's name and PTR record.** The server introduces itself with the panel's domain (the host of `APP_URL`, or `NMI_HOSTNAME`). At the provider, set the PTR record of the server's main address to that name. No second subdomain is needed: the panel's domain already points to the server.
+5. **The sender's domain.** *Deliverability Shield → Add domain*, confirm it with the CNAME record, then on the domain page, card **NetSendo MTA (NMI)**, **Switch on NetSendo MTA**. NetSendo creates the domain's login on the MTA.
+6. **An IP address.** *Mail Infrastructure → pool → Add IP* with its name (e.g. `mail1.example.com`) and its provider, then on the IP page under **Sending domain** assign it to the domain. No additional addresses? Add the server's main address: the guide lists the server's public addresses.
+7. **DKIM.** On the IP page **Generate DKIM keys** and add the TXT record shown (`<selector>._domainkey.<domain>`) to the domain's DNS; **Verify DKIM** checks it.
+8. **The IP is on the server.** The MTA sends from an IP only when the server has it. Add an additional address to the server as your provider describes (the IP page links to the guide). Until then its mail leaves from the server's main address.
+9. **PTR records of the addresses.** Each IP needs an A record `mail1.example.com → 203.0.113.10` in the domain's DNS and the PTR record `203.0.113.10 → mail1.example.com` at the provider. **Check PTR** on the IP page checks both.
+10. **A mailbox.** *Settings → Mailboxes → Add → NetSendo MTA*, choose the domain and the IP. The sender address must be on the domain or a subdomain, so the DKIM signature aligns.
+11. **A test.** **Test Connection** on the mailbox, then a message to the address mail-tester.com gives you: it shows whether SPF, DKIM and PTR are right. Start with small volumes and **Start warming** on the IP page.
+
+The mailbox is refused while the domain is not verified, NMI is off for it, the IP belongs to another domain or has no DKIM keys. An IP a mailbox sends through cannot be moved, removed from its domain or deleted, and NMI cannot be switched off for a domain whose mailboxes use it. Without GOLD the setup stays readable, existing NMI mailboxes keep working and can be edited or switched off; switching the sending server on, setting NMI up for a new mailbox, assigning IPs and switching NMI on for a domain need GOLD.
+
+## How it works
+
+### The sending server in Docker
+
+`docker-compose.yml` runs `nmi-mta` (image `ghcr.io/netsendo/netsendo-mta`, the same version as NetSendo) with every installation:
+
+- **On the server's own network** (`network_mode: host`), so it sees every address of the server and can send from each.
+- **Listening only on `10.58.0.1:2525`**, the gateway of `netsendo-network` (`NMI_MTA_LISTEN`). The app, queue and scheduler containers reach it there under the name `netsendo-mta` (`extra_hosts`); it is not reachable from the internet. An active ufw must let the containers in: `install.sh` adds `ufw allow from 10.58.0.0/16 to 10.58.0.1 port 2525 proto tcp` when ufw is active.
+- **One small process** (about 35 MB of memory) that relays for nobody until the sending server is switched on in the panel.
+
+An `.env` from an older `.env.example` with `NMI_MTA_HOST=netsendo-mta` and `NMI_MTA_PORT=25` keeps working: NetSendo uses port 2525 for that name. `NMI_MTA_HOST` / `NMI_MTA_PORT` point elsewhere only for an MTA set up another way. If you change the subnet of `netsendo-network`, change `NMI_MTA_LISTEN` and the `extra_hosts` entries with it. Several NetSendo installations on one server need their own subnets and listen addresses.
 
 ### How NetSendo logs in to the MTA
 
@@ -73,47 +111,11 @@ A message names the IP of its mailbox in the `X-NMI-IP` header (`NmiProvider`, t
 
 Otherwise the message leaves from the server's main address under the main name; `docker logs netsendo-mta` says which and why for every message (`sending from 203.0.113.10 as mail1.example.com`). The plugin lists the addresses it can send from in its EHLO answer to clients on the private network (`X-NETSENDO-ADDRESS`); the IP page shows whether the MTA has the IP.
 
-On Docker's bridge network (the default) the MTA sees only its container address, so all mail leaves from the server's main address. To send from dedicated IPs:
-
-1. **Add the IPs to the server** as your provider describes (additional / failover IPs on the network interface). `ip -4 addr` on the server lists them.
-2. **Give each IP its records:** an A record `mail1.example.com → 203.0.113.10` in the domain's DNS and the PTR record `203.0.113.10 → mail1.example.com` at the provider. **Check PTR** on the IP page confirms both.
-3. **Run the MTA on the server's own network.** Next to `docker-compose.yml` create `docker-compose.override.yml` (Docker Compose reads it on its own; `!reset` needs version 2.24.4 or newer):
-
-   ```yaml
-   services:
-     nmi-mta:
-       # The server's own network: the MTA sees every address of the server
-       network_mode: host
-       networks: !reset []
-       ports: !reset []
-       healthcheck:
-         test: ["CMD-SHELL", "nc -z 172.17.0.1 2525 || exit 1"]
-     # The containers that send reach the MTA on the server
-     app:
-       extra_hosts: ["host.docker.internal:host-gateway"]
-     queue:
-       extra_hosts: ["host.docker.internal:host-gateway"]
-     scheduler:
-       extra_hosts: ["host.docker.internal:host-gateway"]
-   ```
-
-   and in `.env`:
-
-   ```bash
-   # The MTA listens only on Docker's address of the server, not on the internet
-   NMI_MTA_LISTEN=172.17.0.1:2525
-   NMI_MTA_HOST=host.docker.internal
-   NMI_MTA_PORT=2525
-   ```
-
-   `172.17.0.1` is the address of Docker's `docker0` bridge, which `host-gateway` points to (`ip -4 addr show docker0` shows it if it differs). A firewall on the server (ufw, firewalld) has to let the containers in: e.g. `ufw allow from 10.58.0.0/16 to 172.17.0.1 port 2525 proto tcp` (`10.58.0.0/16` is `netsendo-network`).
-4. `docker compose --profile nmi up -d`, then open the IP page: *The mail server has this address* means mail of its mailboxes leaves from it.
-
-Several NetSendo installations on one server each need their own `NMI_MTA_LISTEN` port.
+Because the MTA runs on the server's network, an additional address works as soon as it is on the server: add it as your provider describes (`ip -4 addr` on the server lists the addresses), set its A and PTR records, and the IP page shows *The mail server has this address*. Nothing in NetSendo or Docker has to change.
 
 ### The MTA image
 
-`docker-compose.yml` uses `ghcr.io/netsendo/netsendo-mta:${NETSENDO_VERSION}`, built from `docker/haraka` with the same tags as the NetSendo image. `docker-compose.dev.yml` builds it from the directory and mounts `docker/haraka/config`.
+`docker-compose.yml` uses `ghcr.io/netsendo/netsendo-mta:${NETSENDO_VERSION}`, built from `docker/haraka` with the same tags as the NetSendo image. `docker-compose.dev.yml` builds it from the directory, mounts `docker/haraka/config` and keeps it on the Docker network (as `netsendo-mta`, port 2525).
 
 ---
 
@@ -160,24 +162,17 @@ Real-time monitoring against major DNSBLs:
 
 ## Docker Setup
 
-NMI uses Haraka MTA running in a separate container.
-
-### Production
+NMI uses the Haraka MTA in the `nmi-mta` container, which starts with NetSendo.
 
 ```bash
-# Start all services including NMI
-docker compose --profile nmi up -d
+# Start or update NetSendo, the sending server included
+docker compose pull && docker compose up -d
 
-# View MTA logs
+# View MTA logs: every login, the address and name of each message, deliveries and bounces
 docker logs netsendo-mta
 ```
 
-### Development
-
-```bash
-# Start with NMI profile
-docker compose -f docker-compose.dev.yml --profile nmi up -d
-```
+Development: `docker compose -f docker-compose.dev.yml up -d` builds the MTA from `docker/haraka`.
 
 ### Volumes
 
@@ -197,19 +192,21 @@ NMI creates the following persistent volumes:
 
 ### Master Switch
 
+The sending server is switched on and off in the panel (admin, GOLD to switch on).
+
 | Variable      | Default | Description               |
 | ------------- | ------- | ------------------------- |
-| `NMI_ENABLED` | `false` | Enable NMI features in UI |
+| `NMI_ENABLED` | (empty) | `true` keeps NetSendo MTA on regardless of the panel; `false` or empty: the panel decides |
 
 ### MTA Connection
 
 | Variable             | Default        | Description                  |
 | -------------------- | -------------- | ---------------------------- |
-| `NMI_MTA_HOST`       | `netsendo-mta` | Haraka container hostname    |
-| `NMI_MTA_PORT`       | `25`           | SMTP port                    |
+| `NMI_MTA_HOST`       | `netsendo-mta` | Where NetSendo hands mail to the MTA (`netsendo-mta` is `10.58.0.1` in the containers) |
+| `NMI_MTA_PORT`       | `2525`         | Its port (`25` with `netsendo-mta`, from an older `.env`, means `2525`) |
 | `NMI_MTA_ENCRYPTION` | `none`         | TLS mode (none/starttls/tls) |
 | `NMI_HOSTNAME`       | (empty)        | Name the MTA gives itself from the server's main address; empty: the host of `APP_URL` |
-| `NMI_MTA_LISTEN`     | (empty)        | Addresses the MTA listens on (`address:port,…`), for the MTA on the server's network; empty: `[::]:25,[::]:587` |
+| `NMI_MTA_LISTEN`     | `10.58.0.1:2525` | Addresses the MTA listens on (`address:port,…`); `docker-compose.yml` sets the gateway of `netsendo-network`; without it the image listens on `[::]:25,[::]:587,[::]:2525` |
 | `NMI_PORT25_CHECK_HOST` | `gmail-smtp-in.l.google.com` | Server the dashboard connects to on port 25 (empty: no check) |
 | `NMI_MTA_AUTH_FILE`  | `storage/nmi/mta-users.json` | MTA logins written by NetSendo |
 
@@ -246,74 +243,46 @@ NMI creates the following persistent volumes:
 
 ---
 
-## Migration Guide
+## Upgrading
 
-> [!IMPORTANT]
-> **For users upgrading from versions without NMI:**
+1. Take the current `docker-compose.yml` (the `nmi-mta` service now starts with NetSendo on the server's network, and the app, queue and scheduler know it as `netsendo-mta`).
+2. `docker compose pull && docker compose up -d`. The migrations run on start.
+3. Open *Mail Infrastructure* and follow the guide.
 
-### Step 1: Update Docker Compose
-
-Pull the latest `docker-compose.yml` which includes the `nmi-mta` service.
-
-### Step 2: Update `.env`
-
-Add NMI variables from `.env.example`:
-
-```bash
-NMI_ENABLED=false
-NMI_MTA_HOST=netsendo-mta
-# ... (see .env.example for full list)
-```
-
-### Step 3: Run Migrations
-
-```bash
-docker compose exec app php artisan migrate
-```
-
-This creates the required tables:
-
-- `ip_pools`
-- `dedicated_ip_addresses`
-- NMI fields in `domain_configurations`
-
-### Step 4: Enable NMI (Optional)
-
-When ready to use NMI:
-
-```bash
-# Update .env
-NMI_ENABLED=true
-
-# Start NMI container
-docker compose --profile nmi up -d
-```
+Nothing in `.env` has to change. `NMI_ENABLED=true` from an earlier setup keeps the sending server on; remove it to switch the server from the panel.
 
 ---
 
 ## Troubleshooting
 
-### NMI not showing in menu
+### The guide says the sending server does not answer
 
-1. Verify `NMI_ENABLED=true` in `.env`
-2. Clear cache: `php artisan optimize:clear`
-3. Rebuild frontend: `npm run build`
+1. `docker compose ps nmi-mta` shows whether it runs; `docker logs netsendo-mta` why not.
+2. An older `docker-compose.yml` has no `nmi-mta` on the server's network: take the current one and `docker compose up -d`.
+3. ufw active: `ufw allow from 10.58.0.0/16 to 10.58.0.1 port 2525 proto tcp`. Other firewalls need the same rule.
+4. `Listening on 10.58.0.1:2525` missing in the log and an error about the address: `netsendo-network` has another subnet; set `NMI_MTA_LISTEN` and the `extra_hosts` entries to its gateway.
 
-### MTA container not starting
+### Port 25 blocked
 
-```bash
-# Check logs
-docker logs netsendo-mta
+The provider blocks outgoing port 25. Ask it to open it (some do after a request), or move to a provider that allows it. Until then nothing can be delivered.
 
-# Verify network
-docker network ls | grep netsendo
-```
+### Mail leaves from the main address instead of the dedicated IP
+
+`docker logs netsendo-mta` says why for each message:
+
+- *not configured on this server*: the address is not on the server's network interface; add it as the provider describes.
+- *not an IP of … domain*: the mailbox's IP belongs to another domain.
+- *IPv6*: the MTA delivers over IPv4; use an IPv4 address.
+
+### PTR record does not match
+
+The PTR record is set at the provider the address belongs to, not in the domain's DNS. After changing it, **Check PTR** on the IP page (the answer may take a few minutes to change).
 
 ### DKIM verification failing
 
-1. Ensure DNS record is published
+1. Ensure the DNS record is published
 2. Wait for DNS propagation (up to 48h)
-3. Verify selector matches generated value
+3. Verify the selector matches the generated value
 
 ---
 
@@ -330,8 +299,11 @@ docker network ls | grep netsendo
 | `/settings/nmi/ips/{id}/blacklist/check` | POST       | Check blacklists |
 | `/settings/nmi/ips/{id}/domain`          | POST       | Assign the IP to a domain (`domain_configuration_id`) |
 | `/settings/nmi/ips/{id}/domain`          | DELETE     | Remove the IP from its domain |
-| `/settings/nmi/ips/{id}`                 | PATCH      | Rename the IP (`hostname`: its HELO name and PTR target) |
+| `/settings/nmi/ips/{id}`                 | PATCH      | Rename the IP (`hostname`: its HELO name and PTR target) or change its `provider` |
 | `/settings/nmi/ips/{id}/ptr/verify`      | POST       | Check the IP's PTR record and the A record of its name |
 | `/settings/nmi/mta/status`               | GET        | MTA online, port 25, the addresses the MTA can send from, the server name and its PTR record |
+| `/settings/nmi/guide`                    | GET        | The setup guide: each step with its state (`ok`, `todo`, `warning`, `error`, `unknown`, `info`) |
+| `/settings/nmi/installation/enable`      | POST       | Switch the sending server on (admin, GOLD) |
+| `/settings/nmi/installation/disable`     | POST       | Switch the sending server off (admin) |
 | `/settings/nmi/domains/{id}/enable`      | POST       | Switch NMI on for a verified domain |
 | `/settings/nmi/domains/{id}/disable`     | POST       | Switch NMI off for a domain |

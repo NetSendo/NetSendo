@@ -4977,7 +4977,7 @@
             "no_domains": "Aún no tiene dominios en Deliverability Shield.",
             "no_ips": "No hay ninguna IP dedicada asignada a este dominio.",
             "from_hint": "La dirección del remitente debe pertenecer a {domain} o a uno de sus subdominios.",
-            "disabled_installation": "NetSendo MTA o las nuevas cuentas de correo NetSendo MTA están desactivados en esta instalación (NMI_ENABLED, NMI_ALLOW_NEW en .env)."
+            "disabled_installation": "El servidor de envío está desactivado, o lo están las nuevas cuentas de correo NetSendo MTA (NMI_ALLOW_NEW en .env). Un administrador activa el servidor en Infraestructura de correo."
         }
     },
     "tracked_links": {
@@ -8271,7 +8271,8 @@
         "setup_required": "REQUIERE CONFIGURACIÓN",
         "banner": {
             "title": "Infraestructura de Correo Profesional",
-            "description": "Construya su reputación de remitente con direcciones IP dedicadas, calentamiento inteligente de IP y firma DKIM automática."
+            "description": "Construya su reputación de remitente con direcciones IP dedicadas, calentamiento inteligente de IP y firma DKIM automática.",
+            "start_with_guide": "Empieza por la guía de abajo: te lleva por todos los pasos."
         },
         "features": {
             "dedicated_ips": "Direcciones IP Dedicadas",
@@ -8347,7 +8348,10 @@
             "ip_address": "Dirección IP",
             "ip_address_placeholder": "p. ej. 192.168.1.100",
             "submit": "Añadir IP",
-            "title": "Añadir dirección IP"
+            "title": "Añadir dirección IP",
+            "provider": "Proveedor del servidor",
+            "provider_other": "Otro proveedor",
+            "provider_help": "NetSendo muestra las instrucciones de este proveedor en la página de la IP."
         },
         "delete_ip": {
             "confirm": "¿Seguro que desea eliminar esta dirección IP?",
@@ -8393,7 +8397,8 @@
             "select_provider": "Seleccione un proveedor",
             "select_region": "Seleccione una región",
             "submit": "Aprovisionar IP",
-            "title": "Aprovisionar IP desde la nube"
+            "title": "Aprovisionar IP desde la nube",
+            "reserve_only": "Esto solo reserva una dirección en el proveedor. La dirección tiene que ser del mismo proveedor que tu servidor y aún hay que añadirla al servidor. Comprueba en la comparación de proveedores si deja pasar el puerto 25."
         },
         "starting": "Iniciando...",
         "checking": "Comprobando...",
@@ -8430,7 +8435,7 @@
             "enable": "Activar NetSendo MTA",
             "disable": "Desactivar",
             "needs_verification": "Verifique el dominio (el registro CNAME de arriba) antes de activar NetSendo MTA.",
-            "not_available": "NetSendo MTA está desactivado en esta instalación (NMI_ENABLED en .env).",
+            "not_available": "El servidor de envío está desactivado. Un administrador lo activa en Infraestructura de correo (la guía paso a paso).",
             "smtp_username": "Usuario del MTA",
             "smtp_username_hint": "NetSendo inicia sesión en el MTA con este usuario y una contraseña generada. No necesita introducirlos en ningún sitio.",
             "ips": "IP dedicadas de este dominio",
@@ -8466,10 +8471,151 @@
             "step_a_record": "En el DNS de tu dominio añade un registro A: {name} → {ip}.",
             "step_ptr": "En el proveedor de tu servidor configura el registro PTR de {ip} como {name}. No se configura en el DNS del dominio, sino en el panel del proveedor al que pertenece la dirección.",
             "on_server": "El servidor de correo tiene esta dirección: el correo sale desde ella.",
-            "not_on_server": "El servidor de correo no tiene esta dirección, así que el correo sale desde la dirección principal del servidor. Hay que añadir la dirección al servidor en tu proveedor y ejecutar el servidor de correo en la red del servidor (docs/NMI.md).",
+            "not_on_server": "El servidor de envío no tiene esta dirección, así que el correo sale desde la dirección principal del servidor. Añade la dirección al servidor en tu proveedor (instrucciones del proveedor arriba) y el servidor de envío empezará a usarla.",
             "server_unknown": "No se sabe si el servidor de correo tiene esta dirección (no responde o es una versión anterior).",
             "ipv6": "Las direcciones IPv6 no se usan para enviar: el servidor de correo entrega por IPv4, desde la dirección principal del servidor.",
-            "ptr_check_failed": "No se pudo comprobar el registro PTR."
+            "ptr_check_failed": "No se pudo comprobar el registro PTR.",
+            "at_provider": "Instrucciones de {provider}"
+        },
+        "guide": {
+            "title": "Tu propio servidor de envío: paso a paso",
+            "subtitle": "Cada paso se comprueba solo. Verde está hecho, rojo bloquea el envío, naranja funciona pero hay que corregirlo.",
+            "progress": "Hecho: {done} de {total}",
+            "refresh": "Comprobar de nuevo",
+            "load_failed": "No se pudieron comprobar los pasos. Inténtalo de nuevo.",
+            "see_providers": "Ver los proveedores",
+            "needs_ip": "Primero añade una dirección IP y asígnala a un dominio.",
+            "status": {
+                "ok": "Hecho",
+                "todo": "Pendiente",
+                "warning": "Por corregir",
+                "error": "Bloquea el envío",
+                "unknown": "Desconocido",
+                "info": "Al final"
+            },
+            "switch": {
+                "title": "Activa el servidor de envío",
+                "ok": "Activado. Solo envía el correo de los dominios para los que lo actives.",
+                "todo": "El servidor de envío está desactivado y no envía nada. Activarlo requiere una licencia GOLD.",
+                "forced": "Activado de forma fija en el archivo .env (NMI_ENABLED=true). Quita esa línea para controlarlo desde el panel.",
+                "admin_only": "Puede activarlo el administrador de la cuenta.",
+                "enable": "Activar el servidor de envío",
+                "disable": "Desactivar"
+            },
+            "mta": {
+                "title": "El servidor de envío funciona",
+                "ok": "Responde en {address}.",
+                "error": "NetSendo no puede conectarse al servidor de envío ({address}). En el servidor, en la carpeta de NetSendo, descarga el docker-compose.yml más reciente y ejecuta:",
+                "firewall": "Si el cortafuegos ufw está activo en el servidor, deja pasar a los contenedores de NetSendo:"
+            },
+            "port25": {
+                "title": "El puerto 25 está abierto",
+                "ok": "El servidor puede conectarse a los servidores de correo de los destinatarios.",
+                "error": "El proveedor del servidor bloquea el puerto 25, así que no sale ningún correo. Pide al proveedor que lo abra o lleva NetSendo a un proveedor que lo permita.",
+                "unknown": "Sin comprobar: la comprobación está desactivada (NMI_PORT25_CHECK_HOST)."
+            },
+            "server_name": {
+                "title": "Nombre del servidor y registro PTR",
+                "ok": "El servidor se presenta como {name} y el registro PTR de la dirección del servidor apunta a ese nombre.",
+                "warning": "El servidor se presenta como {name}. En el proveedor del servidor (en su panel o con una solicitud de soporte) configura el registro PTR de la dirección principal del servidor con ese nombre.",
+                "error": "La dirección del panel (APP_URL) no es un nombre de dominio, así que el servidor no tiene nombre. Configura APP_URL con la dirección del panel y su dominio, o NMI_HOSTNAME en el .env.",
+                "now": "Ahora:",
+                "no_address": "Este nombre aún no apunta a ninguna dirección IP: añade en el DNS del dominio un registro A de este nombre con la dirección del servidor."
+            },
+            "domain": {
+                "title": "El dominio del remitente",
+                "ok": "Envío activado para:",
+                "todo": "Añade un dominio en Deliverability Shield, confírmalo con el registro CNAME y activa NetSendo MTA en su página.",
+                "switch_on": "activa NetSendo MTA en la página del dominio",
+                "verify": "confirma el dominio con el registro CNAME",
+                "open": "Abrir Deliverability Shield"
+            },
+            "ip": {
+                "title": "Una dirección IP para enviar",
+                "ok": "Direcciones asignadas a dominios:",
+                "todo": "Añade una dirección IP a un pool (el botón “Añadir IP” de abajo) y asígnala a un dominio en su página. ¿No tienes direcciones adicionales? Empieza por la dirección principal del servidor.",
+                "server_addresses": "Direcciones de este servidor:"
+            },
+            "dkim": {
+                "title": "Firma DKIM",
+                "ok": "Las claves están generadas y los registros publicados en el DNS.",
+                "todo": "En la página de la IP genera las claves DKIM y añade el registro TXT que se muestra al DNS del dominio:",
+                "no_keys": "sin claves",
+                "not_published": "el registro aún no está en el DNS"
+            },
+            "ip_on_server": {
+                "title": "La dirección IP está en el servidor",
+                "ok": "El servidor de envío tiene todas las direcciones, así que el correo sale desde ellas.",
+                "warning": "El servidor de envío no tiene estas direcciones, así que su correo sale desde la dirección principal del servidor. Añádelas al servidor en tu proveedor (instrucciones en la página de la IP):",
+                "unknown": "Desconocido, porque el servidor de envío no responde.",
+                "missing": "no está en el servidor"
+            },
+            "ptr": {
+                "title": "Registros PTR de las direcciones",
+                "ok": "Cada dirección y su nombre apuntan el uno al otro.",
+                "warning": "Por configurar: el registro A del nombre en el DNS del dominio y el registro PTR de la dirección en el proveedor (detalles y el botón “Comprobar PTR” en la página de la IP):",
+                "item": "{name}, PTR ahora: {ptr}"
+            },
+            "mailbox": {
+                "title": "Un buzón de envío",
+                "ok": "Buzones que envían a través de NetSendo MTA: {count}.",
+                "todo": "Añade un buzón con el proveedor NetSendo MTA y elige el dominio y la dirección IP.",
+                "open": "Abrir buzones"
+            },
+            "test": {
+                "title": "Un envío de prueba",
+                "info": "Haz clic en “Probar conexión” en el buzón de NetSendo MTA. Después envía un mensaje de prueba a la dirección que te da mail-tester.com: el resultado muestra si SPF, DKIM y PTR están bien."
+            }
+        },
+        "hosting": {
+            "title": "Dónde conseguir servidor y direcciones IP",
+            "subtitle": "Proveedores comparados: puerto 25, direcciones IPv4 adicionales y registros PTR.",
+            "need_port25": "El puerto 25 saliente tiene que estar abierto, o ningún correo sale del servidor.",
+            "need_ips": "Las direcciones IPv4 adicionales se compran al mismo proveedor que el servidor y se añaden a su interfaz de red.",
+            "need_ptr": "Cada dirección necesita un registro PTR (el nombre de la dirección): en el panel del proveedor o con una solicitud de soporte.",
+            "disclaimer": "Según las páginas de los proveedores, a fecha de {date}. Las condiciones y los precios cambian: compruébalos con el proveedor antes de comprar.",
+            "col_provider": "Proveedor",
+            "col_port25": "Puerto 25",
+            "col_ips": "IPv4 adicionales",
+            "col_ptr": "Registro PTR",
+            "col_notes": "Notas",
+            "port25_open": "abierto",
+            "port25_on_request": "a petición",
+            "port25_blocked": "bloqueado",
+            "ptr_panel": "en el panel",
+            "ptr_panel_api": "en el panel y por API",
+            "ptr_ticket": "con solicitud de soporte",
+            "ptr_none": "ninguno",
+            "fit_recommended": "Bueno para correo",
+            "fit_possible": "Posible",
+            "fit_avoid": "No para correo",
+            "no_extra_ips": "ninguna",
+            "link_extra_ips": "Direcciones adicionales",
+            "link_configure": "Añadir la dirección al servidor",
+            "link_ptr": "Configurar el PTR",
+            "link_port25": "Puerto 25",
+            "notes": {
+                "ovh": "Puerto 25 abierto en VPS y servidores dedicados (bloqueado en Public Cloud); se bloquea automáticamente si se detecta spam. Hasta 16 direcciones adicionales por VPS y hasta 256 por servidor dedicado.",
+                "scaleway": "El puerto 25 lo activas tú en la consola tras verificar tu identidad. Hasta 5 direcciones por Instance y hasta 64 en Elastic Metal; el registro PTR está incluido.",
+                "hetzner": "Una dirección cuesta €1,70 al mes más €4,90 una vez; Hetzner pide una justificación técnica. Sus páginas no indican la política del puerto 25: pregunta al soporte antes de comprar.",
+                "hetzner_cloud": "Los puertos 25 y 465 están bloqueados; puedes pedir que los abran tras un mes y una primera factura pagada, se decide caso por caso. Una Floating IP hay que configurarla en el servidor.",
+                "netcup": "Direcciones adicionales baratas (€2,00 con IVA), enrutadas a la dirección principal del servidor; PTR en el panel y por API. Sus páginas no indican la política del puerto 25: pregunta al soporte.",
+                "linode": "Puerto 25 tras una solicitud (tus datos, uso, dominios de envío). Permite expresamente el correo de marketing con consentimiento. Cada dirección adicional necesita una justificación; el precio depende de la región.",
+                "upcloud": "Puerto 25 tras una solicitud con prueba de identidad o de pago. Hasta 5 direcciones IPv4; cada una es una interfaz de red aparte, así que hay que configurar el enrutamiento.",
+                "vultr": "Puerto 25 tras una solicitud que describa el uso y el volumen; la aprobación no está garantizada. Añadir una dirección reinicia el servidor.",
+                "ionos": "El puerto 25 se abre por teléfono cuando el servidor tiene nombre completo, PTR y SPF. Una dirección adicional cuesta €5 al mes con IVA (precio de Alemania); el PTR se configura al crear la dirección.",
+                "homepl": "Según el plan, de 3 a 31 direcciones IPv4 adicionales; el PTR se configura en el panel de cliente. Sus páginas no indican la política del puerto 25 ni el precio de la dirección: pregunta al soporte.",
+                "aws": "Puerto 25 tras un formulario de solicitud, por separado en cada región. La política de AWS prohíbe el correo masivo no solicitado.",
+                "contabo": "Límite de unos 25 correos por minuto; en un VPS solo una dirección adicional.",
+                "nazwapl": "Solo una dirección IPv4, sin adicionales; el registro PTR es un extra de pago (40 PLN al mes).",
+                "digitalocean": "SMTP bloqueado en todos los Droplets sin forma de abrirlo; las Reserved IP no tienen registro PTR.",
+                "google_cloud": "Puerto 25 bloqueado sin forma de pedir una excepción: un servidor de envío en Google Cloud no puede entregar correo.",
+                "azure": "Puerto 25 solo en suscripciones Enterprise (EA, MCA-E); el PTR solo se configura por CLI o PowerShell."
+            },
+            "port25_unconfirmed": "no indicado: pregunta",
+            "ptr_api": "solo por API/CLI",
+            "per_month": "al mes",
+            "per_hour": "por hora"
         }
     },
     "high_confidence_data": "Datos de alta confianza",

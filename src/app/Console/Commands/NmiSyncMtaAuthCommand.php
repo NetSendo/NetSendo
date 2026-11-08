@@ -13,17 +13,14 @@ class NmiSyncMtaAuthCommand extends Command
 
     public function handle(MtaAuthFile $file): int
     {
-        if (!config('nmi.features.enabled')) {
-            $this->info('NMI is disabled. Skipping the MTA logins.');
-            return self::SUCCESS;
-        }
-
-        if (!$file->write()) {
+        if (!$file->sync()) {
             $this->error("Could not write {$file->path()}. In Docker: docker compose exec -u root app chown dev:www-data " . dirname($file->path()));
             return self::FAILURE;
         }
 
-        $this->info(count($file->entries()) . " MTA login(s) in {$file->path()}.");
+        $this->info(\App\Services\Nmi\NmiSwitch::enabled()
+            ? count($file->entries()) . " MTA login(s) in {$file->path()}."
+            : 'NetSendo MTA is switched off: no MTA logins.');
 
         return self::SUCCESS;
     }

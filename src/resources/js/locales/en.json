@@ -4591,7 +4591,7 @@
             "no_domains": "You have no domains in Deliverability Shield yet.",
             "no_ips": "No dedicated IP is assigned to this domain.",
             "from_hint": "The sender address must be on {domain} or one of its subdomains.",
-            "disabled_installation": "NetSendo MTA is switched off on this installation, or new NetSendo MTA mailboxes are (NMI_ENABLED, NMI_ALLOW_NEW in .env)."
+            "disabled_installation": "The sending server is switched off, or new NetSendo MTA mailboxes are (NMI_ALLOW_NEW in .env). An admin switches the server on in Mail Infrastructure."
         }
     },
     "funnels": {
@@ -8662,7 +8662,8 @@
         "setup_required": "SETUP REQUIRED",
         "banner": {
             "title": "Professional Mail Infrastructure",
-            "description": "Build sender reputation with dedicated IP addresses, intelligent IP warming, and automatic DKIM signing."
+            "description": "Build sender reputation with dedicated IP addresses, intelligent IP warming, and automatic DKIM signing.",
+            "start_with_guide": "Start with the guide below: it takes you through every step."
         },
         "features": {
             "dedicated_ips": "Dedicated IP Addresses",
@@ -8752,7 +8753,10 @@
             "description": "Description (optional)",
             "description_placeholder": "Optional notes about this IP",
             "submit": "Add IP",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
+            "provider": "Server provider",
+            "provider_other": "Another provider",
+            "provider_help": "NetSendo shows this provider's instructions on the IP page."
         },
         "delete_ip": {
             "title": "Delete IP Address",
@@ -8768,7 +8772,8 @@
             "submit": "Provision IP",
             "cancel": "Cancel",
             "no_providers": "No providers configured. Click Configure Providers to add your API keys.",
-            "provisioning": "Provisioning..."
+            "provisioning": "Provisioning...",
+            "reserve_only": "This only reserves an address at the provider. The address must come from the same provider as your server, and it still has to be added to the server. Check in the provider comparison whether it lets port 25 through."
         },
         "providers": {
             "vultr": "Vultr",
@@ -8821,7 +8826,7 @@
             "enable": "Switch on NetSendo MTA",
             "disable": "Switch off",
             "needs_verification": "Verify the domain (the CNAME record above) before switching NetSendo MTA on.",
-            "not_available": "NetSendo MTA is switched off on this installation (NMI_ENABLED in .env).",
+            "not_available": "The sending server is switched off. An admin switches it on in Mail Infrastructure (the step-by-step guide).",
             "smtp_username": "MTA login",
             "smtp_username_hint": "NetSendo logs in to the MTA with this login and a generated password. You do not need to enter them anywhere.",
             "ips": "Dedicated IPs of this domain",
@@ -8857,10 +8862,151 @@
             "step_a_record": "In your domain's DNS add an A record: {name} → {ip}.",
             "step_ptr": "At your server provider set the PTR record of {ip} to {name}. It is not set in the domain's DNS but in the panel of the provider the address belongs to.",
             "on_server": "The mail server has this address: mail leaves from it.",
-            "not_on_server": "The mail server does not have this address, so mail leaves from the server's main address. The address has to be added to the server at your provider and the mail server run on the server's network (docs/NMI.md).",
+            "not_on_server": "The sending server does not have this address, so mail leaves from the server's main address. Add the address to the server at your provider (the provider's instructions above), and the sending server starts using it.",
             "server_unknown": "Not known whether the mail server has this address (it does not answer, or it is an older version).",
             "ipv6": "IPv6 addresses are not used for sending: the mail server delivers over IPv4, from the server's main address.",
-            "ptr_check_failed": "The PTR record could not be checked."
+            "ptr_check_failed": "The PTR record could not be checked.",
+            "at_provider": "Instructions of {provider}"
+        },
+        "guide": {
+            "title": "Your own sending server: step by step",
+            "subtitle": "Every step checks itself. Green is done, red blocks sending, amber works but needs fixing.",
+            "progress": "Done: {done} of {total}",
+            "refresh": "Check again",
+            "load_failed": "The steps could not be checked. Try again.",
+            "see_providers": "See the providers",
+            "needs_ip": "First add an IP address and assign it to a domain.",
+            "status": {
+                "ok": "Done",
+                "todo": "To do",
+                "warning": "To fix",
+                "error": "Blocks sending",
+                "unknown": "Unknown",
+                "info": "Last"
+            },
+            "switch": {
+                "title": "Switch the sending server on",
+                "ok": "On. It sends only the mail of the domains you switch it on for.",
+                "todo": "The sending server is off and sends nothing. Switching it on needs a GOLD licence.",
+                "forced": "Kept on in the .env file (NMI_ENABLED=true). Remove that line to switch it from the panel.",
+                "admin_only": "The account admin can switch it on.",
+                "enable": "Switch the sending server on",
+                "disable": "Switch off"
+            },
+            "mta": {
+                "title": "The sending server is running",
+                "ok": "It answers at {address}.",
+                "error": "NetSendo cannot connect to the sending server ({address}). On the server, in the NetSendo folder, download the latest docker-compose.yml and run:",
+                "firewall": "If the ufw firewall is active on the server, let the NetSendo containers in:"
+            },
+            "port25": {
+                "title": "Port 25 is open",
+                "ok": "The server can connect to the recipients' mail servers.",
+                "error": "The server provider blocks port 25, so no mail can leave. Ask the provider to open it, or move NetSendo to a provider that allows it.",
+                "unknown": "Not checked: the check is switched off (NMI_PORT25_CHECK_HOST)."
+            },
+            "server_name": {
+                "title": "The server's name and PTR record",
+                "ok": "The server introduces itself as {name}, and the PTR record of the server's address points to that name.",
+                "warning": "The server introduces itself as {name}. At your server provider (in its panel or by a support request) set the PTR record of the server's main address to that name.",
+                "error": "The panel's address (APP_URL) is not a domain name, so the server has no name. Set APP_URL to the panel's address with its domain, or NMI_HOSTNAME in .env.",
+                "now": "Now:",
+                "no_address": "This name does not point to any IP address yet: add an A record for it with the server's address in the domain's DNS."
+            },
+            "domain": {
+                "title": "The sender's domain",
+                "ok": "Sending is on for:",
+                "todo": "Add a domain in Deliverability Shield, confirm it with the CNAME record and switch NetSendo MTA on on its page.",
+                "switch_on": "switch NetSendo MTA on on the domain's page",
+                "verify": "confirm the domain with the CNAME record",
+                "open": "Open Deliverability Shield"
+            },
+            "ip": {
+                "title": "An IP address to send from",
+                "ok": "Addresses assigned to domains:",
+                "todo": "Add an IP address to a pool (the “Add IP” button below) and assign it to a domain on its page. No additional addresses? Start with the server's main address.",
+                "server_addresses": "This server's addresses:"
+            },
+            "dkim": {
+                "title": "DKIM signature",
+                "ok": "The keys are generated and the records published in DNS.",
+                "todo": "On the IP page generate the DKIM keys and add the TXT record shown to the domain's DNS:",
+                "no_keys": "no keys",
+                "not_published": "the record is not in DNS yet"
+            },
+            "ip_on_server": {
+                "title": "The IP address is on the server",
+                "ok": "The sending server has every address, so mail leaves from them.",
+                "warning": "The sending server does not have these addresses, so their mail leaves from the server's main address. Add them to the server at your provider (instructions on the IP page):",
+                "unknown": "Unknown, because the sending server does not answer.",
+                "missing": "not on the server"
+            },
+            "ptr": {
+                "title": "PTR records of the addresses",
+                "ok": "Every address and its name point at each other.",
+                "warning": "To set: the name's A record in the domain's DNS and the address's PTR record at the provider (details and the “Check PTR” button on the IP page):",
+                "item": "{name}, PTR now: {ptr}"
+            },
+            "mailbox": {
+                "title": "A sending mailbox",
+                "ok": "Mailboxes sending through NetSendo MTA: {count}.",
+                "todo": "Add a mailbox with the NetSendo MTA provider and choose the domain and the IP address.",
+                "open": "Open mailboxes"
+            },
+            "test": {
+                "title": "A test send",
+                "info": "Click “Test Connection” on the NetSendo MTA mailbox. Then send a test message to the address mail-tester.com gives you: the result shows whether SPF, DKIM and PTR are right."
+            }
+        },
+        "hosting": {
+            "title": "Where to get a server and IP addresses",
+            "subtitle": "Providers compared: port 25, additional IPv4 addresses and PTR records.",
+            "need_port25": "Outgoing port 25 must be open, or no mail leaves the server.",
+            "need_ips": "Additional IPv4 addresses are bought from the same provider as the server and added to its network interface.",
+            "need_ptr": "Every address needs a PTR record (the address's name): in the provider's panel or by a support request.",
+            "disclaimer": "From the providers' pages, as of {date}. Terms and prices change: check them with the provider before you buy.",
+            "col_provider": "Provider",
+            "col_port25": "Port 25",
+            "col_ips": "Additional IPv4",
+            "col_ptr": "PTR record",
+            "col_notes": "Notes",
+            "port25_open": "open",
+            "port25_on_request": "on request",
+            "port25_blocked": "blocked",
+            "ptr_panel": "in the panel",
+            "ptr_panel_api": "in the panel and by API",
+            "ptr_ticket": "by support request",
+            "ptr_none": "none",
+            "fit_recommended": "Good for mail",
+            "fit_possible": "Possible",
+            "fit_avoid": "Not for mail",
+            "no_extra_ips": "none",
+            "link_extra_ips": "Additional addresses",
+            "link_configure": "Adding the address to the server",
+            "link_ptr": "Setting the PTR",
+            "link_port25": "Port 25",
+            "notes": {
+                "ovh": "Port 25 open on VPS and dedicated servers (blocked in Public Cloud), blocked automatically when spam is detected. Up to 16 additional addresses per VPS, up to 256 per dedicated server.",
+                "scaleway": "You switch port 25 on yourself in the console after an identity check. Up to 5 addresses per Instance, up to 64 on Elastic Metal; the PTR record is included.",
+                "hetzner": "An address costs €1.70 a month plus €4.90 once; Hetzner asks for a technical reason. Its pages do not state the port 25 policy: ask support before you buy.",
+                "hetzner_cloud": "Ports 25 and 465 are blocked; you can ask to open them after a month and a first paid invoice, decided case by case. A Floating IP has to be configured on the server.",
+                "netcup": "Cheap additional addresses (€2.00 incl. VAT), routed to the server’s main address; PTR in the panel and by API. Its pages do not state the port 25 policy: ask support.",
+                "linode": "Port 25 after a request (your details, use case, sending domains). Explicitly allows opt-in marketing mail. Each additional address needs a justification; the price depends on the region.",
+                "upcloud": "Port 25 after a request with proof of identity or payment. Up to 5 IPv4 addresses; each is a separate network interface, so routing has to be configured.",
+                "vultr": "Port 25 after a request describing the use and volume; approval is not guaranteed. Adding an address restarts the server.",
+                "ionos": "Port 25 is opened by phone once the server has a full name, PTR and SPF. An additional address costs €5 a month incl. VAT (German price); the PTR is set when the address is created.",
+                "homepl": "Depending on the plan, 3–31 additional IPv4 addresses; the PTR is set in the customer panel. Its pages do not state the port 25 policy or the address price: ask support.",
+                "aws": "Port 25 after a request form, separately in each region. The AWS policy bans unsolicited mass email.",
+                "contabo": "Limit of about 25 emails a minute; only one additional address on a VPS.",
+                "nazwapl": "Only one IPv4 address, no additional ones; the PTR record is a paid add-on (40 PLN a month).",
+                "digitalocean": "SMTP is blocked on all Droplets with no way to open it; Reserved IPs have no PTR record.",
+                "google_cloud": "Port 25 is blocked with no way to request an exception: a sending server in Google Cloud cannot deliver mail.",
+                "azure": "Port 25 only on Enterprise subscriptions (EA, MCA-E); the PTR is set only by CLI or PowerShell."
+            },
+            "port25_unconfirmed": "not stated: ask",
+            "ptr_api": "by API/CLI only",
+            "per_month": "a month",
+            "per_hour": "an hour"
         }
     },
     "high_confidence_data": "High Confidence Data",

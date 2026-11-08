@@ -49,8 +49,8 @@ class NmiProvider implements MailProviderInterface
     public static function createTransport(DomainConfiguration $domain): EsmtpTransport
     {
         $transport = new EsmtpTransport(
-            (string) config('nmi.mta_host', 'netsendo-mta'),
-            (int) config('nmi.mta_port', 25)
+            \App\Services\Nmi\MtaEndpoint::host(),
+            \App\Services\Nmi\MtaEndpoint::port()
         );
 
         if ($domain->nmi_smtp_username) {

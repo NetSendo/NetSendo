@@ -5,6 +5,8 @@ import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
 import GoldNotice from "@/Components/License/GoldNotice.vue";
+import SetupGuide from "@/Components/Nmi/SetupGuide.vue";
+import HostingProviders from "@/Components/Nmi/HostingProviders.vue";
 import { useLicense } from "@/Composables/useLicense";
 
 // NMI is GOLD: without it the setup stays readable, changes answer 402 (upgrade dialog)
@@ -17,6 +19,10 @@ const props = defineProps({
     pools: { type: Array, default: () => [] },
     ips: { type: Array, default: () => [] },
     nmiEnabled: { type: Boolean, default: false },
+    // { forced_by_env, can_toggle }: NetSendo MTA is switched on and off in the panel
+    nmiSwitch: { type: Object, default: () => ({ forced_by_env: false, can_toggle: false }) },
+    // Hosting providers compared in the guide (App\Services\Nmi\HostingProviders)
+    hostingProviders: { type: Array, default: () => [] },
 });
 
 // MTA Status state
@@ -26,9 +32,6 @@ const mtaStatus = ref({
     message: "",
     // Outgoing port 25 (delivery to the recipients' servers): true, false or null (not checked)
     port25: null,
-    // Name the mail server gives itself from the main address, with its PTR check:
-    // { name, ok, addresses: [{ ip, ptr }] }
-    serverName: null,
 });
 
 const checkMtaStatus = async () => {
@@ -40,7 +43,6 @@ const checkMtaStatus = async () => {
             message: response.data.data.message,
             checking: false,
             port25: response.data.data.outbound_port_25 ?? null,
-            serverName: response.data.data.server_name ?? null,
         };
     } catch (error) {
         mtaStatus.value = {
@@ -100,6 +102,7 @@ const selectedPoolId = ref(null);
 const addIpForm = ref({
     ip_address: "",
     hostname: "",
+    provider: "manual",
     description: "",
 });
 const addingIp = ref(false);
@@ -107,7 +110,7 @@ const addIpError = ref("");
 
 const openAddIpModal = (poolId) => {
     selectedPoolId.value = poolId;
-    addIpForm.value = { ip_address: "", hostname: "", description: "" };
+    addIpForm.value = { ip_address: "", hostname: "", provider: "manual", description: "" };
     addIpError.value = "";
     showAddIp.value = true;
 };
@@ -121,7 +124,8 @@ const addIpToPool = async () => {
         showAddIp.value = false;
         router.reload({ only: ["pools", "ips", "stats"] });
     } catch (error) {
-        addIpError.value = error.response?.data?.message || t("common.error");
+        const errors = error.response?.data?.errors;
+        addIpError.value = (errors && Object.values(errors)[0]?.[0]) || error.response?.data?.message || t("common.error");
     } finally {
         addingIp.value = false;
     }
@@ -345,47 +349,6 @@ const removeProvider = async (provider) => {
                 {{ $t("nmi.mta_status.port25_blocked_help") }}
             </div>
 
-            <!-- The name of the mail server (from the panel's domain) and its PTR record -->
-            <div
-                v-if="nmiEnabled && !mtaStatus.checking && mtaStatus.serverName"
-                class="rounded-xl border bg-white p-4 text-sm shadow-sm dark:border-slate-700 dark:bg-slate-800"
-            >
-                <div class="flex flex-wrap items-center gap-2">
-                    <span class="text-gray-500 dark:text-gray-400">{{ $t("nmi.server_name.label") }}:</span>
-                    <span class="font-mono font-semibold text-gray-900 dark:text-white">
-                        {{ mtaStatus.serverName.name || $t("nmi.server_name.none") }}
-                    </span>
-                    <span
-                        v-if="mtaStatus.serverName.name"
-                        class="rounded-full px-2 py-0.5 text-xs font-medium"
-                        :class="
-                            mtaStatus.serverName.ok
-                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                        "
-                    >
-                        {{ mtaStatus.serverName.ok ? $t("nmi.server_name.ptr_ok") : $t("nmi.server_name.ptr_missing") }}
-                    </span>
-                </div>
-                <p v-if="!mtaStatus.serverName.name" class="mt-2 text-gray-600 dark:text-gray-400">
-                    {{ $t("nmi.server_name.none_help") }}
-                </p>
-                <p v-else-if="mtaStatus.serverName.ok" class="mt-2 text-gray-600 dark:text-gray-400">
-                    {{ $t("nmi.server_name.ok_help") }}
-                </p>
-                <template v-else>
-                    <p class="mt-2 text-gray-600 dark:text-gray-400">
-                        {{ $t("nmi.server_name.ptr_help", { name: mtaStatus.serverName.name }) }}
-                    </p>
-                    <ul v-if="mtaStatus.serverName.addresses?.length" class="mt-2 space-y-1 font-mono text-xs text-gray-700 dark:text-gray-300">
-                        <li v-for="address in mtaStatus.serverName.addresses" :key="address.ip">
-                            {{ $t("nmi.server_name.address_ptr", { ip: address.ip, ptr: address.ptr || $t("nmi.server_name.no_ptr") }) }}
-                        </li>
-                    </ul>
-                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">{{ $t("nmi.server_name.cloudflare") }}</p>
-                </template>
-            </div>
-
             <!-- NMI Disabled Banner -->
             <div
                 v-if="!nmiEnabled"
@@ -400,6 +363,7 @@ const removeProvider = async (provider) => {
                             </span>
                             <h2 class="mt-4 text-3xl font-bold">{{ $t("nmi.banner.title") }}</h2>
                             <p class="mt-2 max-w-xl text-lg text-white/90">{{ $t("nmi.banner.description") }}</p>
+                            <p class="mt-3 max-w-xl text-sm font-medium text-white">{{ $t("nmi.banner.start_with_guide") }}</p>
                             <div class="mt-6 grid gap-3 sm:grid-cols-2">
                                 <div class="flex items-center gap-2">
                                     <svg class="h-5 w-5 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -435,6 +399,12 @@ const removeProvider = async (provider) => {
                     </div>
                 </div>
             </div>
+
+            <!-- Setup guide: every step with its live state -->
+            <SetupGuide />
+
+            <!-- Where to get a server with own IP addresses -->
+            <HostingProviders id="hosting-providers" :providers="hostingProviders" />
 
             <!-- Stats Cards -->
             <div v-if="nmiEnabled" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -755,6 +725,18 @@ const removeProvider = async (provider) => {
                         </div>
 
                         <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t("nmi.add_ip.provider") }}</label>
+                            <select
+                                v-model="addIpForm.provider"
+                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                            >
+                                <option v-for="provider in hostingProviders" :key="provider.key" :value="provider.key">{{ provider.name }}</option>
+                                <option value="manual">{{ $t("nmi.add_ip.provider_other") }}</option>
+                            </select>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $t("nmi.add_ip.provider_help") }}</p>
+                        </div>
+
+                        <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t("nmi.add_ip.description") }}</label>
                             <textarea
                                 v-model="addIpForm.description"
@@ -803,6 +785,11 @@ const removeProvider = async (provider) => {
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t("nmi.provision.title") }}</h3>
                     </div>
+
+                    <!-- Reserving an address does not put it on the server -->
+                    <p class="mt-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-200">
+                        {{ $t("nmi.provision.reserve_only") }}
+                    </p>
 
                     <form @submit.prevent="provisionIp" class="mt-6 space-y-4">
                         <!-- Error Alert -->

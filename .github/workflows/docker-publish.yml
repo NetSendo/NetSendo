@@ -14,7 +14,7 @@
 #
 # The NetSendo MTA image (docker/haraka, ghcr.io/netsendo/netsendo-mta) is built
 # with the same tags by build-and-push-mta: installations get it with
-# `docker compose --profile nmi`, without the docker/haraka directory.
+# `docker compose up`, without the docker/haraka directory.
 #
 # After a version image (tag vX.Y.Z) is pushed, notify-aderlo tells Aderlo,
 # which hosts NetSendo Cloud, so the hosted instances get the new version

@@ -24,25 +24,24 @@ COPY plugins/ /opt/haraka/plugins/
 # Logins written by NetSendo (nmi-auth volume, mounted read-only)
 RUN mkdir -p /opt/haraka/auth
 
-# Start-up: config/me and the listen addresses (NMI_MTA_LISTEN)
+# Start-up: config/me and the listen addresses (NMI_MTA_LISTEN); the healthcheck
+# connects to the first listen address
 COPY docker-entrypoint.sh /usr/local/bin/netsendo-mta-entrypoint
-RUN chmod 755 /usr/local/bin/netsendo-mta-entrypoint
+COPY healthcheck.sh /usr/local/bin/netsendo-mta-healthcheck
+RUN chmod 755 /usr/local/bin/netsendo-mta-entrypoint /usr/local/bin/netsendo-mta-healthcheck
 
 # Set permissions
 RUN chown -R haraka:haraka /opt/haraka
 
-# Expose SMTP ports
-# 25 - Standard SMTP (MTA to MTA)
-# 587 - Submission (client to server)
-# 465 - SMTPS (deprecated but still used)
-EXPOSE 25 587 465
+# SMTP ports: 2525 where NetSendo hands mail over, 25 and 587 for older setups
+EXPOSE 25 587 2525
 
 # Switch to haraka user
 USER haraka
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD nc -z localhost 25 || exit 1
+    CMD netsendo-mta-healthcheck
 
 # Start Haraka
 ENTRYPOINT ["/usr/local/bin/netsendo-mta-entrypoint"]

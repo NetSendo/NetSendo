@@ -56,7 +56,7 @@ return [
 
     // NetSendo MTA (NMI) mailboxes
     'nmi' => [
-        'disabled' => 'NetSendo MTA is switched off on this installation (NMI_ENABLED in .env).',
+        'disabled' => 'The sending server is switched off. An admin switches it on in Mail Infrastructure (the step-by-step guide).',
         'new_mailboxes_disabled' => 'New NetSendo MTA mailboxes are switched off on this installation (NMI_ALLOW_NEW in .env).',
         'domain_required' => 'Choose one of your domains for NetSendo MTA.',
         'ip_required' => 'Choose one of your dedicated IPs for NetSendo MTA.',

@@ -19,8 +19,10 @@ return [
     | Connection details for the Haraka MTA server.
     |
     */
+    // The MTA runs on the server's network and listens on netsendo-network's gateway
+    // (10.58.0.1:2525), which the NetSendo containers know as netsendo-mta (MtaEndpoint)
     'mta_host' => env('NMI_MTA_HOST', 'netsendo-mta'),
-    'mta_port' => env('NMI_MTA_PORT', 25),
+    'mta_port' => env('NMI_MTA_PORT', 2525),
     'mta_encryption' => env('NMI_MTA_ENCRYPTION', 'none'),
 
     // Name the MTA gives itself to the recipients' mail servers (HELO) when it sends from
@@ -144,7 +146,8 @@ return [
     |
     */
     'features' => [
-        // Master switch for NMI
+        // NMI_ENABLED=true keeps NetSendo MTA on; otherwise the switch in the panel decides
+        // (App\Services\Nmi\NmiSwitch)
         'enabled' => env('NMI_ENABLED', false),
 
         // Allow new NMI mailbox creation

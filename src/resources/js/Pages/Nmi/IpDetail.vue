@@ -16,6 +16,8 @@ const props = defineProps({
     dkim: { type: Object, default: null },
     // Domains of the user (Deliverability Shield) the IP can send for
     domains: { type: Array, default: () => [] },
+    // Hosting providers (App\Services\Nmi\HostingProviders): the IP's own has instructions
+    hostingProviders: { type: Array, default: () => [] },
 });
 
 // Warming status colors (an IP starts as "new")
@@ -82,6 +84,17 @@ const saveHostname = () => {
             onFinish: () => (savingHostname.value = false),
         },
     );
+};
+
+// The hosting provider of the server the IP belongs to, with its instructions
+const providerInput = ref(props.ip.provider || "manual");
+watch(
+    () => props.ip.provider,
+    (provider) => (providerInput.value = provider || "manual"),
+);
+const hostingProvider = computed(() => props.hostingProviders.find((provider) => provider.key === props.ip.provider) || null);
+const saveProvider = () => {
+    router.patch(route("settings.nmi.ips.update", props.ip.id), { provider: providerInput.value }, { preserveScroll: true });
 };
 
 // PTR record of the IP (set at the provider of the server): checked on request
@@ -459,6 +472,46 @@ const copyToClipboard = (text) => {
                             <li>{{ $t("nmi.sending_ip.step_a_record", { name: ip.hostname, ip: ip.ip_address }) }}</li>
                             <li>{{ $t("nmi.sending_ip.step_ptr", { name: ip.hostname, ip: ip.ip_address }) }}</li>
                         </ol>
+                    </div>
+
+                    <div>
+                        <label for="ip-provider" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            {{ $t("nmi.add_ip.provider") }}
+                        </label>
+                        <select
+                            id="ip-provider"
+                            v-model="providerInput"
+                            @change="saveProvider"
+                            class="mt-1 block w-full max-w-sm rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
+                        >
+                            <option v-for="provider in hostingProviders" :key="provider.key" :value="provider.key">{{ provider.name }}</option>
+                            <option value="manual">{{ $t("nmi.add_ip.provider_other") }}</option>
+                        </select>
+                        <div v-if="hostingProvider" class="mt-3 rounded-lg border border-gray-200 p-4 text-sm dark:border-slate-700">
+                            <p class="font-medium text-gray-900 dark:text-white">{{ $t("nmi.sending_ip.at_provider", { provider: hostingProvider.name }) }}</p>
+                            <ul class="mt-2 space-y-1">
+                                <li v-if="hostingProvider.links.extra_ips">
+                                    <a :href="hostingProvider.links.extra_ips" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline dark:text-indigo-400">
+                                        {{ $t("nmi.hosting.link_extra_ips") }}
+                                    </a>
+                                </li>
+                                <li v-if="hostingProvider.links.configure">
+                                    <a :href="hostingProvider.links.configure" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline dark:text-indigo-400">
+                                        {{ $t("nmi.hosting.link_configure") }}
+                                    </a>
+                                </li>
+                                <li v-if="hostingProvider.links.ptr">
+                                    <a :href="hostingProvider.links.ptr" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline dark:text-indigo-400">
+                                        {{ $t("nmi.hosting.link_ptr") }}
+                                    </a>
+                                </li>
+                                <li v-if="hostingProvider.links.port25">
+                                    <a :href="hostingProvider.links.port25" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline dark:text-indigo-400">
+                                        {{ $t("nmi.hosting.link_port25") }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
 
                     <div class="rounded-lg border p-4 text-sm" :class="serverBoxClass">

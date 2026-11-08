@@ -203,12 +203,13 @@ services:
       # Names in the greeting (the name of each message comes from NetSendo)
       - NMI_HOSTNAME=${NMI_HOSTNAME:-}
       - APP_URL=${APP_URL:-}
-      # Listen addresses for the MTA on the server's own network (docs/NMI.md)
+      # Development keeps the MTA on the Docker network (as netsendo-mta, port 2525);
+      # docker-compose.yml runs it on the server's network instead
       - NMI_MTA_LISTEN=${NMI_MTA_LISTEN:-}
     networks:
       - netsendo-network
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 25 || exit 1"]
+      test: ["CMD", "netsendo-mta-healthcheck"]
       interval: 30s
       timeout: 10s
       retries: 3

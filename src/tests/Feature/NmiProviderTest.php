@@ -130,7 +130,8 @@ class NmiProviderTest extends TestCase
         $this->assertSame('nmi-1-abcdefgh', $transport->getUsername());
         $this->assertSame('p@ss:w/rd?#1', $transport->getPassword());
         $this->assertSame('netsendo-mta', $transport->getStream()->getHost());
-        $this->assertSame(25, $transport->getStream()->getPort());
+        // NMI_MTA_PORT=25 of an older .env: the MTA on the server's network listens on 2525
+        $this->assertSame(2525, $transport->getStream()->getPort());
     }
 
     public function test_the_password_is_stored_encrypted(): void

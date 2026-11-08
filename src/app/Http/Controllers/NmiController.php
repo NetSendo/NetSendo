@@ -8,16 +8,21 @@ use App\Models\IpPool;
 use App\Models\IpProviderSetting;
 use App\Services\Nmi\BlacklistMonitorService;
 use App\Services\Nmi\DkimKeyManager;
+use App\Services\Nmi\HostingProviders;
 use App\Services\Nmi\IpProvisioningService;
 use App\Services\Deliverability\DnsLookupService;
 use App\Services\Nmi\IpWarmingService;
 use App\Services\Nmi\MailServerName;
+use App\Services\Nmi\MtaEndpoint;
 use App\Services\Nmi\MtaProbe;
+use App\Services\Nmi\NmiSwitch;
 use App\Services\Nmi\NmiSetupService;
 use App\Services\Nmi\OutboundPortCheck;
+use App\Services\Nmi\SetupGuide;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -57,9 +62,15 @@ class NmiController extends Controller
             'stats' => $stats,
             'pools' => $pools,
             'ips' => $ips->map(fn($ip) => $this->formatIpForResponse($ip)),
-            // NMI_ENABLED (config/nmi.php); the key read before did not exist, so the
-            // "setup required" banner was shown on every installation
-            'nmiEnabled' => (bool) config('nmi.features.enabled', false),
+            // Switched on in the panel (or NMI_ENABLED=true in .env); the key read before did
+            // not exist, so the "setup required" banner was shown on every installation
+            'nmiEnabled' => NmiSwitch::enabled(),
+            'nmiSwitch' => [
+                'forced_by_env' => NmiSwitch::forcedByEnv(),
+                'can_toggle' => $user->isAdmin(),
+            ],
+            // Where to get a server with own IP addresses (the guide compares them)
+            'hostingProviders' => HostingProviders::all(),
         ];
 
         // Return JSON for AJAX requests
@@ -71,6 +82,49 @@ class NmiController extends Controller
         }
 
         return Inertia::render('Nmi/Index', $data);
+    }
+
+    /**
+     * Switch NetSendo MTA on for the installation (admin; GOLD through the route)
+     */
+    public function enableInstallation(Request $request)
+    {
+        return $this->switchInstallation($request, true);
+    }
+
+    /**
+     * Switch NetSendo MTA off for the installation (admin; allowed without GOLD). The MTA
+     * loses all logins at once; domains, IPs and mailboxes stay as they are.
+     */
+    public function disableInstallation(Request $request)
+    {
+        return $this->switchInstallation($request, false);
+    }
+
+    private function switchInstallation(Request $request, bool $enabled)
+    {
+        abort_unless($request->user()->isAdmin(), 403, __('nmi.switch_admin_only'));
+
+        if (!$enabled && NmiSwitch::forcedByEnv()) {
+            throw ValidationException::withMessages(['nmi' => __('nmi.switch_forced_by_env')]);
+        }
+
+        NmiSwitch::set($enabled);
+
+        return $this->respond($request, $enabled ? __('nmi.switched_on') : __('nmi.switched_off'), [
+            'enabled' => NmiSwitch::enabled(),
+        ]);
+    }
+
+    /**
+     * The setup guide: each step to a working sending server with its live state
+     */
+    public function guide(Request $request, SetupGuide $guide): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => ['steps' => $guide->steps($request->user())],
+        ]);
     }
 
     /**
@@ -189,6 +243,8 @@ class NmiController extends Controller
             'warming' => $this->warmingService->getWarmingStatus($ip),
             'blacklist' => $this->blacklistService->getSummary($ip),
             'dkim' => $this->dkimManager->getDnsInstructions($ip),
+            // Hosting providers, with the instructions for the IP's own
+            'hostingProviders' => HostingProviders::all(),
             // Domains of the user the IP can be assigned to (Deliverability Shield)
             'domains' => DomainConfiguration::forUser($request->user()->id)
                 ->orderBy('domain')
@@ -363,6 +419,7 @@ class NmiController extends Controller
 
         $validated = $request->validate([
             'hostname' => [
+                'sometimes',
                 'required',
                 'string',
                 'max:253',
@@ -372,12 +429,19 @@ class NmiController extends Controller
                     }
                 },
             ],
+            // The hosting provider of the server (the IP page shows its instructions)
+            'provider' => ['sometimes', 'required', 'string', Rule::in(array_merge(HostingProviders::keys(), [DedicatedIpAddress::PROVIDER_MANUAL]))],
         ]);
 
-        $hostname = MailServerName::normalize($validated['hostname']);
-        if ($hostname !== $ip->hostname) {
-            // The PTR check was for the old name
-            $ip->update(['hostname' => $hostname, 'ptr_verified' => false, 'ptr_verified_at' => null]);
+        if (array_key_exists('hostname', $validated)) {
+            $hostname = MailServerName::normalize($validated['hostname']);
+            if ($hostname !== $ip->hostname) {
+                // The PTR check was for the old name
+                $ip->update(['hostname' => $hostname, 'ptr_verified' => false, 'ptr_verified_at' => null]);
+            }
+        }
+        if (array_key_exists('provider', $validated)) {
+            $ip->update(['provider' => $validated['provider']]);
         }
 
         return $this->respond($request, __('nmi.ip_updated'), $this->formatIpForResponse(
@@ -535,8 +599,8 @@ class NmiController extends Controller
             'success' => true,
             'data' => [
                 'online' => $status['online'],
-                'host' => (string) config('nmi.mta_host', 'netsendo-mta'),
-                'port' => (int) config('nmi.mta_port', 25),
+                'host' => MtaEndpoint::host(),
+                'port' => MtaEndpoint::port(),
                 'message' => $status['message'],
                 'checked_at' => now()->toIso8601String(),
                 // The MTA delivers straight to the recipients' servers: port 25 must be open
@@ -577,7 +641,18 @@ class NmiController extends Controller
                 },
                 Rule::unique('dedicated_ip_addresses', 'ip_address')->whereNull('deleted_at'),
             ],
-            'hostname' => ['required', 'string', 'max:255'],
+            'hostname' => [
+                'required',
+                'string',
+                'max:253',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if (!MailServerName::isValid((string) $value)) {
+                        $fail(__('nmi.hostname_invalid'));
+                    }
+                },
+            ],
+            // The hosting provider of the server (the IP page shows its instructions)
+            'provider' => ['nullable', 'string', Rule::in(array_merge(HostingProviders::keys(), [DedicatedIpAddress::PROVIDER_MANUAL]))],
             'description' => ['nullable', 'string', 'max:500'],
         ]);
 
@@ -587,9 +662,9 @@ class NmiController extends Controller
         $ip = DedicatedIpAddress::create([
             'ip_pool_id' => $pool->id,
             'ip_address' => $validated['ip_address'],
-            'hostname' => $validated['hostname'],
+            'hostname' => MailServerName::normalize($validated['hostname']),
             'ip_version' => $ipVersion,
-            'provider' => DedicatedIpAddress::PROVIDER_MANUAL,
+            'provider' => $validated['provider'] ?? DedicatedIpAddress::PROVIDER_MANUAL,
             'warming_status' => DedicatedIpAddress::WARMING_NEW,
             'reputation_score' => 100,
             'is_active' => true,

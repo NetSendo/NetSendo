@@ -962,6 +962,11 @@ Route::middleware(['auth', '2fa'])->group(function () {
         // MTA Status
         Route::get('/mta/status', [\App\Http\Controllers\NmiController::class, 'getMtaStatus'])->name('mta.status');
 
+        // NetSendo MTA on/off for the installation (admin) and the setup guide
+        Route::post('/installation/enable', [\App\Http\Controllers\NmiController::class, 'enableInstallation'])->name('installation.enable')->middleware('licensed:mail_infrastructure');
+        Route::post('/installation/disable', [\App\Http\Controllers\NmiController::class, 'disableInstallation'])->name('installation.disable');
+        Route::get('/guide', [\App\Http\Controllers\NmiController::class, 'guide'])->name('guide');
+
         // IP Providers
         Route::get('/providers', [\App\Http\Controllers\NmiController::class, 'getProviderSettings'])->name('providers.index');
         Route::post('/providers', [\App\Http\Controllers\NmiController::class, 'saveProviderSettings'])->name('providers.store')->middleware('licensed:mail_infrastructure');

@@ -230,7 +230,7 @@ class DeliverabilityController extends Controller
             'simulations' => $simulations,
             // NetSendo MTA (NMI, GOLD) for this domain; the SMTP password is never sent
             'nmi' => [
-                'available' => (bool) config('nmi.features.enabled'),
+                'available' => \App\Services\Nmi\NmiSwitch::enabled(),
                 'enabled' => (bool) $domain->nmi_enabled,
                 'ready' => $domain->isNmiReady(),
                 'smtp_username' => $domain->nmi_smtp_username,

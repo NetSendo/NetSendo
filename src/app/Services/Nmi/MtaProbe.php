@@ -25,8 +25,8 @@ class MtaProbe
      */
     public function probe(): array
     {
-        $host = (string) config('nmi.mta_host', 'netsendo-mta');
-        $port = (int) config('nmi.mta_port', 25);
+        $host = MtaEndpoint::host();
+        $port = MtaEndpoint::port();
 
         $socket = @fsockopen($host, $port, $errno, $errstr, self::TIMEOUT);
         if ($socket === false) {
