@@ -185,8 +185,10 @@ class AgentOrchestrator
                         $goalData = null;
                         try {
                             // Goals are part of Brain autonomy (GOLD); without it the chat goes
-                            // straight to intent classification
+                            // straight to intent classification. In advisory mode Brain only
+                            // advises, so no goal (with plans to approve) is opened either
                             $goalData = $settings->autonomyLicensed()
+                                && $settings->effectiveMode() !== ModeController::MODE_MANUAL
                                 ? $this->goalPlanner->isGoalRequest($message, $user)
                                 : null;
                         } catch (\Exception $e) {
@@ -245,11 +247,12 @@ class AgentOrchestrator
             $this->conversationManager->addAssistantMessage(
                 $conversation,
                 $result['message'],
-                [
+                array_filter([
                     'intent' => $intent['intent'] ?? 'conversation',
                     'agent' => $intent['agent'] ?? null,
                     'work_mode' => $settings->work_mode,
-                ],
+                    'plan_id' => $result['plan_id'] ?? null,
+                ], fn ($value) => $value !== null),
                 $result['tokens_input'] ?? 0,
                 $result['tokens_output'] ?? 0,
                 $modelUsed,
@@ -261,7 +264,9 @@ class AgentOrchestrator
 
             // Step 5: Track token usage
             $totalTokens = ($result['tokens_input'] ?? 0) + ($result['tokens_output'] ?? 0);
-            $settings->addTokensUsed($totalTokens);
+            if (empty($result['tokens_charged'])) {
+                $settings->addTokensUsed($totalTokens);
+            }
 
             // Step 6: Auto-generate title for new conversations
             if (!$conversation->title && $conversation->message_count <= 3) {
@@ -426,6 +431,7 @@ Respond in JSON:
 }
 
 Set requires_agent=false for general questions, conversations, greetings, and questions about facts in the knowledge base (e.g. "how do we handle returns?", "what does plan X cost?") — those are answered in the conversation.
+Questions about the user's OWN company, products, plans, prices, offer or processes are knowledge-base questions (requires_agent=false), even when research tools are available. Choose the research agent only when the user asks to search the web or to research competitors, markets, trends, news or other companies.
 Set requires_agent=true when the user wants to PERFORM a specific action (e.g. create a campaign, research a topic, analyze competitors, etc.)
 Set task_type="situation_analysis" (and requires_agent=false) when user asks for a holistic situation review, current state analysis, or overall assessment of their marketing/CRM situation (e.g. "przeanalizuj obecną sytuację", "analyze current situation", "co jest nie tak", "what should I do", "podsumuj stan", "give me an overview").
 
@@ -461,6 +467,17 @@ PROMPT;
                 if (!empty($intent['requires_agent']) && !isset($this->agents[$intent['agent'] ?? ''])) {
                     $intent['requires_agent'] = false;
                     $intent['agent'] = null;
+                }
+
+                // A plain question sent to the research agent is answered in the conversation
+                // (with the knowledge base) unless it asks for a web search: "what plans do we
+                // have and what does the cheapest cost?" went to research, which in semi-automatic
+                // mode means a research plan to approve for a question
+                if (!empty($intent['requires_agent']) && ($intent['agent'] ?? null) === 'research'
+                    && $this->isPlainQuestion($message) && !$this->asksForWebResearch($message)) {
+                    $intent['requires_agent'] = false;
+                    $intent['agent'] = null;
+                    $intent['task_type'] = 'general';
                 }
                 if (!is_array($intent['parameters'])) {
                     $intent['parameters'] = [];
@@ -537,12 +554,13 @@ PROMPT;
         }
 
         $settings = AiBrainSettings::getForUser($user->id);
+        $agent->takeUsage(); // count this request's tokens only
 
         // In manual (advisory) mode, just provide advice without creating an action plan. The
         // agent's own mode decides, like it does for approvals: an agent set to "Advisory"
         // advises even when the global mode is semi-automatic
         if ($settings->getAgentMode($agentName) === ModeController::MODE_MANUAL) {
-            return $agent->advise($intent, $user, $knowledgeContext);
+            return $this->withAgentUsage($agent->advise($intent, $user, $knowledgeContext), $agent);
         }
 
         // Check if conversation already has rich campaign/agent context
@@ -571,10 +589,10 @@ PROMPT;
             $conversation->update(['context' => $context]);
 
             $questions = $agent->getInfoQuestions($intent, $user, $knowledgeContext);
-            return [
+            return $this->withAgentUsage([
                 'type' => 'info_request',
                 'message' => $questions,
-            ];
+            ], $agent);
         }
 
         // Create an action plan (with retry on failure)
@@ -608,6 +626,12 @@ PROMPT;
             ];
         }
 
+        // The plan belongs to the conversation that asked for it: its result is posted there
+        // after an approval, and the chat can show its approve/reject buttons again
+        if (!$plan->ai_conversation_id && $conversation->exists) {
+            $plan->update(['ai_conversation_id' => $conversation->id]);
+        }
+
         // A plan made for a goal counts towards that goal. Other requests from the chat belong to
         // no goal: linking them to whichever goal was active moved its progress with unrelated work
         $goalId = $intent['parameters']['goal_id'] ?? null;
@@ -615,7 +639,13 @@ PROMPT;
             try {
                 $goal = AiGoal::forUser($user->id)->find($goalId);
                 if ($goal) {
-                    $plan->update(['ai_goal_id' => $goal->id]);
+                    $goalStep = $intent['parameters']['goal_step'] ?? null;
+                    $plan->update(array_filter([
+                        'ai_goal_id' => $goal->id,
+                        'plan_data' => $goalStep !== null
+                            ? array_merge($plan->plan_data ?? [], ['goal_step' => (int) $goalStep])
+                            : null,
+                    ]));
                     $goal->updateProgress();
                 }
             } catch (\Exception $e) {
@@ -627,12 +657,13 @@ PROMPT;
         if ($this->modeController->planRequiresApproval($plan, $user)) {
             $approval = $this->modeController->requestApproval($plan, $user, $channel);
 
-            return [
+            return $this->withAgentUsage([
                 'type' => 'approval_request',
                 'message' => $this->formatPlanForApproval($plan),
                 'plan_id' => $plan->id,
                 'approval_id' => $approval->id,
-            ];
+                'plan' => self::planCard($plan),
+            ], $agent);
         }
 
         // Autonomous mode: execute immediately
@@ -665,16 +696,52 @@ PROMPT;
         try {
             $result = $agent->execute($plan, $user);
 
-            $plan->markCompleted([
+            // A plan whose change or send failed is a failed plan: it used to be "completed"
+            // (and counted as a success) although nothing was sent
+            $plan->refresh();
+            $planFailed = ($result['type'] ?? '') === 'error' || $this->planOutcomeFailed($plan);
+            $summary = [
                 'result' => $result['message'] ?? 'Completed',
                 'completed_steps' => $plan->completed_steps,
                 'failed_steps' => $plan->failed_steps,
-            ]);
+            ];
+
+            if ($planFailed) {
+                $plan->markFailed($summary);
+            } else {
+                $plan->markCompleted($summary);
+            }
 
             // Log agent completion event
-            AiBrainActivityLog::logEvent($user->id, 'agent_complete', 'completed', $agentName, [
+            AiBrainActivityLog::logEvent($user->id, 'agent_complete', $planFailed ? 'failed' : 'completed', $agentName, [
                 'plan_id' => $plan->id,
             ]);
+
+            if ($planFailed) {
+                // A goal records the failure (and pauses after repeated ones) like a crashed run
+                $failureMessage = '';
+                if ($plan->ai_goal_id) {
+                    try {
+                        $failureResult = $this->goalPlanner->handlePlanFailure($plan, mb_substr((string) ($result['message'] ?? ''), 0, 300), $user);
+                        $failureMessage = "\n\n" . ($failureResult['message'] ?? '');
+
+                        // "Retrying with another approach" — once: a step that fails twice
+                        // waits for the user (GoalPlanner::getNextAction)
+                        if (($failureResult['action'] ?? null) === 'retry') {
+                            \App\Jobs\ContinueBrainGoalJob::dispatch($plan->ai_goal_id, $user->id)->afterCommit();
+                        }
+                    } catch (\Exception $e) {
+                        Log::debug('Goal failure handling skipped', ['error' => $e->getMessage()]);
+                    }
+                }
+
+                return [
+                    'type' => 'execution_result',
+                    'message' => ($result['message'] ?? __('brain.plan_execution_error', ['error' => ''])) . $failureMessage,
+                    'plan_id' => $plan->id,
+                    'failed' => true,
+                ];
+            }
 
             // Disabled: AI style extraction to KB removed — only users can add KB entries
             // try {
@@ -724,6 +791,83 @@ PROMPT;
                 'plan_id' => $plan->id,
             ];
         }
+    }
+
+    /**
+     * Attach the tokens the agent used to its answer. They are charged to the daily budget
+     * already (BaseAgent::callAi), so processMessage must not charge them again.
+     */
+    protected function withAgentUsage(array $result, BaseAgent $agent): array
+    {
+        $usage = $agent->takeUsage();
+        if (!isset($result['tokens_input']) && !isset($result['tokens_output'])) {
+            $result['tokens_input'] = $usage['tokens_input'];
+            $result['tokens_output'] = $usage['tokens_output'];
+            $result['tokens_charged'] = true;
+        }
+
+        return $result;
+    }
+
+    /** Words that ask for a web search or outside research (PL, EN, DE, ES stems). */
+    protected const WEB_RESEARCH_KEYWORDS = [
+        'zbadaj', 'wyszukaj', 'poszukaj', 'internet', 'w sieci', 'google', 'konkurenc', 'rynk', 'trend', 'branż',
+        'news', 'wiadomości z', 'research', 'search', 'look up', 'competitor', 'industry',
+        'recherch', 'wettbewerb', 'konkurrenz', 'markt', 'investiga', 'busca', 'competencia', 'mercado', 'tendencia',
+    ];
+
+    protected function isPlainQuestion(string $message): bool
+    {
+        $lower = mb_strtolower(trim($message));
+
+        return str_ends_with($lower, '?')
+            || (bool) preg_match('/^(jak|jaki|jaka|jakie|ile|czy|co|kiedy|gdzie|dlaczego|what|how|which|when|where|why|is|are|do|does|wie|was|welche|wann|qué|cómo|cuál|cuánto)\b/u', $lower);
+    }
+
+    protected function asksForWebResearch(string $message): bool
+    {
+        $lower = mb_strtolower($message);
+        foreach (self::WEB_RESEARCH_KEYWORDS as $keyword) {
+            if (str_contains($lower, $keyword)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The plan as the chat shows it with approve/reject buttons.
+     */
+    public static function planCard(AiActionPlan $plan): array
+    {
+        return [
+            'id' => $plan->id,
+            'title' => $plan->title,
+            'steps' => $plan->steps()->orderBy('step_order')->get()->map(fn ($step) => [
+                'action' => $step->action_type,
+                'description' => $step->title,
+                'tier' => \App\Services\Brain\Tools\ToolRegistry::tierOf($step->action_type),
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * Whether a finished plan failed: a failed step that changes or sends something, or every
+     * step failed. A failed read-only step (one statistic missing from a report) does not fail
+     * a plan whose other steps worked.
+     */
+    protected function planOutcomeFailed(AiActionPlan $plan): bool
+    {
+        $steps = $plan->steps()->get();
+        $failed = $steps->where('status', 'failed');
+
+        if ($failed->isEmpty()) {
+            return false;
+        }
+
+        return $failed->count() === $steps->count()
+            || $failed->contains(fn ($step) => \App\Services\Brain\Tools\ToolRegistry::tierOf($step->action_type) !== \App\Services\Brain\Tools\ToolRegistry::TIER_READ);
     }
 
     /**
@@ -782,6 +926,10 @@ PROMPT;
             $nextAction = $this->goalPlanner->getNextAction($goal);
 
             if ($nextAction) {
+                // The next step starts on the queue once this plan is done (the message used
+                // to promise it while only an enabled hourly cron ever did)
+                \App\Jobs\ContinueBrainGoalJob::dispatch($goal->id, $user->id)->afterCommit();
+
                 return [
                     'type' => 'goal_continuation',
                     'message' => __('brain.goals.continued_next_plan', [
@@ -875,37 +1023,68 @@ PROMPT;
             }
         }
 
-        // In autonomous mode, start executing the first plan immediately
-        if ($settings->work_mode === ModeController::MODE_AUTONOMOUS) {
-            $firstPlan = $subPlans[0] ?? null;
-            if ($firstPlan) {
-                $message .= "\n⚡ " . __('brain.goals.starting_first_plan', [
-                    'plan' => $firstPlan['title'] ?? '',
-                ]) . "\n";
-
-                // Execute first plan by routing to agent
-                $intent = [
-                    'requires_agent' => true,
-                    'agent' => $firstPlan['agent'] ?? 'campaign',
-                    'intent' => $firstPlan['intent'] ?? $firstPlan['description'] ?? $firstPlan['title'],
-                    'task_type' => $firstPlan['agent'] ?? 'campaign',
-                    'confidence' => 0.9,
-                    'parameters' => [],
-                ];
-
-                $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'], query: $intent['intent'] ?? null);
-                $planResult = $this->handleAgentRequest($intent, $user, $conversation, 'web', $knowledgeContext);
-                $message .= "\n" . ($planResult['message'] ?? '');
-            }
-        } else {
-            $message .= "\n" . __('brain.goals.awaiting_approval');
-        }
-
-        return [
+        // The first step starts now in every mode: semi-automatic gets its plan to approve (the
+        // chat used to say "approve each step" with nothing to approve), autonomous runs it.
+        // The next steps follow as each plan finishes (ContinueBrainGoalJob)
+        $firstStep = $this->goalPlanner->getNextAction($goal->fresh());
+        $result = [
             'type' => 'goal_created',
-            'message' => $message,
             'goal_id' => $goal->id,
         ];
+
+        if ($firstStep) {
+            $message .= "\n⚡ " . __('brain.goals.starting_first_plan', ['plan' => $firstStep['title'] ?? '']) . "\n";
+            $stepResult = $this->startGoalStep($goal, $firstStep, $user, $conversation, 'web');
+            $message .= "\n" . ($stepResult['message'] ?? '');
+
+            foreach (['type', 'plan_id', 'approval_id', 'plan', 'failed'] as $key) {
+                if (array_key_exists($key, $stepResult)) {
+                    $result[$key] = $stepResult[$key];
+                }
+            }
+        }
+
+        $result['message'] = $message;
+
+        return $result;
+    }
+
+    /**
+     * Start one step of a goal's decomposition: the agent plans it, and the agent's mode decides
+     * what happens next (advice, a plan waiting for approval, or an immediate run).
+     */
+    public function startGoalStep(
+        AiGoal $goal,
+        array $step,
+        User $user,
+        ?AiConversation $conversation = null,
+        string $channel = 'web',
+    ): array {
+        $agentName = $step['agent'] ?? 'campaign';
+        $intentText = $step['intent'] ?? $step['title'] ?? $goal->title;
+        if (!empty($step['description']) && $step['description'] !== $intentText) {
+            $intentText .= "\n" . $step['description'];
+        }
+
+        $intent = [
+            'requires_agent' => true,
+            'agent' => $agentName,
+            'intent' => $intentText,
+            'task_type' => $agentName,
+            'confidence' => 0.9,
+            'channel' => $channel,
+            // The step brief comes from the goal: no "tell me more" round trip
+            'has_user_details' => true,
+            'parameters' => [
+                'goal_id' => $goal->id,
+                'goal_step' => $step['order'] ?? null,
+            ],
+        ];
+
+        $conversation ??= $goal->conversation ?? new AiConversation(['user_id' => $user->id]);
+        $knowledgeContext = $this->knowledgeBase->getContext($user, $agentName, query: $intentText);
+
+        return $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
     }
 
     /**
@@ -1222,7 +1401,7 @@ PROMPT;
             }
         }
 
-        $text .= "\n" . __('brain.mode_label', ['mode' => $this->modeController->getModeLabel($plan->work_mode)]);
+        $text .= "\n" . __('brain.mode_label', ['mode' => __($this->modeController->getModeLabel($plan->work_mode))]);
         $text .= "\n\n" . __('brain.approve_reject');
 
         return $text;

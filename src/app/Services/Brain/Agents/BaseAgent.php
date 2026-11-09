@@ -161,6 +161,25 @@ abstract class BaseAgent
     /** Whether callAi() runs inside executeStep() (tokens logged with the step). */
     protected bool $inStepExecution = false;
 
+    /** Tokens of all callAi() calls since the last takeUsage() (advice, info questions, planning). */
+    protected int $usageTokensInput = 0;
+    protected int $usageTokensOutput = 0;
+
+    /**
+     * Tokens the agent used since the last call, which resets the count. The chat records them
+     * with the answer (advice and plans showed 0 tokens); the daily budget is already charged.
+     *
+     * @return array{tokens_input: int, tokens_output: int}
+     */
+    public function takeUsage(): array
+    {
+        $usage = ['tokens_input' => $this->usageTokensInput, 'tokens_output' => $this->usageTokensOutput];
+        $this->usageTokensInput = 0;
+        $this->usageTokensOutput = 0;
+
+        return $usage;
+    }
+
     /**
      * Call AI provider with prompt.
      * Supports per-task model routing via AiBrainSettings.
@@ -185,18 +204,41 @@ abstract class BaseAgent
         }
 
         $startTime = microtime(true);
+        $prompt = AiService::prependDateContext($prompt, $user?->timezone);
 
-        $result = $this->aiService->generateContentWithUsage(
-            AiService::prependDateContext($prompt, $user?->timezone),
-            $integration,
-            $options
-        );
+        try {
+            $result = $this->aiService->generateContentWithUsage($prompt, $integration, $options);
+        } catch (\Exception $e) {
+            // The model assigned to the task failed (a free Gemini key has no quota for 2.5 Pro,
+            // a key was revoked...): retry once on the Brain model instead of failing the step
+            $fallback = $user ? AiBrainSettings::getForUser($user->id)->fallbackAi($integration, $options['model'] ?? null) : null;
+            if (!$fallback) {
+                throw $e;
+            }
+
+            Log::warning('Brain task model failed, retrying on the Brain model', [
+                'task' => $task,
+                'integration_id' => $integration->id,
+                'model' => $options['model'] ?? $integration->default_model,
+                'error' => mb_substr($e->getMessage(), 0, 300),
+            ]);
+
+            [$integration, $fallbackModel] = $fallback;
+            unset($options['model']);
+            if ($fallbackModel) {
+                $options['model'] = $fallbackModel;
+            }
+
+            $result = $this->aiService->generateContentWithUsage($prompt, $integration, $options);
+        }
 
         $tokensIn = $result['tokens_input'];
         $tokensOut = $result['tokens_output'];
 
         $this->stepTokensInput += $tokensIn;
         $this->stepTokensOutput += $tokensOut;
+        $this->usageTokensInput += $tokensIn;
+        $this->usageTokensOutput += $tokensOut;
         $this->stepModelUsed = $result['model'] ?? $this->stepModelUsed;
 
         if ($user && ($tokensIn + $tokensOut) > 0) {
@@ -306,6 +348,13 @@ abstract class BaseAgent
         $maxRetries = 2;
         $lastException = null;
 
+        // Nothing is sent once an earlier step of the plan failed: the send would go out with
+        // missing content or the wrong audience
+        if (\App\Services\Brain\Tools\ToolRegistry::tierOf($step->action_type) === \App\Services\Brain\Tools\ToolRegistry::TIER_SEND
+            && $step->plan->steps()->where('step_order', '<', $step->step_order)->where('status', 'failed')->exists()) {
+            return $this->failStep($step, $user, __('brain.step_skipped_after_failure'));
+        }
+
         // Reset per-step token accounting (accumulated by callAi)
         $this->stepTokensInput = 0;
         $this->stepTokensOutput = 0;
@@ -323,6 +372,14 @@ abstract class BaseAgent
                 }
 
                 $result = $this->executeStepAction($step, $user);
+
+                // A step that reports failure is a failed step, not a completed one: "message not
+                // found" or a send blocked by the safety checks used to count as done, and the plan
+                // was reported as a success although nothing was sent
+                if (($result['status'] ?? null) === 'failed') {
+                    $failedResult = $result;
+                    break;
+                }
 
                 $step->markCompleted($result);
 
@@ -362,8 +419,13 @@ abstract class BaseAgent
             }
         }
 
-        // All retries exhausted — mark as failed
         $this->inStepExecution = false;
+
+        if (isset($failedResult)) {
+            $this->failStep($step, $user, (string) ($failedResult['message'] ?? __('brain.step_failed')), $failedResult);
+        }
+
+        // All retries exhausted — mark as failed
         $step->markFailed($lastException->getMessage());
 
         AiExecutionLog::logError(
@@ -377,6 +439,31 @@ abstract class BaseAgent
         );
 
         throw $lastException;
+    }
+
+    /**
+     * Record a step that did not succeed and stop the plan's step loop for it.
+     *
+     * @throws \RuntimeException always — the agents' loops report a thrown step as failed
+     */
+    protected function failStep(AiActionPlanStep $step, User $user, string $reason, array $result = []): never
+    {
+        $step->markFailed($reason);
+        if (!empty($result)) {
+            $step->update(['result' => $result]);
+        }
+
+        AiExecutionLog::logError(
+            $user->id,
+            $this->getName(),
+            "execute_step:{$step->action_type}",
+            $reason,
+            $step->config,
+            $step->ai_action_plan_id,
+            $step->id
+        );
+
+        throw new \RuntimeException($reason);
     }
 
     /**

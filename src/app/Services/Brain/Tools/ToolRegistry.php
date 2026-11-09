@@ -45,22 +45,22 @@ class ToolRegistry
             'schedule_send' => [
                 'tier' => self::TIER_SEND,
                 'description' => 'REALLY send or schedule the campaign — dispatches actual emails through the send pipeline after safety checks',
-                'config' => '{send_at: "YYYY-MM-DD HH:MM"|"immediate", list_ids: [N], message_id: N}',
+                'config' => '{send_at: "YYYY-MM-DD HH:MM"|"immediate", list_ids: [N], message_id: ID of an EXISTING message — omit it when this plan creates the message (the message from the create_message step is used)}',
             ],
             'create_ab_test' => [
                 'tier' => self::TIER_WRITE,
                 'description' => 'create A/B test for a message',
-                'config' => '{message_id: N, test_type: "subject"|"content"|"sender"|"send_time"|"full", winning_metric: "open_rate"|"click_rate", sample_percentage: 20, test_duration_hours: 24, auto_select_winner: true, variants: [{subject: "", preheader: ""}, {subject: "", preheader: ""}]}',
+                'config' => '{message_id: ID of an EXISTING message — omit it when this plan creates the message, test_type: "subject"|"content"|"sender"|"send_time"|"full", winning_metric: "open_rate"|"click_rate", sample_percentage: 20, test_duration_hours: 24, auto_select_winner: true, variants: [{subject: "", preheader: ""}, {subject: "", preheader: ""}]}',
             ],
             'start_ab_test' => [
                 'tier' => self::TIER_SEND,
                 'description' => 'start a created A/B test so variants get sampled during sending — use after create_ab_test and before/with schedule_send',
-                'config' => '{ab_test_id: N}',
+                'config' => '{ab_test_id: ID of an EXISTING test — omit it when this plan creates the test}',
             ],
             'apply_ab_winner' => [
                 'tier' => self::TIER_SEND,
                 'description' => 'complete a running A/B test, pick the winner and send it to the remaining audience',
-                'config' => '{ab_test_id: N, force: false}',
+                'config' => '{ab_test_id: ID of an EXISTING test — omit it when this plan creates the test, force: false}',
             ],
             'check_ab_results' => [
                 'tier' => self::TIER_READ,

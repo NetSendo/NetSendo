@@ -8419,6 +8419,7 @@
             "campaign": "📧 Planificación de campañas",
             "crm": "👥 CRM",
             "segmentation": "🎯 Segmentación",
+            "research": "🔍 Investigación web",
             "conversation": "💬 Conversación general"
         },
         "model": {
@@ -8442,7 +8443,10 @@
         "plan": {
             "title": "Plan de acción",
             "approve": "Aprobar",
-            "reject": "Rechazar"
+            "reject": "Rechazar",
+            "queued": "Plan aprobado — ejecutando en segundo plano. El resultado aparecerá en esta conversación.",
+            "rejected": "Plan rechazado.",
+            "decision_failed": "No se pudo guardar la decisión."
         },
         "telegram": {
             "title": "Integración con Telegram",
@@ -8634,7 +8638,13 @@
                 "goal_progress": "Progreso del objetivo",
                 "goal_completed": "Objetivo alcanzado",
                 "goal_metric_evaluated": "Métrica del objetivo comprobada",
-                "goal_sub_plan_executed": "Plan del objetivo ejecutado"
+                "goal_sub_plan_executed": "Plan del objetivo ejecutado",
+                "plan_execution_finished": "Ejecución del plan terminada",
+                "goal_step_started": "Iniciado el siguiente paso del objetivo",
+                "cron_error": "Error de tarea CRON",
+                "cron_run": "Ejecución de CRON",
+                "cron_task_pending_approval": "Tarea CRON pendiente de aprobación",
+                "cron_task_skipped": "Tarea CRON omitida"
             },
             "statuses": {
                 "started": "iniciado",

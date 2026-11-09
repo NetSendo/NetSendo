@@ -500,31 +500,54 @@ const handleKeyDown = (e) => {
 };
 
 // --- Plan Actions ---
-const approvePlan = async (planId) => {
+// The buttons go away once a decision is sent, and the chat says what happens next. The
+// plan's result is posted into this conversation when the run finishes.
+const decidePlan = async (msg, approved) => {
+    const planId = msg.plan?.id;
+    if (!planId) return;
+    msg.plan = null;
     try {
-        await axios.post(`/brain/api/plans/${planId}/approve`, {
-            approved: true,
+        const response = await axios.post(`/brain/api/plans/${planId}/approve`, {
+            approved,
+            reason: approved ? undefined : "User rejected from UI",
         });
-        // Refresh current conversation
-        if (activeConversationId.value) {
-            await loadConversation(activeConversationId.value);
+        messages.value.push({
+            id: Date.now(),
+            role: "system",
+            content: approved
+                ? response.data?.message ||
+                  t("brain.plan.queued", "Plan zatwierdzony — wykonuję w tle.")
+                : t("brain.plan.rejected", "Plan odrzucony."),
+            created_at: new Date().toISOString(),
+        });
+        if (approved && activeConversationId.value) {
+            // Pick up the result message the run posts into this conversation
+            const conversationId = activeConversationId.value;
+            setTimeout(() => refreshActiveConversation(conversationId), 15000);
         }
     } catch (error) {
-        // Error handling
+        messages.value.push({
+            id: Date.now(),
+            role: "system",
+            content:
+                error.response?.data?.error ||
+                t("brain.plan.decision_failed", "Nie udało się zapisać decyzji."),
+            created_at: new Date().toISOString(),
+        });
     }
 };
 
-const rejectPlan = async (planId) => {
+const refreshActiveConversation = async (conversationId) => {
+    if (conversationId !== activeConversationId.value) return;
     try {
-        await axios.post(`/brain/api/plans/${planId}/approve`, {
-            approved: false,
-            reason: "User rejected from UI",
-        });
-        if (activeConversationId.value) {
-            await loadConversation(activeConversationId.value);
+        const response = await axios.get(
+            `/brain/api/conversations/${conversationId}`,
+        );
+        if (conversationId === activeConversationId.value) {
+            messages.value = response.data.messages || [];
         }
     } catch (error) {
-        // Error handling
+        // keep the current messages
     }
 };
 
@@ -1019,7 +1042,7 @@ const getLastMessage = (conversation) => {
                                     </div>
                                     <div class="mt-3 flex gap-2">
                                         <button
-                                            @click="approvePlan(msg.plan.id)"
+                                            @click="decidePlan(msg, true)"
                                             class="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-600"
                                         >
                                             ✓
@@ -1031,7 +1054,7 @@ const getLastMessage = (conversation) => {
                                             }}
                                         </button>
                                         <button
-                                            @click="rejectPlan(msg.plan.id)"
+                                            @click="decidePlan(msg, false)"
                                             class="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-600"
                                         >
                                             ✕

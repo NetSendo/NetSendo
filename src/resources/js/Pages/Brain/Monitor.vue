@@ -612,13 +612,13 @@ function trendClass(trend, higherIsBetter = true) {
                             class="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"
                         >
                             <span class="text-green-500"
-                                >✓ {{ planStats.completed || 0 }}</span
+                                >✓ {{ planStats.completed_today || 0 }}</span
                             >
                             <span class="text-amber-500"
                                 >⏳ {{ planStats.active || 0 }}</span
                             >
                             <span class="text-red-500"
-                                >✕ {{ planStats.failed || 0 }}</span
+                                >✕ {{ planStats.failed_today || 0 }}</span
                             >
                         </div>
                     </div>

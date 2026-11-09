@@ -80,10 +80,12 @@ class ExecuteBrainPlanJob implements ShouldQueue
 
         $durationMs = (int) ((microtime(true) - $startTime) * 1000);
 
+        $failed = ($result['type'] ?? '') === 'error' || !empty($result['failed']);
+
         AiBrainActivityLog::logEvent(
             $user->id,
             'plan_execution_finished',
-            ($result['type'] ?? '') === 'error' ? 'error' : 'completed',
+            $failed ? 'error' : 'completed',
             $plan->agent_type,
             [
                 'plan_id' => $plan->id,
@@ -94,8 +96,38 @@ class ExecuteBrainPlanJob implements ShouldQueue
             $durationMs
         );
 
+        // The chat that asked for the plan gets its result: approving in the Monitor or on
+        // Telegram used to leave the conversation without an answer
+        $this->postToConversation($plan, $result);
+
         if ($this->notifyChannel === 'telegram') {
             $this->notifyTelegram($user, $result);
+        }
+    }
+
+    protected function postToConversation(AiActionPlan $plan, array $result): void
+    {
+        try {
+            $conversation = $plan->ai_conversation_id
+                ? \App\Models\AiConversation::where('user_id', $plan->user_id)->find($plan->ai_conversation_id)
+                : null;
+
+            if (!$conversation) {
+                return;
+            }
+
+            app(\App\Services\Brain\ConversationManager::class)->addAssistantMessage(
+                $conversation,
+                $result['message'] ?? __('brain.plan_executed'),
+                ['plan_id' => $plan->id, 'agent' => $plan->agent_type, 'type' => 'plan_result'],
+                $result['tokens_input'] ?? 0,
+                $result['tokens_output'] ?? 0,
+            );
+        } catch (\Exception $e) {
+            Log::warning('ExecuteBrainPlanJob: posting the result to the conversation failed', [
+                'plan_id' => $plan->id,
+                'error' => $e->getMessage(),
+            ]);
         }
     }
 
