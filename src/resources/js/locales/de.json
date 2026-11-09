@@ -8218,6 +8218,15 @@
             "custom_placeholder": "z.B. Chinesisch, Japanisch, Arabisch...",
             "save": "Sprache speichern"
         },
+        "task_limit": {
+            "title": "Token-Limit pro Aufgabe",
+            "description": "Wie viele Tokens Brain für eine Aufgabe verbrauchen darf: eine Chat-Nachricht, die Ausführung eines Plans, einen Zielschritt oder eine automatische Aufgabe. Eine Aufgabe, die das Limit überschreitet, wird mit einer Erklärung gestoppt; andere Aufgaben laufen weiter. Es gibt kein Tageslimit.",
+            "label": "Tokens pro Aufgabe",
+            "save": "Limit speichern",
+            "hint": "0 bedeutet kein Limit. Standard 100.000. Eine typische Kampagne verbraucht etwa 20.000 Tokens.",
+            "used_today": "Brain hat heute {tokens} Tokens verbraucht. Das ist nur eine Statistik und blockiert nichts.",
+            "save_failed": "Das Limit konnte nicht gespeichert werden."
+        },
         "research": {
             "title": "Internetrecherche",
             "description": "Geben Sie Brain Zugang zu Echtzeit-Internetdaten. Recherchieren Sie Wettbewerber, Markttrends und bereichern Sie das CRM mit Live-Unternehmensdaten.",
@@ -8311,6 +8320,8 @@
             "next_run": "Nächster Lauf",
             "plans_today": "Pläne heute",
             "tokens_today": "Tokens heute",
+            "task_token_limit": "Limit pro Aufgabe",
+            "no_task_token_limit": "kein Limit",
             "last_activity": "Letzte Aktivität",
             "never": "Nie",
             "tasks_today": "Heute",

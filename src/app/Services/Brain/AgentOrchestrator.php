@@ -83,6 +83,20 @@ class AgentOrchestrator
         ?int $conversationId = null,
         bool $forceNew = false,
     ): array {
+        // One message is one task, with its own token limit (TaskTokenBudget)
+        return TaskTokenBudget::run($user, fn () => $this->runMessage($message, $user, $channel, $conversationId, $forceNew));
+    }
+
+    /**
+     * The work of processMessage(), run as one task.
+     */
+    protected function runMessage(
+        string $message,
+        User $user,
+        string $channel,
+        ?int $conversationId,
+        bool $forceNew,
+    ): array {
         $startTime = microtime(true);
         $settings = AiBrainSettings::getForUser($user->id);
 
@@ -97,14 +111,6 @@ class AgentOrchestrator
             return [
                 'type' => 'error',
                 'message' => __('brain.no_ai_integration'),
-            ];
-        }
-
-        // Check token limits
-        if ($settings->isTokenLimitReached()) {
-            return [
-                'type' => 'error',
-                'message' => __('brain.token_limit_reached'),
             ];
         }
 
@@ -234,6 +240,9 @@ class AgentOrchestrator
                 }
             }
 
+            // A task stopped by its token limit says so, whichever of its steps hit the limit
+            $result = $this->withTaskLimitNotice($result);
+
             // Step 4: Ensure model label is present for display
             $modelUsed = $result['model'] ?? null;
             if (!$modelUsed && ($result['type'] ?? '') !== 'info_request') {
@@ -332,7 +341,10 @@ class AgentOrchestrator
                 ['message' => mb_substr($message, 0, 200)]
             );
 
-            $errorMsg = __('brain.processing_error');
+            // A message stopped by its token limit explains the limit (not "skipped")
+            $errorMsg = $e instanceof TaskTokenLimitExceeded
+                ? (TaskTokenBudget::exceededMessage() ?? $e->getMessage())
+                : __('brain.processing_error');
             $this->conversationManager->addAssistantMessage($conversation, $errorMsg);
 
             return [
@@ -598,6 +610,14 @@ PROMPT;
         // Create an action plan (with retry on failure)
         $plan = $agent->plan($intent, $user, $knowledgeContext);
 
+        if (!$plan && TaskTokenBudget::exceeded()) {
+            return $this->withAgentUsage([
+                'type' => 'error',
+                'message' => TaskTokenBudget::exceededMessage(),
+                'failed' => true,
+            ], $agent);
+        }
+
         if (!$plan) {
             // Retry once with a simplified prompt approach
             Log::info('First plan attempt failed, retrying with simplified prompt', [
@@ -675,6 +695,15 @@ PROMPT;
      */
     public function executePlan(AiActionPlan $plan, User $user): array
     {
+        // A plan run is one task with its own token limit (inside a chat message: part of it)
+        return TaskTokenBudget::run($user, fn () => $this->runPlan($plan, $user));
+    }
+
+    /**
+     * The work of executePlan(), run as one task.
+     */
+    protected function runPlan(AiActionPlan $plan, User $user): array
+    {
         $agentName = $plan->agent_type;
         $agent = $this->agents[$agentName] ?? null;
 
@@ -694,12 +723,13 @@ PROMPT;
         ]);
 
         try {
-            $result = $agent->execute($plan, $user);
+            // A run stopped by the task's token limit is a failed run and says why
+            $result = $this->withTaskLimitNotice($agent->execute($plan, $user));
 
             // A plan whose change or send failed is a failed plan: it used to be "completed"
             // (and counted as a success) although nothing was sent
             $plan->refresh();
-            $planFailed = ($result['type'] ?? '') === 'error' || $this->planOutcomeFailed($plan);
+            $planFailed = ($result['type'] ?? '') === 'error' || !empty($result['failed']) || $this->planOutcomeFailed($plan);
             $summary = [
                 'result' => $result['message'] ?? 'Completed',
                 'completed_steps' => $plan->completed_steps,
@@ -726,8 +756,9 @@ PROMPT;
                         $failureMessage = "\n\n" . ($failureResult['message'] ?? '');
 
                         // "Retrying with another approach" — once: a step that fails twice
-                        // waits for the user (GoalPlanner::getNextAction)
-                        if (($failureResult['action'] ?? null) === 'retry') {
+                        // waits for the user (GoalPlanner::getNextAction). A step stopped by the
+                        // token limit is not retried: it would use the same tokens again
+                        if (($failureResult['action'] ?? null) === 'retry' && !TaskTokenBudget::exceeded()) {
                             \App\Jobs\ContinueBrainGoalJob::dispatch($plan->ai_goal_id, $user->id)->afterCommit();
                         }
                     } catch (\Exception $e) {
@@ -794,8 +825,28 @@ PROMPT;
     }
 
     /**
-     * Attach the tokens the agent used to its answer. They are charged to the daily budget
-     * already (BaseAgent::callAi), so processMessage must not charge them again.
+     * Tell the user when the running task was stopped by its token limit (TaskTokenBudget):
+     * the explanation is added once, and the result counts as failed.
+     */
+    protected function withTaskLimitNotice(array $result): array
+    {
+        $limitMessage = TaskTokenBudget::exceededMessage();
+        if ($limitMessage === null) {
+            return $result;
+        }
+
+        $message = trim((string) ($result['message'] ?? ''));
+        if (!str_contains($message, $limitMessage)) {
+            $result['message'] = trim($message . "\n\n" . $limitMessage);
+        }
+        $result['failed'] = true;
+
+        return $result;
+    }
+
+    /**
+     * Attach the tokens the agent used to its answer. They are charged already
+     * (BaseAgent::callAi), so processMessage must not charge them again.
      */
     protected function withAgentUsage(array $result, BaseAgent $agent): array
     {
@@ -1082,9 +1133,14 @@ PROMPT;
         ];
 
         $conversation ??= $goal->conversation ?? new AiConversation(['user_id' => $user->id]);
-        $knowledgeContext = $this->knowledgeBase->getContext($user, $agentName, query: $intentText);
 
-        return $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
+        // A goal step is one task with its own token limit
+        return TaskTokenBudget::run($user, function () use ($intent, $user, $conversation, $channel, $agentName, $intentText) {
+            $knowledgeContext = $this->knowledgeBase->getContext($user, $agentName, query: $intentText);
+            return $this->withTaskLimitNotice(
+                $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext),
+            );
+        });
     }
 
     /**
@@ -1115,6 +1171,8 @@ PROMPT;
             $user,
             $knowledgeContext,
         );
+
+        TaskTokenBudget::ensureAvailable($user->id);
 
         $provider = $this->aiService->getProvider($integration);
         $modelToUse = $preferredModel ?: null;
@@ -1159,10 +1217,6 @@ PROMPT;
 
         if (!$integration) {
             return null; // Fallback to synchronous
-        }
-
-        if ($settings->isTokenLimitReached()) {
-            return null;
         }
 
         // Resolve conversation
@@ -1626,6 +1680,15 @@ PROMPT;
      * Auto-fills context from CRM data so agents don't need to ask for info.
      */
     public function executeCronTask(array $task, User $user): array
+    {
+        // Each cron task is one task with its own token limit
+        return TaskTokenBudget::run($user, fn () => $this->runCronTask($task, $user));
+    }
+
+    /**
+     * The work of executeCronTask(), run as one task.
+     */
+    protected function runCronTask(array $task, User $user): array
     {
         $startTime = microtime(true);
         $agentName = $task['agent'] ?? null;

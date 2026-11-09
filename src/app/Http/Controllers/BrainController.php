@@ -736,7 +736,15 @@ class BrainController extends Controller
         $request->validate([
             'work_mode' => 'nullable|string|in:autonomous,semi_auto,manual',
             'preferred_language' => 'nullable|string|max:5',
-            'daily_token_limit' => 'nullable|integer|min:1000',
+            // Tokens one task may use (TaskTokenBudget); 0 = no limit
+            'task_token_limit' => [
+                'nullable', 'integer', 'min:0', 'max:100000000',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if ($value > 0 && $value < 1000) {
+                        $fail(__('brain.task_token_limit_too_low'));
+                    }
+                },
+            ],
             'preferences' => 'nullable|array',
             'telegram_bot_token' => 'nullable|string|max:255',
             'perplexity_api_key' => 'nullable|string|max:255',
@@ -780,7 +788,7 @@ class BrainController extends Controller
 
         // Standard fields
         $settings->update($request->only([
-            'preferred_language', 'daily_token_limit',
+            'preferred_language', 'task_token_limit',
             'telegram_bot_token',
             'perplexity_api_key', 'serpapi_api_key',
             'preferred_model', 'preferred_integration_id',

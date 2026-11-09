@@ -189,7 +189,8 @@ class ModeController
             $summary .= "{$plan->description}\n\n";
         }
 
-        $summary .= "**" . __('brain.steps_to_execute') . "**\n";
+        // The translation is bold already ("**Steps to execute:**")
+        $summary .= __('brain.steps_to_execute') . "\n";
         foreach ($steps as $step) {
             $summary .= "  {$step->step_order}. {$step->title}\n";
         }

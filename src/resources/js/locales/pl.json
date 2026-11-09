@@ -8867,6 +8867,15 @@
             "custom_placeholder": "np. chiński, japoński, arabski...",
             "save": "Zapisz język"
         },
+        "task_limit": {
+            "title": "Limit tokenów na zadanie",
+            "description": "Ile tokenów Brain może zużyć na jedno zadanie: wiadomość w czacie, wykonanie planu, krok celu albo zadanie automatyczne. Zadanie, które przekroczy limit, zostaje przerwane z wyjaśnieniem, a pozostałe działają dalej. Nie ma limitu dziennego.",
+            "label": "Tokeny na jedno zadanie",
+            "save": "Zapisz limit",
+            "hint": "0 oznacza brak limitu. Domyślnie 100 000. Typowa kampania zużywa około 20 000 tokenów.",
+            "used_today": "Dzisiaj Brain zużył {tokens} tokenów. To tylko statystyka, nic nie jest przez nią blokowane.",
+            "save_failed": "Nie udało się zapisać limitu."
+        },
         "research": {
             "title": "Badania internetowe",
             "description": "Daj Brainowi dostęp do aktualnych danych z internetu. Badaj konkurencję, trendy rynkowe i wzbogacaj CRM o dane firm w czasie rzeczywistym.",
@@ -8960,6 +8969,8 @@
             "next_run": "Następne uruchomienie",
             "plans_today": "Plany dzisiaj",
             "tokens_today": "Tokeny dzisiaj",
+            "task_token_limit": "Limit na zadanie",
+            "no_task_token_limit": "bez limitu",
             "last_activity": "Ostatnia aktywność",
             "never": "Nigdy",
             "tasks_today": "Dzisiaj",

@@ -113,6 +113,9 @@ class BrainPageController extends Controller
             'agents' => $agents,
             'agent_modes' => $agentModes,
             'strategy_settings' => $settings->strategy_settings ?? AiBrainSettings::DEFAULT_STRATEGY,
+            // Tokens one task may use (0 = no limit) and today's usage, shown next to it
+            'taskTokenLimit' => $settings->taskTokenLimit(),
+            'tokensUsedToday' => $settings->tokensUsedToday(),
         ]);
     }
 
@@ -140,7 +143,7 @@ class BrainPageController extends Controller
                 'cron_enabled' => (bool) $settings->cron_enabled,
                 'cron_interval_minutes' => (int) ($settings->cron_interval_minutes ?? 60),
                 'is_active' => (bool) $settings->is_active,
-                'daily_token_limit' => (int) $settings->daily_token_limit,
+                'task_token_limit' => $settings->taskTokenLimit(),
                 'tokens_used_today' => $settings->tokensUsedToday(),
             ],
         ]);

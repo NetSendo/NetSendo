@@ -669,6 +669,24 @@ function trendClass(trend, higherIsBetter = true) {
                                 }}</span
                             >
                         </div>
+                        <p
+                            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                        >
+                            {{
+                                t(
+                                    "brain.monitor.task_token_limit",
+                                    "Limit na zadanie",
+                                )
+                            }}:
+                            {{
+                                (settings?.task_token_limit ?? 0) > 0
+                                    ? settings.task_token_limit.toLocaleString()
+                                    : t(
+                                          "brain.monitor.no_task_token_limit",
+                                          "bez limitu",
+                                      )
+                            }}
+                        </p>
                         <button
                             v-if="tokensToday.by_model?.length"
                             @click="showModelBreakdown = !showModelBreakdown"

@@ -52,6 +52,7 @@ class AiBrainSettings extends Model
         'strategy_settings',
         'agent_modes',
         'daily_token_limit',
+        'task_token_limit',
         'tokens_used_today',
         'token_reset_date',
         'is_active',
@@ -75,6 +76,7 @@ class AiBrainSettings extends Model
         'token_reset_date' => 'date',
         'is_active' => 'boolean',
         'daily_token_limit' => 'integer',
+        'task_token_limit' => 'integer',
         'embedding_integration_id' => 'integer',
         'tokens_used_today' => 'integer',
         'cron_enabled' => 'boolean',
@@ -297,18 +299,22 @@ class AiBrainSettings extends Model
         return $this->autonomyLicensed() && ($this->isPerplexityConfigured() || $this->isSerpApiConfigured());
     }
 
+    /** Tokens one task may use when the user has not set a limit (TaskTokenBudget). */
+    public const DEFAULT_TASK_TOKEN_LIMIT = 100000;
+
     /**
-     * Check if the daily token limit is reached.
+     * Tokens one Brain task may use: a chat message, a plan run, a goal step or a cron task.
+     * 0 means no limit. There is no daily limit — it stopped every task for the rest of the
+     * day, however many lists and tasks were still waiting.
      */
-    public function isTokenLimitReached(): bool
+    public function taskTokenLimit(): int
     {
-        return $this->tokensUsedToday() >= $this->daily_token_limit;
+        return max(0, (int) ($this->task_token_limit ?? self::DEFAULT_TASK_TOKEN_LIMIT));
     }
 
     /**
-     * Tokens charged today. The stored counter is reset only when tokens are charged, so a
-     * count left from an earlier day is no longer today's — without this a day that ended
-     * over the limit blocked Brain for good (blocked calls charge nothing, so nothing reset it).
+     * Tokens charged today (statistics only — nothing is blocked by it). The stored counter is
+     * reset when tokens are charged, so a count left from an earlier day is no longer today's.
      */
     public function tokensUsedToday(): int
     {
@@ -316,10 +322,12 @@ class AiBrainSettings extends Model
     }
 
     /**
-     * Add tokens used and check if reset is needed.
+     * Charge tokens of an AI call: today's statistics and the running task's budget.
      */
     public function addTokensUsed(int $tokens): void
     {
+        \App\Services\Brain\TaskTokenBudget::charge((int) $this->user_id, $tokens);
+
         if (!$this->countsForToday()) {
             $this->update([
                 'tokens_used_today' => $tokens,
@@ -464,7 +472,7 @@ class AiBrainSettings extends Model
             [
                 'work_mode' => 'semi_auto',
                 'preferred_language' => 'auto',
-                'daily_token_limit' => 100000,
+                'task_token_limit' => self::DEFAULT_TASK_TOKEN_LIMIT,
             ]
         );
     }

@@ -8872,6 +8872,15 @@
             "custom_placeholder": "e.g. Chinese, Japanese, Arabic...",
             "save": "Save language"
         },
+        "task_limit": {
+            "title": "Token limit per task",
+            "description": "How many tokens Brain may use on one task: a chat message, a plan run, a goal step or an automatic task. A task that goes over the limit is stopped with an explanation; other tasks keep running. There is no daily limit.",
+            "label": "Tokens per task",
+            "save": "Save limit",
+            "hint": "0 means no limit. Default 100,000. A typical campaign uses about 20,000 tokens.",
+            "used_today": "Brain used {tokens} tokens today. This is a statistic only; it blocks nothing.",
+            "save_failed": "The limit could not be saved."
+        },
         "research": {
             "title": "Internet Research",
             "description": "Give Brain access to real-time internet data. Research competitors, market trends, and enrich CRM with live company information.",
@@ -8965,6 +8974,8 @@
             "next_run": "Next run",
             "plans_today": "Plans today",
             "tokens_today": "Tokens today",
+            "task_token_limit": "Limit per task",
+            "no_task_token_limit": "no limit",
             "last_activity": "Last activity",
             "never": "Never",
             "tasks_today": "Today",
