@@ -167,7 +167,7 @@ abstract class BaseAgent
 
     /**
      * Tokens the agent used since the last call, which resets the count. The chat records them
-     * with the answer (advice and plans showed 0 tokens); the daily budget is already charged.
+     * with the answer (advice and plans showed 0 tokens); they are already charged.
      *
      * @return array{tokens_input: int, tokens_output: int}
      */
@@ -183,11 +183,14 @@ abstract class BaseAgent
     /**
      * Call AI provider with prompt.
      * Supports per-task model routing via AiBrainSettings.
-     * Records REAL token usage: accumulates per-step counters and charges
-     * the user's daily token budget (Brain 2.0, D5).
+     * Records REAL token usage: accumulates per-step counters and charges today's statistics
+     * and the running task's token budget (Brain 2.0, D5; TaskTokenBudget).
      */
     protected function callAi(string $prompt, array $options = [], ?User $user = null, ?string $task = null): string
     {
+        // A task that used its token limit makes no further AI call (TaskTokenBudget)
+        \App\Services\Brain\TaskTokenBudget::ensureAvailable($user?->id);
+
         // The model assigned to the task in the advanced settings, else the Brain model, else the
         // first usable integration (AiBrainSettings::aiFor)
         if ($user) {
@@ -471,6 +474,11 @@ abstract class BaseAgent
      */
     protected function isRetryableError(\Exception $e): bool
     {
+        // Retrying cannot help a task that used its token limit
+        if ($e instanceof \App\Services\Brain\TaskTokenLimitExceeded) {
+            return false;
+        }
+
         $message = strtolower($e->getMessage());
 
         // Retry on timeout, rate limit, or temporary network errors

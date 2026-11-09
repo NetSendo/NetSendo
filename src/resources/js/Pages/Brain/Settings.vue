@@ -24,6 +24,8 @@ const props = defineProps({
     agents: Array,
     agent_modes: Object,
     strategy_settings: Object,
+    taskTokenLimit: Number,
+    tokensUsedToday: Number,
 });
 
 // --- Strategy Settings ---
@@ -253,6 +255,38 @@ const saveLanguage = async () => {
         // Error
     } finally {
         isSavingLanguage.value = false;
+    }
+};
+
+// --- Token limit per task ---
+// One task (a chat message, a plan run, a goal step, a cron task) stops when it uses this many
+// tokens; other tasks keep working. 0 = no limit
+const taskTokenLimit = ref(props.taskTokenLimit ?? 100000);
+const isSavingTaskLimit = ref(false);
+const taskLimitSaved = ref(false);
+const taskLimitError = ref("");
+
+const saveTaskTokenLimit = async () => {
+    isSavingTaskLimit.value = true;
+    taskLimitSaved.value = false;
+    taskLimitError.value = "";
+    try {
+        await axios.put("/brain/api/settings", {
+            // An empty field restores the default limit; 0 is "no limit"
+            task_token_limit:
+                taskTokenLimit.value === "" || taskTokenLimit.value === null
+                    ? null
+                    : Number(taskTokenLimit.value),
+        });
+        taskLimitSaved.value = true;
+        setTimeout(() => (taskLimitSaved.value = false), 2000);
+    } catch (error) {
+        taskLimitError.value =
+            error.response?.data?.errors?.task_token_limit?.[0] ||
+            error.response?.data?.message ||
+            t("brain.task_limit.save_failed");
+    } finally {
+        isSavingTaskLimit.value = false;
     }
 };
 
@@ -1504,6 +1538,70 @@ const getCategoryColor = (key) => {
                         }}
                     </button>
                 </div>
+            </div>
+
+            <!-- Token Limit per Task Card -->
+            <div
+                class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+            >
+                <h3
+                    class="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white"
+                >
+                    🧮 {{ t("brain.task_limit.title") }}
+                    <span
+                        v-if="taskLimitSaved"
+                        class="text-xs font-normal text-green-500"
+                        >✓ {{ t("brain.saved", "Zapisano") }}</span
+                    >
+                </h3>
+                <p class="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                    {{ t("brain.task_limit.description") }}
+                </p>
+                <div class="flex flex-wrap items-end gap-3">
+                    <div>
+                        <label
+                            for="brain-task-token-limit"
+                            class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            {{ t("brain.task_limit.label") }}
+                        </label>
+                        <input
+                            id="brain-task-token-limit"
+                            v-model.number="taskTokenLimit"
+                            type="number"
+                            min="0"
+                            step="1000"
+                            class="w-48 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        />
+                    </div>
+                    <button
+                        @click="saveTaskTokenLimit"
+                        :disabled="isSavingTaskLimit"
+                        class="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {{
+                            isSavingTaskLimit
+                                ? t("brain.saving", "Zapisywanie...")
+                                : t("brain.task_limit.save")
+                        }}
+                    </button>
+                </div>
+                <p
+                    v-if="taskLimitError"
+                    class="mt-2 text-xs text-red-500"
+                >
+                    {{ taskLimitError }}
+                </p>
+                <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    {{ t("brain.task_limit.hint") }}
+                </p>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {{
+                        t("brain.task_limit.used_today", {
+                            tokens: (tokensUsedToday || 0).toLocaleString(),
+                        })
+                    }}
+                </p>
             </div>
 
             <!-- Per-Task Model Routing Card -->

@@ -669,20 +669,25 @@ PROMPT;
         }
 
         $listNames = ContactList::whereIn('id', $listIds)->pluck('name')->join(', ') ?: '-';
-        $scheduleLabel = $immediate ? __('brain.campaign.send_now_label') : $sendTime->format('d.m.Y H:i');
 
-        // Dry-run mode: report what would happen, send nothing
+        // Dry-run mode: report what would happen, send nothing. An immediate send has its own
+        // sentence ("would go out now"): "at now" read wrong in every language
         if ($this->isDryRun($user)) {
             return [
                 'status' => 'completed',
                 'message_id' => $message->id,
                 'dry_run' => true,
                 'recipients' => $recipientsCount,
-                'message' => __('brain.campaign.dry_run_notice', [
-                    'recipients' => $recipientsCount,
-                    'lists' => $listNames,
-                    'schedule' => $scheduleLabel,
-                ]),
+                'message' => $immediate
+                    ? __('brain.campaign.dry_run_notice_now', [
+                        'recipients' => $recipientsCount,
+                        'lists' => $listNames,
+                    ])
+                    : __('brain.campaign.dry_run_notice', [
+                        'recipients' => $recipientsCount,
+                        'lists' => $listNames,
+                        'schedule' => $sendTime->format('d.m.Y H:i'),
+                    ]),
             ];
         }
 

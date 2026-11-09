@@ -2,7 +2,9 @@
 
 return [
     // === AgentOrchestrator ===
-    'token_limit_reached' => '⚠️ Tägliches AI-Token-Limit erreicht. Versuche es morgen erneut oder erhöhe das Limit in den Einstellungen.',
+    'task_token_limit_reached' => '⚠️ Diese Aufgabe hat :used Tokens verbraucht und das Limit von :limit Tokens pro Aufgabe erreicht, daher hat Brain sie gestoppt. Andere Aufgaben laufen weiter. Das Limit änderst du in den Brain-Einstellungen → „Token-Limit pro Aufgabe“.',
+    'task_token_limit_too_low' => 'Das Token-Limit pro Aufgabe muss mindestens 1000 betragen (oder 0 für kein Limit).',
+    'task_token_limit_skipped' => '⏭️ Übersprungen: Die Aufgabe hat ihr Token-Limit aufgebraucht.',
     'processing_error' => '❌ Entschuldigung, beim Verarbeiten deiner Nachricht ist ein Fehler aufgetreten. Bitte versuche es erneut.',
     'plan_failed' => '🤔 Ich konnte keinen Plan für diese Aktion erstellen. Kannst du genauer beschreiben, was du tun möchtest?',
     'agent_not_found' => '❌ Agent \':agent\' ist nicht verfügbar.',
@@ -378,7 +380,6 @@ return [
         'send_no_lists' => '⚠️ Keine Zielgruppe — wähle eine Mailingliste oder führe zuerst die Zielgruppenauswahl aus',
         'send_invalid_date' => '⚠️ Ungültiges Versanddatum ":date" — verwende YYYY-MM-DD HH:MM oder "immediate"',
         'send_blocked' => '🛑 Versand durch Sicherheitsprüfungen blockiert:',
-        'send_now_label' => 'jetzt',
         'send_queued' => '🚀 Kampagne ":subject" wird JETZT versendet — :recipients Empfänger (Listen: :lists)',
         'send_scheduled' => '📅 Kampagne ":subject" geplant für :schedule — :recipients Empfänger (Listen: :lists)',
         'send_window_adjusted' => '⏰ Versandzeit auf :time verschoben (erlaubtes Versandfenster)',
@@ -388,7 +389,8 @@ return [
         'safety_spam_check_failed' => '⚠️ Spam-Analyse nicht verfügbar — Inhalt ohne Prüfung gesendet',
         'safety_weekly_limit' => 'Wöchentliches Kampagnenlimit erreicht (:sent/:max diese Woche)',
         'safety_audience_cap' => 'Zielgruppe von :count überschreitet das Limit von :max pro Kampagne',
-        'dry_run_notice' => '🧪 DRY-RUN: Kampagne würde an :recipients Empfänger gehen (Listen: :lists) um :schedule — nichts wurde gesendet',
+        'dry_run_notice' => '🧪 DRY-RUN: Kampagne würde an :recipients Empfänger gehen (Listen: :lists), geplant für :schedule — nichts wurde gesendet',
+        'dry_run_notice_now' => '🧪 DRY-RUN: Kampagne würde jetzt an :recipients Empfänger gehen (Listen: :lists) — nichts wurde gesendet',
         // A/B-Lebenszyklus (Brain 2.0)
         'ab_already_running' => '🟢 A/B-Test ":name" läuft bereits',
         'ab_started' => '🚀 A/B-Test ":name" gestartet — Varianten auf :sample% der Zielgruppe',

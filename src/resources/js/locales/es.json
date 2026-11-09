@@ -8481,6 +8481,15 @@
             "custom_placeholder": "ej. chino, japonés, árabe...",
             "save": "Guardar idioma"
         },
+        "task_limit": {
+            "title": "Límite de tokens por tarea",
+            "description": "Cuántos tokens puede usar Brain en una tarea: un mensaje del chat, la ejecución de un plan, un paso de un objetivo o una tarea automática. Una tarea que supera el límite se detiene con una explicación; las demás siguen funcionando. No hay límite diario.",
+            "label": "Tokens por tarea",
+            "save": "Guardar límite",
+            "hint": "0 significa sin límite. Por defecto 100 000. Una campaña típica usa unos 20 000 tokens.",
+            "used_today": "Hoy Brain usó {tokens} tokens. Es solo una estadística; no bloquea nada.",
+            "save_failed": "No se pudo guardar el límite."
+        },
         "research": {
             "title": "Investigación en internet",
             "description": "Da a Brain acceso a datos de internet en tiempo real. Investiga competidores, tendencias de mercado y enriquece el CRM con información empresarial en vivo.",
@@ -8574,6 +8583,8 @@
             "next_run": "Próxima ejecución",
             "plans_today": "Planes hoy",
             "tokens_today": "Tokens hoy",
+            "task_token_limit": "Límite por tarea",
+            "no_task_token_limit": "sin límite",
             "last_activity": "Última actividad",
             "never": "Nunca",
             "tasks_today": "Hoy",

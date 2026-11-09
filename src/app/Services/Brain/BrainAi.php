@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
  * Tracked AI call helper for Brain services (Brain 2.0, D5).
  *
  * Wraps AiService::generateContentWithUsage so that EVERY Brain LLM call:
- * - charges the user's daily token budget (AiBrainSettings::addTokensUsed)
+ * - charges today's token statistics and the running task's budget (AiBrainSettings::addTokensUsed)
  * - is logged to ai_execution_logs with real token counts and model,
  *   which feeds the Monitor's token/cost aggregation
  */
@@ -32,6 +32,9 @@ class BrainAi
         array $options = [],
         string $agentType = 'brain',
     ): string {
+        // A task that used its token limit makes no further AI call
+        TaskTokenBudget::ensureAvailable($user->id);
+
         $aiService = app(AiService::class);
         $startTime = microtime(true);
 

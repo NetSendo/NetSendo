@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.8.4] – Brain's token limit is per task, not per day - 2026-11-09
+
+**Release date:** 2026-11-09
+
+### Changed
+
+- **Brain's token limit belongs to one task, not to the whole day.** Brain stopped every task for the rest of the day once 100,000 tokens were used: about four campaigns on a large model, so an account with many lists and tasks stopped working by noon. The limit could not be changed anywhere in the panel, although the message said "increase the limit in settings". A task is now one chat message, the run of a plan, one goal step or one cron task, and each has its own budget. A task that goes over it makes no further AI call: the message or the plan report says how many tokens it used and where to change the limit, the next steps of the plan are marked as skipped, nothing is sent after them, and a goal step stopped this way is not retried. Other tasks keep working. A plan run inside a chat message counts towards that message.
+  - Set the limit in *Brain → Settings → Token limit per task* (default 100,000; 0 = no limit). Today's usage is shown next to it and in the Monitor, as a statistic that blocks nothing. Telegram's `/status` shows both.
+  - The API setting is `task_token_limit` (`PUT /brain/api/settings`); `daily_token_limit` is no longer used.
+
+### Fixed
+
+- The approval summary in the Monitor and on Telegram showed `****Steps to execute:****` with doubled bold markers.
+- A dry run of an immediate send said the campaign would go out "at now" (in Polish "o teraz", in German "um jetzt", in Spanish "a las ahora"). It now says it would go out now, and a scheduled one says when it is scheduled for.
+
 ## [2.8.3] – Brain sends the message its plan made, goals from the chat keep going - 2026-11-09
 
 **Release date:** 2026-11-09

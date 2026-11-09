@@ -18,6 +18,7 @@ use App\Services\Brain\ModeController;
 use App\Services\Brain\SituationAnalyzer;
 use App\Services\Brain\PerformanceTracker;
 use App\Services\Brain\TaskScorer;
+use App\Services\Brain\TaskTokenBudget;
 use App\Services\Brain\CampaignCalendarService;
 use App\Services\Brain\WeeklyDigestService;
 use App\Services\Brain\Skills\MarketingSalesSkill;
@@ -350,8 +351,12 @@ class RunBrainCronCommand extends Command
                         ),
                     ];
 
-                    $knowledgeContext = app(KnowledgeBaseService::class)->getContext($user, $agentName, query: $intent['intent'] ?? null);
-                    $plan = $agent->plan($intent, $user, $knowledgeContext);
+                    // Planning a cron task is one task with its own token limit
+                    $plan = TaskTokenBudget::run($user, fn () => $agent->plan(
+                        $intent,
+                        $user,
+                        app(KnowledgeBaseService::class)->getContext($user, $agentName, query: $intent['intent'] ?? null),
+                    ));
 
                     if (!$plan) {
                         $this->warn("[Brain CRON]   ✗ Plan creation failed for: {$task['title']}");
@@ -836,8 +841,12 @@ class RunBrainCronCommand extends Command
                             ),
                         ];
 
-                        $knowledgeContext = app(KnowledgeBaseService::class)->getContext($user, $agentName, query: $intent['intent'] ?? null);
-                        $plan = $agent->plan($intent, $user, $knowledgeContext);
+                        // Planning a cron task is one task with its own token limit
+                        $plan = TaskTokenBudget::run($user, fn () => $agent->plan(
+                            $intent,
+                            $user,
+                            app(KnowledgeBaseService::class)->getContext($user, $agentName, query: $intent['intent'] ?? null),
+                        ));
 
                         if ($plan) {
                             $plan->update([

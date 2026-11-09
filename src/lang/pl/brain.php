@@ -2,7 +2,9 @@
 
 return [
     // === AgentOrchestrator ===
-    'token_limit_reached' => '⚠️ Osiągnięto dzienny limit tokenów AI. Spróbuj ponownie jutro lub zwiększ limit w ustawieniach.',
+    'task_token_limit_reached' => '⚠️ To zadanie zużyło :used tokenów i doszło do limitu :limit tokenów na jedno zadanie, więc Brain je przerwał. Inne zadania działają dalej. Limit zmienisz w Ustawieniach Brain → „Limit tokenów na zadanie”.',
+    'task_token_limit_too_low' => 'Limit tokenów na zadanie musi wynosić co najmniej 1000 (albo 0 — bez limitu).',
+    'task_token_limit_skipped' => '⏭️ Pominięte: zadanie wyczerpało limit tokenów.',
     'processing_error' => '❌ Przepraszam, wystąpił błąd podczas przetwarzania Twojej wiadomości. Spróbuj ponownie.',
     'plan_failed' => '🤔 Nie udało mi się stworzyć planu dla tej akcji. Możesz sprecyzować, co dokładnie chcesz zrobić?',
     'agent_not_found' => '❌ Agent \':agent\' nie jest dostępny.',
@@ -368,7 +370,6 @@ return [
         'send_no_lists' => '⚠️ Brak grupy docelowej — wybierz listę mailingową lub najpierw uruchom wybór odbiorców',
         'send_invalid_date' => '⚠️ Nieprawidłowa data wysyłki ":date" — użyj YYYY-MM-DD HH:MM lub "immediate"',
         'send_blocked' => '🛑 Wysyłka zablokowana przez kontrole bezpieczeństwa:',
-        'send_now_label' => 'teraz',
         'send_queued' => '🚀 Kampania ":subject" w kolejce do wysyłki TERAZ — :recipients odbiorców (listy: :lists)',
         'send_scheduled' => '📅 Kampania ":subject" zaplanowana na :schedule — :recipients odbiorców (listy: :lists)',
         'send_window_adjusted' => '⏰ Czas wysyłki przesunięty na :time zgodnie z dozwolonym oknem wysyłek',
@@ -378,7 +379,8 @@ return [
         'safety_spam_check_failed' => '⚠️ Analiza spamu niedostępna — treść wysłana bez sprawdzenia',
         'safety_weekly_limit' => 'Osiągnięto tygodniowy limit kampanii (:sent/:max w tym tygodniu)',
         'safety_audience_cap' => 'Grupa :count odbiorców przekracza limit :max na kampanię',
-        'dry_run_notice' => '🧪 DRY-RUN: kampania trafiłaby do :recipients odbiorców (listy: :lists) o :schedule — nic nie zostało wysłane',
+        'dry_run_notice' => '🧪 DRY-RUN: kampania trafiłaby do :recipients odbiorców (listy: :lists), wysyłka zaplanowana na :schedule — nic nie zostało wysłane',
+        'dry_run_notice_now' => '🧪 DRY-RUN: kampania trafiłaby teraz do :recipients odbiorców (listy: :lists) — nic nie zostało wysłane',
         // Cykl życia A/B (Brain 2.0)
         'ab_already_running' => '🟢 Test A/B ":name" już trwa',
         'ab_started' => '🚀 Test A/B ":name" wystartował — warianty na próbie :sample% odbiorców',

@@ -2,7 +2,9 @@
 
 return [
     // === AgentOrchestrator ===
-    'token_limit_reached' => '⚠️ Daily AI token limit reached. Try again tomorrow or increase the limit in settings.',
+    'task_token_limit_reached' => '⚠️ This task used :used tokens and reached the limit of :limit tokens per task, so Brain stopped it. Other tasks keep running. Change the limit in Brain Settings → "Token limit per task".',
+    'task_token_limit_too_low' => 'The token limit per task must be at least 1000 (or 0 for no limit).',
+    'task_token_limit_skipped' => '⏭️ Skipped: the task used up its token limit.',
     'processing_error' => '❌ Sorry, an error occurred while processing your message. Please try again.',
     'plan_failed' => '🤔 I couldn\'t create a plan for this action. Can you be more specific about what you want to do?',
     'agent_not_found' => '❌ Agent \':agent\' is not available.',
@@ -378,7 +380,6 @@ return [
         'send_no_lists' => '⚠️ No target audience — select a mailing list or run audience selection first',
         'send_invalid_date' => '⚠️ Invalid send date ":date" — use YYYY-MM-DD HH:MM or "immediate"',
         'send_blocked' => '🛑 Send blocked by pre-send safety checks:',
-        'send_now_label' => 'now',
         'send_queued' => '🚀 Campaign ":subject" queued for sending NOW — :recipients recipients (lists: :lists)',
         'send_scheduled' => '📅 Campaign ":subject" scheduled for :schedule — :recipients recipients (lists: :lists)',
         'send_window_adjusted' => '⏰ Send time moved to :time to respect your allowed send window',
@@ -388,7 +389,8 @@ return [
         'safety_spam_check_failed' => '⚠️ Spam analysis unavailable — content sent without spam check',
         'safety_weekly_limit' => 'Weekly campaign limit reached (:sent/:max this week)',
         'safety_audience_cap' => 'Audience of :count exceeds the per-campaign cap of :max',
-        'dry_run_notice' => '🧪 DRY-RUN: campaign would go to :recipients recipients (lists: :lists) at :schedule — nothing was sent',
+        'dry_run_notice' => '🧪 DRY-RUN: campaign would go to :recipients recipients (lists: :lists), scheduled for :schedule — nothing was sent',
+        'dry_run_notice_now' => '🧪 DRY-RUN: campaign would go out now to :recipients recipients (lists: :lists) — nothing was sent',
         // A/B lifecycle (Brain 2.0)
         'ab_already_running' => '🟢 A/B test ":name" is already running',
         'ab_started' => '🚀 A/B test ":name" started — variants will be sampled on :sample% of the audience',
