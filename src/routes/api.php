@@ -472,7 +472,7 @@ Route::post('webhooks/purchase', \App\Http\Controllers\Api\PurchaseWebhookContro
     ->name('api.webhooks.purchase');
 
 // ============================================================================
-// Telegram Bot Webhook (Public, No Auth - verified by Telegram)
+// Telegram Bot Webhook (Public, No Auth - TelegramController checks Telegram's secret token)
 // ============================================================================
 Route::post('telegram/webhook', [\App\Http\Controllers\TelegramController::class, 'webhook'])
     ->name('api.telegram.webhook');

@@ -42,6 +42,7 @@ return [
     'goal_rejected' => 'Goal proposal ":title" rejected.',
     'goal_expired' => 'This goal proposal has expired or was already handled.',
     'goal_invalid' => 'Invalid goal proposal.',
+    'plan_not_pending' => 'This plan is no longer waiting for your approval.',
     'telegram_link_instructions' => 'Send to your Telegram bot: /connect :code',
     'telegram_new_conversation_btn' => 'New conversation',
     'telegram_new_conversation_confirm' => 'Next message will start a new conversation.',

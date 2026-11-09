@@ -42,6 +42,7 @@ return [
     'goal_rejected' => 'Zielvorschlag ":title" abgelehnt.',
     'goal_expired' => 'Dieser Zielvorschlag ist abgelaufen oder wurde bereits bearbeitet.',
     'goal_invalid' => 'Ungültiger Zielvorschlag.',
+    'plan_not_pending' => 'Dieser Plan wartet nicht mehr auf deine Freigabe.',
     'telegram_link_instructions' => 'Sende an deinen Telegram-Bot: /connect :code',
     'telegram_new_conversation_btn' => 'Neue Unterhaltung',
     'telegram_new_conversation_confirm' => 'Die nächste Nachricht startet eine neue Unterhaltung.',

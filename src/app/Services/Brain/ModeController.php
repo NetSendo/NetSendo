@@ -133,10 +133,17 @@ class ModeController
 
     /**
      * Process an approval decision.
+     *
+     * With $userId only that user's approval still waiting for a decision is found; a decision
+     * coming from outside the panel (Telegram) always passes it.
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function processApproval(int $approvalId, bool $approved, ?string $reason = null): AiPendingApproval
+    public function processApproval(int $approvalId, bool $approved, ?string $reason = null, ?int $userId = null): AiPendingApproval
     {
-        $approval = AiPendingApproval::findOrFail($approvalId);
+        $approval = $userId === null
+            ? AiPendingApproval::findOrFail($approvalId)
+            : AiPendingApproval::forUser($userId)->where('status', 'pending')->findOrFail($approvalId);
 
         if ($approval->isExpired()) {
             throw new \RuntimeException('Approval has expired.');

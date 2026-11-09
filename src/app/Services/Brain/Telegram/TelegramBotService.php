@@ -7,6 +7,7 @@ use App\Models\AiPendingApproval;
 use App\Models\User;
 use App\Services\Brain\AgentOrchestrator;
 use App\Services\Brain\VoiceTranscriptionService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -14,6 +15,14 @@ use Illuminate\Support\Facades\Log;
 
 class TelegramBotService
 {
+    /** Telegram sends the secret_token given in setWebhook with every update, in this header. */
+    public const SECRET_HEADER = 'X-Telegram-Bot-Api-Secret-Token';
+
+    /** Path of the webhook route (routes/api.php: api.telegram.webhook). */
+    public const WEBHOOK_PATH = '/api/telegram/webhook';
+
+    protected const ALLOWED_UPDATES = ['message', 'callback_query'];
+
     protected string $apiBase = 'https://api.telegram.org/bot';
 
     public function __construct(
@@ -33,7 +42,82 @@ class TelegramBotService
             }
         }
 
-        return config('services.telegram.bot_token', '');
+        return (string) config('services.telegram.bot_token');
+    }
+
+    // === Webhook authenticity ===
+
+    /**
+     * The secret_token a bot's webhook is registered with: derived from the bot token and the
+     * APP_KEY, so it is known only to this instance and Telegram, and changes with either.
+     */
+    public static function webhookSecret(string $botToken): string
+    {
+        return hash_hmac('sha256', 'telegram-webhook|' . $botToken, (string) config('app.key'));
+    }
+
+    /** The webhook address of this instance (APP_URL). */
+    public static function webhookUrl(): string
+    {
+        return rtrim((string) config('app.url'), '/') . self::WEBHOOK_PATH;
+    }
+
+    /**
+     * Whether a webhook request comes from Telegram through a bot this instance registered.
+     *
+     * The URL is public, so the secret is the only proof. A chat linked to an account must come
+     * through the bot that serves that account: the secret of an account's own bot (which its
+     * owner can learn by pointing the bot elsewhere) never speaks for another account's chat.
+     * A chat not linked yet (/start, /connect) may come through any bot configured here.
+     */
+    public function isAuthenticUpdate(array $update, ?string $secret): bool
+    {
+        if ($secret === null || $secret === '') {
+            return false;
+        }
+
+        $chatId = $update['message']['chat']['id'] ?? $update['callback_query']['message']['chat']['id'] ?? null;
+        $user = is_scalar($chatId) ? $this->authService->findUserByChatId((string) $chatId) : null;
+
+        if ($user) {
+            $token = $this->resolveBotToken($user);
+
+            return $token !== '' && hash_equals(self::webhookSecret($token), $secret);
+        }
+
+        foreach ($this->configuredBotTokens() as $token) {
+            if (hash_equals(self::webhookSecret($token), $secret)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Every bot token configured on this instance: TELEGRAM_BOT_TOKEN and the accounts' own bots.
+     *
+     * @return list<string>
+     */
+    protected function configuredBotTokens(): array
+    {
+        $tokens = [(string) config('services.telegram.bot_token')];
+
+        AiBrainSettings::whereNotNull('telegram_bot_token')
+            ->where('telegram_bot_token', '!=', '')
+            ->select(['id', 'telegram_bot_token'])
+            ->each(function (AiBrainSettings $settings) use (&$tokens) {
+                // A token saved under an earlier APP_KEY cannot be read and serves no bot
+                $tokens[] = (string) rescue(fn () => $settings->telegram_bot_token, '', false);
+            });
+
+        return array_values(array_unique(array_filter($tokens, fn (string $token) => $token !== '')));
+    }
+
+    /** Cache flag: this bot's webhook carries the secret it has now (see secureWebhooks). */
+    protected function securedCacheKey(string $botToken): string
+    {
+        return 'telegram:webhook-secured:' . hash('sha256', self::webhookSecret($botToken));
     }
 
     /**
@@ -50,7 +134,7 @@ class TelegramBotService
             return $settings->getBotToken() ?: '';
         }
 
-        return config('services.telegram.bot_token', '');
+        return (string) config('services.telegram.bot_token');
     }
 
     /**
@@ -623,8 +707,9 @@ class TelegramBotService
         try {
             $modeController = app(\App\Services\Brain\ModeController::class);
 
+            // Only a plan of the account linked to this chat, still waiting for a decision
             if ($action === 'approve') {
-                $approval = $modeController->processApproval($approvalId, true);
+                $approval = $modeController->processApproval($approvalId, true, userId: $user->id);
                 $this->sendMessage($chatId, "✅ " . __('brain.plan_queued'));
 
                 // Queue the execution (Brain 2.0 Phase 1) — the job sends
@@ -634,9 +719,11 @@ class TelegramBotService
                 }
 
             } elseif ($action === 'reject') {
-                $modeController->processApproval($approvalId, false, 'Rejected via Telegram');
+                $modeController->processApproval($approvalId, false, 'Rejected via Telegram', $user->id);
                 $this->sendMessage($chatId, "❌ Plan rejected.");
             }
+        } catch (ModelNotFoundException) {
+            $this->sendMessage($chatId, "⚠️ " . __('brain.plan_not_pending'));
         } catch (\Exception $e) {
             $this->sendMessage($chatId, "❌ Error: {$e->getMessage()}");
         }
@@ -773,22 +860,93 @@ class TelegramBotService
     }
 
     /**
-     * Set the webhook URL for the Telegram bot.
+     * Set the webhook URL for the Telegram bot, with the secret token every update must carry.
+     *
+     * An account's own bot goes where its owner says (they hold its token anyway). The shared bot
+     * from TELEGRAM_BOT_TOKEN serves every account here, so its webhook always points at this
+     * instance (APP_URL): no account can move it to a server of its own to read the updates of
+     * the others, or learn its secret.
      */
     public function setWebhook(string $url, ?User $user = null): array
     {
-        $botToken = $this->resolveBotToken($user);
+        $ownToken = $user ? (string) AiBrainSettings::getForUser($user->id)->telegram_bot_token : '';
+        $botToken = $ownToken !== '' ? $ownToken : (string) config('services.telegram.bot_token');
 
-        if (empty($botToken)) {
+        if ($botToken === '') {
             return ['ok' => false, 'description' => 'Bot token not configured'];
         }
 
+        if ($ownToken === '') {
+            $url = self::webhookUrl();
+        }
+
+        return $this->registerWebhook($botToken, $url);
+    }
+
+    protected function registerWebhook(string $botToken, string $url): array
+    {
         $response = Http::post("{$this->apiBase}{$botToken}/setWebhook", [
             'url' => $url,
-            'allowed_updates' => ['message', 'callback_query'],
+            'secret_token' => self::webhookSecret($botToken),
+            'allowed_updates' => self::ALLOWED_UPDATES,
         ]);
 
-        return $response->json();
+        $result = is_array($response->json()) ? $response->json() : ['ok' => false, 'description' => 'No answer from Telegram'];
+
+        if ($response->successful() && ($result['ok'] ?? false)) {
+            Cache::forever($this->securedCacheKey($botToken), true);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Register again, with the secret token, each configured bot whose webhook points at this
+     * instance (the APP_URL host) but was set before updates had to carry it, so bots keep
+     * working after an update without anyone saving the settings. A bot handled once is
+     * remembered until its token or the APP_KEY changes. Webhooks pointing elsewhere stay as
+     * they are. Runs from the scheduler: brain:secure-telegram-webhooks.
+     *
+     * @return array{secured: int, skipped: int, failed: int}
+     */
+    public function secureWebhooks(): array
+    {
+        $counts = ['secured' => 0, 'skipped' => 0, 'failed' => 0];
+        $host = parse_url(self::webhookUrl(), PHP_URL_HOST);
+
+        foreach ($this->configuredBotTokens() as $token) {
+            $cacheKey = $this->securedCacheKey($token);
+            if (Cache::get($cacheKey)) {
+                continue;
+            }
+
+            try {
+                $info = Http::timeout(15)->get("{$this->apiBase}{$token}/getWebhookInfo");
+                if (!$info->successful() || !$info->json('ok')) {
+                    $counts['failed']++;
+                    continue;
+                }
+
+                $url = (string) $info->json('result.url');
+                $pointsHere = $url !== '' && is_string($host)
+                    && strcasecmp((string) parse_url($url, PHP_URL_HOST), $host) === 0
+                    && str_ends_with((string) parse_url($url, PHP_URL_PATH), self::WEBHOOK_PATH);
+
+                if (!$pointsHere) {
+                    Cache::forever($cacheKey, true);
+                    $counts['skipped']++;
+                    continue;
+                }
+
+                ($this->registerWebhook($token, $url)['ok'] ?? false) ? $counts['secured']++ : $counts['failed']++;
+            } catch (\Throwable $e) {
+                // The request URL in the message holds the bot token
+                Log::warning('Telegram webhook not secured', ['error' => str_replace($token, '***', $e->getMessage())]);
+                $counts['failed']++;
+            }
+        }
+
+        return $counts;
     }
 
     // === Conversation Management ===

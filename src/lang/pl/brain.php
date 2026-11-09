@@ -42,6 +42,7 @@ return [
     'goal_rejected' => 'Propozycja celu ":title" odrzucona.',
     'goal_expired' => 'Ta propozycja celu wygasła lub została już obsłużona.',
     'goal_invalid' => 'Nieprawidłowa propozycja celu.',
+    'plan_not_pending' => 'Ten plan nie czeka już na Twoją akceptację.',
     'telegram_link_instructions' => 'Wyślij do bota Telegram: /connect :code',
     'telegram_new_conversation_btn' => 'Nowa konwersacja',
     'telegram_new_conversation_confirm' => 'Następna wiadomość rozpocznie nową konwersację.',

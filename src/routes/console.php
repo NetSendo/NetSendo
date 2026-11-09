@@ -301,6 +301,12 @@ Schedule::command('brain:close-stale-plans')
     ->hourly()
     ->withoutOverlapping();
 
+// Telegram bots whose webhook was set before it needed the secret token are set again with it
+// (every licence: without GOLD the bot still answers with a notice). Done once per bot.
+Schedule::command('brain:secure-telegram-webhooks')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+
 // Semantic knowledge base (GOLD): embed entries that are missing or outdated — saved while the
 // AI provider was down, before GOLD or before an embedding provider was added
 Schedule::command('brain:index-knowledge')

@@ -647,9 +647,13 @@ class GoldFeatureGatingTest extends TestCase
 
     public function test_the_telegram_webhook_answers_without_gold_and_runs_nothing(): void
     {
+        config(['services.telegram.bot_token' => '123:abc']);
+
         $this->postJson('/api/telegram/webhook', [
             'update_id' => 1,
             'message' => ['message_id' => 1, 'chat' => ['id' => 4242], 'text' => 'Plan a campaign'],
+        ], [
+            \App\Services\Brain\Telegram\TelegramBotService::SECRET_HEADER => \App\Services\Brain\Telegram\TelegramBotService::webhookSecret('123:abc'),
         ])->assertOk();
 
         $this->assertSame(0, \App\Models\AiConversation::count());

@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.8.6] – Brain's Telegram bot accepts only Telegram's updates - 2026-11-09
+
+**Release date:** 2026-11-09
+
+### Security
+
+- **The Telegram webhook accepts only updates from Telegram.** `POST /api/telegram/webhook` is public and took any JSON as an update from Telegram. Anyone who knew the Telegram chat ID of a linked account could send messages and commands as that chat (`/mode autonomous`, `/knowledge`, `/disconnect`, chat requests to Brain), and press its approval buttons. NetSendo now gives Telegram a secret token in `setWebhook` (an HMAC of the bot token with the `APP_KEY`), and the webhook refuses with 403 every update that does not carry it in `X-Telegram-Bot-Api-Secret-Token`. A linked chat must come through the bot of its own account, so the owner of one bot cannot use its token for the chat of another account. A chat that is not linked yet (`/start`, `/connect`) may come through any bot configured on the instance. Reported by [realtasty](https://github.com/realtasty).
+- **A Telegram approval button decides only a plan of its own account.** The *Approve* and *Reject* buttons found the approval by its number alone, so a chat could reject (cancel) or approve another account's plan. A button now decides only a plan of the account linked to the chat that is still waiting for a decision; any other answers "This plan is no longer waiting for your approval". Pressing *Approve* twice no longer queues the plan twice.
+- **The shared Telegram bot can no longer be pointed elsewhere by one account.** *Setup Webhook* sent Telegram whatever address the request gave, so any account using the bot from `TELEGRAM_BOT_TOKEN` could move its webhook to a server of its own and receive the updates of every other account. The shared bot's webhook now always points at `APP_URL/api/telegram/webhook`. An account's own bot still goes where its owner says.
+
+### Upgrading
+
+- Bots whose webhook points at this instance get the secret token within five minutes of the update, from the scheduler (`brain:secure-telegram-webhooks`). Telegram keeps the updates it sends in the meantime and retries them. If the scheduler does not run, click *Brain → Settings → Telegram → Setup Webhook* (or run `php artisan brain:secure-telegram-webhooks`). A webhook set to an address on another host (not the `APP_URL` host) is left as it is: set it again from the panel.
+- Covered by `tests/Feature/TelegramWebhookSecurityTest.php`. Translations: en, pl, de, es.
+
 ## [2.8.5] – The Brain API respects API key permissions - 2026-11-09
 
 **Release date:** 2026-11-09
