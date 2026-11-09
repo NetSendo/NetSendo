@@ -229,6 +229,23 @@ class BrainController extends Controller
             ->with('messages')
             ->findOrFail($id);
 
+        // Plans still waiting for a decision keep their approve/reject buttons after a reload
+        $planIds = $conversation->messages
+            ->map(fn ($message) => $message->metadata['plan_id'] ?? null)
+            ->filter()
+            ->unique();
+        $pendingPlans = $planIds->isEmpty() ? collect() : AiActionPlan::forUser($request->user()->id)
+            ->whereIn('id', $planIds)
+            ->where('status', 'pending_approval')
+            ->whereHas('pendingApproval')
+            ->get()
+            ->keyBy('id');
+
+        $conversation->messages->each(function ($message) use ($pendingPlans) {
+            $plan = $pendingPlans->get($message->metadata['plan_id'] ?? null);
+            $message->setAttribute('plan', $plan ? \App\Services\Brain\AgentOrchestrator::planCard($plan) : null);
+        });
+
         return response()->json($conversation);
     }
 
@@ -988,6 +1005,9 @@ class BrainController extends Controller
             'completed' => AiActionPlan::forUser($user->id)->withStatus('completed')->count(),
             'failed' => AiActionPlan::forUser($user->id)->withStatus('failed')->count(),
             'pending' => AiActionPlan::forUser($user->id)->pending()->count(),
+            // The "Plans today" card shows today's split, not the all-time totals under today's count
+            'completed_today' => AiActionPlan::forUser($user->id)->withStatus('completed')->whereDate('created_at', today())->count(),
+            'failed_today' => AiActionPlan::forUser($user->id)->withStatus('failed')->whereDate('created_at', today())->count(),
         ];
 
         // Today's token usage — real values with cost estimation

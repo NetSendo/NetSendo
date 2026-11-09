@@ -8805,6 +8805,7 @@
             "campaign": "📧 Planowanie kampanii",
             "crm": "👥 CRM",
             "segmentation": "🎯 Segmentacja",
+            "research": "🔍 Badania internetowe",
             "conversation": "💬 Konwersacja ogólna"
         },
         "model": {
@@ -8828,7 +8829,10 @@
         "plan": {
             "title": "Plan działania",
             "approve": "Zatwierdź",
-            "reject": "Odrzuć"
+            "reject": "Odrzuć",
+            "queued": "Plan zatwierdzony — wykonuję w tle. Wynik pojawi się w tej rozmowie.",
+            "rejected": "Plan odrzucony.",
+            "decision_failed": "Nie udało się zapisać decyzji."
         },
         "telegram": {
             "title": "Integracja z Telegramem",
@@ -9020,7 +9024,13 @@
                 "goal_progress": "Postęp celu",
                 "goal_completed": "Cel osiągnięty",
                 "goal_metric_evaluated": "Sprawdzono metrykę celu",
-                "goal_sub_plan_executed": "Wykonano plan celu"
+                "goal_sub_plan_executed": "Wykonano plan celu",
+                "plan_execution_finished": "Zakończono wykonanie planu",
+                "goal_step_started": "Uruchomiono kolejny krok celu",
+                "cron_error": "Błąd zadania CRON",
+                "cron_run": "Uruchomienie CRON",
+                "cron_task_pending_approval": "Zadanie CRON czeka na zatwierdzenie",
+                "cron_task_skipped": "Pominięto zadanie CRON"
             },
             "statuses": {
                 "started": "rozpoczęte",

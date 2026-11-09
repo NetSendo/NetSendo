@@ -329,8 +329,8 @@ class TelegramBotService
 
         if (!$newMode) {
             $currentMode = $modeController->getMode($user);
-            $label = $modeController->getModeLabel($currentMode);
-            $desc = $modeController->getModeDescription($currentMode);
+            $label = __($modeController->getModeLabel($currentMode));
+            $desc = __($modeController->getModeDescription($currentMode));
 
             $this->sendMessage($chatId, "**Current mode:** {$label}\n{$desc}\n\nChange mode:\n`/mode autonomous` - full autonomy\n`/mode semi_auto` - semi-automatic\n`/mode manual` - manual");
             return;
@@ -338,7 +338,7 @@ class TelegramBotService
 
         try {
             $modeController->setMode($user, $newMode);
-            $label = $modeController->getModeLabel($newMode);
+            $label = __($modeController->getModeLabel($newMode));
             $this->sendMessage($chatId, "✅ Mode changed to: {$label}");
         } catch (\InvalidArgumentException $e) {
             $this->sendMessage($chatId, "❌ Unknown mode. Available: `autonomous`, `semi_auto`, `manual`");
@@ -361,7 +361,7 @@ class TelegramBotService
 
         $status = "📊 **NetSendo Brain Status**\n\n";
         $status .= "👤 Account: {$user->name}\n";
-        $status .= "🔧 Mode: {$modeController->getModeLabel($settings->work_mode)}\n";
+        $status .= "🔧 Mode: " . __($modeController->getModeLabel($settings->work_mode)) . "\n";
         $status .= "🔢 Tokens today: {$settings->tokensUsedToday()}/{$settings->daily_token_limit}\n";
 
         // Pending approvals

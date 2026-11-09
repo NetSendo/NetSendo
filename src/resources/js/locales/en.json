@@ -8810,6 +8810,7 @@
             "campaign": "📧 Campaign Planning",
             "crm": "👥 CRM",
             "segmentation": "🎯 Segmentation",
+            "research": "🔍 Web research",
             "conversation": "💬 General Conversation"
         },
         "model": {
@@ -8833,7 +8834,10 @@
         "plan": {
             "title": "Action plan",
             "approve": "Approve",
-            "reject": "Reject"
+            "reject": "Reject",
+            "queued": "Plan approved — running in the background. The result will appear in this conversation.",
+            "rejected": "Plan rejected.",
+            "decision_failed": "The decision could not be saved."
         },
         "telegram": {
             "title": "Telegram Integration",
@@ -9025,7 +9029,13 @@
                 "goal_progress": "Goal progress",
                 "goal_completed": "Goal reached",
                 "goal_metric_evaluated": "Goal metric checked",
-                "goal_sub_plan_executed": "Goal plan run"
+                "goal_sub_plan_executed": "Goal plan run",
+                "plan_execution_finished": "Plan run finished",
+                "goal_step_started": "Next goal step started",
+                "cron_error": "CRON task error",
+                "cron_run": "CRON run",
+                "cron_task_pending_approval": "CRON task awaiting approval",
+                "cron_task_skipped": "CRON task skipped"
             },
             "statuses": {
                 "started": "started",

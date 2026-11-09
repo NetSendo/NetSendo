@@ -35,7 +35,30 @@ class BrainAi
         $aiService = app(AiService::class);
         $startTime = microtime(true);
 
-        $result = $aiService->generateContentWithUsage($prompt, $integration, $options);
+        try {
+            $result = $aiService->generateContentWithUsage($prompt, $integration, $options);
+        } catch (\Exception $e) {
+            // The model assigned to the task failed: retry once on the Brain model
+            $fallback = AiBrainSettings::getForUser($user->id)->fallbackAi($integration, $options['model'] ?? null);
+            if (!$fallback) {
+                throw $e;
+            }
+
+            Log::warning('BrainAi: task model failed, retrying on the Brain model', [
+                'action' => $action,
+                'integration_id' => $integration->id,
+                'model' => $options['model'] ?? $integration->default_model,
+                'error' => mb_substr($e->getMessage(), 0, 300),
+            ]);
+
+            [$integration, $fallbackModel] = $fallback;
+            unset($options['model']);
+            if ($fallbackModel) {
+                $options['model'] = $fallbackModel;
+            }
+
+            $result = $aiService->generateContentWithUsage($prompt, $integration, $options);
+        }
 
         $tokensIn = $result['tokens_input'];
         $tokensOut = $result['tokens_output'];

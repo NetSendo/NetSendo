@@ -803,6 +803,7 @@ class RunBrainCronCommand extends Command
                     'parameters' => [
                         'goal_id' => $goal->id,
                         'goal_title' => $goal->title,
+                        'goal_step' => $nextAction['order'] ?? null,
                     ],
                 ];
 
@@ -842,6 +843,7 @@ class RunBrainCronCommand extends Command
                             $plan->update([
                                 'status' => 'pending_approval',
                                 'ai_goal_id' => $goal->id,
+                                'plan_data' => array_merge($plan->plan_data ?? [], ['goal_step' => (int) ($nextAction['order'] ?? 0)]),
                             ]);
 
                             $approval = AiPendingApproval::create([

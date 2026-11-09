@@ -9,8 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.8.3] – Brain sends the message its plan made, goals from the chat keep going - 2026-11-09
+
+**Release date:** 2026-11-09
+
+Found in a second live review of Brain on a GOLD instance, in all three modes.
+
 ### Fixed
 
+- **A Brain send could mail and rewire an older message.** Planners fill `message_id` of the send step with the number of the step that creates the message (`"message_id": 3`), and the send step read it as a database ID: it attached the plan's list to whichever older message had that ID, turned it into a broadcast and sent it. The same happened in dry-run mode, which also set that message back to draft. A send or A/B step now always uses the message created earlier in its own plan; a given ID is used only by plans that create no message, and a dry run changes nothing. The same applies to A/B test IDs, and starting a test or sending its winner no longer falls back to "the latest test".
+- **A failed content step no longer leaves a placeholder to send.** When the content step failed (or the model answered without a body), the message step saved `<p>Message content</p>` and the send step would have mailed it. The message step now fails without content, a send step does not run after any failed step of its plan, and a message with an empty body or that placeholder is never sent.
+- **Failed steps count as failed.** A step that reported failure ("message not found", a send blocked by the safety checks) was stored as completed, and its plan as completed and successful although nothing was sent. Such a step is now failed and logged as an error, and a plan fails when a step that changes or sends something failed, or when every step failed. A failed read-only step does not fail a report whose other steps worked.
+- **Goals from the chat.**
+  - In advisory mode Brain opens no goals: a request with several steps gets advice like any other.
+  - In semi-automatic and autonomous mode the first step starts at once: a plan to approve (the chat said "approve each step" with nothing to approve), or a run. When a step's plan finishes, the next step starts on the queue; this used to happen only with the hourly Brain cron enabled, while the chat said it had started. A failed step is retried once, and a step that failed twice waits for the user.
+  - Progress counts the planned steps: a five-step goal was 100% complete, and closed, after its first plan. Step dependencies are compared as step numbers, and nothing new starts while a step of the goal waits for approval or runs (the chat, the queue and the cron each opened the same step).
+  - Goals untouched for 30 days are no longer mentioned in answers.
+- **The chat can approve its own plans.** A plan card in the chat had no buttons, because the plan never reached the page, and after approving in the Monitor the chat never learned the result. Plans now belong to their conversation: the chat shows *Approve* and *Reject* (also after a reload), and the result of an approved plan is posted into the conversation.
+- **A model without quota no longer stops Brain.** When the model assigned to a task fails (a free Gemini key has no quota for Gemini 2.5 Pro, a key was revoked), the call is retried once on the Brain model.
+- **Fewer needless questions.** A campaign request that names the subject, the content or the list is planned instead of being answered with the full questionnaire and every list of the account. When questions are needed, the lists are shown only if the request named none (at most 15).
+- A question about your own offer ("what plans do we have and what does the cheapest cost?") is answered in the conversation from the knowledge base instead of going to the research agent, unless it asks for a web search.
+- Mode names instead of keys: the plan card in the chat and Telegram's `/mode` and `/status` showed `brain.mode.semi_auto_label`. The *Web research* row of the advanced model settings showed `brain.task.research`, and the Monitor showed raw event names such as `plan_execution_finished`.
+- The *Plans today* tile in the Monitor showed all-time completed and failed counts under today's number.
+- Brain reports compare the campaigns of the report's period: a report "for the last 30 days" named an August campaign the best of the period. Opens in the trends step count each subscriber once, like the campaign statistics next to them.
+- Advice, questions and plan cards in the chat record the tokens they used.
+- The campaign plan report was in English in every language ("Completed steps"), and a suggested task said "Zbadaj 1 firm".
 - **The `latest` Docker image comes from the newest commit of main.** A merge and the release commit right after it were built in parallel, and whichever build finished last published `:latest`. On 2026-11-08 the merge commit's image, which still said 2.8.1, finished last, so installations updated to `latest` showed 2.8.1 although they ran the 2.8.2 code. A newer build of main now cancels the older one.
 
 ## [2.8.2] – Brain understands chat commands, the mode you see is the mode it works in - 2026-11-08

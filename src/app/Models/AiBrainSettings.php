@@ -206,6 +206,41 @@ class AiBrainSettings extends Model
     }
 
     /**
+     * The model to retry with after the model assigned to a task failed (quota, outage, revoked
+     * key): the Brain model, else the first usable integration. Null when that is the model
+     * that just failed.
+     *
+     * @return array{0: AiIntegration, 1: ?string}|null
+     */
+    public function fallbackAi(?AiIntegration $failed, ?string $failedModel): ?array
+    {
+        $integration = null;
+        $model = null;
+
+        if ($this->preferred_integration_id) {
+            $preferred = AiIntegration::find($this->preferred_integration_id);
+            if ($preferred?->isUsable()) {
+                $integration = $preferred;
+                $model = $this->preferred_model ?: null;
+            }
+        }
+
+        $integration ??= app(\App\Services\AI\AiService::class)->getDefaultIntegration();
+
+        if (!$integration) {
+            return null;
+        }
+
+        $sameIntegration = $failed && $failed->id === $integration->id;
+        $sameModel = ($failedModel ?: $failed?->default_model) === ($model ?: $integration->default_model);
+        if ($sameIntegration && $sameModel) {
+            return null;
+        }
+
+        return [$integration, $model];
+    }
+
+    /**
      * Get the Telegram bot token (from DB or fallback to config).
      */
     public function getBotToken(): ?string

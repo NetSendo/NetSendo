@@ -77,8 +77,22 @@ class CampaignAgent extends BaseAgent
             return false;
         }
 
-        // Need at least topic/goal/product info to create a meaningful campaign
-        return empty($params['topic']) && empty($params['goal']) && empty($params['product']);
+        // Need something to write about. The classifier names it in different ways ("subject",
+        // "content", "theme"...): only "topic", "goal" and "product" counted, so a request that
+        // gave the list, the subject and the timing was still answered with the full questionnaire
+        foreach (['topic', 'goal', 'product', 'subject', 'content', 'content_type', 'message', 'theme', 'purpose', 'offer', 'campaign_name', 'title'] as $key) {
+            if (!empty($params[$key])) {
+                return false;
+            }
+        }
+
+        // A longer request is a brief in itself
+        $request = (string) ($intent['intent'] ?? '');
+        if (preg_match("/User's request:\s*(.+)$/s", $request, $m)) {
+            $request = $m[1];
+        }
+
+        return mb_strlen(trim($request)) < 60;
     }
 
     /**
@@ -86,9 +100,15 @@ class CampaignAgent extends BaseAgent
      */
     public function getInfoQuestions(array $intent, User $user, string $knowledgeContext = ''): string
     {
-        // Fetch available lists for context
-        $lists = ContactList::where('user_id', $user->id)->withCount('subscribers')->get();
-        $listsInfo = $lists->map(fn($l) => "• {$l->name} ({$l->subscribers_count} subscribers)")->join("\n");
+        // Lists only when the request names none — and the larger ones first, at most 15
+        $params = $intent['parameters'] ?? [];
+        $listGiven = !empty($params['list_name']) || !empty($params['list_id']) || !empty($params['list_ids']) || !empty($params['lists']);
+        $listsInfo = '';
+        if (!$listGiven) {
+            $lists = ContactList::where('user_id', $user->id)->withCount('subscribers')
+                ->orderByDesc('subscribers_count')->limit(15)->get();
+            $listsInfo = $lists->map(fn($l) => "• {$l->name} ({$l->subscribers_count})")->join("\n");
+        }
 
         $response = __('brain.campaign.info_header') . "\n\n"
             . __('brain.campaign.info_goal') . "\n"
@@ -219,7 +239,7 @@ PROMPT;
             $report .= "{$plan->description}\n";
         }
 
-        $report .= "\n📋 **Completed steps** ({$completedCount}/{$plan->total_steps}):\n"
+        $report .= "\n📋 **" . __('brain.campaign.steps_done', ['done' => $completedCount, 'total' => $plan->total_steps]) . "**\n"
             . implode("\n", $stepReports);
 
         return [
@@ -462,9 +482,16 @@ PROMPT;
         $response = $this->callAi($prompt, ['max_tokens' => 6000, 'temperature' => 0.7], $user, 'content_generation');
         $data = $this->parseJson($response);
 
+        // An answer without a body is a failed step: the message step after it would otherwise
+        // save (and the send step mail) an empty or placeholder message
+        if (!is_array($data) || trim(strip_tags((string) ($data['content'] ?? ''))) === '') {
+            return ['status' => 'failed', 'message' => __('brain.campaign.content_generation_empty')];
+        }
+
         return [
             'status' => 'completed',
             'generated_content' => $data,
+            'message' => __('brain.campaign.content_generated', ['subject' => $data['subject'] ?? '-']),
         ];
     }
 
@@ -472,16 +499,31 @@ PROMPT;
     {
         $config = $step->config;
 
-        // Look for generated content from a previous step
+        // Content comes from the plan's generate_content step. When that step failed, there is no
+        // message to save — a "<p>Message content</p>" placeholder used to be saved and then sent
         $plan = $step->plan;
         $contentStep = $plan->steps()
             ->where('action_type', 'generate_content')
-            ->where('status', 'completed')
+            ->where('step_order', '<', $step->step_order)
+            ->orderByDesc('step_order')
             ->first();
 
-        $content = $contentStep?->result['generated_content'] ?? null;
+        $content = null;
+        if ($contentStep) {
+            $content = $contentStep->status === 'completed'
+                ? ($contentStep->result['generated_content'] ?? null)
+                : null;
+            if (!is_array($content)) {
+                return ['status' => 'failed', 'message' => __('brain.campaign.message_without_content')];
+            }
+        }
+
         $subject = $config['subject'] ?? $content['subject'] ?? __('brain.campaign.default_message');
-        $body = $content['content'] ?? '<p>Message content</p>';
+        $body = $content['content'] ?? $config['content'] ?? null;
+
+        if (trim(strip_tags((string) $body)) === '') {
+            return ['status' => 'failed', 'message' => __('brain.campaign.message_without_content')];
+        }
 
         $message = Message::create([
             'user_id' => $user->id,
@@ -511,30 +553,23 @@ PROMPT;
     {
         $config = $step->config;
         $sendAt = $config['send_at'] ?? 'immediate';
-        $messageId = $config['message_id'] ?? null;
         $plan = $step->plan;
 
-        // Resolve message from previous create_message step if not in config
-        if (!$messageId) {
-            $messageStep = $plan->steps()
-                ->where('action_type', 'create_message')
-                ->where('status', 'completed')
-                ->first();
-            $messageId = $messageStep?->result['message_id'] ?? null;
-        }
-
-        if (!$messageId) {
-            return ['status' => 'failed', 'message' => __('brain.campaign.ab_no_message')];
-        }
-
-        $message = Message::where('user_id', $user->id)->find($messageId);
+        [$message, $error] = $this->resolvePlanMessage($step, $user);
         if (!$message) {
-            return ['status' => 'failed', 'message' => __('brain.campaign.ab_message_not_found', ['id' => $messageId])];
+            return ['status' => 'failed', 'message' => $error];
         }
+        $messageId = $message->id;
 
         // Never convert an autoresponder into a broadcast send
         if ($message->type === 'autoresponder') {
             return ['status' => 'failed', 'message' => __('brain.campaign.send_autoresponder_blocked', ['id' => $messageId])];
+        }
+
+        // Never mail an empty body or the placeholder older Brain versions saved
+        $plainBody = trim(strip_tags((string) $message->content));
+        if (($message->channel ?? 'email') !== 'sms' && ($plainBody === '' || $plainBody === 'Message content')) {
+            return ['status' => 'failed', 'message' => __('brain.campaign.send_empty_content', ['id' => $messageId])];
         }
 
         // Resolve target lists: config → select_audience step
@@ -560,16 +595,17 @@ PROMPT;
             return ['status' => 'failed', 'message' => __('brain.campaign.send_no_lists')];
         }
 
-        // Normalize the message for broadcast sending and attach the audience
-        $message->update([
+        // Broadcast settings and the audience are set in memory first: a dry run counts the
+        // recipients without changing the message, and only a real send saves them
+        $message->fill([
             'channel' => in_array($message->channel, ['email', 'sms'], true) ? $message->channel : 'email',
             'type' => 'broadcast',
         ]);
-        $message->contactLists()->sync($listIds);
-        if (!empty($crmContactIds)) {
-            $message->crmContacts()->sync($crmContactIds);
-        }
-        $message->unsetRelation('contactLists')->unsetRelation('excludedLists')->unsetRelation('crmContacts');
+        $message->unsetRelation('excludedLists')->unsetRelation('excludedCrmContacts');
+        $message->setRelation('contactLists', ContactList::whereIn('id', $listIds)->get());
+        $message->setRelation('crmContacts', !empty($crmContactIds)
+            ? CrmContact::whereIn('id', $crmContactIds)->get()
+            : $message->crmContacts()->get());
 
         $recipients = $message->getUniqueRecipients();
         $recipientsCount = $recipients->count();
@@ -625,7 +661,6 @@ PROMPT;
         $warnings = $checkResult['warnings'];
 
         if (!$checkResult['allowed']) {
-            $message->update(['status' => 'draft']);
             return [
                 'status' => 'failed',
                 'message_id' => $message->id,
@@ -638,7 +673,6 @@ PROMPT;
 
         // Dry-run mode: report what would happen, send nothing
         if ($this->isDryRun($user)) {
-            $message->update(['status' => 'draft']);
             return [
                 'status' => 'completed',
                 'message_id' => $message->id,
@@ -651,6 +685,14 @@ PROMPT;
                 ]),
             ];
         }
+
+        // A real send: save the broadcast settings and the audience
+        $message->save();
+        $message->contactLists()->sync($listIds);
+        if (!empty($crmContactIds)) {
+            $message->crmContacts()->sync($crmContactIds);
+        }
+        $message->unsetRelation('contactLists')->unsetRelation('excludedLists')->unsetRelation('crmContacts');
 
         $notes = [];
         if ($windowAdjusted) {
@@ -736,26 +778,11 @@ PROMPT;
 
         $config = $step->config;
 
-        // Find message — either from config or from a previous create_message step
-        $messageId = $config['message_id'] ?? null;
-
-        if (!$messageId) {
-            $plan = $step->plan;
-            $messageStep = $plan->steps()
-                ->where('action_type', 'create_message')
-                ->where('status', 'completed')
-                ->first();
-            $messageId = $messageStep?->result['message_id'] ?? null;
-        }
-
-        if (!$messageId) {
-            return ['status' => 'failed', 'message' => __('brain.campaign.ab_no_message')];
-        }
-
-        $message = Message::where('user_id', $user->id)->find($messageId);
+        [$message, $error] = $this->resolvePlanMessage($step, $user);
         if (!$message) {
-            return ['status' => 'failed', 'message' => __('brain.campaign.ab_message_not_found', ['id' => $messageId])];
+            return ['status' => 'failed', 'message' => $error];
         }
+        $messageId = $message->id;
 
         $testType = $config['test_type'] ?? AbTest::TYPE_SUBJECT;
         $winningMetric = $config['winning_metric'] ?? AbTest::METRIC_OPEN_RATE;
@@ -980,21 +1007,74 @@ PROMPT;
      */
     protected function resolveAbTest(AiActionPlanStep $step, User $user): ?AbTest
     {
-        $abTestId = $step->config['ab_test_id'] ?? null;
+        // A test created earlier in this plan always wins, for the same reason as messages
+        // (resolvePlanMessage): planners put the create_ab_test STEP number into ab_test_id
+        $createStep = $step->plan->steps()
+            ->where('action_type', 'create_ab_test')
+            ->where('step_order', '<', $step->step_order)
+            ->orderByDesc('step_order')
+            ->first();
 
-        if (!$abTestId) {
-            $createStep = $step->plan->steps()
-                ->where('action_type', 'create_ab_test')
-                ->where('status', 'completed')
-                ->first();
-            $abTestId = $createStep?->result['ab_test_id'] ?? null;
+        if ($createStep) {
+            $abTestId = $createStep->status === 'completed' ? ($createStep->result['ab_test_id'] ?? null) : null;
+        } else {
+            $abTestId = $this->resolveStepReference($step, $step->config['ab_test_id'] ?? null, 'ab_test_id');
         }
 
-        if ($abTestId) {
-            return AbTest::forUser($user->id)->find($abTestId);
+        // Starting a test or sending its winner needs to know which test — never "the latest one"
+        return $abTestId ? AbTest::forUser($user->id)->find($abTestId) : null;
+    }
+
+    /**
+     * The message a send or A/B step works on.
+     *
+     * A message created earlier in this plan always wins. Planners fill "message_id" with the
+     * NUMBER of the create_message step ("message_id": 3), and that number used to be read as a
+     * database ID: the send replaced the lists of whichever older message had that ID and mailed
+     * it. A configured ID is used only by plans that create no message of their own.
+     *
+     * @return array{0: ?Message, 1: ?string} the message, or null and the reason
+     */
+    protected function resolvePlanMessage(AiActionPlanStep $step, User $user): array
+    {
+        $createStep = $step->plan->steps()
+            ->where('action_type', 'create_message')
+            ->where('step_order', '<', $step->step_order)
+            ->orderByDesc('step_order')
+            ->first();
+
+        if ($createStep) {
+            $messageId = $createStep->status === 'completed' ? ($createStep->result['message_id'] ?? null) : null;
+            if (!$messageId) {
+                return [null, __('brain.campaign.message_step_failed')];
+            }
+        } else {
+            $messageId = $this->resolveStepReference($step, $step->config['message_id'] ?? null, 'message_id');
+            if (!$messageId) {
+                return [null, __('brain.campaign.ab_no_message')];
+            }
         }
 
-        return AbTest::forUser($user->id)->latest()->first();
+        $message = Message::where('user_id', $user->id)->find($messageId);
+        if (!$message) {
+            return [null, __('brain.campaign.ab_message_not_found', ['id' => $messageId])];
+        }
+
+        return [$message, null];
+    }
+
+    /**
+     * Resolve a config reference: "step_3" (the result of step 3 of this plan) or a plain ID.
+     */
+    protected function resolveStepReference(AiActionPlanStep $step, mixed $reference, string $resultKey): ?int
+    {
+        if (is_string($reference) && preg_match('/^step[_\s-]?(\d+)$/i', trim($reference), $m)) {
+            $referenced = $step->plan->steps()->where('step_order', (int) $m[1])->first();
+
+            return $referenced?->status === 'completed' ? ($referenced->result[$resultKey] ?? null) : null;
+        }
+
+        return is_numeric($reference) ? (int) $reference : null;
     }
 
     protected function executeCheckAbResults(AiActionPlanStep $step, User $user): array
