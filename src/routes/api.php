@@ -480,11 +480,10 @@ Route::post('telegram/webhook', [\App\Http\Controllers\TelegramController::class
 // ============================================================================
 // NetSendo Brain API (Authenticated)
 // ============================================================================
-Route::prefix('v1/brain')->middleware(['api.key', 'throttle:api'])->group(function () {
-
-    // Chat
-    Route::post('chat', [\App\Http\Controllers\BrainController::class, 'chat'])
-        ->name('api.v1.brain.chat');
+// Every route needs a Brain scope on the key: brain:read for
+// reading, brain:write (which includes brain:read) for anything that changes Brain or
+// makes it act. A key scoped to, say, subscribers:read gets 403 here.
+Route::prefix('v1/brain')->middleware(['api.key:brain:read', 'throttle:api'])->group(function () {
 
     // Conversations
     Route::get('conversations', [\App\Http\Controllers\BrainController::class, 'conversations'])
@@ -495,6 +494,25 @@ Route::prefix('v1/brain')->middleware(['api.key', 'throttle:api'])->group(functi
     // Knowledge Base
     Route::get('knowledge', [\App\Http\Controllers\BrainController::class, 'knowledge'])
         ->name('api.v1.brain.knowledge.index');
+
+    // Action Plans
+    Route::get('plans', [\App\Http\Controllers\BrainController::class, 'plans'])
+        ->name('api.v1.brain.plans.index');
+    Route::get('plans/{id}', [\App\Http\Controllers\BrainController::class, 'plan'])
+        ->name('api.v1.brain.plans.show');
+
+    // Settings (the stored Telegram token and research keys are never returned)
+    Route::get('settings', [\App\Http\Controllers\BrainController::class, 'settings'])
+        ->name('api.v1.brain.settings');
+});
+
+Route::prefix('v1/brain')->middleware(['api.key:brain:write', 'throttle:api'])->group(function () {
+
+    // Chat
+    Route::post('chat', [\App\Http\Controllers\BrainController::class, 'chat'])
+        ->name('api.v1.brain.chat');
+
+    // Knowledge Base
     Route::post('knowledge', [\App\Http\Controllers\BrainController::class, 'storeKnowledge'])
         ->name('api.v1.brain.knowledge.store');
     Route::put('knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'updateKnowledge'])
@@ -503,16 +521,10 @@ Route::prefix('v1/brain')->middleware(['api.key', 'throttle:api'])->group(functi
         ->name('api.v1.brain.knowledge.destroy');
 
     // Action Plans
-    Route::get('plans', [\App\Http\Controllers\BrainController::class, 'plans'])
-        ->name('api.v1.brain.plans.index');
-    Route::get('plans/{id}', [\App\Http\Controllers\BrainController::class, 'plan'])
-        ->name('api.v1.brain.plans.show');
     Route::post('plans/{id}/approve', [\App\Http\Controllers\BrainController::class, 'approvePlan'])
         ->name('api.v1.brain.plans.approve');
 
     // Settings
-    Route::get('settings', [\App\Http\Controllers\BrainController::class, 'settings'])
-        ->name('api.v1.brain.settings');
     Route::put('settings', [\App\Http\Controllers\BrainController::class, 'updateSettings'])
         ->name('api.v1.brain.settings.update');
 

@@ -4,6 +4,7 @@ return [
     // === AgentOrchestrator ===
     'task_token_limit_reached' => '⚠️ This task used :used tokens and reached the limit of :limit tokens per task, so Brain stopped it. Other tasks keep running. Change the limit in Brain Settings → "Token limit per task".',
     'task_token_limit_too_low' => 'The token limit per task must be at least 1000 (or 0 for no limit).',
+    'research_key_missing' => 'No API key is saved for this provider — enter a key to test it.',
     'task_token_limit_skipped' => '⏭️ Skipped: the task used up its token limit.',
     'processing_error' => '❌ Sorry, an error occurred while processing your message. Please try again.',
     'plan_failed' => '🤔 I couldn\'t create a plan for this action. Can you be more specific about what you want to do?',

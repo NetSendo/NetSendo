@@ -4343,7 +4343,9 @@
             "email_read": "E-Mail (Lesen)",
             "email_write": "E-Mail (Schreiben)",
             "funnels_read": "Funnels (Lesen)",
-            "funnels_write": "Funnels (Schreiben)"
+            "funnels_write": "Funnels (Schreiben)",
+            "brain_read": "NetSendo Brain (Lesen)",
+            "brain_write": "NetSendo Brain (Schreiben)"
         },
         "status": {
             "expired": "abgelaufen",

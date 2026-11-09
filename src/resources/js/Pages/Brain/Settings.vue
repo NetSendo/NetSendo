@@ -422,11 +422,13 @@ const isSavingToken = ref(false);
 const tokenSaved = ref(false);
 const webhookStatus = ref(null);
 const isSettingWebhook = ref(false);
-const existingTokenMask = ref(
-    props.settings?.telegram_bot_token
-        ? "••••••••" + props.settings.telegram_bot_token.slice(-4)
-        : "",
-);
+// Saved secrets never reach the page: the server sends only their last four characters
+const secretMask = (name) => {
+    const hint = props.settings?.secret_hints?.[name];
+    return hint === null || hint === undefined ? "" : "••••••••" + hint;
+};
+
+const existingTokenMask = ref(secretMask("telegram_bot_token"));
 
 const saveBotToken = async () => {
     if (!botToken.value.trim()) return;
@@ -557,17 +559,9 @@ const serpApiTestResult = ref(null);
 const isTestingPerplexity = ref(false);
 const isTestingSerpApi = ref(false);
 
-const existingPerplexityMask = ref(
-    props.settings?.perplexity_api_key
-        ? "••••••••" + props.settings.perplexity_api_key.slice(-4)
-        : "",
-);
+const existingPerplexityMask = ref(secretMask("perplexity_api_key"));
 
-const existingSerpApiMask = ref(
-    props.settings?.serpapi_api_key
-        ? "••••••••" + props.settings.serpapi_api_key.slice(-4)
-        : "",
-);
+const existingSerpApiMask = ref(secretMask("serpapi_api_key"));
 
 const savePerplexityKey = async () => {
     if (!perplexityApiKey.value.trim()) return;
@@ -609,8 +603,9 @@ const saveSerpApiKey = async () => {
 };
 
 const testPerplexityApi = async () => {
-    const key = perplexityApiKey.value || props.settings?.perplexity_api_key;
-    if (!key) return;
+    // Without a typed key the server tests the saved one
+    const key = perplexityApiKey.value || null;
+    if (!key && !existingPerplexityMask.value) return;
     isTestingPerplexity.value = true;
     perplexityTestResult.value = null;
     try {
@@ -630,8 +625,9 @@ const testPerplexityApi = async () => {
 };
 
 const testSerpApi = async () => {
-    const key = serpApiKey.value || props.settings?.serpapi_api_key;
-    if (!key) return;
+    // Without a typed key the server tests the saved one
+    const key = serpApiKey.value || null;
+    if (!key && !existingSerpApiMask.value) return;
     isTestingSerpApi.value = true;
     serpApiTestResult.value = null;
     try {

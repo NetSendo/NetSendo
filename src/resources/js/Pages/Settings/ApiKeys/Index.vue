@@ -119,6 +119,16 @@ const permissionLabels = computed(() => ({
         icon: "🔄",
         color: "amber",
     },
+    "brain:read": {
+        label: t("api_keys.permissions.brain_read"),
+        icon: "🧠",
+        color: "violet",
+    },
+    "brain:write": {
+        label: t("api_keys.permissions.brain_write"),
+        icon: "🧠",
+        color: "violet",
+    },
 }));
 
 function openCreateModal() {

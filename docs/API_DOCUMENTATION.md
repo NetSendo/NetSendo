@@ -37,6 +37,8 @@ Authorization: Bearer ns_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 | `email:write`       | Wysyłanie email                         |
 | `sms:read`          | Odczyt statusu SMS i providerów         |
 | `sms:write`         | Wysyłanie SMS                           |
+| `brain:read`        | NetSendo Brain: odczyt rozmów, bazy wiedzy, planów i ustawień (bez zapisanych sekretów) |
+| `brain:write`       | NetSendo Brain: czat, zmiany bazy wiedzy i ustawień, akceptacja planów, Telegram (obejmuje `brain:read`) |
 
 > **Uwaga:** Uprawnienie `subscribers:write` automatycznie obejmuje `subscribers:read`.
 
@@ -44,6 +46,14 @@ Authorization: Bearer ns_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 > listami. Klucze utworzone wcześniej dostają je automatycznie, o ile miały już
 > `subscribers:write` — klucze celowo wąskie zachowują swój zakres i trzeba je
 > rozszerzyć ręcznie w panelu (**Klucze API**).
+
+> **Migracja (Brain):** endpointy `/api/v1/brain/*` wymagają teraz `brain:read`
+> albo `brain:write`. Wcześniej działały z każdym ważnym kluczem. Oba nowe
+> uprawnienia dostają automatycznie tylko klucze z pełnym dostępem (mające
+> wszystkie dotychczasowe uprawnienia). Węższy klucz traci dostęp do Brain,
+> dopóki nie dodasz mu tych uprawnień w panelu. Odpowiedzi API nigdy nie zawierają
+> tokenu bota Telegram ani kluczy Perplexity i SerpAPI, tylko `secret_hints`
+> (ostatnie cztery znaki).
 
 ---
 

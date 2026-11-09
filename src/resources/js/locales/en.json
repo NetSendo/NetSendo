@@ -5329,7 +5329,9 @@
             "email_read": "Email (read)",
             "email_write": "Email (write)",
             "funnels_read": "Funnels (read)",
-            "funnels_write": "Funnels (write)"
+            "funnels_write": "Funnels (write)",
+            "brain_read": "NetSendo Brain (read)",
+            "brain_write": "NetSendo Brain (write)"
         },
         "status": {
             "expired": "expired",

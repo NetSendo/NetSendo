@@ -69,6 +69,8 @@ class ExportTest extends TestCase
             'name' => 'Test Key',
             'key_prefix' => 'ns_live_test',
             'key_hash' => hash('sha256', $plainKey),
+            // With the scope, so the 404 comes from the ownership check
+            'permissions' => ['subscribers:read'],
         ]);
 
         $response = $this->withHeaders(['Authorization' => 'Bearer ' . $plainKey])

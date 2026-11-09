@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.8.5] – The Brain API respects API key permissions - 2026-11-09
+
+**Release date:** 2026-11-09
+
+### Security
+
+- **The Brain API now respects API key permissions.** `/api/v1/brain/*` accepted any valid API key, whatever permissions it was given: a key limited to, say, `subscribers:read` could read Brain's settings, with the Telegram bot token and the Perplexity and SerpAPI keys in plain text, and change settings, the knowledge base and plans. Brain now has its own permissions, `brain:read` and `brain:write` (Settings → API Keys). Reported privately by [realtasty](https://github.com/realtasty).
+  - Existing keys with full access get both permissions automatically, so their integrations keep working. A narrower key loses Brain access until you add the Brain permissions to it.
+  - Saved secrets no longer leave the server in JSON, not in the API and not in the panel page. Instead, `secret_hints` gives the last four characters of each. Testing the Perplexity or SerpAPI connection without typing a key now tests the saved one on the server.
+  - The queued CSV export of a list (`POST /api/v1/lists/{list}/export`) now needs `subscribers:read`, like the inline export.
+
 ## [2.8.4] – Brain's token limit is per task, not per day - 2026-11-09
 
 **Release date:** 2026-11-09

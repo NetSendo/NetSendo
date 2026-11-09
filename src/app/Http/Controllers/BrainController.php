@@ -925,11 +925,18 @@ class BrainController extends Controller
     {
         $request->validate([
             'provider' => 'required|string|in:perplexity,serpapi',
-            'api_key' => 'required|string|max:255',
+            // Without a key the saved one is tested: the panel no longer receives saved keys
+            'api_key' => 'nullable|string|max:255',
         ]);
 
         $provider = $request->input('provider');
-        $apiKey = $request->input('api_key');
+        $apiKey = $request->input('api_key')
+            ?: AiBrainSettings::getForUser($request->user()->id)->{$provider === 'perplexity' ? 'perplexity_api_key' : 'serpapi_api_key'};
+
+        if (blank($apiKey)) {
+            return response()->json(['success' => false, 'message' => __('brain.research_key_missing')], 422);
+        }
+
         $webResearch = app(WebResearchService::class);
 
         $result = match ($provider) {

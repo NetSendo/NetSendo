@@ -63,6 +63,19 @@ class AiBrainSettings extends Model
         'last_activity_at',
     ];
 
+    /**
+     * Secrets never leave the server in JSON: not through the API, not in the panel's page
+     * props. The `encrypted` cast decrypts them on read, so without this the settings
+     * response handed the Telegram bot token and research keys to any caller.
+     * The pending Telegram link code is hidden too: whoever holds it can link a chat to Brain.
+     */
+    public const SECRET_ATTRIBUTES = ['telegram_bot_token', 'perplexity_api_key', 'serpapi_api_key'];
+
+    protected $hidden = [...self::SECRET_ATTRIBUTES, 'telegram_link_code'];
+
+    /** In JSON instead of the secrets: which are set and their last four characters. */
+    protected $appends = ['secret_hints'];
+
     protected $casts = [
         'preferences' => 'array',
         'agent_permissions' => 'array',
@@ -240,6 +253,29 @@ class AiBrainSettings extends Model
         }
 
         return [$integration, $model];
+    }
+
+    /**
+     * For each secret: null when it is not set, else its last four characters ('' when the
+     * value is too short to show any of it). The panel shows the mask from this.
+     */
+    protected function secretHints(): Attribute
+    {
+        return Attribute::get(fn () => collect(self::SECRET_ATTRIBUTES)
+            ->mapWithKeys(function (string $attribute) {
+                if (blank($this->getAttributes()[$attribute] ?? null)) {
+                    return [$attribute => null];
+                }
+
+                try {
+                    $value = (string) $this->{$attribute};
+                } catch (\Illuminate\Contracts\Encryption\DecryptException) {
+                    return [$attribute => '']; // stored under another APP_KEY: set, but unreadable
+                }
+
+                return [$attribute => $value === '' ? null : (strlen($value) >= 12 ? substr($value, -4) : '')];
+            })
+            ->all());
     }
 
     /**

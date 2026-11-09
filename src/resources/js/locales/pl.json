@@ -5297,7 +5297,9 @@
             "email_read": "E-mail (odczyt)",
             "email_write": "E-mail (zapis)",
             "funnels_read": "Lejki (odczyt)",
-            "funnels_write": "Lejki (zapis)"
+            "funnels_write": "Lejki (zapis)",
+            "brain_read": "NetSendo Brain (odczyt)",
+            "brain_write": "NetSendo Brain (zapis)"
         },
         "status": {
             "expired": "wygasł",
