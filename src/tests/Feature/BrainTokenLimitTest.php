@@ -362,6 +362,10 @@ class BrainTokenLimitTest extends TestCase
 
     public function test_a_dry_run_of_an_immediate_send_says_now_without_a_time_preposition(): void
     {
+        // Inside the default 9–17 send window: outside it the send is moved to 09:00 the next
+        // day and the notice names that time, so the test failed whenever CI ran in the evening
+        $this->travelTo(now()->startOfDay()->setTime(11, 0));
+
         $settings = $this->settings();
         $settings->update(['preferences' => array_merge($settings->preferences ?? [], ['dry_run_mode' => true])]);
 
