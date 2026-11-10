@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.8.7] – Installations on Podman update again - 2026-11-10
+
+**Release date:** 2026-11-10
+
+### Fixed
+
+- **Installations running on Podman could not update since 2.8.0.** The `reverb` ports line in `docker-compose.yml` used a nested default, `${REVERB_HOST_PORT:-${REVERB_PORT:-8085}}`. Docker Compose expands it, but podman-compose does not: `podman-compose up -d` stopped with "invalid port format", the update was rolled back, and the installation stayed on 2.7.x, without the security fixes of 2.8.5 and 2.8.6. The default is now one level deep, `${REVERB_HOST_PORT:-8085}`. Docker installations publish Reverb exactly as before (`0.0.0.0:8085`), and `REVERB_HOST_PORT` and `REVERB_BIND_ADDRESS` work on both.
+  - If you changed Reverb's host port with `REVERB_PORT`, set `REVERB_HOST_PORT` instead, as *Port 8085 Already in Use* in `DOCKER_INSTALL.md` describes. `REVERB_PORT` must stay 8085, because the app reaches Reverb on that port inside the network.
+
 ## [2.8.6] – Brain's Telegram bot accepts only Telegram's updates - 2026-11-09
 
 **Release date:** 2026-11-09
