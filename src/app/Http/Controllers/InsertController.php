@@ -143,6 +143,7 @@ class InsertController extends Controller
                 'label' => __('inserts.variables.links'),
                 'variables' => [
                     ['code' => '[[unsubscribe]]', 'label' => __('inserts.variables.unsubscribe_link'), 'description' => __('inserts.variables.unsubscribe_link_desc')],
+                    ['code' => '[[unsubscribe_now]]', 'label' => __('inserts.variables.unsubscribe_now'), 'description' => __('inserts.variables.unsubscribe_now_desc')],
                     ['code' => '[[manage]]', 'label' => __('inserts.variables.manage_link'), 'description' => __('inserts.variables.manage_link_desc')],
                 ],
             ],

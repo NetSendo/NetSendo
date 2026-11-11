@@ -46,14 +46,15 @@ class DormantMode
             return $next($request);
         }
 
-        // /unsubscribe/{subscriber}, /{list}, /{list}/process, /process-all (routes/web.php)
+        // /unsubscribe/{subscriber}, /{list}, /{list}/process, /process-all, /now, /{list}/now (routes/web.php)
         if (preg_match('#^unsubscribe/[^/]+(/[^/]+){0,2}$#', $path)) {
             $segments = explode('/', $path);
 
             // GET /unsubscribe/{subscriber}/{list} normally emails a confirmation link first.
             // Asleep, nothing is sent: the person confirms on the page, which POSTs the same
-            // signed URL as an RFC 8058 one-click request.
-            if ($request->isMethod('GET') && count($segments) === 3 && $segments[2] !== 'process-all') {
+            // signed URL as an RFC 8058 one-click request. The [[unsubscribe_now]] pages
+            // (/now) already work that way.
+            if ($request->isMethod('GET') && count($segments) === 3 && !in_array($segments[2], ['process-all', 'now'], true)) {
                 return $this->unsubscribePage($request);
             }
 

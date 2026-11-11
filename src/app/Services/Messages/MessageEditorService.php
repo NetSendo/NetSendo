@@ -572,6 +572,7 @@ class MessageEditorService
             'source' => 'test',
             'unsubscribe_link' => '#',
             'unsubscribe_url' => '#',
+            'unsubscribe_now' => '#',
         ];
     }
 

@@ -1,0 +1,45 @@
+<?php
+
+// Strony dla subskrybentów: ustawienia subskrypcji (SubscriberPreferencesController) i wypis jednym kliknięciem (UnsubscribeController::now)
+return [
+    'title' => 'Twoje subskrypcje',
+    'subtitle' => 'Zdecyduj, jakie wiadomości chcesz od nas dostawać.',
+    'unsubscribe_all' => 'Wypisz mnie ze wszystkiego',
+    'unsubscribe_all_note' => 'Jedno kliknięcie wypisuje ten adres ze wszystkich list. Nie dostaniesz od nas już żadnej wiadomości.',
+    'no_active_lists' => 'Ten adres nie jest zapisany na żadną listę.',
+    'or' => 'albo',
+    'lists_title' => 'Wybierz, które listy zostawić',
+    'lists_help' => 'Odznacz listę, aby się z niej wypisać.',
+    'left_hint' => 'Wypisano. Zaznacz, aby wrócić: powrót potwierdzisz w e-mailu.',
+    'no_lists' => 'Nie ma tu list do wyboru.',
+    'language_title' => 'Język wiadomości',
+    'language_default' => '— domyślny —',
+    'language_help' => 'Wybierz język, w którym chcesz dostawać wiadomości.',
+    'save' => 'Zapisz zmiany',
+    'delete_text' => 'Chcesz całkowicie usunąć swoje dane?',
+    'delete_button' => 'Usuń wszystkie moje dane',
+    'delete_confirm' => 'Na pewno trwale usunąć wszystkie Twoje dane? Tego nie da się cofnąć.',
+    'invalid_link' => 'Ten link jest nieprawidłowy albo wygasł.',
+    'confirm_sent' => 'Wysłaliśmy e-mail z potwierdzeniem. Kliknij link w wiadomości, aby wrócić na wybrane listy.',
+    'confirm' => [
+        'title' => 'Potwierdź zmiany',
+        'rejoin' => 'Wrócisz na listy:',
+        'leave' => 'Wypiszesz się z list:',
+        'button' => 'Potwierdzam',
+        'note' => 'Nic się nie zmieni, dopóki nie klikniesz przycisku.',
+    ],
+    'email' => [
+        'subject' => 'Potwierdź zmiany w subskrypcjach',
+        'heading' => 'Potwierdź zmiany',
+        'body' => 'Kliknij link poniżej i potwierdź na stronie, że chcesz wrócić na wybrane listy.',
+        'link' => 'Potwierdź zmiany',
+        'ignore' => 'Jeśli to nie Ty, zignoruj tę wiadomość.',
+    ],
+    'now' => [
+        'title' => 'Wypisz się',
+        'list' => 'Wypisać adres :email z listy „:list”?',
+        'all' => 'Wypisać adres :email ze wszystkich list?',
+        'button' => 'Wypisz mnie',
+        'note' => 'Wypiszemy Cię od razu, bez dodatkowego e-maila.',
+    ],
+];

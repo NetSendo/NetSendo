@@ -29,10 +29,11 @@ NetSendo API v1 obsługuje:
 
 ### Linki systemowe
 
-| Placeholder       | Opis                           |
-| ----------------- | ------------------------------ |
-| `[[unsubscribe]]` | Link wypisania z listy         |
-| `[[manage]]`      | Link zarządzania preferencjami |
+| Placeholder           | Opis                                                                                                                         |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `[[unsubscribe]]`     | Link wypisania z listy                                                                                                       |
+| `[[unsubscribe_now]]` | Wypis jednym przyciskiem: z listy wiadomości albo ze wszystkich list, bez e-maila z potwierdzeniem i bez strony ustawień |
+| `[[manage]]`          | Link zarządzania preferencjami                                                                                               |
 
 ### Daty
 

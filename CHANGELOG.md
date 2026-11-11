@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.8.8] – Unsubscribing never subscribes, one-click unsubscribe link - 2026-11-10
+
+**Release date:** 2026-11-10
+
+### Fixed
+
+- **Saving the preferences page could subscribe a person to every public list.** `[[unsubscribe]]` in a message to several lists, and `[[manage]]`, open the preferences page. It listed every public list of the account (new lists are public by default) and applied the selection as soon as the link of its confirmation email was opened. On one instance three people who clicked "unsubscribe" were put on all 40 lists within about a minute: the autoresponders of those lists started, and the owner got about 40 "New subscriber" notifications per person. An empty selection was not the cause (it unsubscribes from every list on the page): the form came back with every box ticked and its confirmation link was opened at once, which is how the link scanners of some mail providers behave. Now:
+  - The page lists only the public lists the person is on or has left. Lists they never joined are not offered, and a form that names them changes nothing.
+  - Unticking a list unsubscribes at once, with no confirmation email, and drops what was still planned for the person on that list.
+  - Going back to a list the person left still needs the confirmation email, but its link opens a page with a *Confirm* button. Opening the link alone changes nothing.
+  - Confirmation links emailed before this version still work and follow the same rules: they never add a list the person was not on.
+- **The preferences page speaks the subscriber's language.** It was English only. It now uses the contact's *Language*, else the panel language of the account, else the browser's: Polish, English, German or Spanish. The pages shown after saving are the account's *System pages* and keep their own text.
+
+### Added
+
+- **"Unsubscribe me from everything" on the preferences page**: one button, at the top, that unsubscribes the address from every list of the account, private lists too.
+- **`[[unsubscribe_now]]`**, an unsubscribe link without the preferences page: it opens a page with one *Unsubscribe me* button that unsubscribes at once, with no confirmation email. In a message from one list it leaves that list, as it does in a message to several lists when the person is on one of them; otherwise it leaves every list, like the `List-Unsubscribe` header. Opening the link alone unsubscribes nobody, so mail scanners cannot. It is in the editor under *Inserts → Links*.
+
 ## [2.8.7] – Installations on Podman update again - 2026-11-10
 
 **Release date:** 2026-11-10

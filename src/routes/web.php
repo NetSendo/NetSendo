@@ -1012,6 +1012,9 @@ Route::prefix('t/pixel')->name('pixel.')->group(function () {
 
 // Unsubscribe Routes (signed URLs from emails)
 Route::get('/unsubscribe/{subscriber}/process-all', [\App\Http\Controllers\UnsubscribeController::class, 'globalUnsubscribeProcess'])->name('subscriber.unsubscribe.global.process');
+// [[unsubscribe_now]]: a page with one button that unsubscribes at once (list, or every list)
+Route::get('/unsubscribe/{subscriber}/now', [\App\Http\Controllers\UnsubscribeController::class, 'now'])->name('subscriber.unsubscribe.now.global');
+Route::get('/unsubscribe/{subscriber}/{list}/now', [\App\Http\Controllers\UnsubscribeController::class, 'now'])->name('subscriber.unsubscribe.now');
 Route::get('/unsubscribe/{subscriber}/{list}', [\App\Http\Controllers\UnsubscribeController::class, 'confirm'])->name('subscriber.unsubscribe.confirm');
 Route::get('/unsubscribe/{subscriber}/{list}/process', [\App\Http\Controllers\UnsubscribeController::class, 'process'])->name('subscriber.unsubscribe.process');
 Route::get('/unsubscribe/{subscriber}', [\App\Http\Controllers\UnsubscribeController::class, 'globalUnsubscribe'])->name('subscriber.unsubscribe.global');
@@ -1024,6 +1027,7 @@ Route::post('/unsubscribe/{subscriber}', [\App\Http\Controllers\UnsubscribeContr
 Route::get('/preferences/{subscriber}', [\App\Http\Controllers\SubscriberPreferencesController::class, 'show'])->name('subscriber.preferences');
 Route::post('/preferences/{subscriber}', [\App\Http\Controllers\SubscriberPreferencesController::class, 'update'])->name('subscriber.preferences.update');
 Route::get('/preferences/{subscriber}/confirm', [\App\Http\Controllers\SubscriberPreferencesController::class, 'confirm'])->name('subscriber.preferences.confirm');
+Route::post('/preferences/{subscriber}/confirm', [\App\Http\Controllers\SubscriberPreferencesController::class, 'applyConfirmed'])->name('subscriber.preferences.confirm.apply');
 
 // GDPR Data Deletion (Right to be Forgotten)
 Route::post('/preferences/{subscriber}/delete', [\App\Http\Controllers\SubscriberPreferencesController::class, 'requestDeletion'])->name('subscriber.data.delete');
