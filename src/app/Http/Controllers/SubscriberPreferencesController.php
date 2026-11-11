@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\SubscriberSignedUp;
-use App\Events\SubscriberUnsubscribed;
+use App\Http\Controllers\Concerns\SpeaksSubscriberLanguage;
 use App\Models\ContactList;
 use App\Models\Subscriber;
 use App\Models\SuppressionList;
@@ -12,24 +12,37 @@ use App\Models\SystemPage;
 use App\Services\PlaceholderService;
 use App\Services\SystemEmailService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 
 /**
- * Handles public subscriber preferences page where users can manage their subscriptions.
- * Users can see all public lists and choose which ones to subscribe to or unsubscribe from.
+ * The public preferences page (/preferences/{subscriber}, signed), where
+ * [[unsubscribe]] of a message to several lists and [[manage]] lead.
+ *
+ * - It lists the public lists the subscriber is on or has left; lists they
+ *   never joined are not offered. Mail scanners open the links of incoming
+ *   mail, tick every box of a form and follow the confirmation link they get:
+ *   on 2026-11-10 that subscribed three people to all 40 lists of an account.
+ * - Unticking a list unsubscribes from it at once.
+ * - Ticking a list the subscriber left asks for a confirmation from the
+ *   inbox, applied with a button on the page the link opens, never by
+ *   opening the link alone.
+ * - "Unsubscribe me from everything" sends the RFC 8058 one-click request to
+ *   the account-wide unsubscribe URL (UnsubscribeController::globalOneClick).
  */
 class SubscriberPreferencesController extends Controller
 {
+    use SpeaksSubscriberLanguage;
+
     public function __construct(
         protected PlaceholderService $placeholderService,
         protected SystemEmailService $systemEmailService
     ) {}
 
     /**
-     * Show the preferences page with all public lists.
-     * Requires signed URL for security.
+     * Show the preferences page. Requires a signed URL.
      */
     public function show(Request $request, Subscriber $subscriber)
     {
@@ -37,243 +50,222 @@ class SubscriberPreferencesController extends Controller
             return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
         }
 
-        // Get subscriber's user to find their public lists
         $userId = $this->getSubscriberUserId($subscriber);
 
         if (!$userId) {
             return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
         }
 
-        // Get all public lists for this user
-        $publicLists = ContactList::where('user_id', $userId)
-            ->public()
-            ->email()
-            ->orderBy('name')
-            ->get();
+        $this->useSubscriberLocale($subscriber);
 
-        // Get subscriber's current subscriptions with their status
-        $subscribedListIds = $subscriber->contactLists()
-            ->wherePivot('status', 'active')
-            ->pluck('contact_lists.id')
-            ->toArray();
+        $lists = $this->manageableLists($subscriber, $userId);
 
         return view('public.preferences', [
             'subscriber' => $subscriber,
-            'lists' => $publicLists,
-            'subscribedListIds' => $subscribedListIds,
+            'lists' => $lists,
+            'subscribedListIds' => $lists->filter(fn ($list) => $this->isActive($list))->pluck('id')->all(),
             'signedUrl' => $request->fullUrl(),
+            'unsubscribeAllUrl' => $this->placeholderService->generateGlobalUnsubscribeLink($subscriber),
+            'activeListCount' => $subscriber->contactLists()->wherePivot('status', Subscriber::STATUS_ACTIVE)->count(),
             'availableLanguages' => config('netsendo.languages'),
             'currentLanguage' => $subscriber->language,
         ]);
     }
 
     /**
-     * Process preferences update request.
-     * Does NOT apply changes immediately - sends confirmation email instead.
+     * Save the page: unticked lists are left at once, ticked lists the
+     * subscriber had left are rejoined after a confirmation email.
      */
     public function update(Request $request, Subscriber $subscriber)
     {
-        // Validate the original signature
+        $this->useSubscriberLocale($subscriber);
+
         $originalUrl = $request->input('signed_url');
         if (!$originalUrl || !URL::hasValidSignature(request()->create($originalUrl))) {
-            return back()->withErrors(['error' => 'Invalid or expired link.']);
+            return back()->withErrors(['error' => __('preferences.invalid_link')]);
         }
 
         $validated = $request->validate([
             'lists' => 'nullable|array',
-            'lists.*' => 'integer|exists:contact_lists,id',
+            'lists.*' => 'integer',
             'language' => 'nullable|string|max:5',
         ]);
-
-        $selectedListIds = $validated['lists'] ?? [];
 
         // Update subscriber language preference immediately (no confirmation needed)
         if (array_key_exists('language', $validated)) {
             $subscriber->update(['language' => $validated['language']]);
+            $this->useSubscriberLocale($subscriber);
         }
 
-        // Store the pending changes in session (or temporary storage)
-        $pendingChanges = [
-            'selected_lists' => $selectedListIds,
-            'requested_at' => now()->toISOString(),
-        ];
+        $userId = $this->getSubscriberUserId($subscriber);
 
-        // Generate confirmation link
+        if (!$userId) {
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+        }
+
+        $selected = array_map('intval', $validated['lists'] ?? []);
+        $lists = $this->manageableLists($subscriber, $userId);
+
+        $leave = $lists->filter(fn ($list) => $this->isActive($list) && !in_array($list->id, $selected, true));
+        $rejoin = $lists->filter(fn ($list) => !$this->isActive($list) && in_array($list->id, $selected, true));
+
+        // Leaving takes nothing more than this page: the link was sent to this address
+        foreach ($leave as $list) {
+            $subscriber->unsubscribeFromList($list->id, 'preferences');
+        }
+
+        Log::info('Subscriber preferences saved', [
+            'subscriber_id' => $subscriber->id,
+            'left_list_ids' => $leave->pluck('id')->values()->all(),
+            'rejoin_requested_list_ids' => $rejoin->pluck('id')->values()->all(),
+            'ignored_list_ids' => array_values(array_diff($selected, $lists->pluck('id')->all())),
+        ]);
+
+        if ($rejoin->isEmpty()) {
+            return $this->renderSystemPage('preference_update_success', $subscriber, null);
+        }
+
         $confirmUrl = URL::signedRoute('subscriber.preferences.confirm', [
             'subscriber' => $subscriber->id,
-            'changes' => base64_encode(json_encode($pendingChanges)),
+            'changes' => base64_encode(json_encode([
+                'rejoin' => $rejoin->pluck('id')->values()->all(),
+                'requested_at' => now()->toISOString(),
+            ])),
         ], now()->addHours(24));
 
-        // Send confirmation email
-        $this->sendConfirmationEmail($subscriber, $pendingChanges, $confirmUrl);
+        $this->sendConfirmationEmail($subscriber, $confirmUrl);
 
         return $this->renderSystemPage('preference_confirm_sent', $subscriber, null, [
-            'message' => 'We have sent you a confirmation email. Please click the link in the email to apply your changes.',
+            'message' => __('preferences.confirm_sent'),
         ]);
     }
 
     /**
-     * Confirm and apply the preference changes.
-     * Called from signed URL in confirmation email.
+     * The link of the confirmation email: shows what will change and a button.
+     * Opening the link changes nothing — scanners that fetch every link of an
+     * email must not rejoin anybody.
      */
     public function confirm(Request $request, Subscriber $subscriber)
     {
+        $plan = $this->confirmationPlan($request, $subscriber);
+
+        if (!$plan) {
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+        }
+
+        if ($plan['rejoin']->isEmpty() && $plan['leave']->isEmpty()) {
+            return $this->renderSystemPage('preference_update_success', $subscriber, null);
+        }
+
+        $this->useSubscriberLocale($subscriber);
+
+        return view('public.preferences-confirm', [
+            'subscriber' => $subscriber,
+            'rejoin' => $plan['rejoin'],
+            'leave' => $plan['leave'],
+            // The raw query string: the signature covers the parameters in their original order
+            'action' => $request->url() . '?' . $request->server->get('QUERY_STRING'),
+        ]);
+    }
+
+    /**
+     * The button of the confirmation page: applies the changes.
+     */
+    public function applyConfirmed(Request $request, Subscriber $subscriber)
+    {
+        $plan = $this->confirmationPlan($request, $subscriber);
+
+        if (!$plan) {
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+        }
+
+        foreach ($plan['leave'] as $list) {
+            $subscriber->unsubscribeFromList($list->id, 'preferences');
+        }
+
+        foreach ($plan['rejoin'] as $list) {
+            $subscriber->contactLists()->updateExistingPivot($list->id, [
+                'status' => Subscriber::STATUS_ACTIVE,
+                'subscribed_at' => now(),
+                'resubscribed_at' => now(),
+                'unsubscribed_at' => null,
+            ]);
+
+            event(new SubscriberSignedUp($subscriber, $list, null, 'preferences_reactivation'));
+        }
+
+        Log::info('Subscriber preferences confirmed', [
+            'subscriber_id' => $subscriber->id,
+            'rejoined_list_ids' => $plan['rejoin']->pluck('id')->all(),
+            'left_list_ids' => $plan['leave']->pluck('id')->all(),
+        ]);
+
+        return $this->renderSystemPage('preference_update_success', $subscriber, null);
+    }
+
+    /**
+     * What a signed confirmation link asks for, limited to the lists the
+     * subscriber can change on the page: ['rejoin' => lists, 'leave' => lists],
+     * or null for an invalid link.
+     */
+    protected function confirmationPlan(Request $request, Subscriber $subscriber): ?array
+    {
         if (!$request->hasValidSignature()) {
-            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+            return null;
         }
 
-        $changesEncoded = $request->query('changes');
-        if (!$changesEncoded) {
-            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
-        }
-
-        $pendingChanges = json_decode(base64_decode($changesEncoded), true);
-        if (!$pendingChanges || !isset($pendingChanges['selected_lists'])) {
-            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
-        }
-
-        $selectedListIds = array_map('intval', $pendingChanges['selected_lists']);
-
-        // Get subscriber's user to find their public lists
+        $changes = json_decode((string) base64_decode((string) $request->query('changes'), true), true);
         $userId = $this->getSubscriberUserId($subscriber);
 
-        Log::info('Subscriber preferences confirm - starting', [
-            'subscriber_id' => $subscriber->id,
-            'selected_lists' => $selectedListIds,
-            'resolved_user_id' => $userId,
-            'subscriber_user_id' => $subscriber->user_id,
-        ]);
-
-        if (!$userId) {
-            Log::error('Subscriber preferences confirm - no user ID found', [
-                'subscriber_id' => $subscriber->id,
-            ]);
-            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+        if (!is_array($changes) || !$userId) {
+            return null;
         }
 
-        // Get all public lists for this user
-        $publicListIds = ContactList::where('user_id', $userId)
-            ->public()
-            ->email()
-            ->pluck('id')
-            ->toArray();
+        $lists = $this->manageableLists($subscriber, $userId);
 
-        Log::info('Subscriber preferences confirm - public lists', [
-            'subscriber_id' => $subscriber->id,
-            'public_list_ids' => $publicListIds,
-            'public_list_count' => count($publicListIds),
-        ]);
+        if (isset($changes['rejoin']) && is_array($changes['rejoin'])) {
+            $ids = array_map('intval', $changes['rejoin']);
 
-        if (empty($publicListIds)) {
-            Log::warning('Subscriber preferences confirm - NO PUBLIC LISTS FOUND! This is likely the issue.', [
-                'subscriber_id' => $subscriber->id,
-                'user_id' => $userId,
-            ]);
+            return [
+                'rejoin' => $lists->filter(fn ($list) => !$this->isActive($list) && in_array($list->id, $ids, true))->values(),
+                'leave' => collect(),
+            ];
         }
 
-        try {
-            $changesApplied = [];
+        // Links emailed before 2.8.8 carry the whole selection of the page: lists
+        // left out are left, ticked lists the subscriber had left are rejoined, and
+        // lists they never joined are not joined.
+        if (isset($changes['selected_lists']) && is_array($changes['selected_lists'])) {
+            $ids = array_map('intval', $changes['selected_lists']);
 
-            // Apply changes only to public lists
-            foreach ($publicListIds as $listId) {
-                $isSelected = in_array($listId, $selectedListIds, true);
-                $existingPivot = $subscriber->contactLists()
-                    ->where('contact_lists.id', $listId)
-                    ->first();
-
-                $pivotStatus = $existingPivot?->pivot->status ?? 'none';
-
-                Log::info('Subscriber preferences confirm - processing list', [
-                    'subscriber_id' => $subscriber->id,
-                    'list_id' => $listId,
-                    'is_selected' => $isSelected,
-                    'existing_pivot_status' => $pivotStatus,
-                ]);
-
-                if ($isSelected) {
-                    // Subscribe to the list
-                    if (!$existingPivot) {
-                        $subscriber->contactLists()->attach($listId, [
-                            'status' => 'active',
-                            'subscribed_at' => now(),
-                            'source' => 'preferences',
-                        ]);
-                        $changesApplied[] = ['list_id' => $listId, 'action' => 'attached'];
-                        Log::info('Subscriber preferences confirm - attached new list', [
-                            'subscriber_id' => $subscriber->id,
-                            'list_id' => $listId,
-                        ]);
-
-                        // Dispatch event for autoresponder queue entries
-                        $list = ContactList::find($listId);
-                        if ($list) {
-                            event(new SubscriberSignedUp($subscriber, $list, null, 'preferences'));
-                        }
-                    } elseif ($existingPivot->pivot->status !== 'active') {
-                        $result = $subscriber->contactLists()->updateExistingPivot($listId, [
-                            'status' => 'active',
-                            'subscribed_at' => now(),
-                        ]);
-                        $changesApplied[] = ['list_id' => $listId, 'action' => 'reactivated', 'result' => $result];
-                        Log::info('Subscriber preferences confirm - reactivated list', [
-                            'subscriber_id' => $subscriber->id,
-                            'list_id' => $listId,
-                            'update_result' => $result,
-                        ]);
-
-                        // Dispatch event for autoresponder queue entries
-                        $list = ContactList::find($listId);
-                        if ($list) {
-                            event(new SubscriberSignedUp($subscriber, $list, null, 'preferences_reactivation'));
-                        }
-                    }
-                } else {
-                    // Unsubscribe from the list
-                    if ($existingPivot && $existingPivot->pivot->status === 'active') {
-                        $result = $subscriber->contactLists()->updateExistingPivot($listId, [
-                            'status' => 'unsubscribed',
-                            'unsubscribed_at' => now(),
-                        ]);
-                        $changesApplied[] = ['list_id' => $listId, 'action' => 'unsubscribed', 'result' => $result];
-                        Log::info('Subscriber preferences confirm - unsubscribed from list', [
-                            'subscriber_id' => $subscriber->id,
-                            'list_id' => $listId,
-                            'update_result' => $result,
-                        ]);
-
-                        // Dispatch event for automations
-                        $list = ContactList::find($listId);
-                        if ($list) {
-                            event(new SubscriberUnsubscribed($subscriber, $list, 'preferences'));
-                        }
-                    }
-                }
-            }
-
-            // VERIFICATION: Check actual DB state after updates
-            $subscriber->load('contactLists');
-            $finalActiveListIds = $subscriber->contactLists()
-                ->wherePivot('status', 'active')
-                ->pluck('contact_lists.id')
-                ->toArray();
-
-            Log::info('Subscriber preferences updated - FINAL STATE', [
-                'subscriber_id' => $subscriber->id,
-                'requested_selected_lists' => $selectedListIds,
-                'final_active_list_ids' => $finalActiveListIds,
-                'changes_applied' => $changesApplied,
-                'public_lists_processed' => $publicListIds,
-            ]);
-
-            return $this->renderSystemPage('preference_update_success', $subscriber, null);
-
-        } catch (\Exception $e) {
-            Log::error('Failed to update subscriber preferences', [
-                'subscriber_id' => $subscriber->id,
-                'error' => $e->getMessage(),
-            ]);
-            return $this->renderSystemPage('unsubscribe_error', $subscriber, null);
+            return [
+                'rejoin' => $lists->filter(fn ($list) => !$this->isActive($list) && in_array($list->id, $ids, true))->values(),
+                'leave' => $lists->filter(fn ($list) => $this->isActive($list) && !in_array($list->id, $ids, true))->values(),
+            ];
         }
+
+        return null;
+    }
+
+    /**
+     * The lists a subscriber can change on the page: public email lists of
+     * their account they are on or have left (bounced and unconfirmed
+     * memberships are not theirs to change here).
+     */
+    protected function manageableLists(Subscriber $subscriber, int $userId): Collection
+    {
+        return $subscriber->contactLists()
+            ->where('contact_lists.user_id', $userId)
+            ->where('contact_lists.is_public', true)
+            ->where('contact_lists.type', 'email')
+            ->wherePivotIn('status', [Subscriber::STATUS_ACTIVE, Subscriber::STATUS_UNSUBSCRIBED])
+            ->orderBy('contact_lists.name')
+            ->get();
+    }
+
+    protected function isActive(ContactList $list): bool
+    {
+        return $list->pivot?->status === Subscriber::STATUS_ACTIVE;
     }
 
     /**
@@ -285,9 +277,9 @@ class SubscriberPreferencesController extends Controller
     }
 
     /**
-     * Send confirmation email for preference changes.
+     * Send the email that confirms rejoining lists.
      */
-    protected function sendConfirmationEmail(Subscriber $subscriber, array $pendingChanges, string $confirmUrl): void
+    protected function sendConfirmationEmail(Subscriber $subscriber, string $confirmUrl): void
     {
         // Get first list to find user context
         $list = $subscriber->contactLists()->first();
@@ -303,9 +295,11 @@ class SubscriberPreferencesController extends Controller
         $systemEmail = SystemEmail::getBySlug('preference_confirm', $list->id);
 
         if (!$systemEmail || !$systemEmail->is_active) {
-            // Fallback to default template
-            $subject = 'Confirm Your Subscription Preferences';
-            $content = '<h2>Confirm Your Changes</h2><p>Click the link below to confirm your subscription preferences:</p><p><a href="[[confirm-link]]">Confirm changes</a></p><p>If you did not request this change, you can ignore this email.</p>';
+            $subject = __('preferences.email.subject');
+            $content = '<h2>' . e(__('preferences.email.heading')) . '</h2>'
+                . '<p>' . e(__('preferences.email.body')) . '</p>'
+                . '<p><a href="[[confirm-link]]">' . e(__('preferences.email.link')) . '</a></p>'
+                . '<p>' . e(__('preferences.email.ignore')) . '</p>';
         } else {
             $subject = $systemEmail->subject;
             $content = $systemEmail->content;

@@ -102,10 +102,11 @@ Wstawki (placeholders) pozwalają na personalizację treści wiadomości Email i
 
 #### Linki systemowe
 
-| Placeholder       | Opis                           |
-| ----------------- | ------------------------------ |
-| `[[unsubscribe]]` | Link wypisania z listy         |
-| `[[manage]]`      | Link zarządzania preferencjami |
+| Placeholder           | Opis                                                                                                                         |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `[[unsubscribe]]`     | Link wypisania z listy                                                                                                       |
+| `[[unsubscribe_now]]` | Wypis jednym przyciskiem: z listy wiadomości albo ze wszystkich list, bez e-maila z potwierdzeniem i bez strony ustawień |
+| `[[manage]]`          | Link zarządzania preferencjami                                                                                               |
 
 #### Pola niestandardowe
 
@@ -884,6 +885,12 @@ Zwraca wszystkie dostępne placeholdery systemowe i niestandardowe.
         "name": "unsubscribe",
         "placeholder": "[[unsubscribe]]",
         "label": "Unsubscribe Link",
+        "type": "link"
+      },
+      {
+        "name": "unsubscribe_now",
+        "placeholder": "[[unsubscribe_now]]",
+        "label": "One-Click Unsubscribe Page Link",
         "type": "link"
       },
       {

@@ -1,0 +1,45 @@
+<?php
+
+// Seiten für Abonnenten: Abonnement-Einstellungen (SubscriberPreferencesController) und Abmeldung mit einem Klick (UnsubscribeController::now)
+return [
+    'title' => 'Ihre Abonnements',
+    'subtitle' => 'Entscheiden Sie, welche E-Mails Sie von uns erhalten möchten.',
+    'unsubscribe_all' => 'Von allem abmelden',
+    'unsubscribe_all_note' => 'Ein Klick meldet diese Adresse von allen Listen ab. Sie erhalten danach keine E-Mails mehr von uns.',
+    'no_active_lists' => 'Diese Adresse ist in keiner Liste eingetragen.',
+    'or' => 'oder',
+    'lists_title' => 'Wählen Sie, welche Listen Sie behalten',
+    'lists_help' => 'Entfernen Sie das Häkchen bei einer Liste, um sich von ihr abzumelden.',
+    'left_hint' => 'Abgemeldet. Setzen Sie das Häkchen, um zurückzukehren: Sie bestätigen das per E-Mail.',
+    'no_lists' => 'Hier gibt es keine Listen zur Auswahl.',
+    'language_title' => 'Sprache der E-Mails',
+    'language_default' => '— Standard —',
+    'language_help' => 'Wählen Sie die Sprache, in der Sie E-Mails erhalten möchten.',
+    'save' => 'Änderungen speichern',
+    'delete_text' => 'Möchten Sie Ihre Daten vollständig löschen?',
+    'delete_button' => 'Alle meine Daten löschen',
+    'delete_confirm' => 'Möchten Sie wirklich alle Ihre Daten endgültig löschen? Das kann nicht rückgängig gemacht werden.',
+    'invalid_link' => 'Dieser Link ist ungültig oder abgelaufen.',
+    'confirm_sent' => 'Wir haben Ihnen eine Bestätigungs-E-Mail gesendet. Klicken Sie auf den Link darin, um zu den gewählten Listen zurückzukehren.',
+    'confirm' => [
+        'title' => 'Änderungen bestätigen',
+        'rejoin' => 'Sie kehren zu diesen Listen zurück:',
+        'leave' => 'Sie melden sich von diesen Listen ab:',
+        'button' => 'Bestätigen',
+        'note' => 'Nichts ändert sich, bevor Sie auf die Schaltfläche klicken.',
+    ],
+    'email' => [
+        'subject' => 'Bestätigen Sie die Änderungen Ihrer Abonnements',
+        'heading' => 'Änderungen bestätigen',
+        'body' => 'Klicken Sie auf den Link unten und bestätigen Sie auf der Seite, dass Sie zu den gewählten Listen zurückkehren möchten.',
+        'link' => 'Änderungen bestätigen',
+        'ignore' => 'Wenn Sie das nicht waren, ignorieren Sie diese E-Mail.',
+    ],
+    'now' => [
+        'title' => 'Abmelden',
+        'list' => 'Die Adresse :email von der Liste „:list“ abmelden?',
+        'all' => 'Die Adresse :email von allen Listen abmelden?',
+        'button' => 'Abmelden',
+        'note' => 'Sie werden sofort abgemeldet, ohne weitere E-Mail.',
+    ],
+];

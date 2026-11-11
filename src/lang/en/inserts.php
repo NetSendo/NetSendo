@@ -19,6 +19,8 @@ return [
         'links' => 'Links',
         'unsubscribe_link' => 'Unsubscribe Link',
         'unsubscribe_link_desc' => 'Link to unsubscribe from list (required)',
+        'unsubscribe_now' => 'Unsubscribe in One Click',
+        'unsubscribe_now_desc' => 'A page with one button that unsubscribes at once: from the list of the message, or from every list. No confirmation email, no preferences page',
         'manage_link' => 'Manage Subscription',
         'manage_link_desc' => 'Link to edit subscriber details',
         

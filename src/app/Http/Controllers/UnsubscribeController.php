@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\SubscriberUnsubscribed;
+use App\Http\Controllers\Concerns\SpeaksSubscriberLanguage;
 use App\Models\ContactList;
 use App\Models\Subscriber;
 use App\Models\SystemEmail;
@@ -24,9 +25,14 @@ use Illuminate\Support\Facades\URL;
  * One-click (RFC 8058): the List-Unsubscribe header carries the same signed
  * URL. A mailbox provider POSTs List-Unsubscribe=One-Click to it, and that
  * unsubscribes at once — the user already confirmed in the mail client.
+ *
+ * [[unsubscribe_now]] opens a page with one button that sends that same
+ * one-click request (now()): no confirmation email, no preferences page.
  */
 class UnsubscribeController extends Controller
 {
+    use SpeaksSubscriberLanguage;
+
     public function __construct(
         protected PlaceholderService $placeholderService,
         protected SystemEmailService $systemEmailService
@@ -232,6 +238,42 @@ class UnsubscribeController extends Controller
 
         return $this->renderSystemPage('unsubscribe_global_success', $subscriber, null, [
             'unsubscribed_count' => (string) $count,
+        ]);
+    }
+
+    /**
+     * [[unsubscribe_now]]: a page with one button that unsubscribes at once from
+     * the list (or, without a list, from every list), with no confirmation email.
+     * The button sends the RFC 8058 one-click request to the signed URL of the
+     * List-Unsubscribe header (oneClick(), globalOneClick()). Opening the link
+     * alone changes nothing: mail scanners fetch every link of incoming mail.
+     */
+    public function now(Request $request, Subscriber $subscriber, ?ContactList $list = null)
+    {
+        if (!$request->hasValidSignature()) {
+            return $this->renderSystemPage('unsubscribe_error', $subscriber, $list, [], 403);
+        }
+
+        $active = $subscriber->contactLists()->wherePivot('status', Subscriber::STATUS_ACTIVE);
+
+        if ($list && !$active->where('contact_lists.id', $list->id)->exists()) {
+            return $this->renderSystemPage('unsubscribe_success', $subscriber, $list);
+        }
+
+        if (!$list && !$active->exists()) {
+            return $this->renderSystemPage('unsubscribe_global_success', $subscriber, null, [
+                'unsubscribed_count' => '0',
+            ]);
+        }
+
+        $this->useSubscriberLocale($subscriber);
+
+        return view('public.unsubscribe-now', [
+            'subscriber' => $subscriber,
+            'list' => $list,
+            'action' => $list
+                ? $this->placeholderService->generateUnsubscribeLink($subscriber, $list)
+                : $this->placeholderService->generateGlobalUnsubscribeLink($subscriber),
         ]);
     }
 

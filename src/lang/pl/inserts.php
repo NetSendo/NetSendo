@@ -19,6 +19,8 @@ return [
         'links' => 'Linki',
         'unsubscribe_link' => 'Link wypisu',
         'unsubscribe_link_desc' => 'Link do wypisania się z listy (wymagany)',
+        'unsubscribe_now' => 'Wypis jednym kliknięciem',
+        'unsubscribe_now_desc' => 'Strona z jednym przyciskiem, który od razu wypisuje: z listy tej wiadomości albo ze wszystkich list. Bez e-maila z potwierdzeniem i bez strony ustawień',
         'manage_link' => 'Zarządzanie subskrypcją',
         'manage_link_desc' => 'Link do edycji danych subskrybenta',
         
