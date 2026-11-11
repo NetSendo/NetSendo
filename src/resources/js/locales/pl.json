@@ -3782,6 +3782,28 @@
             "success": "Nowe hasło zostało wygenerowane i wysłane na Twój adres e-mail.",
             "button": "Zresetuj hasło",
             "processing": "Przetwarzanie..."
+        },
+        "brand": {
+            "headline": "Marketing e-mail i SMS na własnym serwerze.",
+            "points": {
+                "channels": "E-mail i SMS z jednego panelu",
+                "automation": "Automatyzacje, lejki i CRM",
+                "ownership": "Twoje dane zostają na Twoim serwerze"
+            }
+        },
+        "first_run": {
+            "eyebrow": "Pierwsze uruchomienie",
+            "title": "Witaj w NetSendo",
+            "email_hint": "Tym adresem będziesz się logować."
+        },
+        "show_password": "Pokaż hasło",
+        "hide_password": "Ukryj hasło",
+        "back_to_login": "Wróć do logowania",
+        "invitation": {
+            "title": "Dołącz do zespołu",
+            "intro": "{name} zaprasza Cię do NetSendo. Ustaw hasło, aby utworzyć konto.",
+            "set_password": "Ustaw hasło",
+            "submit": "Utwórz konto i dołącz"
         }
     },
     "profile": {

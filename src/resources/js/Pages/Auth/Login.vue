@@ -1,10 +1,13 @@
 <script setup>
-import { ref } from 'vue';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import FirstRunModal from '@/Components/FirstRunModal.vue';
-import Modal from '@/Components/Modal.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
-import { useI18n } from 'vue-i18n';
+import { ref } from "vue";
+import GuestLayout from "@/Layouts/GuestLayout.vue";
+import Modal from "@/Components/Modal.vue";
+import AuthHeading from "@/Components/Auth/AuthHeading.vue";
+import AuthField from "@/Components/Auth/AuthField.vue";
+import AuthSubmit from "@/Components/Auth/AuthSubmit.vue";
+import AuthNotice from "@/Components/Auth/AuthNotice.vue";
+import { Head, Link, useForm } from "@inertiajs/vue3";
+import { useI18n } from "vue-i18n";
 
 const { t } = useI18n();
 
@@ -15,6 +18,7 @@ defineProps({
     status: {
         type: String,
     },
+    // No account exists yet: there is nobody to sign in, the next step is the administrator account
     isFirstUser: {
         type: Boolean,
         default: false,
@@ -22,22 +26,22 @@ defineProps({
 });
 
 const form = useForm({
-    email: '',
-    password: '',
+    email: "",
+    password: "",
     remember: false,
 });
 
 const resetForm = useForm({
-    email: '',
+    email: "",
 });
 
 const showResetModal = ref(false);
 const resetStatus = ref(null);
 
 const submitReset = () => {
-    resetForm.post(route('password.webhook-reset'), {
+    resetForm.post(route("password.webhook-reset"), {
         onSuccess: () => {
-            resetStatus.value = t('auth.webhook_reset.success');
+            resetStatus.value = t("auth.webhook_reset.success");
             setTimeout(() => {
                 showResetModal.value = false;
                 resetForm.reset();
@@ -48,8 +52,8 @@ const submitReset = () => {
 };
 
 const submit = () => {
-    form.post(route('login'), {
-        onFinish: () => form.reset('password'),
+    form.post(route("login"), {
+        onFinish: () => form.reset("password"),
     });
 };
 </script>
@@ -58,196 +62,144 @@ const submit = () => {
     <GuestLayout>
         <Head :title="$t('auth.login')" />
 
-        <!-- Header -->
-        <div class="text-center mb-6">
-            <div class="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 mb-4 shadow-lg shadow-purple-500/25">
-                <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
-            </div>
-            <h1 class="text-2xl font-bold text-white mb-1">{{ $t('auth.welcome_back') }}</h1>
-            <p class="text-white/60 text-sm">{{ $t('auth.login_to_account') }}</p>
-        </div>
+        <!-- First run: the installation has no account, so it offers to create one -->
+        <template v-if="isFirstUser">
+            <AuthHeading
+                :eyebrow="$t('auth.first_run.eyebrow')"
+                :title="$t('auth.first_run.title')"
+                :subtitle="$t('first_run.modal_description')"
+            />
 
-        <!-- Status message -->
-        <div v-if="status" class="mb-4 rounded-lg bg-green-500/20 border border-green-500/30 p-3 text-sm text-green-300">
-            {{ status }}
-        </div>
-
-        <!-- Flash error message (e.g., registration blocked) -->
-        <div v-if="$page.props.flash?.error" class="mb-4 rounded-lg bg-amber-500/20 border border-amber-500/30 p-3 text-sm text-amber-300 flex items-center gap-2">
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            {{ $page.props.flash.error }}
-        </div>
-
-        <form @submit.prevent="submit" class="space-y-5">
-            <!-- Email -->
-            <div>
-                <label for="email" class="block text-sm font-medium text-white/80 mb-2">
-                    {{ $t('auth.email') }}
-                </label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                        </svg>
-                    </div>
-                    <input
-                        id="email"
-                        type="email"
-                        v-model="form.email"
-                        required
-                        autofocus
-                        autocomplete="username"
-                        class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-200"
-                        placeholder="your@email.com"
-                    />
-                </div>
-                <p v-if="form.errors.email" class="mt-2 text-sm text-red-400">
-                    {{ form.errors.email }}
-                </p>
-            </div>
-
-            <!-- Password -->
-            <div>
-                <label for="password" class="block text-sm font-medium text-white/80 mb-2">
-                    {{ $t('auth.password') }}
-                </label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="h-5 w-5 text-white/40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                    </div>
-                    <input
-                        id="password"
-                        type="password"
-                        v-model="form.password"
-                        required
-                        autocomplete="current-password"
-                        class="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500/50 transition-all duration-200"
-                        placeholder="••••••••"
-                    />
-                </div>
-                <p v-if="form.errors.password" class="mt-2 text-sm text-red-400">
-                    {{ form.errors.password }}
-                </p>
-            </div>
-
-            <!-- Remember me & Forgot password -->
-            <div class="flex items-center justify-between">
-                <label class="flex items-center cursor-pointer">
-                    <input
-                        type="checkbox"
-                        v-model="form.remember"
-                        class="w-4 h-4 rounded border-white/30 bg-white/10 text-purple-600 focus:ring-purple-500/50 focus:ring-offset-0"
-                    />
-                    <span class="ml-2 text-sm text-white/60">{{ $t('auth.remember_me') }}</span>
-                </label>
-
-                <button
-                    v-if="canResetPassword"
-                    type="button"
-                    @click="showResetModal = true"
-                    class="text-sm text-purple-400 hover:text-purple-300 transition-colors"
-                >
-                    {{ $t('auth.forgot_password_link') }}
-                </button>
-            </div>
-
-            <!-- Submit button -->
-            <button
-                type="submit"
-                :disabled="form.processing"
-                class="w-full relative group"
-            >
-                <div
-                    class="absolute -inset-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl blur opacity-60 group-hover:opacity-100 transition duration-300"
-                    :class="{ 'opacity-30': form.processing }"
-                ></div>
-                <div
-                    class="relative flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl text-white font-semibold transition-all duration-200"
-                    :class="{ 'opacity-50 cursor-not-allowed': form.processing }"
-                >
-                    <svg v-if="form.processing" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <span v-if="form.processing">{{ $t('common.loading') }}</span>
-                    <span v-else>{{ $t('auth.login') }}</span>
-                </div>
-            </button>
-        </form>
-
-        <!-- Register link: only before the first (administrator) account exists -->
-        <div v-if="isFirstUser" class="mt-6 pt-6 border-t border-white/10 text-center">
-            <p class="text-white/50 text-sm">
-                {{ $t('auth.no_account') }}
-                <Link :href="route('register')" class="text-purple-400 hover:text-purple-300 font-medium transition-colors">
-                    {{ $t('welcome.register') }}
-                </Link>
+            <p class="text-sm font-medium text-slate-800 dark:text-slate-200">
+                {{ $t("first_run.features_heading") }}
             </p>
-        </div>
-        <!-- First Run Modal -->
-        <FirstRunModal :show="isFirstUser" />
+            <ul class="mb-8 mt-3 flex flex-col gap-2 text-sm text-slate-600 dark:text-slate-400">
+                <li v-for="n in 3" :key="n" class="flex items-start gap-2.5">
+                    <svg
+                        aria-hidden="true"
+                        class="mt-0.5 h-4 w-4 shrink-0 text-emerald-700 dark:text-emerald-400"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="3"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        viewBox="0 0 24 24"
+                    >
+                        <path d="M5 13l4 4L19 7" />
+                    </svg>
+                    {{ $t(`first_run.feature_${n}`) }}
+                </li>
+            </ul>
 
-        <!-- Reset Password Modal -->
-        <Modal :show="showResetModal" @close="showResetModal = false">
-            <div class="p-6">
-                <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                    {{ $t('auth.webhook_reset.title') }}
-                </h2>
+            <Link
+                :href="route('register')"
+                class="flex min-h-11 w-full items-center justify-center rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+            >
+                {{ $t("first_run.create_admin_button") }}
+            </Link>
+        </template>
 
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    {{ $t('auth.webhook_reset.content') }}
-                </p>
+        <template v-else>
+            <AuthHeading :title="$t('auth.welcome_back')" :subtitle="$t('auth.login_to_account')" />
 
-                <div class="mt-6">
-                    <label for="reset_email" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        {{ $t('auth.email') }}
+            <AuthNotice v-if="status">{{ status }}</AuthNotice>
+            <AuthNotice v-if="$page.props.flash?.error" tone="warning">
+                {{ $page.props.flash.error }}
+            </AuthNotice>
+
+            <form class="flex flex-col gap-5" @submit.prevent="submit">
+                <AuthField
+                    id="email"
+                    v-model="form.email"
+                    type="email"
+                    :label="$t('auth.email')"
+                    :error="form.errors.email"
+                    required
+                    autofocus
+                    autocomplete="username"
+                    placeholder="your@email.com"
+                />
+
+                <AuthField
+                    id="password"
+                    v-model="form.password"
+                    type="password"
+                    :label="$t('auth.password')"
+                    :error="form.errors.password"
+                    required
+                    autocomplete="current-password"
+                />
+
+                <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+                    <label class="flex min-h-9 cursor-pointer items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                        <input
+                            v-model="form.remember"
+                            type="checkbox"
+                            class="h-4 w-4 accent-indigo-600"
+                        />
+                        {{ $t("auth.remember_me") }}
                     </label>
-                    <input
-                        id="reset_email"
-                        type="email"
-                        v-model="resetForm.email"
-                        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
-                        placeholder="your@email.com"
-                        @keyup.enter="submitReset"
-                    />
-                    <p v-if="resetForm.errors.email" class="mt-2 text-sm text-red-600 dark:text-red-400">
-                        {{ resetForm.errors.email }}
-                    </p>
-                    <p v-if="resetStatus" class="mt-2 text-sm text-green-600 dark:text-green-400">
-                        {{ resetStatus }}
-                    </p>
+
+                    <button
+                        v-if="canResetPassword"
+                        type="button"
+                        class="min-h-9 text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        @click="showResetModal = true"
+                    >
+                        {{ $t("auth.forgot_password_link") }}
+                    </button>
                 </div>
 
-                <div class="mt-6 flex justify-end gap-3">
+                <AuthSubmit :processing="form.processing" :processing-label="$t('common.loading')">
+                    {{ $t("auth.login") }}
+                </AuthSubmit>
+            </form>
+        </template>
+
+        <!-- Password reset by e-mail -->
+        <Modal :show="showResetModal" max-width="md" @close="showResetModal = false">
+            <form class="flex flex-col gap-4 p-6" @submit.prevent="submitReset">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                    {{ $t("auth.webhook_reset.title") }}
+                </h2>
+                <p class="text-sm text-slate-600 dark:text-slate-400">
+                    {{ $t("auth.webhook_reset.content") }}
+                </p>
+
+                <AuthField
+                    id="reset_email"
+                    v-model="resetForm.email"
+                    type="email"
+                    :label="$t('auth.email')"
+                    :error="resetForm.errors.email"
+                    autocomplete="username"
+                    placeholder="your@email.com"
+                />
+                <p v-if="resetStatus" role="status" class="text-sm text-emerald-700 dark:text-emerald-300">
+                    {{ resetStatus }}
+                </p>
+
+                <div class="flex justify-end gap-3">
                     <button
                         type="button"
-                        class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 dark:bg-gray-700 dark:text-gray-100 dark:border-gray-600 dark:hover:bg-gray-600"
+                        class="min-h-10 rounded-xl border border-slate-300 px-4 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700/60"
                         @click="showResetModal = false"
                     >
-                        {{ $t('common.cancel') || 'Cancel' }}
+                        {{ $t("common.cancel") }}
                     </button>
-
                     <button
-                        type="button"
-                        class="px-4 py-2 text-sm font-medium text-white bg-purple-600 border border-transparent rounded-md shadow-sm hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 flex items-center gap-2"
+                        type="submit"
                         :disabled="resetForm.processing"
-                        @click="submitReset"
+                        class="min-h-10 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 disabled:opacity-60"
                     >
-                        <svg v-if="resetForm.processing" class="animate-spin -ml-1 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        {{ resetForm.processing ? $t('common.loading') : $t('auth.webhook_reset.button') }}
+                        {{
+                            resetForm.processing
+                                ? $t("auth.webhook_reset.processing")
+                                : $t("auth.webhook_reset.button")
+                        }}
                     </button>
                 </div>
-            </div>
+            </form>
         </Modal>
     </GuestLayout>
 </template>
-

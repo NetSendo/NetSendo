@@ -3255,6 +3255,28 @@
             "processing": "Procesando...",
             "success": "Se ha generado una nueva contraseña y se ha enviado a tu dirección de correo.",
             "title": "Restablecer contraseña"
+        },
+        "brand": {
+            "headline": "Marketing por correo y SMS en tu propio servidor.",
+            "points": {
+                "channels": "Correo y SMS desde un solo panel",
+                "automation": "Automatizaciones, embudos y CRM",
+                "ownership": "Tus datos se quedan en tu servidor"
+            }
+        },
+        "first_run": {
+            "eyebrow": "Primera ejecución",
+            "title": "Bienvenido a NetSendo",
+            "email_hint": "Iniciarás sesión con esta dirección."
+        },
+        "show_password": "Mostrar contraseña",
+        "hide_password": "Ocultar contraseña",
+        "back_to_login": "Volver al inicio de sesión",
+        "invitation": {
+            "title": "Únete al equipo",
+            "intro": "{name} te invita a NetSendo. Define una contraseña para crear tu cuenta.",
+            "set_password": "Define una contraseña",
+            "submit": "Crear cuenta y unirse"
         }
     },
     "Ta nazwa pola jest zarezerwowana przez system.": "Este nombre de campo está reservado por el sistema.",

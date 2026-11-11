@@ -1,17 +1,17 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import GuestLayout from "@/Layouts/GuestLayout.vue";
+import AuthHeading from "@/Components/Auth/AuthHeading.vue";
+import AuthField from "@/Components/Auth/AuthField.vue";
+import AuthSubmit from "@/Components/Auth/AuthSubmit.vue";
+import AuthNotice from "@/Components/Auth/AuthNotice.vue";
+import { Head, useForm } from "@inertiajs/vue3";
 
 const form = useForm({
-    password: '',
+    password: "",
 });
 
 const submit = () => {
-    form.post(route('password.confirm'), {
+    form.post(route("password.confirm"), {
         onFinish: () => form.reset(),
     });
 };
@@ -21,34 +21,26 @@ const submit = () => {
     <GuestLayout>
         <Head :title="$t('auth.confirm_password.title')" />
 
-        <div class="mb-4 text-sm text-gray-600 dark:text-gray-400">
-            {{ $t('auth.confirm_password.intro') }}
-        </div>
+        <AuthHeading
+            :title="$t('auth.confirm_password.title')"
+            :subtitle="$t('auth.confirm_password.intro')"
+        />
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="password" :value="$t('auth.password')" />
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="current-password"
-                    autofocus
-                />
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
+        <form class="flex flex-col gap-5" @submit.prevent="submit">
+            <AuthField
+                id="password"
+                v-model="form.password"
+                type="password"
+                :label="$t('auth.password')"
+                :error="form.errors.password"
+                required
+                autofocus
+                autocomplete="current-password"
+            />
 
-            <div class="mt-4 flex justify-end">
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    {{ $t('auth.confirm_password.submit') }}
-                </PrimaryButton>
-            </div>
+            <AuthSubmit :processing="form.processing">
+                {{ $t("auth.confirm_password.submit") }}
+            </AuthSubmit>
         </form>
     </GuestLayout>
 </template>

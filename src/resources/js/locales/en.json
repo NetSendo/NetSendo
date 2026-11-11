@@ -4302,6 +4302,28 @@
             "success": "A new password has been generated and sent to your email address.",
             "button": "Reset Password",
             "processing": "Processing..."
+        },
+        "brand": {
+            "headline": "E-mail and SMS marketing on your own server.",
+            "points": {
+                "channels": "E-mail and SMS from one panel",
+                "automation": "Automations, funnels and a CRM",
+                "ownership": "Your data stays on your server"
+            }
+        },
+        "first_run": {
+            "eyebrow": "First run",
+            "title": "Welcome to NetSendo",
+            "email_hint": "You will sign in with this address."
+        },
+        "show_password": "Show password",
+        "hide_password": "Hide password",
+        "back_to_login": "Back to sign in",
+        "invitation": {
+            "title": "Join the team",
+            "intro": "{name} invites you to NetSendo. Set a password to create your account.",
+            "set_password": "Set a password",
+            "submit": "Create account and join"
         }
     },
     "Ta nazwa pola jest zarezerwowana przez system.": "This field name is reserved by the system.",
