@@ -4618,7 +4618,8 @@
         "result_failed_create": "La copia de seguridad falló.",
         "result_failed_restore": "La restauración falló.",
         "safety_backup_note": "Copia de seguridad de emergencia de la base de datos anterior: {name}",
-        "delete_confirm_title": "¿Eliminar esta copia de seguridad?"
+        "delete_confirm_title": "¿Eliminar esta copia de seguridad?",
+        "actions_for": "Acciones de la copia: {name}"
     },
     "api_keys": {
         "title": "Claves API",
@@ -9649,7 +9650,8 @@
         "title": "Base de nombres",
         "updated": "El nombre ha sido actualizado",
         "vocative_help": "Forma vocativa del nombre usada en la personalización [[!fname]]",
-        "vocative_placeholder": "p. ej. Anno, Janie..."
+        "vocative_placeholder": "p. ej. Anno, Janie...",
+        "actions_for": "Acciones del nombre: {name}"
     },
     "users": {
         "add_first_user": "Añadir primer usuario",

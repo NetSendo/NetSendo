@@ -5651,7 +5651,8 @@
         "result_failed_create": "Tworzenie kopii zapasowej nie powiodło się.",
         "result_failed_restore": "Przywracanie nie powiodło się.",
         "safety_backup_note": "Awaryjna kopia poprzedniej bazy danych: {name}",
-        "delete_confirm_title": "Usunąć tę kopię?"
+        "delete_confirm_title": "Usunąć tę kopię?",
+        "actions_for": "Akcje kopii: {name}"
     },
     "api_keys": {
         "title": "Klucze API",
@@ -5906,7 +5907,8 @@
             "completed": "Dopasowywanie płci zakończone",
             "notification_title": "Dopasowywanie płci zakończone",
             "notification_message": "Dopasowano {matched} subskrybentów, {unmatched} nie można było dopasować"
-        }
+        },
+        "actions_for": "Akcje imienia: {name}"
     },
     "settings": {
         "updates": {

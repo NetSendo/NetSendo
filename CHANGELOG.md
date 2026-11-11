@@ -83,6 +83,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Users and API keys are rebuilt on the same pattern.**
   - **Users**: one row per team member with the lists they may open (and where they may edit), a "Permissions" button and a menu; invitations nobody has accepted yet sit in a list below. When adding a member, each list can be given "view" or "view and edit" straight away (it was "view" only, to be changed afterwards). Removing a member and withdrawing an invitation ask in a dialog that names the person, in place of the browser's own prompt, and every action says that it happened.
   - **API keys**: the list shows what a key may do in words ("Full access", or the first permissions and how many more), not a row of sixteen tags. The permission list in the dialogs has "Select all" / "Clear all". The new key is shown in a dialog of its own with Show, Copy and a reminder that it will not be shown again. Errors while creating a key appear in the dialog, in place of browser alerts.
+- **CRON settings, the name database and backups are rebuilt.**
+  - **CRON settings**: the sending status sits in the header as a labelled pill; the four sections are plain tabs; the weekly schedule is one row per day with its hours and the three presets; the last 24 hours are a strip of figures; the run history is a table with a status pill per run; the commands in the installation guide are quiet blocks that follow the theme, and the webhook address and token have Copy and Show buttons that say when something was copied.
+  - **Name database**: figures on top, then one list with search, three filters, "Clear filters" and a page size the reader chooses (it was fixed at 50); the built-in names are read-only, one's own have a menu. Gender matching and the explanation of the grammar syntax are panels below the list. Adding, importing, the matching preview and its result use the shared dialogs.
+  - **Backups**: the running operation and the result of the last one are a notice above the list; each backup has Download and a menu with Restore and Delete; the dialogs name the file they are about.
 - **Buttons, text fields and dialogs share one look.** The primary button is the indigo of the rest of the panel (it was dark grey in capitals), text fields have a visible border again (the colour classes alone drew none since Tailwind 4), dialogs have the panel's rounded card.
 - **The sign-in screens are rebuilt**: sign in, first administrator, forgotten and new password, password confirmation, e-mail verification, two-factor code and team invitation.
   - Two panes: the brand on a dark ground, and the form in the visitor's theme, light or dark. On a phone the brand pane is a strip with the logo.
@@ -104,6 +108,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **The daily limit of an SMS provider could not be removed, and its sender name or number could not be cleared.** An emptied field was treated like a field that was not sent, and the old value stayed.
 - **A team member's last list could not be taken away.** Saving their permissions with no list ticked was refused (the set of lists was required to be non-empty), and the page showed nothing, so the member silently kept the access.
 - **Two API permissions were shown by their internal names** (`lists:write`, `notifications:write`): they had no label in any language.
+- **In the CRON schedule the end of a full day was an empty time field.** A day that sends around the clock ends at 24:00, which a time field cannot show; it now reads 23:59 and stays "until midnight" unless it is changed.
+- The name import button read `common.importing` while a file was being sent (the text did not exist).
 - The password confirmation label on the "new password" page showed nothing (it pointed at a group of texts, not a text).
 
 - **NetSendo Mail Infrastructure could not be set up at all.** Found while finishing the NetSendo MTA provider:

@@ -1,14 +1,21 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import ConfirmModal from '@/Components/ConfirmModal.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import ActionMenu from '@/Components/Ui/ActionMenu.vue';
+import ActionMenuItem from '@/Components/Ui/ActionMenuItem.vue';
+import EmptyState from '@/Components/Ui/EmptyState.vue';
+import PageHeader from '@/Components/Ui/PageHeader.vue';
+import Panel from '@/Components/Ui/Panel.vue';
+import Toast from '@/Components/Ui/Toast.vue';
+import { useToast } from '@/Composables/useToast';
 import { useI18n } from 'vue-i18n';
 import { useDateTime } from '@/Composables/useDateTime';
 
 const { t } = useI18n();
 const { formatDate: formatDateBase } = useDateTime();
-const page = usePage();
 
 const props = defineProps({
     backups: Array,
@@ -25,8 +32,8 @@ const processing = ref(false);
 const isRunning = computed(() => !!props.currentOperation);
 const runningType = computed(() => props.currentOperation?.type ?? null);
 
-const flashSuccess = computed(() => page.props.flash?.success);
-const flashError = computed(() => page.props.flash?.error);
+// What the server says after a request (queued, deleted, refused) is shown as it comes
+const { toast, dismiss } = useToast({ flash: true });
 
 // ---- Progress polling -------------------------------------------------------
 // While an operation runs we refresh only the operation/list props so the user
@@ -132,218 +139,149 @@ function formatDate(date) {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                    💾 {{ t('backup.title') }}
-                </h2>
-                <button
-                    @click="createBackup"
-                    :disabled="isRunning"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <svg v-if="isRunning" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
+            <PageHeader :title="t('backup.title')">
+                <PrimaryButton type="button" :disabled="isRunning" @click="createBackup">
                     {{ isRunning && runningType === 'create' ? t('backup.creating') : t('backup.create') }}
-                </button>
-            </div>
+                </PrimaryButton>
+            </PageHeader>
         </template>
 
-        <div class="py-6">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-                <!-- Flash messages -->
-                <div v-if="flashSuccess" class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4 text-sm text-green-800 dark:text-green-200">
-                    {{ flashSuccess }}
-                </div>
-                <div v-if="flashError" class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-sm text-red-800 dark:text-red-200">
-                    {{ flashError }}
-                </div>
+        <div class="mx-auto flex max-w-screen-2xl flex-col gap-4">
+            <!-- A backup or a restore is running: the page refreshes itself until it is done -->
+            <div
+                v-if="isRunning"
+                role="status"
+                class="rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-4 dark:border-indigo-500/30 dark:bg-indigo-500/10"
+            >
+                <p class="text-sm font-medium text-indigo-900 dark:text-indigo-200">
+                    {{ runningType === 'restore' ? t('backup.running_restore') : t('backup.running_create') }}
+                </p>
+                <p class="mt-0.5 text-sm text-indigo-900 dark:text-indigo-200">
+                    {{ t('backup.running_note') }}
+                </p>
+            </div>
 
-                <!-- Live progress banner -->
-                <div
-                    v-if="isRunning"
-                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
+            <!-- How the last one ended -->
+            <div
+                v-else-if="lastResult"
+                :role="lastResult.ok ? 'status' : 'alert'"
+                class="rounded-2xl border px-5 py-4"
+                :class="
+                    lastResult.ok
+                        ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10'
+                        : 'border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10'
+                "
+            >
+                <p
+                    class="text-sm font-medium"
+                    :class="lastResult.ok ? 'text-emerald-900 dark:text-emerald-200' : 'text-rose-900 dark:text-rose-200'"
                 >
-                    <div class="flex items-start gap-3">
-                        <svg class="w-5 h-5 mt-0.5 text-blue-600 dark:text-blue-400 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <div>
-                            <p class="text-sm font-medium text-blue-800 dark:text-blue-200">
-                                {{ runningType === 'restore' ? t('backup.running_restore') : t('backup.running_create') }}
-                            </p>
-                            <p class="text-sm text-blue-600 dark:text-blue-300 mt-1">
-                                {{ t('backup.running_note') }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Last operation result -->
-                <div
-                    v-else-if="lastResult"
-                    class="rounded-lg p-4 border"
-                    :class="lastResult.ok
-                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'"
+                    {{ lastResult.title }}
+                </p>
+                <p
+                    v-if="lastResult.message"
+                    class="mt-0.5 break-words text-sm"
+                    :class="lastResult.ok ? 'text-emerald-900 dark:text-emerald-200' : 'text-rose-900 dark:text-rose-200'"
                 >
-                    <div class="flex items-start gap-3">
-                        <svg v-if="lastResult.ok" class="w-5 h-5 mt-0.5 text-green-600 dark:text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <svg v-else class="w-5 h-5 mt-0.5 text-red-600 dark:text-red-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <div class="min-w-0">
-                            <p class="text-sm font-medium" :class="lastResult.ok ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'">
-                                {{ lastResult.title }}
-                            </p>
-                            <p v-if="lastResult.message" class="text-sm mt-1 break-words" :class="lastResult.ok ? 'text-green-600 dark:text-green-300' : 'text-red-600 dark:text-red-300'">
-                                {{ lastResult.message }}
-                            </p>
-                            <p v-if="lastResult.safetyBackup" class="text-xs mt-1 text-green-600 dark:text-green-300">
-                                {{ t('backup.safety_backup_note', { name: lastResult.safetyBackup }) }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                    {{ lastResult.message }}
+                </p>
+                <p v-if="lastResult.safetyBackup" class="mt-0.5 break-words text-sm text-emerald-900 dark:text-emerald-200">
+                    {{ t('backup.safety_backup_note', { name: lastResult.safetyBackup }) }}
+                </p>
+            </div>
 
-                <!-- Info Box -->
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <div class="flex items-start gap-3">
-                        <svg class="h-5 w-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div>
-                            <p class="text-sm font-medium text-blue-800 dark:text-blue-200">
-                                {{ t('backup.info_title') }}
-                            </p>
-                            <p class="text-sm text-blue-600 dark:text-blue-300 mt-1">
-                                {{ t('backup.info_text') }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Create Options -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                        {{ t('backup.options') }}
-                    </h3>
-                    <label class="flex items-center gap-3 cursor-pointer">
+            <Panel flush :title="t('backup.list_title')">
+                <div class="flex flex-col gap-3 px-5 pb-4">
+                    <p class="text-sm text-slate-600 dark:text-slate-400">{{ t('backup.info_text') }}</p>
+                    <!-- What the next backup takes -->
+                    <label class="flex items-center gap-2.5">
                         <input
-                            type="checkbox"
                             v-model="onlyDb"
+                            type="checkbox"
                             :disabled="isRunning"
-                            class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 disabled:opacity-50"
+                            class="h-4 w-4 accent-indigo-600"
                         />
-                        <span class="text-gray-700 dark:text-gray-300">
-                            {{ t('backup.only_db') }}
-                        </span>
+                        <span class="text-sm text-slate-800 dark:text-slate-200">{{ t('backup.only_db') }}</span>
                     </label>
                 </div>
 
-                <!-- Backup List -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                            {{ t('backup.list_title') }}
-                        </h3>
-                    </div>
+                <EmptyState v-if="backups.length === 0" :title="t('backup.no_backups')">
+                    <PrimaryButton type="button" :disabled="isRunning" @click="createBackup">
+                        {{ t('backup.create_first') }}
+                    </PrimaryButton>
+                </EmptyState>
 
-                    <div v-if="backups.length === 0" class="px-6 py-12 text-center">
-                        <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
-                        </svg>
-                        <p class="mt-4 text-gray-500 dark:text-gray-400">
-                            {{ t('backup.no_backups') }}
-                        </p>
-                        <button
-                            @click="createBackup"
-                            :disabled="isRunning"
-                            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {{ t('backup.create_first') }}
-                        </button>
-                    </div>
-
-                    <table v-else class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-900">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {{ t('backup.filename') }}
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <div v-else class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                    <table class="w-full text-sm sm:min-w-[680px]">
+                        <thead>
+                            <tr
+                                class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
+                            >
+                                <th scope="col" class="px-5 py-2.5 font-medium">{{ t('backup.filename') }}</th>
+                                <th scope="col" class="px-3 py-2.5 text-right font-medium max-sm:hidden">
                                     {{ t('backup.size') }}
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {{ t('backup.date') }}
-                                </th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {{ t('backup.actions') }}
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">{{ t('backup.date') }}</th>
+                                <th scope="col" class="py-2.5 pl-3 pr-5 text-right font-medium">
+                                    <span class="sr-only">{{ t('backup.actions') }}</span>
                                 </th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <tr v-for="backup in backups" :key="backup.name" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-2">
-                                        <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                                        </svg>
-                                        <span class="font-medium text-gray-900 dark:text-white">{{ backup.name }}</span>
-                                    </div>
+                        <tbody>
+                            <tr
+                                v-for="backup in backups"
+                                :key="backup.name"
+                                class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-700/40 dark:hover:bg-slate-700/20"
+                            >
+                                <td class="max-w-0 px-5 py-3 max-sm:w-full sm:w-[52%]">
+                                    <p class="truncate font-mono text-xs text-slate-900 dark:text-white" :title="backup.name">
+                                        {{ backup.name }}
+                                    </p>
+                                    <!-- On a phone the size and the date have no columns of their own -->
+                                    <p class="mt-0.5 text-xs tabular-nums text-slate-600 sm:hidden dark:text-slate-400">
+                                        {{ backup.size_human }}
+                                        <span aria-hidden="true">·</span>
+                                        {{ formatDate(backup.date) }}
+                                    </p>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                <td class="whitespace-nowrap px-3 py-3 text-right tabular-nums text-slate-900 max-sm:hidden dark:text-slate-100">
                                     {{ backup.size_human }}
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                                <td class="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600 max-sm:hidden dark:text-slate-400">
                                     {{ formatDate(backup.date) }}
                                 </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-2">
+                                <td class="py-3 pl-3 pr-5">
+                                    <div class="flex items-center justify-end gap-1">
                                         <button
-                                            v-if="restoreSupported"
-                                            @click="askRestore(backup.name)"
-                                            :disabled="isRunning"
-                                            class="px-3 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 rounded-lg hover:bg-amber-200 dark:hover:bg-amber-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                            </svg>
-                                            {{ t('backup.restore') }}
-                                        </button>
-                                        <button
+                                            type="button"
+                                            class="inline-flex min-h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 max-sm:hidden dark:text-slate-200 dark:hover:bg-slate-700/60 dark:hover:text-white"
                                             @click="downloadBackup(backup.name)"
-                                            class="px-3 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                                         >
-                                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                            </svg>
                                             {{ t('backup.download') }}
                                         </button>
-                                        <button
-                                            @click="askDelete(backup.name)"
-                                            :disabled="isRunning"
-                                            class="px-3 py-1 bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            {{ t('backup.delete') }}
-                                        </button>
+                                        <ActionMenu :label="t('backup.actions_for', { name: backup.name })">
+                                            <!-- On a phone the button beside the menu has no room: it is the first entry here -->
+                                            <ActionMenuItem class="sm:hidden" @click="downloadBackup(backup.name)">
+                                                {{ t('backup.download') }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem
+                                                v-if="restoreSupported"
+                                                :disabled="isRunning"
+                                                @click="askRestore(backup.name)"
+                                            >
+                                                {{ t('backup.restore') }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem danger :disabled="isRunning" @click="askDelete(backup.name)">
+                                                {{ t('backup.delete') }}
+                                            </ActionMenuItem>
+                                        </ActionMenu>
                                     </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </Panel>
         </div>
 
         <!-- Restore confirmation -->
@@ -356,7 +294,9 @@ function formatDate(date) {
             :processing="processing"
             @close="restoreTarget = null"
             @confirm="confirmRestore"
-        />
+        >
+            {{ restoreTarget }}
+        </ConfirmModal>
 
         <!-- Delete confirmation -->
         <ConfirmModal
@@ -368,6 +308,10 @@ function formatDate(date) {
             :processing="processing"
             @close="deleteTarget = null"
             @confirm="confirmDelete"
-        />
+        >
+            {{ deleteTarget }}
+        </ConfirmModal>
+
+        <Toast :toast="toast" @close="dismiss" />
     </AuthenticatedLayout>
 </template>

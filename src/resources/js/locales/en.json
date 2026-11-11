@@ -5429,7 +5429,8 @@
         "result_failed_create": "Backup failed.",
         "result_failed_restore": "Restore failed.",
         "safety_backup_note": "Safety backup of the previous database: {name}",
-        "delete_confirm_title": "Delete this backup?"
+        "delete_confirm_title": "Delete this backup?",
+        "actions_for": "Actions for the backup: {name}"
     },
     "settings": {
         "updates": {
@@ -5926,7 +5927,8 @@
             "completed": "Gender matching completed",
             "notification_title": "Gender Matching Complete",
             "notification_message": "Matched {matched} subscribers, {unmatched} could not be matched"
-        }
+        },
+        "actions_for": "Actions for the name: {name}"
     },
     "users": {
         "title": "User Management",

@@ -4618,7 +4618,8 @@
         "result_failed_create": "Backup fehlgeschlagen.",
         "result_failed_restore": "Wiederherstellung fehlgeschlagen.",
         "safety_backup_note": "Sicherheits-Backup der vorherigen Datenbank: {name}",
-        "delete_confirm_title": "Dieses Backup löschen?"
+        "delete_confirm_title": "Dieses Backup löschen?",
+        "actions_for": "Aktionen für die Sicherung: {name}"
     },
     "api_keys": {
         "title": "API-Schlüssel",
@@ -9649,7 +9650,8 @@
         "title": "Namensdatenbank",
         "updated": "Name wurde aktualisiert",
         "vocative_help": "Vokativform des Namens für die Personalisierung [[!fname]]",
-        "vocative_placeholder": "z.B. Anno, Janie..."
+        "vocative_placeholder": "z.B. Anno, Janie...",
+        "actions_for": "Aktionen für den Namen: {name}"
     },
     "users": {
         "add_first_user": "Ersten Benutzer hinzufügen",
