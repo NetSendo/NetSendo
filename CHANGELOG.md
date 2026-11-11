@@ -21,6 +21,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Create.** The six quick-action tiles became one "Create" button in the dashboard header.
   - The live clock is gone; today's date is under the greeting and the timezone is in the status line at the bottom, with the last CRON run, the queue length, the mailbox count and the version.
 - **On a phone the page title has its own row under the top-bar buttons** on every page; it used to be squeezed to a few letters. The account name and e-mail next to the avatar show from 1280 px up (they are still in the account menu).
+- **The side menu has nine sections instead of thirteen entries with 71 links.** Messages, Contacts, Automation, CRM, NetSendo Brain, Sales, Analytics, Library and Settings, under the dashboard. Every page is still there, once.
+  - Pages that were listed twice (subscribers, statistics, field management, API keys) are listed once.
+  - "Add e-mail message", "Add SMS message" and "Add subscriber" left the menu: the menu leads to the lists, and each list has its own add button.
+  - Settings are grouped into Account, Sending, Integrations and System. Marketplace moved to Integrations, the licence to Account. Webinars, products and the affiliate programme are under Sales; templates, inserts, media and brands under Library; global statistics, campaign statistics, the campaign auditor, tracked links and the activity log under Analytics.
+  - The section that holds the current page opens by itself and the current page is scrolled into view. Collapsed, the menu is a rail of icons and each icon shows its pages in a panel beside it.
+  - The menu is flat and dark in both themes, 256 px wide (was 288). Sub-pages have no icons; the decorative "AI" tags are gone, the GOLD badges stay.
+- **The top bar is shorter.** The language switcher and the two-factor indicator moved into the account menu. On pages whose header holds a button (Messages, Subscribers) the button no longer runs into the search box at 1280 px, and on a phone the title and the buttons wrap instead of pushing the page wider than the screen.
+- **The e-mail message list is rebuilt.**
+  - Tabs above the list answer the first question, what kind of message: All, Drafts, Scheduled, Sent, Queues, each with its count.
+  - Search and the list filter are always visible; group, tag and campaign are behind "Filters", which shows how many of them are set.
+  - One row says what it used to take seven columns to say: subject with the ID, type and attachments under it; the lists and recipients (queues show sent, planned, queued, failed and missed); the status; and one date, the one that matters for the state (sent, sending or created).
+  - The seven unlabelled icons at the end of a row became a "Statistics" link and a menu with named actions (edit, duplicate, send again, queue statistics, switch the queue on or off, delete).
+  - Sortable columns show their direction; the page size moved to the foot of the list, next to "1–30 of 43".
+- **The sign-in screens are rebuilt**: sign in, first administrator, forgotten and new password, password confirmation, e-mail verification, two-factor code and team invitation.
+  - Two panes: the brand on a dark ground, and the form in the visitor's theme, light or dark. On a phone the brand pane is a strip with the logo.
+  - Behind the brand pane messages leave one bright point ("your own server") in arcs and land on recipients, who light up. It is drawn on a canvas by the page itself (no library, nothing loaded from another host), stands still for visitors who ask for reduced motion and pauses in a background tab.
+  - On an installation without any account the sign-in page says so and offers to create the administrator account, in place of a dialog that covered a form nobody could use yet.
+  - Password fields can show what was typed. Errors are tied to their fields for screen readers.
+  - The invitation page is translated (it was Polish in every language).
+
+### Fixed
+
+- **After signing in, the page could stay on the login form under an empty dialog.** A tab left open after the session expired keeps polling (Brain monitor, notifications, meeting reminders); Laravel remembered the last of those addresses as "where the user was going", and the next sign-in was sent to a JSON endpoint. Only a page load or an Inertia visit sets that address now.
+- **The e-mail message list showed SMS messages too**, with an "edit" link into the e-mail editor. It lists e-mail only; SMS messages are on their own list.
+- **Opening the message list without any filter put `sort=function sort() { [native code] }` in the address** after the first filter change: the empty filter set arrived as a JSON list, and a list has a `sort` of its own. The list then fell back to another order than the one shown.
+- The password confirmation label on the "new password" page showed nothing (it pointed at a group of texts, not a text).
+
+### Security
+
+- **The sort direction of the message list went into SQL as the request wrote it** (`?sort=effective_date&direction=…` was pasted into `ORDER BY`). A signed-in user, a team member included, could run their own SQL through it. The direction is now one of two literals, `asc` or `desc`.
+
+### API
+
 - `GET /api/dashboard/stats` takes `period=7|30|90` (default 30; it used to be the current calendar month) and also returns `period`, `previous` values for every figure, `queue_pending`, `scheduled`, and one `activity_chart` row per day with `date`, `emails`, `subscribers`, `opens` and `clicks`. `recent_campaigns` carries `channel`, `lists`, `sent`, `open_rate` and `click_rate`; its `opens` and `clicks` now count each recipient once.
 
 ### Performance
