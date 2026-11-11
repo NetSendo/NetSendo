@@ -12,11 +12,28 @@ use Illuminate\Support\Facades\Redirect;
 class SmsController extends Controller
 {
     /**
+     * SMS campaigns of the signed-in user. Like e-mail messages, a campaign belongs to the
+     * account that wrote it: nobody else lists, opens, changes or deletes it.
+     */
+    private function ownSms()
+    {
+        return auth()->user()->messages()->sms();
+    }
+
+    /**
+     * The list picked for a campaign has to be one the user may use (their own, or shared with them).
+     */
+    private function listIsAccessible(?int $listId): bool
+    {
+        return $listId === null || auth()->user()->accessibleLists()->whereKey($listId)->exists();
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $messages = Message::sms()
+        $messages = $this->ownSms()
             ->with(['contactLists'])
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -89,8 +106,8 @@ class SmsController extends Controller
                 'recipients_count' => $message->contactLists->first()?->subscribers()->count() ?? 0,
             ]);
 
-        // Get all lists (both email and SMS) for SMS campaigns
-        $lists = ContactList::query()->get(['id', 'name', 'type']);
+        // Lists the user may send to (both email and SMS lists can carry phone numbers)
+        $lists = auth()->user()->accessibleLists()->orderBy('name')->get(['id', 'name', 'type']);
 
         // Assuming groups are not used for SMS yet or shared?
         // For now, only passing lists as per Create view. Index view had group_id filter but we can hide it or implement it similarly if needed.
@@ -117,7 +134,7 @@ class SmsController extends Controller
      */
     private function indexCounts(): array
     {
-        $rows = Message::sms()
+        $rows = $this->ownSms()
             ->selectRaw('type, status, COUNT(*) as total')
             ->groupBy('type', 'status')
             ->get();
@@ -139,7 +156,7 @@ class SmsController extends Controller
     public function create(Request $request)
     {
         // Get all lists (both email and SMS) for SMS campaigns
-        $lists = ContactList::query()->with('defaultSmsProvider')->get(['id', 'name', 'type', 'default_sms_provider_id']);
+        $lists = auth()->user()->accessibleLists()->with('defaultSmsProvider')->get(['id', 'name', 'type', 'default_sms_provider_id']);
 
         // Get optional pre-selected list ID from query parameter
         $preselectedListId = $request->query('list_id') ? (int) $request->query('list_id') : null;
@@ -173,6 +190,10 @@ class SmsController extends Controller
             'status' => 'required|in:draft,scheduled,sent',
         ]);
 
+        if (! $this->listIsAccessible($request->integer('list_id') ?: null)) {
+            return back()->withErrors(['list_id' => __('messages.campaign.invalid_lists')]);
+        }
+
         $message = new Message($validated);
         $message->user_id = auth()->id();
         $message->channel = 'sms';
@@ -205,7 +226,7 @@ class SmsController extends Controller
      */
     public function edit(string $id)
     {
-        $message = Message::sms()->with('contactLists')->findOrFail($id);
+        $message = $this->ownSms()->with('contactLists')->findOrFail($id);
 
         // Transform for view
         $smsData = [
@@ -224,7 +245,7 @@ class SmsController extends Controller
         ];
 
         // Get all lists (both email and SMS) for SMS campaigns
-        $lists = ContactList::query()->with('defaultSmsProvider')->get(['id', 'name', 'type', 'default_sms_provider_id']);
+        $lists = auth()->user()->accessibleLists()->with('defaultSmsProvider')->get(['id', 'name', 'type', 'default_sms_provider_id']);
 
         // Get SMS providers for selection
         $smsProviders = \App\Models\SmsProvider::forUser(auth()->id())->active()->get(['id', 'name', 'from_name', 'from_number', 'is_default']);
@@ -243,7 +264,7 @@ class SmsController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $message = Message::sms()->findOrFail($id);
+        $message = $this->ownSms()->findOrFail($id);
 
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
@@ -256,6 +277,10 @@ class SmsController extends Controller
             'schedule_date' => 'nullable|date',
             'status' => 'required|in:draft,scheduled,sent',
         ]);
+
+        if (! $this->listIsAccessible($request->integer('list_id') ?: null)) {
+            return back()->withErrors(['list_id' => __('messages.campaign.invalid_lists')]);
+        }
 
         $message->fill($validated);
 
@@ -316,7 +341,7 @@ class SmsController extends Controller
      */
     public function destroy(string $id)
     {
-        $message = Message::sms()->findOrFail($id);
+        $message = $this->ownSms()->findOrFail($id);
         $message->delete();
 
         return Redirect::route('sms.index')->with('success', 'SMS Campaign deleted.');
@@ -327,11 +352,7 @@ class SmsController extends Controller
      */
     public function toggleActive(string $id)
     {
-        $message = Message::sms()->findOrFail($id);
-
-        if ($message->user_id !== auth()->id()) {
-            abort(403);
-        }
+        $message = $this->ownSms()->findOrFail($id);
 
         // Only allow toggling for autoresponder/queue type messages
         if (!$message->isQueueType()) {

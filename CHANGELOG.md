@@ -54,6 +54,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **The sort direction of the e-mail and the SMS message list went into SQL as the request wrote it** (`?sort=effective_date&direction=…` was pasted into `ORDER BY`). A signed-in user, a team member included, could run their own SQL through it. The direction is now one of two literals, `asc` or `desc`.
 
+- **SMS campaigns were open to every account of the installation.** The SMS pages read campaigns without asking whose they are: a team member could list, open, change and delete the administrator's campaigns, and pick any contact list of the installation for their own. A campaign now belongs to the account that wrote it, as an e-mail message does, and the list choice is limited to the lists the account may use (its own and the ones shared with it). An administrator no longer sees team members' SMS campaigns on the list, as with their e-mail messages.
+
 ### API
 
 - `GET /api/dashboard/stats` takes `period=7|30|90` (default 30; it used to be the current calendar month) and also returns `period`, `previous` values for every figure, `queue_pending`, `scheduled`, and one `activity_chart` row per day with `date`, `emails`, `subscribers`, `opens` and `clicks`. `recent_campaigns` carries `channel`, `lists`, `sent`, `open_rate` and `click_rate`; its `opens` and `clicks` now count each recipient once.
