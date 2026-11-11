@@ -845,9 +845,26 @@
             "profit": "Profit",
             "statistics": "Statistics",
             "settings": "Settings",
-            "brain": "NetSendo Brain"
+            "brain": "NetSendo Brain",
+            "contacts": "Contacts",
+            "sales": "Sales",
+            "analytics": "Analytics",
+            "library": "Library"
         },
-        "telemetry": "Telemetry"
+        "telemetry": "Telemetry",
+        "main": "Main navigation",
+        "items": {
+            "email": "E-mail",
+            "sms": "SMS",
+            "segmentation": "Segmentation",
+            "google": "Google integrations"
+        },
+        "settings_sections": {
+            "account": "Account",
+            "sending": "Sending",
+            "integrations": "Integrations",
+            "system": "System"
+        }
     },
     "dashboard": {
         "welcome_back": "Welcome back, {name}! 👋",

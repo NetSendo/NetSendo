@@ -1,11 +1,10 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { Link, usePage, router } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import Sidebar from "@/Components/Sidebar/Sidebar.vue";
 import Dropdown from "@/Components/Dropdown.vue";
 import DropdownLink from "@/Components/DropdownLink.vue";
-import LanguageSwitcher from "@/Components/LanguageSwitcher.vue";
 import NotificationDropdown from "@/Components/NotificationDropdown.vue";
 import OnboardingModal from "@/Components/Dashboard/OnboardingModal.vue";
 import GlobalSearchPanel from "@/Components/GlobalSearchPanel.vue";
@@ -18,6 +17,27 @@ import { useMeetingReminders } from "@/Composables/useMeetingReminders";
 
 const page = usePage();
 const { isDark } = useTheme();
+const { locale } = useI18n({ useScope: "global" });
+
+// Language lives in the account menu: it is chosen once, not on every visit
+const currentLocale = computed(() => page.props.locale?.current || "en");
+const supportedLocales = computed(() => page.props.locale?.supported || {});
+
+const switchLocale = (code) => {
+    if (code === currentLocale.value) return;
+
+    router.post(
+        route("locale.update"),
+        { locale: code },
+        {
+            preserveState: false,
+            preserveScroll: true,
+            onSuccess: () => {
+                locale.value = code;
+            },
+        },
+    );
+};
 
 // Meeting reminders
 const { activeReminder, reminderMode, dismissReminder, joinMeeting } =
@@ -122,16 +142,16 @@ const toggleMobileMenu = () => {
 
         <!-- Mobile sidebar -->
         <div
-            class="fixed inset-y-0 left-0 z-40 w-72 transform transition-transform duration-300 lg:hidden"
+            class="fixed inset-y-0 left-0 z-40 w-64 transform transition-transform duration-300 lg:hidden"
             :class="mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'"
         >
-            <Sidebar :collapsed="false" @toggle="mobileMenuOpen = false" />
+            <Sidebar :collapsed="false" drawer @toggle="mobileMenuOpen = false" />
         </div>
 
         <!-- Main content -->
         <div
             class="transition-all duration-300"
-            :class="sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-72'"
+            :class="sidebarCollapsed ? 'lg:pl-20' : 'lg:pl-64'"
         >
             <!-- CRON Warning Banner -->
             <div
@@ -226,9 +246,12 @@ const toggleMobileMenu = () => {
                         </button>
 
                         <!-- Page title slot -->
+                        <!-- Pages put a title and their buttons here in one flex row. On a phone
+                             that row (and the button group in it) wraps instead of pushing the
+                             page wider than the screen -->
                         <div
                             v-if="$slots.header"
-                            class="min-w-0 flex-1 max-sm:order-last max-sm:basis-full"
+                            class="min-w-0 flex-1 max-sm:order-last max-sm:basis-full max-sm:[&>*]:flex-wrap max-sm:[&>*]:gap-y-2 max-sm:[&>*>*]:flex-wrap"
                         >
                             <slot name="header" />
                         </div>
@@ -274,35 +297,15 @@ const toggleMobileMenu = () => {
                         <!-- Notifications -->
                         <NotificationDropdown />
 
-                        <!-- Language Switcher -->
-                        <LanguageSwitcher />
-
                         <!-- MCP Status Indicator -->
                         <McpStatusIndicator />
 
-                        <!-- 2FA Indicator -->
-                        <div
-                            v-if="$page.props.auth.user.two_factor_enabled"
-                            class="flex h-10 w-10 items-center justify-center rounded-xl bg-green-50 text-green-600 transition-colors dark:bg-green-900/30 dark:text-green-400"
-                            :title="$t('auth.two_factor_active')"
-                        >
-                            <svg
-                                class="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                                />
-                            </svg>
-                        </div>
-
                         <!-- User dropdown -->
-                        <Dropdown align="right" width="48">
+                        <Dropdown
+                            align="right"
+                            width="56"
+                            content-classes="py-1 bg-white dark:bg-slate-800"
+                        >
                             <template #trigger>
                                 <button
                                     class="flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-slate-100 max-sm:px-1 dark:hover:bg-slate-800"
@@ -397,6 +400,11 @@ const toggleMobileMenu = () => {
                                             />
                                         </svg>
                                         {{ $t("navigation.security") }}
+                                        <span
+                                            v-if="$page.props.auth.user.two_factor_enabled"
+                                            class="ml-auto rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300"
+                                            >2FA</span
+                                        >
                                     </div>
                                 </DropdownLink>
 
@@ -421,6 +429,49 @@ const toggleMobileMenu = () => {
 
                                 <div
                                     class="border-t border-slate-100 dark:border-slate-700"
+                                ></div>
+
+                                <div
+                                    class="px-4 pb-1 pt-3 text-xs font-medium text-slate-500 dark:text-slate-400"
+                                >
+                                    {{ $t("language.select") }}
+                                </div>
+                                <button
+                                    v-for="(data, code) in supportedLocales"
+                                    :key="code"
+                                    type="button"
+                                    :aria-pressed="code === currentLocale"
+                                    class="flex w-full items-center gap-2 px-4 py-2 text-left text-sm transition-colors hover:bg-slate-100 dark:hover:bg-slate-700/60"
+                                    :class="
+                                        code === currentLocale
+                                            ? 'font-medium text-slate-900 dark:text-white'
+                                            : 'text-slate-700 dark:text-slate-300'
+                                    "
+                                    @click="switchLocale(code)"
+                                >
+                                    <span aria-hidden="true" class="leading-none">{{
+                                        data.flag
+                                    }}</span>
+                                    {{ data.native }}
+                                    <svg
+                                        v-if="code === currentLocale"
+                                        aria-hidden="true"
+                                        class="ml-auto h-4 w-4 text-indigo-600 dark:text-indigo-400"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2.5"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            d="M5 13l4 4L19 7"
+                                        />
+                                    </svg>
+                                </button>
+
+                                <div
+                                    class="mt-1 border-t border-slate-100 dark:border-slate-700"
                                 ></div>
 
                                 <DropdownLink
