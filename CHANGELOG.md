@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - One row says what it used to take seven columns to say: subject with the ID, type and attachments under it; the lists and recipients (queues show sent, planned, queued, failed and missed); the status; and one date, the one that matters for the state (sent, sending or created).
   - The seven unlabelled icons at the end of a row became a "Statistics" link and a menu with named actions (edit, duplicate, send again, queue statistics, switch the queue on or off, delete).
   - Sortable columns show their direction; the page size moved to the foot of the list, next to "1–30 of 43".
+- **Message statistics are rebuilt.** The four key figures sit in one strip; the funnel (sent, unique opens, unique clicks, each as a share of what was sent) is drawn as three bars and replaces the two charts that showed the same numbers; the queue is one bar in five parts with its counts and the "send again to failed" button; recipients, opens and clicks are tables with a visible sort direction, the same paging as the lists, and the bulk "add to list" bar right above the rows. A failed "send again" is reported on the page, not in a browser alert.
 - **The subscriber list is rebuilt on the same pattern.** Status tabs (everyone, active, inactive, bounced, unsubscribed) replace the status menu; search, list type, list and the column settings sit in one row; the status is a labelled pill; the four icons at the end of a row became a menu of named actions (card, edit, add to CRM, delete); ticked rows are highlighted and the bulk actions appear right above the table. Column choice and order, the page size and every bulk action work as before.
 - **"E-mail lists" and "SMS lists" are one page in two flavours.** A table by default (name with description, visibility, group and tags, subscribers, created), cards as the other view; the choice is remembered. The subscriber count leads to the subscribers of that list, the five icons of a row are a menu of named actions, and the page size can be chosen (it was fixed at 12). "Clear filters" also clears the visibility filter, which it used to leave set.
 - **The SMS campaign list follows the e-mail list**: the same tabs with counts, one row per campaign with the text people will receive under its name, a menu of named actions, and a page size the reader chooses (it was fixed at 10).
@@ -58,16 +59,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - **SMS campaigns were open to every account of the installation.** The SMS pages read campaigns without asking whose they are: a team member could list, open, change and delete the administrator's campaigns, and pick any contact list of the installation for their own. A campaign now belongs to the account that wrote it, as an e-mail message does, and the list choice is limited to the lists the account may use (its own and the ones shared with it). An administrator no longer sees team members' SMS campaigns on the list, as with their e-mail messages.
 
-### Performance
-
-- The list pages counted the active subscribers of every row with a query of its own, although the page had already counted them all in one. The second count is gone.
-
 ### API
 
 - `GET /api/dashboard/stats` takes `period=7|30|90` (default 30; it used to be the current calendar month) and also returns `period`, `previous` values for every figure, `queue_pending`, `scheduled`, and one `activity_chart` row per day with `date`, `emails`, `subscribers`, `opens` and `clicks`. `recent_campaigns` carries `channel`, `lists`, `sent`, `open_rate` and `click_rate`; its `opens` and `clicks` now count each recipient once.
 
 ### Performance
 
+- The list pages counted the active subscribers of every row with a query of its own, although the page had already counted them all in one. The second count is gone.
 - `cron_job_logs` has an index on `started_at`. The dashboard sums sent mail by day, and without it every sum read the whole table, which grows by several thousand rows a day.
 
 ## [2.8.7] – Installations on Podman update again - 2026-11-10

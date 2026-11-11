@@ -2,37 +2,38 @@
 import { ref, watch, computed } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
+import PrimaryButton from "@/Components/PrimaryButton.vue";
+import SecondaryButton from "@/Components/SecondaryButton.vue";
 import AddToListDropdown from "@/Components/AddToListDropdown.vue";
 import BulkAddToListModal from "@/Components/BulkAddToListModal.vue";
-import { Head, Link } from "@inertiajs/vue3";
+import Panel from "@/Components/Ui/Panel.vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
+import StatTiles from "@/Components/Ui/StatTiles.vue";
+import StatusPill from "@/Components/Ui/StatusPill.vue";
+import Pagination from "@/Components/Ui/Pagination.vue";
+import SortMark from "@/Components/Ui/SortMark.vue";
+import { Head, Link, router, usePage } from "@inertiajs/vue3";
 import {
     Chart as ChartJS,
-    ArcElement,
     Tooltip,
-    Legend,
     CategoryScale,
     LinearScale,
+    BarController,
     BarElement,
-    Title,
 } from "chart.js";
-import { Doughnut, Bar } from "vue-chartjs";
+import { Bar } from "vue-chartjs";
 import { useI18n } from "vue-i18n";
-import { router } from "@inertiajs/vue3";
-import ChartDataLabels from "chartjs-plugin-datalabels";
+import { useTheme } from "@/Composables/useTheme";
 
-ChartJS.register(
-    ArcElement,
-    Tooltip,
-    Legend,
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    BarElement,
-    Title,
-    ChartDataLabels,
-);
+ChartJS.register(Tooltip, CategoryScale, LinearScale, BarController, BarElement);
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+const { isDark } = useTheme();
+const page = usePage();
+
+const number = (value) => new Intl.NumberFormat(locale.value).format(value ?? 0);
+const percent = (value) =>
+    `${new Intl.NumberFormat(locale.value, { maximumFractionDigits: 1 }).format(value ?? 0)}%`;
 
 // Search state
 const searchRecipients = ref(
@@ -96,36 +97,24 @@ const props = defineProps({
     recipients: Object,
 });
 
-// Status badge configuration
-const statusConfig = {
-    planned: {
-        color: "blue",
-        label: "messages.stats.recipients.status.planned",
-    },
-    queued: {
-        color: "yellow",
-        label: "messages.stats.recipients.status.queued",
-    },
-    sent: { color: "green", label: "messages.stats.recipients.status.sent" },
-    failed: { color: "red", label: "messages.stats.recipients.status.failed" },
-    skipped: {
-        color: "gray",
-        label: "messages.stats.recipients.status.skipped",
-    },
+// What happened to one copy of the message, as a tone
+const STATUS_TONES = {
+    planned: "info",
+    queued: "warning",
+    sent: "success",
+    failed: "danger",
+    skipped: "neutral",
 };
 
-const getStatusClass = (status) => {
-    const colors = {
-        planned:
-            "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
-        queued: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
-        sent: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
-        failed: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
-        skipped:
-            "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-400",
-    };
-    return colors[status] || "bg-gray-100 text-gray-800";
-    return colors[status] || "bg-gray-100 text-gray-800";
+// The sort of the two activity tables lives in the URL (sort_opens_by, sort_clicks_dir, ...)
+const sortParams = computed(() => new URLSearchParams(page.url.split("?")[1] || ""));
+const sortState = (type, field) =>
+    sortParams.value.get(`sort_${type}_by`) === field
+        ? sortParams.value.get(`sort_${type}_dir`) || "desc"
+        : null;
+const ariaSort = (type, field) => {
+    const state = sortState(type, field);
+    return state ? (state === "asc" ? "ascending" : "descending") : "none";
 };
 
 const handleSort = (type, field) => {
@@ -147,75 +136,129 @@ const handleSort = (type, field) => {
     });
 };
 
-const doughnutData = {
-    labels: [
-        t("messages.stats.charts.labels.opened"),
-        t("messages.stats.charts.labels.sent_no_open"),
-    ],
-    datasets: [
-        {
-            backgroundColor: ["#10B981", "#E5E7EB"],
-            data: [
-                props.stats.unique_opens,
-                props.stats.sent - props.stats.unique_opens,
-            ],
-        },
-    ],
-};
+const shareOfSent = (value) =>
+    props.stats.sent > 0 ? Math.min(100, (value / props.stats.sent) * 100) : 0;
 
-const barData = {
-    labels: [
-        t("messages.stats.charts.labels.sent"),
-        t("messages.stats.charts.labels.unique_opens"),
-        t("messages.stats.charts.labels.unique_clicks"),
-    ],
-    datasets: [
-        {
-            label: t("messages.stats.charts.labels.counters"),
-            backgroundColor: "#4F46E5",
-            data: [
-                props.stats.sent,
-                props.stats.unique_opens,
-                props.stats.unique_clicks,
-            ],
-        },
-    ],
-};
+// Sent, then the people who opened, then the people who clicked: each a share of what was sent
+const funnel = computed(() =>
+    [
+        { key: "sent", label: t("messages.stats.charts.labels.sent"), value: props.stats.sent, bar: "bg-indigo-600 dark:bg-indigo-400" },
+        { key: "opens", label: t("messages.stats.charts.labels.unique_opens"), value: props.stats.unique_opens, bar: "bg-amber-500 dark:bg-amber-400" },
+        { key: "clicks", label: t("messages.stats.charts.labels.unique_clicks"), value: props.stats.unique_clicks, bar: "bg-emerald-600 dark:bg-emerald-400" },
+    ].map((step) => {
+        const share = step.key === "sent" ? (props.stats.sent > 0 ? 100 : 0) : shareOfSent(step.value);
+        return { ...step, share: percent(share), width: `${share}%` };
+    }),
+);
 
-// Read time histogram chart
-const readTimeChartData = {
+const kpiTiles = computed(() => [
+    { key: "sent", label: t("messages.stats.kpi.sent"), value: number(props.stats.sent) },
+    {
+        key: "open_rate",
+        label: t("messages.stats.kpi.open_rate"),
+        value: percent(props.stats.open_rate),
+        caption: t("messages.stats.kpi.unique", { count: number(props.stats.unique_opens) }),
+    },
+    {
+        key: "click_rate",
+        label: t("messages.stats.kpi.click_rate"),
+        value: percent(props.stats.click_rate),
+        caption: t("messages.stats.kpi.unique", { count: number(props.stats.unique_clicks) }),
+    },
+    {
+        key: "ctor",
+        label: t("messages.stats.kpi.ctor"),
+        value: percent(props.stats.click_to_open_rate),
+        caption: t("messages.stats.kpi.clicks_opens"),
+    },
+]);
+
+const readTimeTiles = computed(() => [
+    { key: "average", label: t("messages.stats.read_time.average"), value: formatReadTime(props.read_time_stats?.average_seconds) },
+    { key: "median", label: t("messages.stats.read_time.median"), value: formatReadTime(props.read_time_stats?.median_seconds) },
+    { key: "sessions", label: t("messages.stats.read_time.sessions"), value: number(props.read_time_stats?.total_sessions) },
+    { key: "max", label: t("messages.stats.read_time.max"), value: formatReadTime(props.read_time_stats?.max_seconds) },
+]);
+
+// Queue messages always have a queue; a broadcast has one once it went through it
+const showQueue = computed(
+    () =>
+        Boolean(props.queue_stats) &&
+        (props.queue_stats.total > 0 || props.message.type === "autoresponder"),
+);
+
+// The queue in five parts that add up to its total
+const queueParts = computed(() => {
+    const queue = props.queue_stats || {};
+    const width = (value) => (queue.total > 0 ? `${((value || 0) / queue.total) * 100}%` : "0%");
+
+    return [
+        { key: "sent", bar: "bg-emerald-600 dark:bg-emerald-400" },
+        { key: "queued", bar: "bg-amber-500 dark:bg-amber-400" },
+        { key: "planned", bar: "bg-indigo-600 dark:bg-indigo-400" },
+        { key: "failed", bar: "bg-rose-600 dark:bg-rose-400" },
+        { key: "skipped", bar: "bg-slate-400 dark:bg-slate-500" },
+    ].map((part) => ({
+        ...part,
+        label: t(`messages.stats.queue.${part.key}`),
+        value: queue[part.key] || 0,
+        width: width(queue[part.key]),
+    }));
+});
+
+const headerSubtitle = computed(() =>
+    props.message.scheduled_at
+        ? `${t("messages.stats.title")} · ${t("messages.scheduled_for")}: ${props.message.scheduled_at}`
+        : t("messages.stats.title"),
+);
+
+// How long people stayed with the message
+const readTimeChartData = computed(() => ({
     labels: props.read_time_histogram?.labels || [],
     datasets: [
         {
             label: t("messages.stats.read_time.sessions"),
-            backgroundColor: "#8B5CF6",
+            backgroundColor: isDark.value ? "#818cf8" : "#4f46e5",
+            borderRadius: 3,
+            maxBarThickness: 36,
             data: props.read_time_histogram?.data || [],
         },
     ],
-};
+}));
 
-const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: {
-            position: "bottom",
-        },
-        datalabels: {
-            color: "#fff",
-            font: {
-                weight: "bold",
-                size: 12,
+const chartOptions = computed(() => {
+    const grid = isDark.value ? "rgba(148, 163, 184, 0.14)" : "#e2e8f0";
+    const ticks = isDark.value ? "#94a3b8" : "#475569";
+    const font = { family: "Figtree, ui-sans-serif, system-ui, sans-serif", size: 12 };
+
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            datalabels: { display: false },
+            tooltip: {
+                backgroundColor: isDark.value ? "#f8fafc" : "#0f172a",
+                titleColor: isDark.value ? "#0f172a" : "#ffffff",
+                bodyColor: isDark.value ? "#0f172a" : "#ffffff",
+                padding: 12,
+                cornerRadius: 10,
+                displayColors: false,
+                titleFont: font,
+                bodyFont: font,
             },
-            formatter: (value, ctx) => {
-                if (value === 0) return "";
-                return value;
-            },
-            textShadowBlur: 4,
-            textShadowColor: "rgba(0, 0, 0, 0.5)",
         },
-    },
-};
+        scales: {
+            x: { grid: { display: false }, border: { color: grid }, ticks: { color: ticks, font } },
+            y: {
+                beginAtZero: true,
+                border: { display: false },
+                grid: { color: grid },
+                ticks: { color: ticks, font, precision: 0, maxTicksLimit: 5 },
+            },
+        },
+    };
+});
 
 // Format seconds to human readable
 const formatReadTime = (seconds) => {
@@ -255,11 +298,13 @@ const copyError = async () => {
 
 // Resend to failed functionality
 const resendingToFailed = ref(false);
+const notice = ref(null);
 
 const resendToFailed = () => {
     if (resendingToFailed.value) return;
 
     resendingToFailed.value = true;
+    notice.value = null;
 
     router.post(
         route("messages.resend-to-failed", props.message.id),
@@ -271,7 +316,7 @@ const resendToFailed = () => {
             },
             onError: (errors) => {
                 console.error("Resend to failed error:", errors);
-                alert(t("messages.stats.queue.resend_error"));
+                notice.value = t("messages.stats.queue.resend_error");
             },
             onFinish: () => {
                 resendingToFailed.value = false;
@@ -449,6 +494,51 @@ const clearClicksSelection = () => {
     selectedClicks.value = [];
 };
 
+// The two activity tables are the same table over different data
+const activityLogs = computed(() => [
+    {
+        type: "opens",
+        title: t("messages.stats.activity.recent_opens"),
+        total: props.recent_activity?.opens_total,
+        placeholder: t("common.search_placeholder"),
+        search: searchOpens,
+        selected: selectedOpens,
+        allSelected: allOpensSelected,
+        loadingAll: loadingSelectAllOpens,
+        toggle: toggleSelectOpen,
+        toggleAll: toggleAllOpens,
+        selectAll: selectAllOpens,
+        clear: clearOpensSelection,
+        paginator: props.recent_activity?.opens,
+        rows: props.recent_activity?.opens?.data || [],
+        columns: [
+            { field: "email", label: t("messages.stats.activity.email") },
+            { field: "time", label: t("messages.stats.activity.time") },
+        ],
+    },
+    {
+        type: "clicks",
+        title: t("messages.stats.activity.recent_clicks"),
+        total: props.recent_activity?.clicks_total,
+        placeholder: t("messages.stats.search_email_or_url"),
+        search: searchClicks,
+        selected: selectedClicks,
+        allSelected: allClicksSelected,
+        loadingAll: loadingSelectAllClicks,
+        toggle: toggleSelectClick,
+        toggleAll: toggleAllClicks,
+        selectAll: selectAllClicks,
+        clear: clearClicksSelection,
+        paginator: props.recent_activity?.clicks,
+        rows: props.recent_activity?.clicks?.data || [],
+        columns: [
+            { field: "email", label: t("messages.stats.activity.email") },
+            { field: "url", label: t("messages.stats.activity.url") },
+            { field: "time", label: t("messages.stats.activity.time") },
+        ],
+    },
+]);
+
 // Open bulk modal
 const openBulkModal = (type) => {
     bulkModalType.value = type;
@@ -470,1316 +560,415 @@ const handleBulkSuccess = ({ listId, count }) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2
-                        class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight"
-                    >
-                        {{
-                            $t("messages.stats.header_title", {
-                                subject: message.subject,
-                            })
-                        }}
-                    </h2>
-                    <div
-                        v-if="message.scheduled_at"
-                        class="text-sm text-gray-500 dark:text-gray-400 mt-1"
-                    >
-                        📅 {{ $t("messages.scheduled_for") }}:
-                        {{ message.scheduled_at }}
-                    </div>
-                </div>
+            <PageHeader :title="message.subject || $t('messages.stats.title')" :subtitle="headerSubtitle">
+                <Link
+                    :href="route('messages.edit', message.id)"
+                    class="inline-flex min-h-10 items-center rounded-xl border border-slate-300 px-3.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700/60"
+                >
+                    {{ $t("common.edit") }}
+                </Link>
                 <Link
                     :href="route('messages.index')"
-                    class="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    class="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700/60"
                 >
-                    &larr; {{ $t("messages.stats.back_to_list") }}
+                    <svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M15 19l-7-7 7-7" />
+                    </svg>
+                    {{ $t("messages.stats.back_to_list") }}
                 </Link>
-            </div>
+            </PageHeader>
         </template>
 
-        <div class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-                <!-- KPI Cards -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center"
-                    >
-                        <div
-                            class="text-3xl font-bold text-gray-900 dark:text-gray-100"
-                        >
-                            {{ stats.sent }}
-                        </div>
-                        <div
-                            class="text-sm text-gray-500 uppercase tracking-wide"
-                        >
-                            {{ $t("messages.stats.kpi.sent") }}
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center"
-                    >
-                        <div class="text-3xl font-bold text-green-600">
-                            {{ stats.open_rate }}%
-                        </div>
-                        <div
-                            class="text-sm text-gray-500 uppercase tracking-wide"
-                        >
-                            {{ $t("messages.stats.kpi.open_rate") }}
-                        </div>
-                        <div class="text-xs text-gray-400 mt-1">
-                            {{
-                                $t("messages.stats.kpi.unique", {
-                                    count: stats.unique_opens,
-                                })
-                            }}
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center"
-                    >
-                        <div class="text-3xl font-bold text-blue-600">
-                            {{ stats.click_rate }}%
-                        </div>
-                        <div
-                            class="text-sm text-gray-500 uppercase tracking-wide"
-                        >
-                            {{ $t("messages.stats.kpi.click_rate") }}
-                        </div>
-                        <div class="text-xs text-gray-400 mt-1">
-                            {{
-                                $t("messages.stats.kpi.unique", {
-                                    count: stats.unique_clicks,
-                                })
-                            }}
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center"
-                    >
-                        <div class="text-3xl font-bold text-purple-600">
-                            {{ stats.click_to_open_rate }}%
-                        </div>
-                        <div
-                            class="text-sm text-gray-500 uppercase tracking-wide"
-                        >
-                            {{ $t("messages.stats.kpi.ctor") }}
-                        </div>
-                        <div class="text-xs text-gray-400 mt-1">
-                            {{ $t("messages.stats.kpi.clicks_opens") }}
-                        </div>
-                    </div>
-                </div>
+        <div class="mx-auto flex max-w-screen-2xl flex-col gap-5">
+            <p
+                v-if="notice"
+                role="status"
+                class="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm text-rose-800 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300"
+            >
+                {{ notice }}
+            </p>
 
-                <!-- Read Time KPIs -->
-                <div
-                    v-if="read_time_stats && read_time_stats.total_sessions > 0"
-                    class="grid grid-cols-1 md:grid-cols-4 gap-4"
+            <!-- The four numbers the page is opened for -->
+            <StatTiles :items="kpiTiles" :label="$t('messages.stats.title')" />
+
+            <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+                <!-- From sent to opened to clicked, each as a share of what was sent -->
+                <Panel
+                    :title="$t('messages.stats.charts.conversion_funnel')"
+                    :class="{ 'xl:col-span-2': !showQueue }"
                 >
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center border-l-4 border-violet-500"
-                    >
-                        <div class="text-3xl font-bold text-violet-600">
-                            {{
-                                formatReadTime(read_time_stats.average_seconds)
-                            }}
-                        </div>
-                        <div
-                            class="text-sm text-gray-500 uppercase tracking-wide"
-                        >
-                            {{ $t("messages.stats.read_time.average") }}
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center border-l-4 border-violet-500"
-                    >
-                        <div class="text-3xl font-bold text-violet-600">
-                            {{ formatReadTime(read_time_stats.median_seconds) }}
-                        </div>
-                        <div
-                            class="text-sm text-gray-500 uppercase tracking-wide"
-                        >
-                            {{ $t("messages.stats.read_time.median") }}
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center border-l-4 border-violet-500"
-                    >
-                        <div class="text-3xl font-bold text-violet-600">
-                            {{ read_time_stats.total_sessions }}
-                        </div>
-                        <div
-                            class="text-sm text-gray-500 uppercase tracking-wide"
-                        >
-                            {{ $t("messages.stats.read_time.sessions") }}
-                        </div>
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center border-l-4 border-violet-500"
-                    >
-                        <div class="text-3xl font-bold text-violet-600">
-                            {{ formatReadTime(read_time_stats.max_seconds) }}
-                        </div>
-                        <div
-                            class="text-sm text-gray-500 uppercase tracking-wide"
-                        >
-                            {{ $t("messages.stats.read_time.max") }}
-                        </div>
-                    </div>
-                </div>
+                    <ul class="flex flex-col gap-5">
+                        <li v-for="step in funnel" :key="step.key" class="flex flex-col gap-1.5">
+                            <div class="flex items-baseline justify-between gap-3 text-sm">
+                                <span class="font-medium text-slate-900 dark:text-white">{{ step.label }}</span>
+                                <span class="tabular-nums text-slate-600 dark:text-slate-400">
+                                    <span class="font-semibold text-slate-900 dark:text-white">{{ number(step.value) }}</span>
+                                    · {{ step.share }}
+                                </span>
+                            </div>
+                            <div class="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60">
+                                <div
+                                    class="h-full rounded-full"
+                                    :class="step.bar"
+                                    :style="{ width: step.width }"
+                                ></div>
+                            </div>
+                        </li>
+                    </ul>
+                </Panel>
 
-                <!-- Queue Progress (for autoresponder/queue messages) -->
-                <div
-                    v-if="
-                        queue_stats &&
-                        (queue_stats.total > 0 ||
-                            message.type === 'autoresponder')
-                    "
-                    class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden"
-                >
-                    <div
-                        class="px-6 py-4 border-b border-gray-200 dark:border-gray-700"
-                    >
-                        <div class="flex justify-between items-center">
-                            <h3
-                                class="text-lg font-semibold text-gray-800 dark:text-gray-200"
-                            >
-                                {{ $t("messages.stats.queue.title") }}
-                            </h3>
-                            <span
-                                v-if="message.recipients_calculated_at"
-                                class="text-xs text-gray-400"
-                            >
-                                {{ $t("messages.stats.queue.last_sync") }}:
-                                {{ message.recipients_calculated_at }}
-                            </span>
-                        </div>
-                    </div>
-                    <div class="p-6">
-                        <!-- Progress Bar -->
-                        <div class="mb-4">
-                            <div
-                                class="flex h-4 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700"
-                            >
-                                <div
-                                    class="bg-green-500 transition-all duration-300"
-                                    :style="{
-                                        width:
-                                            queue_stats.total > 0
-                                                ? (queue_stats.sent /
-                                                      queue_stats.total) *
-                                                      100 +
-                                                  '%'
-                                                : '0%',
-                                    }"
-                                    :title="
-                                        $t('messages.stats.queue.sent') +
-                                        ': ' +
-                                        queue_stats.sent
-                                    "
-                                ></div>
-                                <div
-                                    class="bg-yellow-500 transition-all duration-300"
-                                    :style="{
-                                        width:
-                                            queue_stats.total > 0
-                                                ? (queue_stats.queued /
-                                                      queue_stats.total) *
-                                                      100 +
-                                                  '%'
-                                                : '0%',
-                                    }"
-                                    :title="
-                                        $t('messages.stats.queue.queued') +
-                                        ': ' +
-                                        queue_stats.queued
-                                    "
-                                ></div>
-                                <div
-                                    class="bg-blue-500 transition-all duration-300"
-                                    :style="{
-                                        width:
-                                            queue_stats.total > 0
-                                                ? (queue_stats.planned /
-                                                      queue_stats.total) *
-                                                      100 +
-                                                  '%'
-                                                : '0%',
-                                    }"
-                                    :title="
-                                        $t('messages.stats.queue.planned') +
-                                        ': ' +
-                                        queue_stats.planned
-                                    "
-                                ></div>
-                                <div
-                                    class="bg-red-500 transition-all duration-300"
-                                    :style="{
-                                        width:
-                                            queue_stats.total > 0
-                                                ? (queue_stats.failed /
-                                                      queue_stats.total) *
-                                                      100 +
-                                                  '%'
-                                                : '0%',
-                                    }"
-                                    :title="
-                                        $t('messages.stats.queue.failed') +
-                                        ': ' +
-                                        queue_stats.failed
-                                    "
-                                ></div>
-                                <div
-                                    class="bg-gray-400 transition-all duration-300"
-                                    :style="{
-                                        width:
-                                            queue_stats.total > 0
-                                                ? (queue_stats.skipped /
-                                                      queue_stats.total) *
-                                                      100 +
-                                                  '%'
-                                                : '0%',
-                                    }"
-                                    :title="
-                                        $t('messages.stats.queue.skipped') +
-                                        ': ' +
-                                        queue_stats.skipped
-                                    "
-                                ></div>
-                            </div>
-                        </div>
+                <!-- Queue progress (queue messages, and broadcasts that went through the queue) -->
+                <Panel v-if="showQueue" :title="$t('messages.stats.queue.title')">
+                    <template v-if="message.recipients_calculated_at" #actions>
+                        <span class="text-xs tabular-nums text-slate-600 dark:text-slate-400">
+                            {{ $t("messages.stats.queue.last_sync") }}: {{ message.recipients_calculated_at }}
+                        </span>
+                    </template>
 
-                        <!-- Stats Grid -->
-                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                            <div
-                                class="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20"
-                            >
-                                <div
-                                    class="text-2xl font-bold text-blue-600 dark:text-blue-400"
-                                >
-                                    {{ queue_stats.planned }}
-                                </div>
-                                <div
-                                    class="text-xs text-blue-500 dark:text-blue-300 uppercase"
-                                >
-                                    {{ $t("messages.stats.queue.planned") }}
-                                </div>
-                            </div>
-                            <div
-                                class="text-center p-3 rounded-lg bg-yellow-50 dark:bg-yellow-900/20"
-                            >
-                                <div
-                                    class="text-2xl font-bold text-yellow-600 dark:text-yellow-400"
-                                >
-                                    {{ queue_stats.queued }}
-                                </div>
-                                <div
-                                    class="text-xs text-yellow-500 dark:text-yellow-300 uppercase"
-                                >
-                                    {{ $t("messages.stats.queue.queued") }}
-                                </div>
-                            </div>
-                            <div
-                                class="text-center p-3 rounded-lg bg-green-50 dark:bg-green-900/20"
-                            >
-                                <div
-                                    class="text-2xl font-bold text-green-600 dark:text-green-400"
-                                >
-                                    {{ queue_stats.sent }}
-                                </div>
-                                <div
-                                    class="text-xs text-green-500 dark:text-green-300 uppercase"
-                                >
-                                    {{ $t("messages.stats.queue.sent") }}
-                                </div>
-                            </div>
-                            <div
-                                class="text-center p-3 rounded-lg bg-red-50 dark:bg-red-900/20"
-                            >
-                                <div
-                                    class="text-2xl font-bold text-red-600 dark:text-red-400"
-                                >
-                                    {{ queue_stats.failed }}
-                                </div>
-                                <div
-                                    class="text-xs text-red-500 dark:text-red-300 uppercase"
-                                >
-                                    {{ $t("messages.stats.queue.failed") }}
-                                </div>
+                    <div
+                        role="img"
+                        :aria-label="$t('messages.stats.queue.title')"
+                        class="flex h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700/60"
+                    >
+                        <div
+                            v-for="part in queueParts"
+                            :key="part.key"
+                            class="h-full"
+                            :class="part.bar"
+                            :style="{ width: part.width }"
+                        ></div>
+                    </div>
+
+                    <dl class="mt-5 grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3">
+                        <div v-for="part in queueParts" :key="part.key" class="flex flex-col gap-0.5">
+                            <dt class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                <span aria-hidden="true" class="h-2.5 w-2.5 rounded-sm" :class="part.bar"></span>
+                                {{ part.label }}
+                            </dt>
+                            <dd class="flex items-center gap-3 text-xl font-semibold tabular-nums text-slate-900 dark:text-white">
+                                {{ number(part.value) }}
                                 <button
-                                    v-if="queue_stats.failed > 0"
-                                    @click="resendToFailed"
+                                    v-if="part.key === 'failed' && part.value > 0"
+                                    type="button"
                                     :disabled="resendingToFailed"
-                                    class="mt-2 text-xs px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded transition-colors disabled:opacity-50"
+                                    class="min-h-8 rounded-lg border border-slate-300 px-2.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700/60"
+                                    @click="resendToFailed"
                                 >
                                     {{
                                         resendingToFailed
-                                            ? $t(
-                                                  "messages.stats.queue.resending",
-                                              )
-                                            : $t(
-                                                  "messages.stats.queue.resend_failed",
-                                              )
+                                            ? $t("messages.stats.queue.resending")
+                                            : $t("messages.stats.queue.resend_failed")
                                     }}
                                 </button>
-                            </div>
-                            <div
-                                class="text-center p-3 rounded-lg bg-gray-50 dark:bg-gray-700"
-                            >
-                                <div
-                                    class="text-2xl font-bold text-gray-600 dark:text-gray-400"
-                                >
-                                    {{ queue_stats.skipped }}
-                                </div>
-                                <div
-                                    class="text-xs text-gray-500 dark:text-gray-300 uppercase"
-                                >
-                                    {{ $t("messages.stats.queue.skipped") }}
-                                </div>
-                            </div>
+                            </dd>
                         </div>
-                    </div>
+                    </dl>
+                </Panel>
+            </div>
+
+            <!-- Reading time: only when the message was measured -->
+            <template v-if="read_time_stats && read_time_stats.total_sessions > 0">
+                <StatTiles :items="readTimeTiles" :label="$t('messages.stats.read_time.distribution')" />
+
+                <div
+                    v-if="read_time_histogram && read_time_histogram.total > 0"
+                    class="grid grid-cols-1 gap-5 xl:grid-cols-2"
+                >
+                    <Panel :title="$t('messages.stats.read_time.distribution')">
+                        <div class="relative h-64">
+                            <Bar
+                                :data="readTimeChartData"
+                                :options="chartOptions"
+                                role="img"
+                                :aria-label="$t('messages.stats.read_time.distribution')"
+                            />
+                        </div>
+                    </Panel>
+
+                    <Panel :title="$t('messages.stats.read_time.top_readers')" flush>
+                        <p
+                            v-if="!top_readers || top_readers.length === 0"
+                            class="px-5 pb-5 text-sm text-slate-600 dark:text-slate-400"
+                        >
+                            {{ $t("messages.stats.activity.no_data") }}
+                        </p>
+                        <table v-else class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400">
+                                    <th scope="col" class="px-5 py-2.5 font-medium">{{ $t("messages.stats.activity.email") }}</th>
+                                    <th scope="col" class="px-5 py-2.5 text-right font-medium">{{ $t("messages.stats.read_time.time") }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr
+                                    v-for="(reader, i) in top_readers"
+                                    :key="i"
+                                    class="border-b border-slate-100 last:border-0 dark:border-slate-700/40"
+                                >
+                                    <td class="max-w-0 px-5 py-2.5">
+                                        <p class="truncate text-slate-900 dark:text-white">{{ reader.email }}</p>
+                                        <p v-if="reader.name" class="truncate text-xs text-slate-600 dark:text-slate-400">{{ reader.name }}</p>
+                                    </td>
+                                    <td class="whitespace-nowrap px-5 py-2.5 text-right tabular-nums text-slate-900 dark:text-slate-100">
+                                        {{ reader.read_time }}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </Panel>
+                </div>
+            </template>
+
+            <!-- Who the message went to, and what happened to each copy -->
+            <Panel
+                v-if="recipients && (recipients.data?.length > 0 || searchRecipients)"
+                :title="$t('messages.stats.recipients.title')"
+                flush
+            >
+                <template #actions>
+                    <span class="tabular-nums text-slate-600 dark:text-slate-400">
+                        {{ $t("messages.stats.recipients.total", { count: number(recipients.total || 0) }) }}
+                    </span>
+                </template>
+
+                <div class="px-5 pb-4">
+                    <input
+                        v-model="searchRecipients"
+                        type="search"
+                        :placeholder="$t('common.search_placeholder')"
+                        :aria-label="$t('common.search_placeholder')"
+                        class="min-h-10 w-full max-w-sm rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
+                    />
                 </div>
 
-                <!-- Recipients List -->
-                <div
-                    v-if="
-                        recipients &&
-                        (recipients.data?.length > 0 || searchRecipients)
-                    "
-                    class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden"
-                >
-                    <div
-                        class="px-6 py-4 border-b border-gray-200 dark:border-gray-700"
-                    >
-                        <div
-                            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3"
-                        >
-                            <h3
-                                class="text-lg font-semibold text-gray-800 dark:text-gray-200"
+                <div class="overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                    <table class="w-full min-w-[720px] text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400">
+                                <th scope="col" class="px-5 py-2.5 font-medium">{{ $t("messages.stats.recipients.email") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium">{{ $t("messages.stats.recipients.name") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium">{{ $t("messages.stats.recipients.queue_status") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium">{{ $t("messages.stats.recipients.sent_at") }}</th>
+                                <th scope="col" class="py-2.5 pl-3 pr-5 font-medium">{{ $t("messages.stats.recipients.error") }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="recipient in recipients.data"
+                                :key="recipient.id"
+                                class="border-b border-slate-100 last:border-0 dark:border-slate-700/40"
                             >
-                                📧 {{ $t("messages.stats.recipients.title") }}
-                            </h3>
-                            <div class="flex items-center gap-3">
-                                <div class="relative">
-                                    <input
-                                        v-model="searchRecipients"
-                                        type="text"
-                                        :placeholder="
-                                            $t('common.search_placeholder')
-                                        "
-                                        class="w-48 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                                    />
-                                    <svg
-                                        v-if="!searchRecipients"
-                                        class="absolute right-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                        />
-                                    </svg>
+                                <td class="px-5 py-2.5 font-medium text-slate-900 dark:text-white">{{ recipient.email }}</td>
+                                <td class="px-3 py-2.5 text-slate-900 dark:text-slate-100">{{ recipient.name || "—" }}</td>
+                                <td class="px-3 py-2.5">
+                                    <StatusPill :tone="STATUS_TONES[recipient.queue_status] || 'neutral'">
+                                        {{ $t(`messages.stats.recipients.status.${recipient.queue_status}`) }}
+                                    </StatusPill>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-2.5 tabular-nums text-slate-600 dark:text-slate-400">
+                                    {{ recipient.sent_at || recipient.planned_at || "—" }}
+                                </td>
+                                <td class="max-w-0 py-2.5 pl-3 pr-5" style="width: 28%">
                                     <button
-                                        v-else
-                                        @click="searchRecipients = ''"
-                                        class="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                                        v-if="recipient.error"
+                                        type="button"
+                                        :title="$t('messages.stats.recipients.click_to_view_error')"
+                                        class="block w-full truncate text-left text-rose-700 underline decoration-rose-300 underline-offset-2 hover:no-underline dark:text-rose-300 dark:decoration-rose-500/50"
+                                        @click="openErrorModal(recipient.email, recipient.error)"
                                     >
-                                        <svg
-                                            class="w-4 h-4"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M6 18L18 6M6 6l12 12"
-                                            />
-                                        </svg>
+                                        {{ recipient.error }}
                                     </button>
-                                </div>
-                                <span
-                                    class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap"
-                                >
-                                    {{
-                                        $t("messages.stats.recipients.total", {
-                                            count: recipients.total || 0,
-                                        })
-                                    }}
-                                </span>
-                            </div>
-                        </div>
+                                    <span v-else class="text-slate-600 dark:text-slate-400">—</span>
+                                </td>
+                            </tr>
+                            <tr v-if="recipients.data.length === 0">
+                                <td colspan="5" class="px-5 py-8 text-center text-slate-600 dark:text-slate-400">
+                                    {{ $t("common.no_results") }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <Pagination v-if="recipients.total > 0" :paginator="recipients" />
+            </Panel>
+
+            <!-- Opens and clicks, one by one -->
+            <div class="grid grid-cols-1 gap-5 xl:grid-cols-2">
+                <Panel
+                    v-for="log in activityLogs"
+                    :key="log.type"
+                    :title="log.title"
+                    flush
+                >
+                    <template #actions>
+                        <span v-if="log.total !== undefined" class="tabular-nums text-slate-600 dark:text-slate-400">
+                            {{ number(log.total) }}
+                        </span>
+                    </template>
+
+                    <div class="px-5 pb-4">
+                        <input
+                            v-model="log.search.value"
+                            type="search"
+                            :placeholder="log.placeholder"
+                            :aria-label="log.placeholder"
+                            class="min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
+                        />
                     </div>
-                    <div class="overflow-x-auto">
-                        <table
-                            class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400"
+
+                    <!-- What can be done with the ticked people -->
+                    <div
+                        v-if="log.selected.value.length > 0"
+                        class="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-indigo-200 bg-indigo-50 px-5 py-3 text-sm dark:border-indigo-500/30 dark:bg-indigo-500/10"
+                    >
+                        <span class="font-semibold tabular-nums text-indigo-900 dark:text-indigo-200">
+                            {{ log.selected.value.length }} {{ $t("messages.stats.bulk_selected") }}
+                        </span>
+                        <button
+                            type="button"
+                            class="min-h-9 rounded-lg bg-indigo-600 px-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-500"
+                            @click="openBulkModal(log.type)"
                         >
-                            <thead
-                                class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"
-                            >
-                                <tr>
-                                    <th class="px-4 py-3">
-                                        {{
-                                            $t(
-                                                "messages.stats.recipients.email",
-                                            )
-                                        }}
+                            {{ $t("messages.stats.bulk_add_to_list") }}
+                        </button>
+                        <button
+                            type="button"
+                            :disabled="log.loadingAll.value"
+                            class="font-medium text-indigo-700 underline underline-offset-2 hover:no-underline disabled:opacity-60 dark:text-indigo-300"
+                            @click="log.selectAll"
+                        >
+                            {{ log.loadingAll.value ? $t("common.loading") : $t("common.select_all") }}
+                        </button>
+                        <button
+                            type="button"
+                            class="font-medium text-indigo-700 underline underline-offset-2 hover:no-underline dark:text-indigo-300"
+                            @click="log.clear"
+                        >
+                            {{ $t("common.deselect_all") }}
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                        <table class="w-full text-sm" :class="log.type === 'clicks' ? 'min-w-[640px]' : 'min-w-[480px]'">
+                            <thead>
+                                <tr class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400">
+                                    <th scope="col" class="w-10 py-2.5 pl-5 pr-2">
+                                        <input
+                                            type="checkbox"
+                                            :aria-label="$t('common.select_all')"
+                                            :checked="log.allSelected.value"
+                                            class="h-4 w-4 accent-indigo-600"
+                                            @change="log.toggleAll"
+                                        />
                                     </th>
-                                    <th class="px-4 py-3">
-                                        {{
-                                            $t("messages.stats.recipients.name")
-                                        }}
+                                    <th
+                                        v-for="column in log.columns"
+                                        :key="column.field"
+                                        scope="col"
+                                        class="px-3 py-2.5 font-medium"
+                                        :aria-sort="ariaSort(log.type, column.field)"
+                                    >
+                                        <button
+                                            type="button"
+                                            class="inline-flex items-center gap-1 hover:text-slate-900 dark:hover:text-white"
+                                            @click="handleSort(log.type, column.field)"
+                                        >
+                                            {{ column.label }}
+                                            <SortMark :state="sortState(log.type, column.field)" />
+                                        </button>
                                     </th>
-                                    <th class="px-4 py-3">
-                                        {{
-                                            $t(
-                                                "messages.stats.recipients.queue_status",
-                                            )
-                                        }}
-                                    </th>
-                                    <th class="px-4 py-3">
-                                        {{
-                                            $t(
-                                                "messages.stats.recipients.sent_at",
-                                            )
-                                        }}
-                                    </th>
-                                    <th class="px-4 py-3">
-                                        {{
-                                            $t(
-                                                "messages.stats.recipients.error",
-                                            )
-                                        }}
+                                    <th scope="col" class="py-2.5 pl-3 pr-5 text-right font-medium">
+                                        <span class="sr-only">{{ $t("messages.stats.actions") }}</span>
                                     </th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr
-                                    v-for="recipient in recipients.data"
-                                    :key="recipient.id"
-                                    class="border-b dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                    v-for="(entry, i) in log.rows"
+                                    :key="i"
+                                    class="border-b border-slate-100 last:border-0 dark:border-slate-700/40"
+                                    :class="
+                                        entry.subscriber_id && log.selected.value.includes(entry.subscriber_id)
+                                            ? 'bg-indigo-50 dark:bg-indigo-500/10'
+                                            : ''
+                                    "
                                 >
-                                    <td
-                                        class="px-4 py-3 font-medium text-gray-900 dark:text-white"
-                                    >
-                                        {{ recipient.email }}
+                                    <td class="w-10 py-2.5 pl-5 pr-2">
+                                        <input
+                                            v-if="entry.subscriber_id"
+                                            type="checkbox"
+                                            :aria-label="entry.email"
+                                            :checked="log.selected.value.includes(entry.subscriber_id)"
+                                            class="h-4 w-4 accent-indigo-600"
+                                            @change="log.toggle(entry.subscriber_id)"
+                                        />
                                     </td>
-                                    <td class="px-4 py-3">
-                                        {{ recipient.name || "-" }}
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <span
-                                            class="inline-flex px-2 py-1 rounded-full text-xs font-medium"
-                                            :class="
-                                                getStatusClass(
-                                                    recipient.queue_status,
-                                                )
-                                            "
+                                    <td class="px-3 py-2.5 font-medium text-slate-900 dark:text-white">{{ entry.email }}</td>
+                                    <td v-if="log.type === 'clicks'" class="max-w-0 px-3 py-2.5" style="width: 36%">
+                                        <a
+                                            :href="entry.url"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            :title="entry.url"
+                                            class="block truncate text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                                         >
-                                            {{
-                                                $t(
-                                                    `messages.stats.recipients.status.${recipient.queue_status}`,
-                                                )
-                                            }}
-                                        </span>
+                                            {{ entry.url }}
+                                        </a>
                                     </td>
-                                    <td class="px-4 py-3">
-                                        {{
-                                            recipient.sent_at ||
-                                            recipient.planned_at ||
-                                            "-"
-                                        }}
+                                    <td class="whitespace-nowrap px-3 py-2.5 tabular-nums text-slate-600 dark:text-slate-400">
+                                        {{ entry.occurred_at }}
                                     </td>
-                                    <td class="px-4 py-3 max-w-xs">
-                                        <button
-                                            v-if="recipient.error"
-                                            @click="
-                                                openErrorModal(
-                                                    recipient.email,
-                                                    recipient.error,
-                                                )
-                                            "
-                                            class="text-left text-red-600 dark:text-red-400 hover:underline cursor-pointer truncate block max-w-full"
-                                            :title="
-                                                $t(
-                                                    'messages.stats.recipients.click_to_view_error',
-                                                )
-                                            "
-                                        >
-                                            {{ recipient.error }}
-                                        </button>
-                                        <span v-else class="text-gray-400"
-                                            >-</span
-                                        >
+                                    <td class="py-2.5 pl-3 pr-5 text-right">
+                                        <AddToListDropdown
+                                            v-if="entry.subscriber_id"
+                                            :subscriber-id="entry.subscriber_id"
+                                            :subscriber-email="entry.email"
+                                        />
+                                    </td>
+                                </tr>
+                                <tr v-if="log.rows.length === 0">
+                                    <td :colspan="log.columns.length + 2" class="px-5 py-8 text-center text-slate-600 dark:text-slate-400">
+                                        {{ $t("messages.stats.activity.no_data") }}
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
-                    <!-- Pagination -->
-                    <div
-                        v-if="recipients.links && recipients.links.length > 3"
-                        class="flex items-center justify-center border-t border-gray-100 px-6 py-4 dark:border-gray-700"
-                    >
-                        <div class="flex gap-1">
-                            <Link
-                                v-for="(link, i) in recipients.links"
-                                :key="i"
-                                :href="link.url || '#'"
-                                class="rounded-lg px-3 py-1 text-sm"
-                                :class="{
-                                    'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400':
-                                        link.active,
-                                    'text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-800':
-                                        !link.active && link.url,
-                                    'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed':
-                                        !link.url,
-                                }"
-                                v-html="link.label"
-                                preserve-scroll
-                            />
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Charts -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow h-96"
-                    >
-                        <h3
-                            class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200"
-                        >
-                            {{ $t("messages.stats.charts.effectiveness") }}
-                        </h3>
-                        <Doughnut
-                            :data="doughnutData"
-                            :options="chartOptions"
-                        />
-                    </div>
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow h-80"
-                    >
-                        <h3
-                            class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200"
-                        >
-                            {{ $t("messages.stats.charts.conversion_funnel") }}
-                        </h3>
-                        <Bar :data="barData" :options="chartOptions" />
-                    </div>
-                </div>
-
-                <!-- Read Time Charts & Top Readers -->
-                <div
-                    v-if="read_time_histogram && read_time_histogram.total > 0"
-                    class="grid grid-cols-1 md:grid-cols-2 gap-6"
-                >
-                    <!-- Read Time Distribution -->
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow h-80"
-                    >
-                        <h3
-                            class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200"
-                        >
-                            <span class="mr-2">⏱️</span
-                            >{{ $t("messages.stats.read_time.distribution") }}
-                        </h3>
-                        <Bar
-                            :data="readTimeChartData"
-                            :options="chartOptions"
-                        />
-                    </div>
-
-                    <!-- Top Readers -->
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"
-                    >
-                        <h3
-                            class="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200"
-                        >
-                            <span class="mr-2">🏆</span
-                            >{{ $t("messages.stats.read_time.top_readers") }}
-                        </h3>
-                        <div class="overflow-x-auto max-h-64 overflow-y-auto">
-                            <table
-                                class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400"
-                            >
-                                <thead
-                                    class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0"
-                                >
-                                    <tr>
-                                        <th class="px-3 py-2">
-                                            {{
-                                                $t(
-                                                    "messages.stats.activity.email",
-                                                )
-                                            }}
-                                        </th>
-                                        <th class="px-3 py-2 text-right">
-                                            {{
-                                                $t(
-                                                    "messages.stats.read_time.time",
-                                                )
-                                            }}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr
-                                        v-for="(reader, i) in top_readers"
-                                        :key="i"
-                                        class="border-b dark:border-gray-700"
-                                    >
-                                        <td class="px-3 py-2">
-                                            <div>{{ reader.email }}</div>
-                                            <div
-                                                v-if="reader.name"
-                                                class="text-xs text-gray-400"
-                                            >
-                                                {{ reader.name }}
-                                            </div>
-                                        </td>
-                                        <td
-                                            class="px-3 py-2 text-right font-medium text-violet-600"
-                                        >
-                                            {{ reader.read_time }}
-                                        </td>
-                                    </tr>
-                                    <tr
-                                        v-if="
-                                            !top_readers ||
-                                            top_readers.length === 0
-                                        "
-                                    >
-                                        <td
-                                            colspan="2"
-                                            class="px-3 py-2 text-center"
-                                        >
-                                            {{
-                                                $t(
-                                                    "messages.stats.activity.no_data",
-                                                )
-                                            }}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Recent Activity Logs -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                    <!-- Opens Log -->
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"
-                    >
-                        <div
-                            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4"
-                        >
-                            <h3
-                                class="text-lg font-semibold text-gray-800 dark:text-gray-200"
-                            >
-                                {{ $t("messages.stats.activity.recent_opens") }}
-                                <span
-                                    v-if="
-                                        recent_activity?.opens_total !==
-                                        undefined
-                                    "
-                                    class="text-sm font-normal text-gray-500 dark:text-gray-400"
-                                >
-                                    ({{ recent_activity.opens_total }})
-                                </span>
-                            </h3>
-                            <div class="relative">
-                                <input
-                                    v-model="searchOpens"
-                                    type="text"
-                                    :placeholder="
-                                        $t('common.search_placeholder')
-                                    "
-                                    class="w-48 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                                />
-                                <svg
-                                    v-if="!searchOpens"
-                                    class="absolute right-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                    />
-                                </svg>
-                                <button
-                                    v-else
-                                    @click="searchOpens = ''"
-                                    class="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                >
-                                    <svg
-                                        class="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M6 18L18 6M6 6l12 12"
-                                        />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <!-- Bulk Actions Bar for Opens -->
-                        <div
-                            v-if="selectedOpens.length > 0"
-                            class="mb-3 flex items-center gap-3 rounded-lg bg-indigo-50 px-4 py-2 dark:bg-indigo-900/30"
-                        >
-                            <span
-                                class="text-sm font-medium text-indigo-700 dark:text-indigo-300"
-                            >
-                                {{ selectedOpens.length }}
-                                {{ $t("messages.stats.bulk_selected") }}
-                            </span>
-                            <button
-                                @click="openBulkModal('opens')"
-                                class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
-                            >
-                                <svg
-                                    class="h-4 w-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                    />
-                                </svg>
-                                {{ $t("messages.stats.bulk_add_to_list") }}
-                            </button>
-                            <button
-                                @click="selectAllOpens"
-                                :disabled="loadingSelectAllOpens"
-                                class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 disabled:opacity-50"
-                            >
-                                <span v-if="loadingSelectAllOpens"
-                                    >{{ $t("common.loading") }}...</span
-                                >
-                                <span v-else>{{
-                                    $t("common.select_all")
-                                }}</span>
-                            </button>
-                            <button
-                                @click="clearOpensSelection"
-                                class="text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-                            >
-                                {{ $t("common.deselect_all") }}
-                            </button>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table
-                                class="min-w-full text-sm text-left text-gray-500 dark:text-gray-400"
-                            >
-                                <thead
-                                    class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"
-                                >
-                                    <tr>
-                                        <th class="px-2 py-2 w-10">
-                                            <input
-                                                type="checkbox"
-                                                :checked="allOpensSelected"
-                                                @change="toggleAllOpens"
-                                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
-                                            />
-                                        </th>
-                                        <th
-                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                                            @click="
-                                                handleSort('opens', 'email')
-                                            "
-                                        >
-                                            {{
-                                                $t(
-                                                    "messages.stats.activity.email",
-                                                )
-                                            }}
-                                            ⇅
-                                        </th>
-                                        <th
-                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                                            @click="handleSort('opens', 'time')"
-                                        >
-                                            {{
-                                                $t(
-                                                    "messages.stats.activity.time",
-                                                )
-                                            }}
-                                            ⇅
-                                        </th>
-                                        <th class="px-4 py-2">
-                                            {{ $t("messages.stats.actions") }}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr
-                                        v-for="(log, i) in recent_activity.opens
-                                            .data"
-                                        :key="i"
-                                        class="border-b dark:border-gray-700"
-                                        :class="
-                                            selectedOpens.includes(
-                                                log.subscriber_id,
-                                            )
-                                                ? 'bg-indigo-50 dark:bg-indigo-900/20'
-                                                : ''
-                                        "
-                                    >
-                                        <td class="px-2 py-2">
-                                            <input
-                                                v-if="log.subscriber_id"
-                                                type="checkbox"
-                                                :checked="
-                                                    selectedOpens.includes(
-                                                        log.subscriber_id,
-                                                    )
-                                                "
-                                                @change="
-                                                    toggleSelectOpen(
-                                                        log.subscriber_id,
-                                                    )
-                                                "
-                                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
-                                            />
-                                        </td>
-                                        <td class="px-4 py-2">
-                                            {{ log.email }}
-                                        </td>
-                                        <td class="px-4 py-2">
-                                            {{ log.occurred_at }}
-                                        </td>
-                                        <td class="px-4 py-2">
-                                            <AddToListDropdown
-                                                v-if="log.subscriber_id"
-                                                :subscriber-id="
-                                                    log.subscriber_id
-                                                "
-                                                :subscriber-email="log.email"
-                                            />
-                                        </td>
-                                    </tr>
-                                    <tr
-                                        v-if="
-                                            !recent_activity.opens.data ||
-                                            recent_activity.opens.data
-                                                .length === 0
-                                        "
-                                    >
-                                        <td
-                                            colspan="4"
-                                            class="px-4 py-2 text-center"
-                                        >
-                                            {{
-                                                $t(
-                                                    "messages.stats.activity.no_data",
-                                                )
-                                            }}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <!-- Pagination for Opens -->
-                        <div
-                            v-if="
-                                recent_activity.opens.links &&
-                                recent_activity.opens.links.length > 3
-                            "
-                            class="flex items-center justify-center border-t border-gray-100 px-6 py-4 dark:border-gray-700"
-                        >
-                            <div class="flex gap-1 flex-wrap justify-center">
-                                <Link
-                                    v-for="(link, i) in recent_activity.opens
-                                        .links"
-                                    :key="i"
-                                    :href="link.url || '#'"
-                                    class="rounded-lg px-3 py-1 text-sm whitespace-nowrap"
-                                    :class="{
-                                        'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400':
-                                            link.active,
-                                        'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700':
-                                            !link.active && link.url,
-                                        'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed':
-                                            !link.url,
-                                    }"
-                                    v-html="link.label"
-                                    preserve-scroll
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Clicks Log -->
-                    <div
-                        class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow"
-                    >
-                        <div
-                            class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4"
-                        >
-                            <h3
-                                class="text-lg font-semibold text-gray-800 dark:text-gray-200"
-                            >
-                                {{
-                                    $t("messages.stats.activity.recent_clicks")
-                                }}
-                                <span
-                                    v-if="
-                                        recent_activity?.clicks_total !==
-                                        undefined
-                                    "
-                                    class="text-sm font-normal text-gray-500 dark:text-gray-400"
-                                >
-                                    ({{ recent_activity.clicks_total }})
-                                </span>
-                            </h3>
-                            <div class="relative">
-                                <input
-                                    v-model="searchClicks"
-                                    type="text"
-                                    :placeholder="
-                                        $t('messages.stats.search_email_or_url')
-                                    "
-                                    class="w-48 px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                                />
-                                <svg
-                                    v-if="!searchClicks"
-                                    class="absolute right-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                    />
-                                </svg>
-                                <button
-                                    v-else
-                                    @click="searchClicks = ''"
-                                    class="absolute right-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                                >
-                                    <svg
-                                        class="w-4 h-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M6 18L18 6M6 6l12 12"
-                                        />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <!-- Bulk Actions Bar for Clicks -->
-                        <div
-                            v-if="selectedClicks.length > 0"
-                            class="mb-3 flex items-center gap-3 rounded-lg bg-indigo-50 px-4 py-2 dark:bg-indigo-900/30"
-                        >
-                            <span
-                                class="text-sm font-medium text-indigo-700 dark:text-indigo-300"
-                            >
-                                {{ selectedClicks.length }}
-                                {{ $t("messages.stats.bulk_selected") }}
-                            </span>
-                            <button
-                                @click="openBulkModal('clicks')"
-                                class="inline-flex items-center gap-1 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
-                            >
-                                <svg
-                                    class="h-4 w-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-                                    />
-                                </svg>
-                                {{ $t("messages.stats.bulk_add_to_list") }}
-                            </button>
-                            <button
-                                @click="selectAllClicks"
-                                :disabled="loadingSelectAllClicks"
-                                class="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200 disabled:opacity-50"
-                            >
-                                <span v-if="loadingSelectAllClicks"
-                                    >{{ $t("common.loading") }}...</span
-                                >
-                                <span v-else>{{
-                                    $t("common.select_all")
-                                }}</span>
-                            </button>
-                            <button
-                                @click="clearClicksSelection"
-                                class="text-xs text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-                            >
-                                {{ $t("common.deselect_all") }}
-                            </button>
-                        </div>
-                        <div class="overflow-x-auto">
-                            <table
-                                class="w-full text-sm text-left text-gray-500 dark:text-gray-400 table-fixed"
-                            >
-                                <thead
-                                    class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400"
-                                >
-                                    <tr>
-                                        <th class="px-2 py-2 w-10">
-                                            <input
-                                                type="checkbox"
-                                                :checked="allClicksSelected"
-                                                @change="toggleAllClicks"
-                                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
-                                            />
-                                        </th>
-                                        <th
-                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 w-1/4"
-                                            @click="
-                                                handleSort('clicks', 'email')
-                                            "
-                                        >
-                                            {{
-                                                $t(
-                                                    "messages.stats.activity.email",
-                                                )
-                                            }}
-                                            ⇅
-                                        </th>
-                                        <th
-                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 w-2/5"
-                                            @click="handleSort('clicks', 'url')"
-                                        >
-                                            {{
-                                                $t(
-                                                    "messages.stats.activity.url",
-                                                )
-                                            }}
-                                            ⇅
-                                        </th>
-                                        <th
-                                            class="px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 w-1/5"
-                                            @click="
-                                                handleSort('clicks', 'time')
-                                            "
-                                        >
-                                            {{
-                                                $t(
-                                                    "messages.stats.activity.time",
-                                                )
-                                            }}
-                                            ⇅
-                                        </th>
-                                        <th
-                                            class="px-4 py-2 w-24 bg-gray-50 dark:bg-gray-700 text-center"
-                                        >
-                                            {{ $t("messages.stats.actions") }}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr
-                                        v-for="(log, i) in recent_activity
-                                            .clicks.data"
-                                        :key="i"
-                                        class="border-b dark:border-gray-700"
-                                        :class="
-                                            selectedClicks.includes(
-                                                log.subscriber_id,
-                                            )
-                                                ? 'bg-indigo-50 dark:bg-indigo-900/20'
-                                                : ''
-                                        "
-                                    >
-                                        <td class="px-2 py-2">
-                                            <input
-                                                v-if="log.subscriber_id"
-                                                type="checkbox"
-                                                :checked="
-                                                    selectedClicks.includes(
-                                                        log.subscriber_id,
-                                                    )
-                                                "
-                                                @change="
-                                                    toggleSelectClick(
-                                                        log.subscriber_id,
-                                                    )
-                                                "
-                                                class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-700"
-                                            />
-                                        </td>
-                                        <td class="px-4 py-2">
-                                            {{ log.email }}
-                                        </td>
-                                        <td
-                                            class="px-4 py-2 truncate max-w-[200px]"
-                                        >
-                                            <a
-                                                :href="log.url"
-                                                target="_blank"
-                                                class="text-blue-600 hover:underline dark:text-blue-400"
-                                            >
-                                                {{ log.url }}
-                                            </a>
-                                        </td>
-                                        <td class="px-4 py-2">
-                                            {{ log.occurred_at }}
-                                        </td>
-                                        <td
-                                            class="px-4 py-2 bg-white dark:bg-gray-800 text-center"
-                                        >
-                                            <AddToListDropdown
-                                                v-if="log.subscriber_id"
-                                                :subscriber-id="
-                                                    log.subscriber_id
-                                                "
-                                                :subscriber-email="log.email"
-                                            />
-                                        </td>
-                                    </tr>
-                                    <tr
-                                        v-if="
-                                            !recent_activity.clicks.data ||
-                                            recent_activity.clicks.data
-                                                .length === 0
-                                        "
-                                    >
-                                        <td
-                                            colspan="5"
-                                            class="px-4 py-2 text-center"
-                                        >
-                                            {{
-                                                $t(
-                                                    "messages.stats.activity.no_data",
-                                                )
-                                            }}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <!-- Pagination for Clicks -->
-                        <div
-                            v-if="
-                                recent_activity.clicks.links &&
-                                recent_activity.clicks.links.length > 3
-                            "
-                            class="flex items-center justify-center border-t border-gray-100 px-6 py-4 dark:border-gray-700"
-                        >
-                            <div class="flex gap-1 flex-wrap justify-center">
-                                <Link
-                                    v-for="(link, i) in recent_activity.clicks
-                                        .links"
-                                    :key="i"
-                                    :href="link.url || '#'"
-                                    class="rounded-lg px-3 py-1 text-sm whitespace-nowrap"
-                                    :class="{
-                                        'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400':
-                                            link.active,
-                                        'text-gray-500 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700':
-                                            !link.active && link.url,
-                                        'text-gray-500 dark:text-gray-400 opacity-50 cursor-not-allowed':
-                                            !link.url,
-                                    }"
-                                    v-html="link.label"
-                                    preserve-scroll
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                    <Pagination v-if="log.paginator?.total > 0" :paginator="log.paginator" />
+                </Panel>
             </div>
         </div>
     </AuthenticatedLayout>
 
-    <!-- Error Details Modal -->
-    <Modal :show="showErrorModal" @close="closeErrorModal" max-width="lg">
-        <div class="p-6">
-            <h3
-                class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4"
-            >
+    <!-- The full text of a delivery error -->
+    <Modal :show="showErrorModal" max-width="lg" @close="closeErrorModal">
+        <div class="flex flex-col gap-4 p-6">
+            <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                 {{ $t("messages.stats.recipients.error_details") }}
-            </h3>
-            <div class="mb-2 text-sm text-gray-500 dark:text-gray-400">
+            </h2>
+            <p class="text-sm text-slate-600 dark:text-slate-400">
                 {{ $t("messages.stats.recipients.email") }}:
-                <span class="font-medium text-gray-900 dark:text-gray-100">{{
-                    selectedError.email
-                }}</span>
-            </div>
-            <div
-                class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 mb-4"
-            >
-                <pre
-                    class="text-sm text-red-700 dark:text-red-300 whitespace-pre-wrap break-words font-mono"
-                    >{{ selectedError.error }}</pre
-                >
-            </div>
+                <span class="font-medium text-slate-900 dark:text-white">{{ selectedError.email }}</span>
+            </p>
+            <pre class="max-h-72 overflow-auto whitespace-pre-wrap break-words rounded-xl bg-slate-100 p-4 text-xs text-slate-900 dark:bg-slate-900/60 dark:text-slate-100">{{ selectedError.error }}</pre>
             <div class="flex justify-end gap-3">
-                <button
-                    @click="copyError"
-                    class="px-4 py-2 text-sm font-medium rounded-lg transition-colors"
-                    :class="
+                <SecondaryButton @click="copyError">
+                    {{
                         errorCopied
-                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
-                    "
-                >
-                    <span v-if="errorCopied"
-                        >✓ {{ $t("messages.stats.recipients.copied") }}</span
-                    >
-                    <span v-else
-                        >📋
-                        {{ $t("messages.stats.recipients.copy_error") }}</span
-                    >
-                </button>
-                <button
-                    @click="closeErrorModal"
-                    class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-lg transition-colors"
-                >
-                    {{ $t("common.close") }}
-                </button>
+                            ? $t("messages.stats.recipients.copied")
+                            : $t("messages.stats.recipients.copy_error")
+                    }}
+                </SecondaryButton>
+                <PrimaryButton @click="closeErrorModal">{{ $t("common.close") }}</PrimaryButton>
             </div>
         </div>
     </Modal>
 
-    <!-- Bulk Add to List Modal -->
     <BulkAddToListModal
         :show="showBulkModal"
-        :subscriber-ids="
-            bulkModalType === 'opens' ? selectedOpens : selectedClicks
-        "
+        :subscriber-ids="bulkModalType === 'opens' ? selectedOpens : selectedClicks"
         :type="bulkModalType"
         @close="showBulkModal = false"
         @success="handleBulkSuccess"
