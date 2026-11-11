@@ -3187,7 +3187,8 @@
             "tokens_small_help": "Para títulos, textos cortos (predeterminado: {default})",
             "tokens_large_label": "Tokens (tareas grandes)",
             "tokens_large_help": "Para contenido de correo electrónico, plantillas (predeterminado: {default})",
-            "optional": "opcional"
+            "optional": "opcional",
+            "key_from": "Obtén una clave en:"
         },
         "delete": {
             "title": "Eliminar integración",
@@ -3199,6 +3200,20 @@
             "fast_and_cheap": "Rápido y barato",
             "reasoning": "Razonamiento",
             "fast": "Rápido"
+        },
+        "table": {
+            "provider": "Proveedor",
+            "status": "Estado",
+            "active": "Activada"
+        },
+        "switch_label": "Activada: {name}",
+        "actions_for": "Acciones de la integración: {name}",
+        "testing": "Probando…",
+        "notifications": {
+            "saved": "Integración guardada",
+            "deleted": "Integración eliminada",
+            "enabled": "Integración activada",
+            "disabled": "Integración desactivada"
         }
     },
     "welcome": {
@@ -7061,7 +7076,9 @@
             "created": "El proveedor SMS se ha creado.",
             "deleted": "El proveedor SMS se ha eliminado.",
             "set_default": "El proveedor se ha establecido como predeterminado.",
-            "updated": "El proveedor SMS se ha actualizado."
+            "updated": "El proveedor SMS se ha actualizado.",
+            "activated": "Proveedor activado",
+            "deactivated": "Proveedor desactivado"
         },
         "sent_today": "Enviados hoy",
         "set_as_default": "Establecer como predeterminado",
@@ -7071,7 +7088,17 @@
             "inactive": "Inactivo",
             "not_tested": "Sin probar"
         },
-        "test_connection": "Probar conexión"
+        "test_connection": "Probar conexión",
+        "table": {
+            "provider": "Conexión",
+            "status": "Estado",
+            "active": "Activado"
+        },
+        "no_limit": "sin límite",
+        "switch_label": "Activado: {name}",
+        "actions_for": "Acciones del proveedor: {name}",
+        "testing": "Probando…",
+        "last_tested": "Prueba: {date}"
     },
     "external_pages": {
         "index": {

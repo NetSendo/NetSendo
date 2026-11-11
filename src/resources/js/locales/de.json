@@ -3187,7 +3187,8 @@
             "tokens_small_help": "Für Titel, kurze Texte (Standard: {default})",
             "tokens_large_label": "Token (große Aufgaben)",
             "tokens_large_help": "Für E-Mail-Inhalte, Vorlagen (Standard: {default})",
-            "optional": "optional"
+            "optional": "optional",
+            "key_from": "Einen Schlüssel erhalten Sie unter:"
         },
         "delete": {
             "title": "Integration löschen",
@@ -3199,6 +3200,20 @@
             "fast_and_cheap": "Schnell und günstig",
             "reasoning": "Schlussfolgern",
             "fast": "Schnell"
+        },
+        "table": {
+            "provider": "Anbieter",
+            "status": "Status",
+            "active": "Eingeschaltet"
+        },
+        "switch_label": "Eingeschaltet: {name}",
+        "actions_for": "Aktionen für die Integration: {name}",
+        "testing": "Test läuft…",
+        "notifications": {
+            "saved": "Integration gespeichert",
+            "deleted": "Integration gelöscht",
+            "enabled": "Integration eingeschaltet",
+            "disabled": "Integration ausgeschaltet"
         }
     },
     "welcome": {
@@ -6731,7 +6746,9 @@
             "created": "SMS-Anbieter wurde erstellt.",
             "deleted": "SMS-Anbieter wurde gelöscht.",
             "set_default": "Anbieter wurde als Standard festgelegt.",
-            "updated": "SMS-Anbieter wurde aktualisiert."
+            "updated": "SMS-Anbieter wurde aktualisiert.",
+            "activated": "Anbieter eingeschaltet",
+            "deactivated": "Anbieter ausgeschaltet"
         },
         "sent_today": "Heute gesendet",
         "set_as_default": "Als Standard festlegen",
@@ -6741,7 +6758,17 @@
             "inactive": "Inaktiv",
             "not_tested": "Nicht getestet"
         },
-        "test_connection": "Verbindung testen"
+        "test_connection": "Verbindung testen",
+        "table": {
+            "provider": "Verbindung",
+            "status": "Status",
+            "active": "Eingeschaltet"
+        },
+        "no_limit": "ohne Limit",
+        "switch_label": "Eingeschaltet: {name}",
+        "actions_for": "Aktionen für den Anbieter: {name}",
+        "testing": "Test läuft…",
+        "last_tested": "Test: {date}"
     },
     "external_pages": {
         "index": {

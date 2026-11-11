@@ -1102,7 +1102,11 @@ const isBroadcastDisabled = computed(() => {
                                                 >
                                                     {{ mailbox.name }}
                                                 </button>
-                                                <StatusPill v-if="mailbox.is_default" tone="info" class="shrink-0">
+                                                <StatusPill
+                                                    v-if="mailbox.is_default"
+                                                    tone="info"
+                                                    class="shrink-0 max-sm:hidden"
+                                                >
                                                     {{ $t("mailboxes.default") }}
                                                 </StatusPill>
                                             </div>
@@ -1130,10 +1134,14 @@ const isBroadcastDisabled = computed(() => {
                                                         : $t("mailboxes.nmi.no_domain")
                                                 }}{{ mailbox.nmi_ip ? " · " + mailbox.nmi_ip : "" }}
                                             </p>
-                                            <!-- On a phone the status has no column of its own: it sits under the name -->
-                                            <div class="mt-1.5 sm:hidden">
+                                            <!-- On a phone the status has no column of its own and the badge
+                                                 would squeeze the name: both sit under it -->
+                                            <div class="mt-1.5 flex flex-wrap items-center gap-1.5 sm:hidden">
                                                 <StatusPill :tone="statusOf(mailbox).tone">
                                                     {{ statusOf(mailbox).label }}
+                                                </StatusPill>
+                                                <StatusPill v-if="mailbox.is_default" tone="info">
+                                                    {{ $t("mailboxes.default") }}
                                                 </StatusPill>
                                             </div>
                                         </div>

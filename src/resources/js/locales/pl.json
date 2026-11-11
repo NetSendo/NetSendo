@@ -3714,7 +3714,8 @@
             "tokens_small_label": "Tokeny (małe zadania)",
             "tokens_small_help": "Dla tytułów, krótkich tekstów (domyślnie: {default})",
             "tokens_large_label": "Tokeny (duże zadania)",
-            "tokens_large_help": "Dla treści emaili, szablonów (domyślnie: {default})"
+            "tokens_large_help": "Dla treści emaili, szablonów (domyślnie: {default})",
+            "key_from": "Klucz wygenerujesz na:"
         },
         "delete": {
             "title": "Usuń integrację",
@@ -3726,6 +3727,20 @@
             "fast_and_cheap": "Szybki i tani",
             "reasoning": "Rozumowanie",
             "fast": "Szybki"
+        },
+        "table": {
+            "provider": "Dostawca",
+            "status": "Status",
+            "active": "Włączona"
+        },
+        "switch_label": "Włączona: {name}",
+        "actions_for": "Akcje integracji: {name}",
+        "testing": "Testowanie…",
+        "notifications": {
+            "saved": "Integracja zapisana",
+            "deleted": "Integracja usunięta",
+            "enabled": "Integracja włączona",
+            "disabled": "Integracja wyłączona"
         }
     },
     "welcome": {
@@ -4553,7 +4568,9 @@
             "created": "Dostawca SMS został utworzony.",
             "updated": "Dostawca SMS został zaktualizowany.",
             "deleted": "Dostawca SMS został usunięty.",
-            "set_default": "Dostawca został ustawiony jako domyślny."
+            "set_default": "Dostawca został ustawiony jako domyślny.",
+            "activated": "Dostawca włączony",
+            "deactivated": "Dostawca wyłączony"
         },
         "delete_modal": {
             "title": "Usuń dostawcę SMS",
@@ -4580,7 +4597,17 @@
             "vonage": "Vonage (Nexmo) - #2 na świecie, świetne API i reliability",
             "messagebird": "MessageBird - holenderski dostawca, dobre ceny w Europie",
             "plivo": "Plivo - ekonomiczna alternatywa dla Twilio"
-        }
+        },
+        "table": {
+            "provider": "Połączenie",
+            "status": "Status",
+            "active": "Włączony"
+        },
+        "no_limit": "bez limitu",
+        "switch_label": "Włączony: {name}",
+        "actions_for": "Akcje dostawcy: {name}",
+        "testing": "Testowanie…",
+        "last_tested": "Test: {date}"
     },
     "cron": {
         "title": "Ustawienia CRON",

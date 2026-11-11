@@ -113,11 +113,13 @@ class SmsProviderController extends Controller
 
         $smsProvider->fill([
             'name' => $validated['name'],
-            'from_number' => $validated['from_number'] ?? $smsProvider->from_number,
-            'from_name' => $validated['from_name'] ?? $smsProvider->from_name,
+            // A field sent empty is cleared; one the request does not mention stays as it was.
+            // "?? old value" treated both the same, so a daily limit could never be removed.
+            'from_number' => array_key_exists('from_number', $validated) ? $validated['from_number'] : $smsProvider->from_number,
+            'from_name' => array_key_exists('from_name', $validated) ? $validated['from_name'] : $smsProvider->from_name,
             'is_active' => $validated['is_active'] ?? $smsProvider->is_active,
             'is_default' => $validated['is_default'] ?? $smsProvider->is_default,
-            'daily_limit' => $validated['daily_limit'] ?? $smsProvider->daily_limit,
+            'daily_limit' => array_key_exists('daily_limit', $validated) ? $validated['daily_limit'] : $smsProvider->daily_limit,
         ]);
 
         // Only update credentials if provided

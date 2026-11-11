@@ -4248,7 +4248,8 @@
             "tokens_small_label": "Tokens (small tasks)",
             "tokens_small_help": "For titles, short texts (default: {default})",
             "tokens_large_label": "Tokens (large tasks)",
-            "tokens_large_help": "For email content, templates (default: {default})"
+            "tokens_large_help": "For email content, templates (default: {default})",
+            "key_from": "Get a key at:"
         },
         "delete": {
             "title": "Delete integration",
@@ -4260,6 +4261,20 @@
             "fast_and_cheap": "Fast and cheap",
             "reasoning": "Reasoning",
             "fast": "Fast"
+        },
+        "table": {
+            "provider": "Provider",
+            "status": "Status",
+            "active": "On"
+        },
+        "switch_label": "On: {name}",
+        "actions_for": "Actions for the integration: {name}",
+        "testing": "Testing…",
+        "notifications": {
+            "saved": "Integration saved",
+            "deleted": "Integration deleted",
+            "enabled": "Integration turned on",
+            "disabled": "Integration turned off"
         }
     },
     "welcome": {
@@ -7452,7 +7467,9 @@
             "created": "SMS provider has been created.",
             "deleted": "SMS provider has been deleted.",
             "set_default": "Provider has been set as default.",
-            "updated": "SMS provider has been updated."
+            "updated": "SMS provider has been updated.",
+            "activated": "Provider turned on",
+            "deactivated": "Provider turned off"
         },
         "sent_today": "Sent today",
         "set_as_default": "Set as default",
@@ -7462,7 +7479,17 @@
             "inactive": "Inactive",
             "not_tested": "Not tested"
         },
-        "test_connection": "Test connection"
+        "test_connection": "Test connection",
+        "table": {
+            "provider": "Connection",
+            "status": "Status",
+            "active": "On"
+        },
+        "no_limit": "no limit",
+        "switch_label": "On: {name}",
+        "actions_for": "Actions for the provider: {name}",
+        "testing": "Testing…",
+        "last_tested": "Tested: {date}"
     },
     "external_pages": {
         "index": {
