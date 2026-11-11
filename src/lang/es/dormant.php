@@ -11,6 +11,7 @@ return [
     'unsubscribe' => [
         'title' => 'Darse de baja',
         'body' => 'Confirma que ya no quieres recibir mensajes de esta lista.',
+        'body_all' => 'Confirma que ya no quieres recibir ningún mensaje de este remitente. Te daremos de baja de todas sus listas.',
         'button' => 'Darme de baja',
         'invalid_title' => 'Este enlace no es válido',
         'invalid' => 'Usa el enlace para darte de baja del mensaje tal como lo recibiste.',

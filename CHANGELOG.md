@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Fixed
+
+- **Unsubscribe links that lead to the preferences page work again on a sleeping NetSendo Cloud instance.** A sleeping instance (`NETSENDO_DORMANT=true`) let only `/unsubscribe/...` through, but `[[unsubscribe]]` in a message sent to several lists, and `[[manage]]`, lead to `/preferences/{subscriber}`, which answered 503 "instance asleep". So people could not unsubscribe with those links, although unsubscribe links in messages sent before are meant to keep working. Now a validly signed preferences link on a sleeping instance shows the unsubscribe page; its button sends the RFC 8058 one-click request to the subscriber's account-wide unsubscribe link and removes them from every list, with no email sent. An unsigned or altered link gets the "This link is not valid" page (403). Saving preferences, confirming changes and the data deletion request stay asleep.
+
 ## [2.8.7] – Installations on Podman update again - 2026-11-10
 
 **Release date:** 2026-11-10
