@@ -312,7 +312,12 @@
         "view_all": "Ver todo",
         "undo": "Deshacer",
         "redo": "Rehacer",
-        "date": "Fecha"
+        "date": "Fecha",
+        "pagination": {
+            "range": "{from}–{to} de {total}",
+            "per_page": "Por página",
+            "label": "Páginas"
+        }
     },
     "ab_tests": {
         "enable_testing": "Habilitar pruebas A/B",
@@ -2054,7 +2059,8 @@
             "status": "Estado",
             "created_at": "Creado el",
             "actions": "Acciones",
-            "stats": "Estadísticas"
+            "stats": "Estadísticas",
+            "message": "Mensaje"
         },
         "empty_title": "No hay mensajes que coincidan con los criterios.",
         "delete_confirm_title": "¿Está seguro de que desea eliminar este mensaje?",
@@ -2545,7 +2551,32 @@
         "resend_note_title": "Nota",
         "resend_success_title": "¡Envío programado!",
         "resending": "Enviando...",
-        "scheduled_for": "Programado para"
+        "scheduled_for": "Programado para",
+        "views": {
+            "label": "Tipo de mensaje",
+            "all": "Todos",
+            "draft": "Borradores",
+            "scheduled": "Programados",
+            "sent": "Enviados",
+            "autoresponder": "Colas"
+        },
+        "filters": {
+            "more": "Filtros",
+            "clear": "Borrar filtros",
+            "group": "Grupo de listas",
+            "tag": "Etiqueta de lista",
+            "campaign": "Campaña"
+        },
+        "empty_first": "Aún no tienes ningún mensaje.",
+        "no_subject": "(sin asunto)",
+        "no_list": "Sin lista",
+        "lists_count": "Listas: {count}",
+        "ab_test_running": "en curso",
+        "actions_for": "Acciones del mensaje: {subject}",
+        "resend_failed": "No se pudo volver a enviar el mensaje.",
+        "date_sent": "Enviado",
+        "date_scheduled": "Envío",
+        "date_created": "Creado"
     },
     "subscribers": {
         "title": "Suscriptores",

@@ -312,7 +312,12 @@
         "source_placeholder": "Wpisz lub wklej kod HTML...",
         "undo": "Cofnij",
         "redo": "Ponów",
-        "date": "Data"
+        "date": "Data",
+        "pagination": {
+            "range": "{from}–{to} z {total}",
+            "per_page": "Na stronie",
+            "label": "Strony"
+        }
     },
     "ab_tests": {
         "enable_testing": "Włącz testy A/B",
@@ -1629,7 +1634,8 @@
             "status": "Status",
             "created_at": "Data utworzenia",
             "actions": "Akcje",
-            "stats": "Statystyki"
+            "stats": "Statystyki",
+            "message": "Wiadomość"
         },
         "empty_title": "Brak wiadomości spełniających kryteria.",
         "delete_confirm_title": "Czy na pewno chcesz usunąć tę wiadomość?",
@@ -2119,7 +2125,32 @@
             "field_phone": "Telefon",
             "field_gender": "Płeć",
             "no_email_lists": "Brak dostępnych list mailingowych."
-        }
+        },
+        "views": {
+            "label": "Rodzaj wiadomości",
+            "all": "Wszystkie",
+            "draft": "Szkice",
+            "scheduled": "Zaplanowane",
+            "sent": "Wysłane",
+            "autoresponder": "Kolejki"
+        },
+        "filters": {
+            "more": "Filtry",
+            "clear": "Wyczyść filtry",
+            "group": "Grupa list",
+            "tag": "Tag listy",
+            "campaign": "Kampania"
+        },
+        "empty_first": "Nie masz jeszcze żadnej wiadomości.",
+        "no_subject": "(bez tematu)",
+        "no_list": "Bez listy",
+        "lists_count": "Listy: {count}",
+        "ab_test_running": "trwa",
+        "actions_for": "Akcje wiadomości: {subject}",
+        "resend_failed": "Wystąpił błąd podczas ponownego wysyłania.",
+        "date_sent": "Wysłano",
+        "date_scheduled": "Wysyłka",
+        "date_created": "Utworzono"
     },
     "subscribers": {
         "title": "Subskrybenci",

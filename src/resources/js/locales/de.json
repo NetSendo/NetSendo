@@ -357,7 +357,12 @@
         "source_placeholder": "HTML-Code eingeben oder einfügen...",
         "undo": "Rückgängig",
         "redo": "Wiederholen",
-        "date": "Datum"
+        "date": "Datum",
+        "pagination": {
+            "range": "{from}–{to} von {total}",
+            "per_page": "Pro Seite",
+            "label": "Seiten"
+        }
     },
     "ab_tests": {
         "enable_testing": "A/B-Tests aktivieren",
@@ -2099,7 +2104,8 @@
             "status": "Status",
             "created_at": "Erstellt am",
             "actions": "Aktionen",
-            "stats": "Statistiken"
+            "stats": "Statistiken",
+            "message": "Nachricht"
         },
         "empty_title": "Keine Nachrichten gefunden, die den Kriterien entsprechen.",
         "delete_confirm_title": "Sind Sie sicher, dass Sie diese Nachricht löschen möchten?",
@@ -2590,7 +2596,32 @@
         "resend_note_title": "Hinweis",
         "resend_success_title": "Versand geplant!",
         "resending": "Wird gesendet...",
-        "scheduled_for": "Geplant für"
+        "scheduled_for": "Geplant für",
+        "views": {
+            "label": "Art der Nachricht",
+            "all": "Alle",
+            "draft": "Entwürfe",
+            "scheduled": "Geplant",
+            "sent": "Gesendet",
+            "autoresponder": "Warteschlangen"
+        },
+        "filters": {
+            "more": "Filter",
+            "clear": "Filter zurücksetzen",
+            "group": "Listengruppe",
+            "tag": "Listen-Tag",
+            "campaign": "Kampagne"
+        },
+        "empty_first": "Du hast noch keine Nachrichten.",
+        "no_subject": "(ohne Betreff)",
+        "no_list": "Keine Liste",
+        "lists_count": "Listen: {count}",
+        "ab_test_running": "läuft",
+        "actions_for": "Aktionen für die Nachricht: {subject}",
+        "resend_failed": "Die Nachricht konnte nicht erneut gesendet werden.",
+        "date_sent": "Gesendet",
+        "date_scheduled": "Versand",
+        "date_created": "Erstellt"
     },
     "subscribers": {
         "title": "Abonnenten",
