@@ -1691,7 +1691,9 @@
             "content": "Content",
             "settings": "Settings",
             "triggers": "Triggers",
-            "ab_testing": "A/B Test"
+            "ab_testing": "A/B Test",
+            "audience": "Audience",
+            "delivery": "Delivery"
         },
         "template": {
             "title": "Template",
@@ -2151,7 +2153,13 @@
         "resend_failed": "The message could not be sent again.",
         "date_sent": "Sent",
         "date_scheduled": "Sends",
-        "date_created": "Created"
+        "date_created": "Created",
+        "sections": {
+            "send_to": "Send to",
+            "exclude": "Do not send to",
+            "when": "When",
+            "sender_tracking": "Sender and tracking"
+        }
     },
     "subscribers": {
         "title": "Subscribers",

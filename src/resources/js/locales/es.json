@@ -2097,7 +2097,9 @@
             "content": "Contenido",
             "settings": "Configuración",
             "triggers": "Disparadores",
-            "ab_testing": "Pruebas A/B"
+            "ab_testing": "Pruebas A/B",
+            "audience": "Destinatarios",
+            "delivery": "Envío"
         },
         "template": {
             "title": "Plantilla",
@@ -2577,7 +2579,13 @@
         "resend_failed": "No se pudo volver a enviar el mensaje.",
         "date_sent": "Enviado",
         "date_scheduled": "Envío",
-        "date_created": "Creado"
+        "date_created": "Creado",
+        "sections": {
+            "send_to": "Enviar a",
+            "exclude": "No enviar a",
+            "when": "Cuándo",
+            "sender_tracking": "Remitente y seguimiento"
+        }
     },
     "subscribers": {
         "title": "Suscriptores",

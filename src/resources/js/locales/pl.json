@@ -1692,7 +1692,9 @@
             "content": "Treść",
             "settings": "Ustawienia",
             "triggers": "Triggery",
-            "ab_testing": "A/B Test"
+            "ab_testing": "A/B Test",
+            "audience": "Odbiorcy",
+            "delivery": "Wysyłka"
         },
         "template": {
             "title": "Szablon",
@@ -2151,7 +2153,13 @@
         "resend_failed": "Wystąpił błąd podczas ponownego wysyłania.",
         "date_sent": "Wysłano",
         "date_scheduled": "Wysyłka",
-        "date_created": "Utworzono"
+        "date_created": "Utworzono",
+        "sections": {
+            "send_to": "Wyślij do",
+            "exclude": "Nie wysyłaj do",
+            "when": "Kiedy",
+            "sender_tracking": "Nadawca i śledzenie"
+        }
     },
     "subscribers": {
         "title": "Subskrybenci",

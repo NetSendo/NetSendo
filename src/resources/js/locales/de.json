@@ -2142,7 +2142,9 @@
             "content": "Inhalt",
             "settings": "Einstellungen",
             "triggers": "Trigger",
-            "ab_testing": "A/B-Test"
+            "ab_testing": "A/B-Test",
+            "audience": "Empfänger",
+            "delivery": "Versand"
         },
         "template": {
             "title": "Vorlage",
@@ -2622,7 +2624,13 @@
         "resend_failed": "Die Nachricht konnte nicht erneut gesendet werden.",
         "date_sent": "Gesendet",
         "date_scheduled": "Versand",
-        "date_created": "Erstellt"
+        "date_created": "Erstellt",
+        "sections": {
+            "send_to": "Senden an",
+            "exclude": "Nicht senden an",
+            "when": "Wann",
+            "sender_tracking": "Absender und Tracking"
+        }
     },
     "subscribers": {
         "title": "Abonnenten",
