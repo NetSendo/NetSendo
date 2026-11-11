@@ -154,14 +154,14 @@ const restoreDefaults = () => {
     <AuthenticatedLayout>
         <template #header>
             <PageHeader :title="$t('automations.title')" :subtitle="$t('automations.subtitle')">
+                <CreateLink :href="route('automations.create')">
+                    {{ $t("automations.create") }}
+                </CreateLink>
                 <ActionMenu :label="$t('automations.more_actions')">
                     <ActionMenuItem @click="showRestore = true">
                         {{ $t("automations.restore_defaults") }}
                     </ActionMenuItem>
                 </ActionMenu>
-                <CreateLink :href="route('automations.create')">
-                    {{ $t("automations.create") }}
-                </CreateLink>
             </PageHeader>
         </template>
 
@@ -229,20 +229,20 @@ const restoreDefaults = () => {
                     </button>
                 </EmptyState>
 
-                <div v-else class="overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
-                    <table class="w-full min-w-[860px] text-sm">
+                <div v-else class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                    <table class="w-full sm:min-w-[860px] text-sm">
                         <thead>
                             <tr
                                 class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
                             >
                                 <th scope="col" class="px-5 py-2.5 font-medium">{{ $t("automations.name") }}</th>
-                                <th scope="col" class="px-3 py-2.5 font-medium">
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
                                     {{ $t("automations.trigger_filter") }}
                                 </th>
-                                <th scope="col" class="px-3 py-2.5 text-right font-medium">
+                                <th scope="col" class="px-3 py-2.5 text-right font-medium max-sm:hidden">
                                     {{ $t("automations.steps") }}
                                 </th>
-                                <th scope="col" class="px-3 py-2.5 font-medium">{{ $t("automations.executions") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">{{ $t("automations.executions") }}</th>
                                 <th scope="col" class="px-3 py-2.5 font-medium">{{ $t("automations.enabled") }}</th>
                                 <th scope="col" class="py-2.5 pl-3 pr-5 text-right font-medium">
                                     <span class="sr-only">{{ $t("common.actions") }}</span>
@@ -255,7 +255,7 @@ const restoreDefaults = () => {
                                 :key="rule.id"
                                 class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-700/40 dark:hover:bg-slate-700/20"
                             >
-                                <td class="max-w-0 px-5 py-3" style="width: 38%">
+                                <td class="max-w-0 px-5 py-3 max-sm:w-full sm:w-[38%]">
                                     <div class="flex items-center gap-2">
                                         <Link
                                             :href="route('automations.edit', rule.id)"
@@ -264,7 +264,11 @@ const restoreDefaults = () => {
                                         >
                                             {{ ruleName(rule) }}
                                         </Link>
-                                        <StatusPill v-if="rule.is_system" tone="info" class="shrink-0">
+                                        <StatusPill
+                                            v-if="rule.is_system"
+                                            tone="info"
+                                            class="shrink-0 max-sm:hidden"
+                                        >
                                             {{ $t("automations.default") }}
                                         </StatusPill>
                                     </div>
@@ -275,9 +279,13 @@ const restoreDefaults = () => {
                                     >
                                         {{ rule.description }}
                                     </p>
+                                    <!-- On a phone the badge would squeeze the name: it goes underneath -->
+                                    <div v-if="rule.is_system" class="mt-1.5 sm:hidden">
+                                        <StatusPill tone="info">{{ $t("automations.default") }}</StatusPill>
+                                    </div>
                                 </td>
 
-                                <td class="max-w-0 px-3 py-3" style="width: 22%">
+                                <td class="max-w-0 px-3 py-3 max-sm:hidden" style="width: 22%">
                                     <p
                                         class="truncate text-slate-900 dark:text-slate-100"
                                         :title="triggerLabel(rule.trigger_event, rule.trigger_event_label)"
@@ -286,11 +294,11 @@ const restoreDefaults = () => {
                                     </p>
                                 </td>
 
-                                <td class="px-3 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100">
+                                <td class="px-3 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100 max-sm:hidden">
                                     {{ number(rule.actions_count) }}
                                 </td>
 
-                                <td class="whitespace-nowrap px-3 py-3">
+                                <td class="whitespace-nowrap px-3 py-3 max-sm:hidden">
                                     <p class="tabular-nums text-slate-900 dark:text-slate-100">
                                         {{ number(rule.execution_count) }}
                                     </p>
@@ -316,11 +324,15 @@ const restoreDefaults = () => {
                                     <div class="flex items-center justify-end gap-1">
                                         <Link
                                             :href="route('automations.logs', rule.id)"
-                                            class="inline-flex min-h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-700/60 dark:hover:text-white"
+                                            class="max-sm:hidden inline-flex min-h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-700/60 dark:hover:text-white"
                                         >
                                             {{ $t("automations.logs") }}
                                         </Link>
                                         <ActionMenu :label="$t('automations.actions_for', { name: ruleName(rule) })">
+                                            <!-- On a phone the link beside the menu has no room: it is the first entry here -->
+                                            <ActionMenuItem :href="route('automations.logs', rule.id)" class="sm:hidden">
+                                                {{ $t("automations.logs") }}
+                                            </ActionMenuItem>
                                             <ActionMenuItem :href="route('automations.edit', rule.id)">
                                                 {{ $t("common.edit") }}
                                             </ActionMenuItem>

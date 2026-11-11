@@ -13,9 +13,10 @@ import { Link } from "@inertiajs/vue3";
 
 <template>
     <div
-        class="grid min-h-screen grid-cols-1 bg-white text-slate-900 lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] dark:bg-slate-900 dark:text-white"
+        class="grid min-h-screen grid-cols-1 bg-white text-slate-900 max-lg:grid-rows-[auto_1fr] lg:grid-cols-[minmax(0,5fr)_minmax(0,6fr)] dark:bg-slate-900 dark:text-white"
     >
-        <!-- Brand -->
+        <!-- Brand: half of a wide screen; on a phone a strip as tall as the logo, so the form
+             gets the rest of the height -->
         <aside
             class="relative isolate flex flex-col justify-between gap-10 overflow-hidden bg-slate-950 px-6 py-5 text-white lg:px-12 lg:py-10"
         >

@@ -87,12 +87,12 @@ const pages = computed(() => (props.paginator.links || []).slice(1, -1));
                     :class="
                         page.active
                             ? 'bg-slate-900 font-semibold text-white dark:bg-white dark:text-slate-900'
-                            : 'text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60'
+                            : 'text-slate-700 hover:bg-slate-100 max-sm:hidden dark:text-slate-200 dark:hover:bg-slate-700/60'
                     "
                 >
                     {{ page.label }}
                 </Link>
-                <span v-else class="px-1" aria-hidden="true">…</span>
+                <span v-else class="px-1 max-sm:hidden" aria-hidden="true">…</span>
             </template>
 
             <component

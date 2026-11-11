@@ -741,7 +741,7 @@ const handleBulkSuccess = ({ listId, count }) => {
                     />
                 </div>
 
-                <div class="overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                <div class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
                     <table class="w-full min-w-[720px] text-sm">
                         <thead>
                             <tr class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400">
@@ -849,7 +849,7 @@ const handleBulkSuccess = ({ listId, count }) => {
                         </button>
                     </div>
 
-                    <div class="overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                    <div class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
                         <table class="w-full text-sm" :class="log.type === 'clicks' ? 'min-w-[640px]' : 'min-w-[480px]'">
                             <thead>
                                 <tr class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400">

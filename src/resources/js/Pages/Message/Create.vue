@@ -4338,23 +4338,25 @@ watch(
                 </div>
 
                 <!-- Actions: stuck to the bottom of the window, so saving and sending never
-                     need a scroll to the end of a form two screens long -->
+                     need a scroll to the end of a form two screens long. On a phone the bar
+                     is two rows: the side actions as icons with "Save draft", then the main
+                     action across the full width -->
                 <div
-                    class="sticky bottom-0 z-10 -mx-6 -mb-6 mt-6 flex flex-wrap items-center justify-between gap-4 rounded-b-2xl border-t border-slate-200 bg-white px-6 py-4 dark:border-slate-700/60 dark:bg-slate-900"
+                    class="sticky bottom-0 z-10 -mx-6 -mb-6 mt-6 flex flex-wrap items-center justify-between gap-4 rounded-b-2xl border-t border-slate-200 bg-white px-6 py-4 max-sm:gap-2 max-sm:py-3 dark:border-slate-700/60 dark:bg-slate-900"
                 >
                     <Link
                         :href="route('messages.index')"
-                        class="text-sm text-slate-600 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                        class="text-sm text-slate-600 underline hover:text-slate-900 max-sm:hidden dark:text-slate-400 dark:hover:text-white"
                     >
                         {{ $t("common.cancel") }}
                     </Link>
 
-                    <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3 max-sm:w-full max-sm:gap-2">
                         <!-- Test Button -->
                         <button
                             type="button"
                             @click="openTestModal"
-                            class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                            class="inline-flex items-center gap-2 rounded-lg border max-sm:min-h-10 max-sm:px-3 border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                         >
                             <svg
                                 class="h-4 w-4"
@@ -4369,14 +4371,14 @@ watch(
                                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                                 />
                             </svg>
-                            {{ $t("messages.actions.test") }}
+                            <span class="max-sm:sr-only">{{ $t("messages.actions.test") }}</span>
                         </button>
 
                         <!-- Check Deliverability Button -->
                         <button
                             type="button"
                             @click="checkDeliverability"
-                            class="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                            class="inline-flex items-center gap-2 rounded-lg border max-sm:min-h-10 max-sm:px-3 border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
                         >
                             <svg
                                 class="h-4 w-4"
@@ -4391,7 +4393,7 @@ watch(
                                     d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                                 />
                             </svg>
-                            {{ $t("messages.deliverability.check_button") }}
+                            <span class="max-sm:sr-only">{{ $t("messages.deliverability.check_button") }}</span>
                             <GoldBadge
                                 v-if="!licenceAllows('deliverability_shield')"
                                 locked
@@ -4401,6 +4403,7 @@ watch(
                         <template v-if="form.type === 'broadcast'">
                             <!-- Save Draft -->
                             <SecondaryButton
+                                class="max-sm:flex-1"
                                 @click="submit('draft')"
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
@@ -4416,7 +4419,7 @@ watch(
                                     scheduleMode = 'later';
                                     activeTab = 'delivery';
                                 "
-                                class="inline-flex items-center gap-2 rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                                class="inline-flex items-center gap-2 rounded-lg border max-sm:min-h-10 max-sm:px-3 border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
                             >
                                 <svg
                                     class="h-4 w-4"
@@ -4431,7 +4434,7 @@ watch(
                                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                                     />
                                 </svg>
-                                {{ $t("messages.actions.schedule") }}
+                                <span class="max-sm:sr-only">{{ $t("messages.actions.schedule") }}</span>
                             </button>
 
                             <!-- Prompt to select date when in schedule mode without date -->
@@ -4439,7 +4442,7 @@ watch(
                                 type="button"
                                 v-if="scheduleMode === 'later' && !form.send_at"
                                 @click="activeTab = 'delivery'"
-                                class="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 hover:border-amber-400 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50 cursor-pointer"
+                                class="inline-flex items-center gap-2 rounded-lg border max-sm:min-h-10 max-sm:px-3 border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 hover:border-amber-400 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50 cursor-pointer"
                             >
                                 <svg
                                     class="h-4 w-4"
@@ -4454,11 +4457,12 @@ watch(
                                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                     />
                                 </svg>
-                                {{ $t("messages.actions.select_datetime") }}
+                                <span class="max-sm:sr-only">{{ $t("messages.actions.select_datetime") }}</span>
                             </button>
 
                             <!-- Send Now / Submit Scheduled -->
                             <PrimaryButton
+                                class="max-sm:w-full"
                                 v-if="scheduleMode === 'now'"
                                 @click="submit('scheduled')"
                                 :class="{ 'opacity-25': form.processing }"
@@ -4481,6 +4485,7 @@ watch(
                             </PrimaryButton>
 
                             <PrimaryButton
+                                class="max-sm:w-full"
                                 v-if="scheduleMode === 'later' && form.send_at"
                                 @click="submit('scheduled')"
                                 :class="{ 'opacity-25': form.processing }"
@@ -4505,6 +4510,7 @@ watch(
 
                         <template v-else>
                             <SecondaryButton
+                                class="max-sm:flex-1"
                                 @click="submit('draft')"
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
@@ -4512,6 +4518,7 @@ watch(
                                 {{ $t("messages.actions.save_draft") }}
                             </SecondaryButton>
                             <PrimaryButton
+                                class="max-sm:w-full"
                                 @click="submit('scheduled')"
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
@@ -5060,7 +5067,7 @@ watch(
             <div
                 v-if="toast"
                 role="status"
-                class="fixed bottom-24 right-6 z-50 flex max-w-md items-center gap-3 rounded-xl border bg-white px-4 py-3 text-sm text-slate-900 shadow-lg dark:bg-slate-800 dark:text-white"
+                class="fixed bottom-24 right-6 z-50 flex max-w-md items-center gap-3 max-sm:bottom-32 max-sm:left-4 max-sm:right-4 rounded-xl border bg-white px-4 py-3 text-sm text-slate-900 shadow-lg dark:bg-slate-800 dark:text-white"
                 :class="[
                     toast.success
                         ? 'border-emerald-300 [&>svg]:text-emerald-700 dark:border-emerald-500/40 dark:[&>svg]:text-emerald-400'

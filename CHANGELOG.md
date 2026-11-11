@@ -20,6 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Recent campaigns** is a table (lists, status, sent, open rate, click rate, date) placed next to **Scheduled**, a new list of the next broadcasts with their send time and recipient count, and the campaign health score.
   - **Create.** The six quick-action tiles became one "Create" button in the dashboard header.
   - The live clock is gone; today's date is under the greeting and the timezone is in the status line at the bottom, with the last CRON run, the queue length, the mailbox count and the version.
+- **The rebuilt lists fit a phone without scrolling sideways.** Below 640 px the tables of messages, SMS campaigns, forms, funnels, automations, e-mail and SMS lists and the dashboard's recent campaigns keep the name, the status under it and the action menu; the other columns return on a wider screen, and the link that sat beside the menu (statistics, get the code, run history, edit) becomes its first entry. Page numbers shrink to the arrows and the current page; header buttons wrap under the title.
+- **The message editor's action bar is two rows on a phone** (test, deliverability and schedule as icons beside "Save draft", then the main action across the width). It used to wrap into four rows that covered almost half of the screen. The sign-in pages give the brand strip the height of the logo on a phone, not a quarter of the screen.
 - **On a phone the page title has its own row under the top-bar buttons** on every page; it used to be squeezed to a few letters. The account name and e-mail next to the avatar show from 1280 px up (they are still in the account menu).
 - **The side menu has nine sections instead of thirteen entries with 71 links.** Messages, Contacts, Automation, CRM, NetSendo Brain, Sales, Analytics, Library and Settings, under the dashboard. Every page is still there, once.
   - Pages that were listed twice (subscribers, statistics, field management, API keys) are listed once.
@@ -65,6 +67,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Page 2 of a filtered automation list forgot the filter**, and the list never showed which automations are the built-in ones (the "Default" badge depended on a field the page did not get).
 - **"Restore defaults" promised to reset the existing default automations to factory settings.** It never did: it adds the ones that are missing and switches them on. The dialog now says that, and when nothing is missing the page says so (the answer was sent to the browser but never shown).
 - **A funnel that cannot be started said nothing.** Activating a funnel with a gap in it (no steps, no trigger list) is refused by the server; the list now shows the reason.
+- **On a phone the message, SMS and subscriber lists were wider than the screen**: the whole page slid sideways and mobile browsers zoomed out to fit it. The cause was the screen-reader-only "Actions" column heading, which escaped the scrolling frame of its table; the same heading sits in every rebuilt table and is now kept inside. On the subscriber list the three header buttons and a long row of page numbers also ran past the edge.
 - The password confirmation label on the "new password" page showed nothing (it pointed at a group of texts, not a text).
 
 ### Security

@@ -78,10 +78,10 @@ const href = (campaign) => {
 
         <div
             v-else
-            class="overflow-x-auto"
+            class="relative overflow-x-auto"
             :class="{ 'opacity-60 transition-opacity': loading }"
         >
-            <table class="w-full min-w-[640px] text-sm">
+            <table class="w-full sm:min-w-[640px] text-sm">
                 <thead>
                     <tr
                         class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
@@ -89,19 +89,19 @@ const href = (campaign) => {
                         <th scope="col" class="px-5 py-2 font-medium">
                             {{ $t("dashboard.recent_campaigns.columns.campaign") }}
                         </th>
-                        <th scope="col" class="px-3 py-2 font-medium">
+                        <th scope="col" class="px-3 py-2 font-medium max-sm:hidden">
                             {{ $t("common.status") }}
                         </th>
-                        <th scope="col" class="px-3 py-2 text-right font-medium">
+                        <th scope="col" class="px-3 py-2 text-right font-medium max-sm:hidden">
                             {{ $t("dashboard.recent_campaigns.columns.sent") }}
                         </th>
                         <th scope="col" class="px-3 py-2 text-right font-medium">
                             {{ $t("dashboard.recent_campaigns.columns.opens") }}
                         </th>
-                        <th scope="col" class="px-3 py-2 text-right font-medium">
+                        <th scope="col" class="px-3 py-2 text-right font-medium max-sm:hidden">
                             {{ $t("dashboard.recent_campaigns.columns.clicks") }}
                         </th>
-                        <th scope="col" class="py-2 pl-3 pr-5 text-right font-medium">
+                        <th scope="col" class="py-2 pl-3 pr-5 text-right font-medium max-sm:hidden">
                             {{ $t("common.date") }}
                         </th>
                     </tr>
@@ -112,7 +112,7 @@ const href = (campaign) => {
                         :key="campaign.id"
                         class="border-b border-slate-100 last:border-0 dark:border-slate-700/40"
                     >
-                        <td class="max-w-0 px-5 py-3" style="width: 46%">
+                        <td class="max-w-0 px-5 py-3 max-sm:w-full sm:w-[46%]">
                             <Link
                                 :href="href(campaign)"
                                 class="block truncate font-medium text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300"
@@ -132,8 +132,21 @@ const href = (campaign) => {
                                         : $t("dashboard.recent_campaigns.no_list")
                                 }}
                             </div>
+                            <!-- On a phone the status has no column of its own: it sits under the name -->
+                            <div class="mt-1.5 sm:hidden">
+                                <span
+                                    class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold"
+                                    :class="statusStyle(campaign.status)"
+                                >
+                                    <span
+                                        aria-hidden="true"
+                                        class="h-1.5 w-1.5 rounded-full bg-current"
+                                    ></span>
+                                    {{ statusLabel(campaign.status) }}
+                                </span>
+                            </div>
                         </td>
-                        <td class="px-3 py-3">
+                        <td class="px-3 py-3 max-sm:hidden">
                             <span
                                 class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold"
                                 :class="statusStyle(campaign.status)"
@@ -146,7 +159,7 @@ const href = (campaign) => {
                             </span>
                         </td>
                         <td
-                            class="px-3 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100"
+                            class="px-3 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100 max-sm:hidden"
                         >
                             {{ campaign.sent ? number(campaign.sent) : "—" }}
                         </td>
@@ -158,7 +171,7 @@ const href = (campaign) => {
                             }}
                         </td>
                         <td
-                            class="px-3 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100"
+                            class="px-3 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100 max-sm:hidden"
                         >
                             {{
                                 campaign.click_rate === null
@@ -167,7 +180,7 @@ const href = (campaign) => {
                             }}
                         </td>
                         <td
-                            class="whitespace-nowrap py-3 pl-3 pr-5 text-right text-slate-600 dark:text-slate-400"
+                            class="whitespace-nowrap py-3 pl-3 pr-5 text-right text-slate-600 dark:text-slate-400 max-sm:hidden"
                         >
                             {{ campaign.date ? shortDate(campaign.date) : "—" }}
                         </td>

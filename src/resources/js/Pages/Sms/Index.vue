@@ -416,8 +416,8 @@ const toggleActive = async (message) => {
                     </Link>
                 </div>
 
-                <div v-else class="overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
-                    <table class="w-full min-w-[760px] text-sm">
+                <div v-else class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                    <table class="w-full sm:min-w-[760px] text-sm">
                         <thead>
                             <tr class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400">
                                 <th scope="col" class="px-5 py-2.5 font-medium" :aria-sort="ariaSort('subject')">
@@ -426,16 +426,16 @@ const toggleActive = async (message) => {
                                         <SortMark :state="sortState('subject')" />
                                     </button>
                                 </th>
-                                <th scope="col" class="px-3 py-2.5 font-medium">
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
                                     {{ $t("sms.table.audience") }}
                                 </th>
-                                <th scope="col" class="px-3 py-2.5 font-medium" :aria-sort="ariaSort('status')">
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden" :aria-sort="ariaSort('status')">
                                     <button type="button" class="inline-flex items-center gap-1 hover:text-slate-900 dark:hover:text-white" @click="sort('status')">
                                         {{ $t("sms.table.status") }}
                                         <SortMark :state="sortState('status')" />
                                     </button>
                                 </th>
-                                <th scope="col" class="px-3 py-2.5 font-medium" :aria-sort="ariaSort('effective_date')">
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden" :aria-sort="ariaSort('effective_date')">
                                     <button type="button" class="inline-flex items-center gap-1 hover:text-slate-900 dark:hover:text-white" @click="sort('effective_date')">
                                         {{ $t("common.date") }}
                                         <SortMark :state="sortState('effective_date')" />
@@ -453,7 +453,7 @@ const toggleActive = async (message) => {
                                 class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-700/40 dark:hover:bg-slate-700/20"
                             >
                                 <!-- Campaign: its name, then the text people will receive -->
-                                <td class="max-w-0 px-5 py-3" style="width: 46%">
+                                <td class="max-w-0 px-5 py-3 max-sm:w-full sm:w-[46%]">
                                     <Link
                                         :href="route('sms.edit', message.id)"
                                         class="block truncate font-medium text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300"
@@ -482,9 +482,15 @@ const toggleActive = async (message) => {
                                             </template>
                                         </span>
                                     </p>
+                                    <!-- On a phone the status has no column of its own: it sits under the name -->
+                                    <div class="mt-1.5 sm:hidden">
+                                        <StatusPill :tone="statusOf(message).tone">
+                                            {{ statusOf(message).label }}
+                                        </StatusPill>
+                                    </div>
                                 </td>
 
-                                <td class="max-w-0 px-3 py-3" style="width: 22%">
+                                <td class="max-w-0 px-3 py-3 max-sm:hidden" style="width: 22%">
                                     <p
                                         class="truncate text-slate-900 dark:text-slate-100"
                                         :title="(message.list_names || []).join(', ')"
@@ -496,13 +502,13 @@ const toggleActive = async (message) => {
                                     </p>
                                 </td>
 
-                                <td class="px-3 py-3">
+                                <td class="px-3 py-3 max-sm:hidden">
                                     <StatusPill :tone="statusOf(message).tone">
                                         {{ statusOf(message).label }}
                                     </StatusPill>
                                 </td>
 
-                                <td class="whitespace-nowrap px-3 py-3">
+                                <td class="whitespace-nowrap px-3 py-3 max-sm:hidden">
                                     <p class="tabular-nums text-slate-900 dark:text-slate-100">
                                         {{ dateOf(message).value }}
                                     </p>
@@ -515,11 +521,15 @@ const toggleActive = async (message) => {
                                     <div class="flex items-center justify-end gap-1">
                                         <Link
                                             :href="route('sms.edit', message.id)"
-                                            class="inline-flex min-h-9 items-center rounded-lg px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-700/60 dark:hover:text-white"
+                                            class="max-sm:hidden inline-flex min-h-9 items-center rounded-lg px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-700/60 dark:hover:text-white"
                                         >
                                             {{ $t("common.edit") }}
                                         </Link>
                                         <ActionMenu :label="$t('messages.actions_for', { subject: message.subject })">
+                                            <!-- On a phone the link beside the menu has no room: it is the first entry here -->
+                                            <ActionMenuItem :href="route('sms.edit', message.id)" class="sm:hidden">
+                                                {{ $t("common.edit") }}
+                                            </ActionMenuItem>
                                             <ActionMenuItem
                                                 v-if="message.type === 'autoresponder'"
                                                 :disabled="togglingMessages.has(message.id)"

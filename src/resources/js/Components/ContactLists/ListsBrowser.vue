@@ -264,9 +264,9 @@ const inputClass =
         <!-- Table -->
         <div
             v-else-if="viewMode === 'list'"
-            class="overflow-x-auto border-t border-slate-200 dark:border-slate-700/60"
+            class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60"
         >
-            <table class="w-full min-w-[760px] text-sm">
+            <table class="w-full sm:min-w-[760px] text-sm">
                 <thead>
                     <tr class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400">
                         <th scope="col" class="px-5 py-2.5 font-medium" :aria-sort="ariaSort('name')">
@@ -275,10 +275,10 @@ const inputClass =
                                 <SortMark :state="sortState('name')" />
                             </button>
                         </th>
-                        <th scope="col" class="px-3 py-2.5 font-medium">
+                        <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
                             {{ $t("lists_browser.visibility") }}
                         </th>
-                        <th scope="col" class="px-3 py-2.5 font-medium">
+                        <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
                             {{ $t(`${ns}.table.groups_tags`) }}
                         </th>
                         <th scope="col" class="px-3 py-2.5 text-right font-medium" :aria-sort="ariaSort('subscribers_count')">
@@ -287,7 +287,7 @@ const inputClass =
                                 <SortMark :state="sortState('subscribers_count')" />
                             </button>
                         </th>
-                        <th scope="col" class="px-3 py-2.5 font-medium" :aria-sort="ariaSort('created_at')">
+                        <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden" :aria-sort="ariaSort('created_at')">
                             <button type="button" class="inline-flex items-center gap-1 hover:text-slate-900 dark:hover:text-white" @click="sort('created_at')">
                                 {{ $t(`${ns}.table.created_at`) }}
                                 <SortMark :state="sortState('created_at')" />
@@ -304,7 +304,7 @@ const inputClass =
                         :key="list.id"
                         class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-700/40 dark:hover:bg-slate-700/20"
                     >
-                        <td class="max-w-0 px-5 py-3" style="width: 38%">
+                        <td class="max-w-0 px-5 py-3 max-sm:w-full sm:w-[38%]">
                             <Link
                                 :href="route(editRoute, list.id)"
                                 class="block truncate font-medium text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300"
@@ -323,12 +323,12 @@ const inputClass =
                                 #{{ list.id }}
                             </p>
                         </td>
-                        <td class="px-3 py-3">
+                        <td class="px-3 py-3 max-sm:hidden">
                             <StatusPill :tone="list.is_public ? 'info' : 'neutral'">
                                 {{ list.is_public ? $t(`${ns}.public`) : $t(`${ns}.private`) }}
                             </StatusPill>
                         </td>
-                        <td class="px-3 py-3">
+                        <td class="px-3 py-3 max-sm:hidden">
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <span v-if="list.group" class="text-slate-900 dark:text-slate-100">
                                     {{ list.group.name }}
@@ -357,7 +357,7 @@ const inputClass =
                                 {{ number(list.subscribers_count) }}
                             </Link>
                         </td>
-                        <td class="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600 dark:text-slate-400">
+                        <td class="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600 dark:text-slate-400 max-sm:hidden">
                             {{ list.created_at }}
                         </td>
                         <td class="py-3 pl-3 pr-5">

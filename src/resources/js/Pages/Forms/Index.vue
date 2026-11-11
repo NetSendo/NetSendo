@@ -194,18 +194,18 @@ const deleteForm = () => {
                     <CreateLink :href="route('forms.create')">{{ $t("forms.create_first") }}</CreateLink>
                 </EmptyState>
 
-                <div v-else class="overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
-                    <table class="w-full min-w-[760px] text-sm">
+                <div v-else class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                    <table class="w-full sm:min-w-[760px] text-sm">
                         <thead>
                             <tr
                                 class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
                             >
                                 <th scope="col" class="px-5 py-2.5 font-medium">{{ $t("forms.table.name") }}</th>
-                                <th scope="col" class="px-3 py-2.5 font-medium">{{ $t("forms.table.status") }}</th>
-                                <th scope="col" class="px-3 py-2.5 text-right font-medium">
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">{{ $t("forms.table.status") }}</th>
+                                <th scope="col" class="px-3 py-2.5 text-right font-medium max-sm:hidden">
                                     {{ $t("forms.table.submissions") }}
                                 </th>
-                                <th scope="col" class="px-3 py-2.5 font-medium">
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
                                     {{ $t("forms.table.last_submission") }}
                                 </th>
                                 <th scope="col" class="py-2.5 pl-3 pr-5 text-right font-medium">
@@ -220,7 +220,7 @@ const deleteForm = () => {
                                 class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-700/40 dark:hover:bg-slate-700/20"
                             >
                                 <!-- The form and the list it feeds -->
-                                <td class="max-w-0 px-5 py-3" style="width: 44%">
+                                <td class="max-w-0 px-5 py-3 max-sm:w-full sm:w-[44%]">
                                     <Link
                                         :href="route('forms.edit', item.id)"
                                         class="block truncate font-medium text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300"
@@ -234,19 +234,25 @@ const deleteForm = () => {
                                     >
                                         {{ item.contact_list?.name || $t("forms.no_list") }}
                                     </p>
+                                    <!-- On a phone the status has no column of its own: it sits under the name -->
+                                    <div class="mt-1.5 sm:hidden">
+                                        <StatusPill :tone="statusOf(item).tone">
+                                            {{ statusOf(item).label }}
+                                        </StatusPill>
+                                    </div>
                                 </td>
 
-                                <td class="px-3 py-3">
+                                <td class="px-3 py-3 max-sm:hidden">
                                     <StatusPill :tone="statusOf(item).tone">
                                         {{ statusOf(item).label }}
                                     </StatusPill>
                                 </td>
 
-                                <td class="px-3 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100">
+                                <td class="px-3 py-3 text-right tabular-nums text-slate-900 dark:text-slate-100 max-sm:hidden">
                                     {{ number(item.submissions_count) }}
                                 </td>
 
-                                <td class="whitespace-nowrap px-3 py-3">
+                                <td class="whitespace-nowrap px-3 py-3 max-sm:hidden">
                                     <span
                                         v-if="item.last_submission_at"
                                         class="tabular-nums text-slate-900 dark:text-slate-100"
@@ -262,11 +268,15 @@ const deleteForm = () => {
                                     <div class="flex items-center justify-end gap-1">
                                         <Link
                                             :href="route('forms.code', item.id)"
-                                            class="inline-flex min-h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-700/60 dark:hover:text-white"
+                                            class="max-sm:hidden inline-flex min-h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-200 dark:hover:bg-slate-700/60 dark:hover:text-white"
                                         >
                                             {{ $t("forms.get_code") }}
                                         </Link>
                                         <ActionMenu :label="$t('forms.actions_for', { name: item.name })">
+                                            <!-- On a phone the link beside the menu has no room: it is the first entry here -->
+                                            <ActionMenuItem :href="route('forms.code', item.id)" class="sm:hidden">
+                                                {{ $t("forms.get_code") }}
+                                            </ActionMenuItem>
                                             <ActionMenuItem :href="route('forms.edit', item.id)">
                                                 {{ $t("common.edit") }}
                                             </ActionMenuItem>

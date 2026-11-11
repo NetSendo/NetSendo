@@ -966,7 +966,7 @@ const resetFilters = () => {
                     </button>
                 </div>
 
-                <div v-else class="overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                <div v-else class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
                     <table class="w-full min-w-[760px] text-sm">
                         <thead>
                             <tr class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400">
