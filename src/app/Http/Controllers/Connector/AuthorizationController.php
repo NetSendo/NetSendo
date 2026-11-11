@@ -87,6 +87,12 @@ class AuthorizationController extends Controller
         // The checked request waits in the session; the form only refers to it,
         // so nothing of it can be changed between showing and approving.
         $requestId = (string) Str::uuid();
+        // Requests that were shown and never answered do not pile up in the session.
+        $waiting = array_filter(
+            (array) $request->session()->get(self::SESSION_KEY, []),
+            fn ($entry) => is_array($entry) && ($entry['expires_at'] ?? 0) >= now()->getTimestamp(),
+        );
+        $request->session()->put(self::SESSION_KEY, array_slice($waiting, -9, null, true));
         $request->session()->put(self::SESSION_KEY.'.'.$requestId, [
             'client_id' => $client->id,
             'redirect_uri' => $redirectUri,

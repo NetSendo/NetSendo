@@ -135,6 +135,31 @@ class ConnectorOAuthFlowTest extends TestCase
         $this->assertArrayHasKey('code', $redirect);
     }
 
+    public function test_unanswered_requests_do_not_pile_up_in_the_session(): void
+    {
+        $clientId = $this->registerClient();
+        $challenge = $this->pkce()['challenge'];
+
+        for ($i = 0; $i < 14; $i++) {
+            $page = $this->actingAs($this->user)->get($this->authorizeUrl($clientId, $challenge));
+        }
+
+        $this->assertCount(10, session('connector.authorize'));
+
+        // The one on screen still works.
+        $redirect = $this->redirectParameters($this->actingAs($this->user)->post('/oauth/authorize', [
+            'request_id' => $page->viewData('page')['props']['requestId'],
+            'decision' => 'approve',
+            'scopes' => ['lists:read'],
+        ]));
+        $this->assertArrayHasKey('code', $redirect);
+
+        // An old one is gone after it expired and another request was shown.
+        $this->travel(20)->minutes();
+        $this->actingAs($this->user)->get($this->authorizeUrl($clientId, $challenge));
+        $this->assertCount(1, session('connector.authorize'));
+    }
+
     public function test_denying_returns_access_denied_to_the_application(): void
     {
         $clientId = $this->registerClient();
