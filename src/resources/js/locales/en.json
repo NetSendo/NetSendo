@@ -2812,7 +2812,9 @@
             "modal_title": "Add Google Integration",
             "name_placeholder": "Name (e.g., Marketing App)"
         },
-        "confirm_delete": "Are you sure you want to delete this integration?"
+        "confirm_delete": "Are you sure you want to delete this integration?",
+        "actions_for": "Actions for the connection: {name}",
+        "delete_title": "Delete the Google connection?"
     },
     "calendar": {
         "title": "Google Calendar Integration",

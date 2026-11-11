@@ -1,7 +1,14 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue';
-import { usePage } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
+import Notice from '@/Components/Ui/Notice.vue';
+import PageHeader from '@/Components/Ui/PageHeader.vue';
+import Panel from '@/Components/Ui/Panel.vue';
+import SegmentedControl from '@/Components/Ui/SegmentedControl.vue';
+import StatusPill from '@/Components/Ui/StatusPill.vue';
 import { useI18n } from 'vue-i18n';
 import { createSafeMarkdown } from '@/utils/safeMarkdown';
 
@@ -15,6 +22,20 @@ const error = ref(null);
 const activeTab = ref('updates');
 
 const currentVersion = computed(() => page.props.appVersion || '1.0.0');
+
+const tabs = computed(() => [
+    { value: 'updates', label: t('settings.updates.tabs.check_updates') },
+    { value: 'changelog', label: t('settings.updates.tabs.changelog') },
+    { value: 'howto', label: t('settings.updates.tabs.how_to_update') },
+]);
+
+// Commands to copy: a quiet block that scrolls sideways instead of wrapping
+const codeBlockClass =
+    'mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs leading-relaxed text-slate-800 dark:border-slate-700/60 dark:bg-slate-900/60 dark:text-slate-200';
+
+// The colours of release notes (rendered Markdown, styled below) for the light and the dark theme
+const notesPalette =
+    'text-slate-600 dark:text-slate-300 [--rn-strong:#0f172a] dark:[--rn-strong:#e2e8f0] [--rn-accent:#4f46e5] dark:[--rn-accent:#a5b4fc] [--rn-code-bg:#f1f5f9] dark:[--rn-code-bg:rgb(255_255_255/0.08)] [--rn-code:#0f172a] dark:[--rn-code:#cbd5e1] [--rn-pre-bg:#f8fafc] dark:[--rn-pre-bg:#0f172a] [--rn-line:#e2e8f0] dark:[--rn-line:#334155] [--rn-muted:#475569] dark:[--rn-muted:#94a3b8]';
 
 // Fallback changelog for when GitHub is not available
 const fallbackChangelog = [
@@ -152,22 +173,11 @@ const getTypeFromVersion = (version) => {
     return 'patch';
 };
 
-const getTypeColor = (type) => {
-    switch (type) {
-        case 'major': return 'bg-indigo-500';
-        case 'minor': return 'bg-green-500';
-        case 'patch': return 'bg-blue-500';
-        default: return 'bg-slate-500';
-    }
-};
-
-const getTypeBadge = (type) => {
-    switch (type) {
-        case 'major': return { text: 'Major', class: 'bg-indigo-500/20 text-indigo-400' };
-        case 'minor': return { text: 'Minor', class: 'bg-green-500/20 text-green-400' };
-        case 'patch': return { text: 'Patch', class: 'bg-blue-500/20 text-blue-400' };
-        default: return { text: 'Update', class: 'bg-slate-500/20 text-slate-400' };
-    }
+// How big a step the release is, as a tone and a word
+const TYPE_BADGES = {
+    major: { text: 'Major', tone: 'info' },
+    minor: { text: 'Minor', tone: 'success' },
+    patch: { text: 'Patch', tone: 'neutral' },
 };
 
 // Computed changelog - merge GitHub data with fallback (GitHub has priority per version)
@@ -225,290 +235,167 @@ onMounted(() => {
 </script>
 
 <template>
+    <Head :title="t('settings.updates.title')" />
+
     <AuthenticatedLayout>
-        <div class="py-8">
-            <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-                <!-- Header -->
-                <div class="mb-8">
-                    <h1 class="text-3xl font-bold text-white">{{ t('settings.updates.title') }}</h1>
-                    <p class="mt-2 text-slate-400">{{ t('settings.updates.description') }}</p>
+        <template #header>
+            <PageHeader :title="t('settings.updates.title')" :subtitle="t('settings.updates.description')">
+                <StatusPill v-if="versionData && !versionData.updates_available" tone="success">
+                    {{ t('settings.updates.up_to_date') }}
+                </StatusPill>
+                <StatusPill v-else-if="versionData?.updates_available" tone="warning">
+                    {{ t('settings.updates.new_version_available') }}
+                </StatusPill>
+            </PageHeader>
+        </template>
+
+        <div class="mx-auto flex max-w-4xl flex-col gap-4">
+            <SegmentedControl v-model="activeTab" :options="tabs" :label="t('settings.updates.title')" class="self-start" />
+
+            <!-- Which version runs here, and whether a newer one is out -->
+            <template v-if="activeTab === 'updates'">
+                <Panel>
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400">{{ t('settings.updates.current_version') }}</p>
+                            <p class="text-3xl font-semibold tabular-nums tracking-tight text-slate-900 dark:text-white">
+                                v{{ currentVersion }}
+                            </p>
+                        </div>
+                        <SecondaryButton type="button" :disabled="isLoading" @click="refreshVersionInfo">
+                            {{ isLoading ? t('settings.updates.checking') : t('settings.updates.check_for_updates') }}
+                        </SecondaryButton>
+                    </div>
+                    <p v-if="error" role="alert" class="mt-3 text-sm text-rose-700 dark:text-rose-300">{{ error }}</p>
+                </Panel>
+
+                <Notice
+                    v-if="versionData?.updates_available && versionData?.new_versions?.length > 0"
+                    tone="warning"
+                    :title="t('settings.updates.new_version_available')"
+                >
+                    <p>
+                        {{ t('settings.updates.new_versions_count', { count: versionData.update_count, version: 'v' + versionData.latest_version }) }}
+                    </p>
+                    <PrimaryButton type="button" class="mt-3" @click="activeTab = 'howto'">
+                        {{ t('settings.updates.update_instructions') }}
+                    </PrimaryButton>
+                </Notice>
+            </template>
+
+            <!-- What each release brought, newest first -->
+            <template v-if="activeTab === 'changelog'">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <h2 class="text-base font-semibold text-slate-900 dark:text-white">{{ t('settings.updates.version_history') }}</h2>
+                    <SecondaryButton type="button" :disabled="isLoadingChangelog" @click="fetchChangelog">
+                        {{ isLoadingChangelog ? t('settings.updates.loading_changelog') : t('settings.updates.refresh') }}
+                    </SecondaryButton>
                 </div>
 
-                <!-- Tabs -->
-                <div class="mb-6 flex gap-2">
-                    <button
-                        @click="activeTab = 'updates'"
-                        :class="[
-                            'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-                            activeTab === 'updates'
-                                ? 'bg-indigo-500 text-white'
-                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                        ]"
-                    >
-                        {{ t('settings.updates.tabs.check_updates') }}
-                    </button>
-                    <button
-                        @click="activeTab = 'changelog'"
-                        :class="[
-                            'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-                            activeTab === 'changelog'
-                                ? 'bg-indigo-500 text-white'
-                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                        ]"
-                    >
-                        {{ t('settings.updates.tabs.changelog') }}
-                    </button>
-                    <button
-                        @click="activeTab = 'howto'"
-                        :class="[
-                            'rounded-lg px-4 py-2 text-sm font-medium transition-colors',
-                            activeTab === 'howto'
-                                ? 'bg-indigo-500 text-white'
-                                : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-                        ]"
-                    >
-                        {{ t('settings.updates.tabs.how_to_update') }}
-                    </button>
-                </div>
-
-                <!-- Updates Tab -->
-                <div v-if="activeTab === 'updates'">
-                    <!-- Current Version Card -->
-                    <div class="mb-8 rounded-xl bg-slate-800/50 p-6 ring-1 ring-white/10">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h2 class="text-lg font-semibold text-white">{{ t('settings.updates.current_version') }}</h2>
-                                <div class="mt-2 flex items-center gap-3">
-                                    <span class="text-3xl font-bold text-indigo-400">v{{ currentVersion }}</span>
-                                    <span v-if="versionData && !versionData.updates_available" class="inline-flex items-center gap-1 rounded-full bg-green-500/20 px-2.5 py-0.5 text-xs font-medium text-green-400">
-                                        <svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                        {{ t('settings.updates.up_to_date') }}
-                                    </span>
-                                </div>
-                            </div>
-                            <button
-                                @click="refreshVersionInfo"
-                                :disabled="isLoading"
-                                class="flex items-center gap-2 rounded-lg bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 disabled:opacity-50"
-                            >
-                                <svg :class="['h-4 w-4', isLoading ? 'animate-spin' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                {{ t('settings.updates.check_for_updates') }}
-                            </button>
-                        </div>
-
-                        <!-- Update Available -->
-                        <div v-if="versionData?.updates_available && versionData?.new_versions?.length > 0" class="mt-6 rounded-lg bg-amber-500/10 p-4 ring-1 ring-amber-500/30">
-                            <div class="flex items-start gap-3">
-                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-500/20">
-                                    <svg class="h-4 w-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                    </svg>
-                                </div>
-                                <div class="flex-1">
-                                    <h3 class="font-semibold text-amber-400">{{ t('settings.updates.new_version_available') }}</h3>
-                                    <p class="mt-1 text-sm text-slate-300">
-                                        {{ t('settings.updates.new_versions_count', { count: versionData.update_count, version: 'v' + versionData.latest_version }) }}
-                                    </p>
-                                    <div class="mt-3 flex flex-wrap gap-2">
-                                        <button
-                                            @click="activeTab = 'howto'"
-                                            class="inline-flex items-center gap-2 rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-amber-600"
-                                        >
-                                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                            </svg>
-                                            {{ t('settings.updates.update_instructions') }}
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Loading State -->
-                        <div v-else-if="isLoading" class="mt-6 flex items-center gap-3 text-slate-400">
-                            <svg class="h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            {{ t('settings.updates.checking') }}
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Changelog Tab -->
-                <div v-if="activeTab === 'changelog'">
-                    <div class="mb-6 flex items-center justify-between">
-                        <h2 class="text-xl font-semibold text-white">{{ t('settings.updates.version_history') }}</h2>
-                        <div class="flex items-center gap-3">
-                            <span v-if="isLoadingChangelog" class="flex items-center gap-2 text-sm text-slate-400">
-                                <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                {{ t('settings.updates.loading_changelog') }}
-                            </span>
-                            <button
-                                @click="fetchChangelog"
-                                :disabled="isLoadingChangelog"
-                                class="flex items-center gap-1.5 rounded-lg bg-white/5 px-3 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
-                            >
-                                <svg :class="['h-3.5 w-3.5', isLoadingChangelog ? 'animate-spin' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                {{ t('settings.updates.refresh') }}
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="relative space-y-6">
-                        <!-- Timeline line -->
-                        <div class="absolute left-4 top-0 h-full w-0.5 bg-slate-700"></div>
-
-                        <!-- Version entries -->
-                        <div
-                            v-for="entry in changelog"
-                            :key="entry.version"
-                            class="relative pl-12"
-                        >
-                            <!-- Timeline dot -->
-                            <div
-                                class="absolute left-2 top-0 h-5 w-5 rounded-full ring-4 ring-slate-900"
-                                :class="getTypeColor(entry.type)"
-                            ></div>
-
-                            <!-- Entry card -->
-                            <div class="rounded-xl bg-slate-800/50 p-5 ring-1 ring-white/10">
-                                <div class="flex flex-wrap items-center gap-3">
-                                    <h3 class="text-lg font-bold text-white">v{{ entry.version }}</h3>
-                                    <span
-                                        class="rounded-full px-2 py-0.5 text-xs font-medium"
-                                        :class="getTypeBadge(entry.type).class"
-                                    >
-                                        {{ getTypeBadge(entry.type).text }}
-                                    </span>
-                                    <span class="text-sm text-slate-500">{{ formatDate(entry.date) }}</span>
-                                    <a
-                                        v-if="entry.url"
-                                        :href="entry.url"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        class="ml-auto text-xs text-indigo-400 hover:text-indigo-300"
-                                    >
-                                        {{ t('settings.updates.view_on_github') }} →
-                                    </a>
-                                </div>
-
-                                <h4 v-if="entry.title" class="mt-2 text-base font-medium text-slate-300">{{ entry.title }}</h4>
-
-                                <template v-if="entry.notesHtml">
-                                    <div
-                                        :ref="el => measureNotes(entry.version, el)"
-                                        class="release-notes mt-4 text-sm text-slate-400"
-                                        :class="{
-                                            'max-h-96 overflow-hidden': !expandedNotes.has(entry.version),
-                                            'is-faded': overflowingNotes.has(entry.version) && !expandedNotes.has(entry.version),
-                                        }"
-                                        v-html="entry.notesHtml"
-                                    ></div>
-                                    <button
-                                        v-if="overflowingNotes.has(entry.version)"
-                                        type="button"
-                                        @click="toggleNotes(entry.version)"
-                                        class="mt-3 text-xs font-medium text-indigo-400 hover:text-indigo-300"
-                                    >
-                                        {{ expandedNotes.has(entry.version) ? t('settings.updates.show_less') : t('settings.updates.show_more') }}
-                                    </button>
-                                </template>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- GitHub Link -->
-                    <div class="mt-8 flex items-center justify-center">
+                <Panel v-for="entry in changelog" :key="entry.version">
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <h3 class="text-base font-semibold tabular-nums text-slate-900 dark:text-white">v{{ entry.version }}</h3>
+                        <StatusPill :tone="(TYPE_BADGES[entry.type] || TYPE_BADGES.patch).tone">
+                            {{ (TYPE_BADGES[entry.type] || TYPE_BADGES.patch).text }}
+                        </StatusPill>
+                        <span class="text-sm tabular-nums text-slate-600 dark:text-slate-400">{{ formatDate(entry.date) }}</span>
                         <a
-                            href="https://github.com/NetSendo/NetSendo/releases"
+                            v-if="entry.url"
+                            :href="entry.url"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="flex items-center gap-2 text-sm text-slate-400 transition-colors hover:text-white"
+                            class="ml-auto text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                         >
-                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
-                            </svg>
-                            {{ t('settings.updates.view_all_releases') }}
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                            </svg>
+                            {{ t('settings.updates.view_on_github') }}
                         </a>
                     </div>
-                </div>
+                    <p v-if="entry.title" class="mt-2 text-sm font-medium text-slate-900 dark:text-white">{{ entry.title }}</p>
 
-                <!-- How to Update Tab -->
-                <div v-if="activeTab === 'howto'" class="space-y-6">
-                    <div class="rounded-xl bg-slate-800/50 p-6 ring-1 ring-white/10">
-                        <h2 class="mb-4 text-xl font-semibold text-white">{{ t('settings.updates.docker_update.title') }}</h2>
-                        <p class="mb-4 text-slate-400">{{ t('settings.updates.docker_update.description') }}</p>
+                    <template v-if="entry.notesHtml">
+                        <div
+                            :ref="(el) => measureNotes(entry.version, el)"
+                            class="release-notes mt-3 text-sm"
+                            :class="[
+                                notesPalette,
+                                {
+                                    'max-h-96 overflow-hidden': !expandedNotes.has(entry.version),
+                                    'is-faded': overflowingNotes.has(entry.version) && !expandedNotes.has(entry.version),
+                                },
+                            ]"
+                            v-html="entry.notesHtml"
+                        ></div>
+                        <button
+                            v-if="overflowingNotes.has(entry.version)"
+                            type="button"
+                            :aria-expanded="expandedNotes.has(entry.version)"
+                            class="mt-3 text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            @click="toggleNotes(entry.version)"
+                        >
+                            {{ expandedNotes.has(entry.version) ? t('settings.updates.show_less') : t('settings.updates.show_more') }}
+                        </button>
+                    </template>
+                </Panel>
 
-                        <div class="rounded-lg bg-slate-900 p-4 font-mono text-sm">
-                            <div class="text-slate-500">{{ t('settings.updates.docker_update.step_stop') }}</div>
-                            <div class="text-green-400">docker compose down</div>
-                            <div class="mt-2 text-slate-500">{{ t('settings.updates.docker_update.step_pull') }}</div>
-                            <div class="text-green-400">docker compose pull</div>
-                            <div class="mt-2 text-slate-500">{{ t('settings.updates.docker_update.step_start') }}</div>
-                            <div class="text-green-400">docker compose up -d</div>
-                        </div>
+                <a
+                    href="https://github.com/NetSendo/NetSendo/releases"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="self-center text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                >
+                    {{ t('settings.updates.view_all_releases') }}
+                </a>
+            </template>
 
-                        <p class="mt-4 text-sm text-slate-500">
-                            {{ t('settings.updates.docker_update.specific_version') }}
-                        </p>
-                        <div class="mt-2 rounded-lg bg-slate-900 p-4 font-mono text-sm text-green-400">
-                            NETSENDO_VERSION=1.1.0 docker compose up -d
-                        </div>
-                    </div>
+            <!-- How to move to a newer version -->
+            <template v-if="activeTab === 'howto'">
+                <Notice tone="warning" :title="t('settings.updates.warning.title')">
+                    <ul class="list-disc space-y-0.5 pl-5">
+                        <li>{{ t('settings.updates.warning.backup') }}</li>
+                        <li>{{ t('settings.updates.warning.release_notes') }}</li>
+                        <li>{{ t('settings.updates.warning.staging') }}</li>
+                    </ul>
+                </Notice>
 
-                    <div class="rounded-xl bg-slate-800/50 p-6 ring-1 ring-white/10">
-                        <h2 class="mb-4 text-xl font-semibold text-white">{{ t('settings.updates.manual_update.title') }}</h2>
-                        <p class="mb-4 text-slate-400">{{ t('settings.updates.manual_update.description') }}</p>
+                <Panel :title="t('settings.updates.docker_update.title')">
+                    <p class="text-sm text-slate-600 dark:text-slate-400">{{ t('settings.updates.docker_update.description') }}</p>
+                    <pre :class="codeBlockClass"># {{ t('settings.updates.docker_update.step_stop') }}
+docker compose down
 
-                        <div class="rounded-lg bg-slate-900 p-4 font-mono text-sm">
-                            <div class="text-slate-500">{{ t('settings.updates.manual_update.step_pull') }}</div>
-                            <div class="text-green-400">git pull origin main</div>
-                            <div class="mt-2 text-slate-500">{{ t('settings.updates.manual_update.step_build') }}</div>
-                            <div class="text-green-400">docker compose up -d --build</div>
-                        </div>
-                    </div>
+# {{ t('settings.updates.docker_update.step_pull') }}
+docker compose pull
 
-                    <div class="rounded-xl bg-amber-500/10 p-6 ring-1 ring-amber-500/30">
-                        <div class="flex items-start gap-3">
-                            <svg class="h-6 w-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                            <div>
-                                <h3 class="font-semibold text-amber-400">{{ t('settings.updates.warning.title') }}</h3>
-                                <ul class="mt-2 space-y-1 text-sm text-slate-300">
-                                    <li>{{ t('settings.updates.warning.backup') }}</li>
-                                    <li>{{ t('settings.updates.warning.release_notes') }}</li>
-                                    <li>{{ t('settings.updates.warning.staging') }}</li>
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+# {{ t('settings.updates.docker_update.step_start') }}
+docker compose up -d</pre>
+                    <p class="mt-4 text-sm text-slate-600 dark:text-slate-400">
+                        {{ t('settings.updates.docker_update.specific_version') }}
+                    </p>
+                    <pre :class="codeBlockClass">NETSENDO_VERSION={{ versionData?.latest_version || currentVersion }} docker compose up -d</pre>
+                </Panel>
+
+                <Panel :title="t('settings.updates.manual_update.title')">
+                    <p class="text-sm text-slate-600 dark:text-slate-400">{{ t('settings.updates.manual_update.description') }}</p>
+                    <pre :class="codeBlockClass"># {{ t('settings.updates.manual_update.step_pull') }}
+git pull origin main
+
+# {{ t('settings.updates.manual_update.step_build') }}
+docker compose up -d --build</pre>
+                </Panel>
+            </template>
         </div>
     </AuthenticatedLayout>
 </template>
 
 <style scoped>
+/* Release notes are Markdown rendered into v-html: styled from here, coloured through the
+   variables the container sets for the light and the dark theme */
 .release-notes.is-faded {
     mask-image: linear-gradient(to bottom, black calc(100% - 4rem), transparent);
 }
+
 .release-notes :deep(> :first-child) {
     margin-top: 0;
 }
+
 .release-notes :deep(p),
 .release-notes :deep(ul),
 .release-notes :deep(ol),
@@ -517,6 +404,7 @@ onMounted(() => {
     margin: 0.5rem 0;
     line-height: 1.6;
 }
+
 .release-notes :deep(h1),
 .release-notes :deep(h2),
 .release-notes :deep(h3),
@@ -525,89 +413,105 @@ onMounted(() => {
 .release-notes :deep(h6) {
     margin: 1.25rem 0 0.5rem;
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--rn-strong);
 }
+
 .release-notes :deep(h1),
 .release-notes :deep(h2) {
     font-size: 1rem;
 }
+
 .release-notes :deep(h3) {
     font-size: 0.9375rem;
 }
+
 .release-notes :deep(ul) {
     list-style: disc;
     padding-left: 1.25rem;
 }
+
 .release-notes :deep(ol) {
     list-style: decimal;
     padding-left: 1.25rem;
 }
+
 .release-notes :deep(li) {
     margin: 0.375rem 0;
 }
+
 .release-notes :deep(li::marker) {
-    color: #818cf8;
+    color: var(--rn-muted);
 }
+
 .release-notes :deep(li > ul),
 .release-notes :deep(li > ol) {
     margin: 0.25rem 0;
 }
+
 .release-notes :deep(strong) {
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--rn-strong);
 }
+
 .release-notes :deep(em) {
     font-style: italic;
 }
+
 .release-notes :deep(a) {
-    color: #818cf8;
+    color: var(--rn-accent);
     text-decoration: underline;
     text-underline-offset: 2px;
 }
-.release-notes :deep(a:hover) {
-    color: #a5b4fc;
-}
+
 .release-notes :deep(code) {
     border-radius: 0.25rem;
-    background: rgb(255 255 255 / 0.08);
+    background: var(--rn-code-bg);
     padding: 0.1em 0.35em;
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     font-size: 0.85em;
-    color: #cbd5e1;
+    color: var(--rn-code);
     overflow-wrap: anywhere;
 }
+
 .release-notes :deep(pre) {
     overflow-x: auto;
+    border: 1px solid var(--rn-line);
     border-radius: 0.5rem;
-    background: #0f172a;
+    background: var(--rn-pre-bg);
     padding: 0.75rem 1rem;
 }
+
 .release-notes :deep(pre code) {
     background: none;
     padding: 0;
     overflow-wrap: normal;
 }
+
 .release-notes :deep(blockquote) {
-    border-left: 3px solid #475569;
+    border-left: 3px solid var(--rn-line);
     padding-left: 0.75rem;
-    color: #94a3b8;
+    color: var(--rn-muted);
 }
+
 .release-notes :deep(hr) {
     margin: 1rem 0;
-    border-color: #334155;
+    border-color: var(--rn-line);
 }
+
 .release-notes :deep(img) {
     max-width: 100%;
     border-radius: 0.5rem;
 }
+
 .release-notes :deep(table) {
     display: block;
     overflow-x: auto;
     border-collapse: collapse;
 }
+
 .release-notes :deep(th),
 .release-notes :deep(td) {
-    border: 1px solid #334155;
+    border: 1px solid var(--rn-line);
     padding: 0.25rem 0.5rem;
 }
 </style>

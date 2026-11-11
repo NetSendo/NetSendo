@@ -3813,7 +3813,9 @@
             "modal_title": "Añadir integración de Google",
             "name_placeholder": "Nombre (ej. Aplicación de Marketing)"
         },
-        "confirm_delete": "¿Está seguro de que desea eliminar esta integración?"
+        "confirm_delete": "¿Está seguro de que desea eliminar esta integración?",
+        "actions_for": "Acciones de la conexión: {name}",
+        "delete_title": "¿Eliminar la conexión con Google?"
     },
     "calendar": {
         "title": "Integración de Google Calendar",

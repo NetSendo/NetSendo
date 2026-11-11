@@ -91,6 +91,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Payment settings**: whether the service is set up is a labelled pill in the header, with one line on what to do next. Keys and secrets are fields that hide what is typed and have a Show button; the webhook address has a Copy button that says "Copied"; the answer of "Test connection" is a notice in the form. Saving says that it happened (Polar and Tpay showed nothing).
   - **Stripe**: the two ways to connect are tabs. Connecting through Stripe Connect is four numbered steps in the order they have to be done; disconnecting asks in a dialog that names the account.
   - **WooCommerce**: the shops are a table (name, address, currency and version, connection status, plugin version with a note when an update is due) with a menu of named actions in place of five unlabelled icons. Messages from the server (shop added, updated, deleted, and above all why a save was refused) are shown; they used to be sent to the browser and never displayed.
+- **The pixel, updates, telemetry and Google integration pages are rebuilt.**
+  - **NetSendo Pixel**: four figures on top; live visitors as a plain list (page, device and browser, how long ago) next to a seven-day chart with the count over every bar; the embed code and every example in the events guide are blocks with a Copy button that says "Copied".
+  - **Updates**: whether the installation is current is a pill in the header; each release is a panel with its size, date and notes; the update commands are blocks to copy, and the "specific version" example names the newest version instead of 1.1.0.
+  - **Telemetry**: the opt-in is one switch in a framed row with its state in words; the installation id, the last report and the exact report that would be sent are below.
+  - **Google integration**: connections are a list with their state and a "Connect with Google" button; the redirect address has a Copy button; deleting asks in a dialog that names the connection, in place of the browser's own prompt.
 - **Buttons, text fields and dialogs share one look.** The primary button is the indigo of the rest of the panel (it was dark grey in capitals), text fields have a visible border again (the colour classes alone drew none since Tailwind 4), dialogs have the panel's rounded card.
 - **The sign-in screens are rebuilt**: sign in, first administrator, forgotten and new password, password confirmation, e-mail verification, two-factor code and team invitation.
   - Two panes: the brand on a dark ground, and the form in the visitor's theme, light or dark. On a phone the brand pane is a strip with the logo.
@@ -115,6 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **In the CRON schedule the end of a full day was an empty time field.** A day that sends around the clock ends at 24:00, which a time field cannot show; it now reads 23:59 and stays "until midnight" unless it is changed.
 - The name import button read `common.importing` while a file was being sent (the text did not exist).
 - **A WooCommerce shop that could not be saved closed its dialog without a word.** When the shop did not answer or its address was already taken, the dialog closed, the entries were gone and no reason was shown. The dialog now stays open with the reason next to its buttons.
+- **The Updates page was written for the dark theme only.** In the light theme its title was white on the light page, and the release notes were light grey on a half-transparent grey card. It now follows the theme.
 - The password confirmation label on the "new password" page showed nothing (it pointed at a group of texts, not a text).
 
 - **NetSendo Mail Infrastructure could not be set up at all.** Found while finishing the NetSendo MTA provider:
