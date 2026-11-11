@@ -232,7 +232,7 @@ class SubscriberPreferencesController extends Controller
             ];
         }
 
-        // Links emailed before 2.8.8 carry the whole selection of the page: lists
+        // Links emailed before 2.9.0 carry the whole selection of the page: lists
         // left out are left, ticked lists the subscriber had left are rejoined, and
         // lists they never joined are not joined.
         if (isset($changes['selected_lists']) && is_array($changes['selected_lists'])) {

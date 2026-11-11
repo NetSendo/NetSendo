@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.9.0] – New panel look, NetSendo MTA mailboxes, unsubscribing that never subscribes - 2026-11-11
+
+**Release date:** 2026-11-11
+
+The panel is being rebuilt page by page. This release covers the sign-in pages, the dashboard, messages, contacts and lists, statistics, the lists of forms, templates, automations and funnels, and most of the settings. The builders, CRM, Brain, the Marketplace pages and a few settings pages (products, licence, profile, the NetSendo MTA pages) still have the previous look and follow in later releases.
+
 ### Added
 
 - **"Unsubscribe me from everything" on the preferences page**: one button, at the top, that unsubscribes the address from every list of the account, private lists too.
@@ -167,6 +173,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - The list pages counted the active subscribers of every row with a query of its own, although the page had already counted them all in one. The second count is gone.
 - `cron_job_logs` has an index on `started_at`. The dashboard sums sent mail by day, and without it every sum read the whole table, which grows by several thousand rows a day.
+
+### Upgrading
+
+- **Docker:** update as usual (`docker compose pull && docker compose up -d`). The database migrations run when the containers start.
+- **Installations that run the NetSendo MTA (`--profile nmi`):** take the new `docker-compose.yml` (it adds the `nmi-auth` volume and the MTA's plugins) and rebuild the MTA image: `docker compose --profile nmi up -d --build`. Installations that do not use the MTA need no change to their compose file.
+- **Message templates:** `[[unsubscribe]]` and `[[manage]]` keep working as before. `[[unsubscribe_now]]` is new and optional.
 
 ## [2.8.7] – Installations on Podman update again - 2026-11-10
 
