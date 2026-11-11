@@ -301,8 +301,7 @@
             "confirm_action": "Sind Sie sicher, dass Sie fortfahren möchten?",
             "action_irreversible": "Diese Aktion kann nicht rückgängig gemacht werden.",
             "exported_failed": "Export fehlgeschlagen.",
-            "imported_failed": "Import fehlgeschlagen.",
-            "error": "Ein Fehler ist aufgetreten"
+            "imported_failed": "Import fehlgeschlagen."
         },
         "days": {
             "monday": "Montag",
@@ -374,7 +373,12 @@
             "per_page": "Pro Seite",
             "label": "Seiten"
         },
-        "clear_filters": "Filter zurücksetzen"
+        "clear_filters": "Filter zurücksetzen",
+        "adding": "Wird hinzugefügt...",
+        "creating": "Wird erstellt...",
+        "checking": "Wird geprüft...",
+        "generating": "Wird erzeugt...",
+        "starting": "Wird gestartet..."
     },
     "ab_tests": {
         "enable_testing": "A/B-Tests aktivieren",
@@ -8353,12 +8357,17 @@
             "ip_address": "IP-Adresse",
             "ip_address_placeholder": "z.B. 192.168.1.100",
             "submit": "IP hinzufügen",
-            "title": "IP-Adresse hinzufügen"
+            "title": "IP-Adresse hinzufügen",
+            "manual_hint": "Für eine selbst bestellte Adresse. Sie muss bereits auf dem Server konfiguriert sein, und ihr Reverse DNS muss auf den Hostnamen zeigen. Siehe Anbieter konfigurieren → Anderes Unternehmen."
         },
         "delete_ip": {
             "confirm": "Möchten Sie diese IP-Adresse wirklich löschen?",
             "title": "IP-Adresse löschen",
-            "warning": "Diese Aktion kann nicht rückgängig gemacht werden."
+            "warning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+            "button": "Adresse löschen",
+            "release_note": "Die Adresse wurde über die API des Anbieters bestellt: Sie wird dort zuerst zurückgegeben, damit sie nicht weiter berechnet wird.",
+            "keep_at_provider": "Nur aus NetSendo entfernen",
+            "deleting": "Wird gelöscht…"
         },
         "invalid_ip_address": "Ungültiges IP-Adressformat.",
         "ip_added": "IP-Adresse wurde erfolgreich hinzugefügt!",
@@ -8385,7 +8394,41 @@
             "not_configured": "Nicht konfiguriert",
             "not_connected": "Nicht verbunden",
             "settings_title": "IP-Anbieter-Einstellungen",
-            "vultr": "Vultr"
+            "vultr": "Vultr",
+            "connect": "Verbinden",
+            "connected_as": "Verbunden als {name}",
+            "unavailable": "Für E-Mail nicht geeignet",
+            "guide_title": "So verbinden Sie",
+            "intro": "Eine dedizierte IP kommt von dem Unternehmen, das Ihren Server hostet: Eine Adresse kann nur von einem Server desselben Unternehmens genutzt werden. NetSendo kann sie über die API des Unternehmens bestellen, oder Sie fügen eine selbst bestellte Adresse hinzu.",
+            "api_key_label": "API-Schlüssel",
+            "other_title": "Anderes Unternehmen (Hetzner, OVH, eigenes Rechenzentrum…)",
+            "guide": {
+                "vultr": {
+                    "s1": "Ihr NetSendo-Server muss eine Vultr-Instanz sein: Eine Adresse von Vultr lässt sich nur an einen Server bei Vultr anhängen.",
+                    "s2": "Öffnen Sie im Vultr-Panel Account → API, aktivieren Sie die API und kopieren Sie Ihren Schlüssel. Ist der Zugriff dort auf bestimmte Adressen beschränkt, fügen Sie die Adresse dieses Servers hinzu.",
+                    "s3": "Fügen Sie den Schlüssel hier ein und klicken Sie auf Verbinden. NetSendo fragt Vultr, wem der Schlüssel gehört, und speichert ihn erst, wenn Vultr ihn akzeptiert.",
+                    "s4": "Vultr sperrt den ausgehenden Port 25 bei neuen Konten. Eröffnen Sie dort ein Support-Ticket (was Sie versenden, SPF und DKIM, erwartetes Volumen) und warten Sie, bis die Sperre aufgehoben ist.",
+                    "s5": "Eine Adresse kostet etwa 3 USD pro Monat; Vultr berechnet sie, bis Sie die Adresse in NetSendo löschen."
+                },
+                "linode": {
+                    "s1": "Ihr NetSendo-Server muss ein Linode (Akamai Cloud) sein.",
+                    "s2": "Bitten Sie zuerst den Akamai-Support um zusätzliche IPv4-Adressen: Eröffnen Sie ein Ticket mit technischer Begründung (eine dedizierte Versandadresse für E-Mail). Ohne Freigabe wird die Bestellung abgelehnt.",
+                    "s3": "Öffnen Sie im Cloud Manager Ihr Profil → API Tokens und erstellen Sie ein Personal Access Token mit dem Scope Linodes: Read/Write.",
+                    "s4": "Fügen Sie das Token hier ein und klicken Sie auf Verbinden.",
+                    "s5": "Bei neueren Konten sind die ausgehenden Ports 25, 465 und 587 eingeschränkt. Die Serverliste kennzeichnet solche Server; ein Support-Ticket hebt die Einschränkung auf.",
+                    "s6": "Akamai berechnet jede zusätzliche Adresse stundenweise, bis Sie sie in NetSendo löschen."
+                },
+                "digitalocean": {
+                    "s1": "Reserved IPs von DigitalOcean können keine E-Mails versenden: Die SMTP-Ports 25, 465 und 587 sind darauf gesperrt, sie erhalten kein Reverse DNS, und ein Droplet kann nur eine davon haben. Nutzen Sie für dedizierte Versandadressen ein anderes Unternehmen."
+                },
+                "other": {
+                    "s1": "Bestellen Sie im Panel Ihres Hosting-Unternehmens eine zusätzliche IPv4-Adresse für Ihren NetSendo-Server.",
+                    "s2": "Konfigurieren Sie die Adresse auf dem Server so, wie das Unternehmen es beschreibt.",
+                    "s3": "Wählen Sie einen Hostnamen (zum Beispiel mail2.ihredomain.de), legen Sie dessen A-Eintrag auf die Adresse an und setzen Sie im Panel des Unternehmens das Reverse DNS (PTR) der Adresse auf diesen Hostnamen.",
+                    "s4": "Fügen Sie sie in NetSendo mit IP hinzufügen hinzu: die Adresse und ihren Hostnamen.",
+                    "s5": "Prüfen Sie auf der Seite der Adresse das Reverse DNS. Im Postfach-Formular zeigt die IP-Auswahl, ob der MTA von ihr sendet."
+                }
+            }
         },
         "provision": {
             "cancel": "Abbrechen",
@@ -8396,7 +8439,51 @@
             "select_provider": "Anbieter wählen",
             "select_region": "Region wählen",
             "submit": "IP bestellen",
-            "title": "IP aus der Cloud bestellen"
+            "title": "IP aus der Cloud bestellen",
+            "server": "Server",
+            "select_server": "Server wählen, auf dem NetSendo läuft",
+            "loading_servers": "Ihre Server werden geladen…",
+            "no_servers": "In diesem Konto wurde kein Server gefunden.",
+            "smtp_restricted": "ausgehendes SMTP eingeschränkt",
+            "hostname": "Hostname der Adresse",
+            "hostname_placeholder": "z. B. mail2.ihredomain.de",
+            "hostname_help": "Unter diesem Namen meldet sich die Adresse: Er wird ihr Reverse DNS (PTR) und der Name, mit dem sich der MTA vorstellt.",
+            "cost_note": "Die Adresse wird sofort bestellt und vom Anbieter berechnet, bis Sie sie hier löschen.",
+            "connect_first": "Verbinden Sie zuerst einen Anbieter: Anbieter konfigurieren.",
+            "done_title": "Adresse {ip} wurde bestellt",
+            "ptr_set": "Reverse DNS wurde auf {hostname} gesetzt.",
+            "ptr_not_set": "Reverse DNS konnte noch nicht gesetzt werden: {reason}",
+            "next_title": "Was noch zu tun ist",
+            "open_ip": "Adresse öffnen",
+            "done": "Fertig",
+            "next": {
+                "a_record": "Legen Sie im DNS einen A-Eintrag an: {hostname} → {ip}.",
+                "vultr_os": "Konfigurieren Sie die Adresse auf dem Server: Fügen Sie {ip}/32 zur Netzwerkschnittstelle hinzu (das Vultr-Panel erzeugt die netplan-Datei unter Settings → IPv4 der Instanz), wenden Sie sie an und starten Sie den Server neu.",
+                "linode_ptr": "Sobald der A-Eintrag auflöst, klicken Sie auf der Seite der Adresse auf Reverse DNS setzen: Vorher lehnt Akamai es ab.",
+                "linode_os": "Starten Sie den Linode neu: Der Network Helper konfiguriert die Adresse beim Start. Ist er deaktiviert, fügen Sie {ip}/24 von Hand zur Schnittstelle hinzu.",
+                "host_network": "Betreiben Sie den MTA im Netzwerk des Servers (docker-compose.nmi-host.yml), damit er die Adresse besitzt.",
+                "finish": "Prüfen Sie auf der Seite der Adresse das Reverse DNS und starten Sie das Warm-up, wählen Sie dann die Adresse in einem NetSendo-MTA-Postfach. Das Postfach-Formular zeigt, ob der MTA von ihr sendet."
+            }
+        },
+        "setup": {
+            "title": "Einrichtung der Adresse",
+            "source": "Herkunft",
+            "source_manual": "Von Hand hinzugefügt",
+            "source_provider": "Bestellt bei {provider}",
+            "region": "Region",
+            "bind_address": "Lokale Adresse",
+            "ptr_title": "Reverse DNS (PTR)",
+            "ptr_help": "Empfangende Server misstrauen E-Mails von einer Adresse, die keinen Host nennt, der zurück auf die Adresse zeigt. Mit demselben Namen stellt sich der MTA vor.",
+            "ptr_expected": "Soll nennen",
+            "ptr_found": "Nennt jetzt",
+            "ptr_none": "nichts",
+            "ptr_ok": "Korrekt",
+            "ptr_wrong": "Nicht korrekt",
+            "ptr_unchecked": "Nicht geprüft",
+            "check_ptr": "Prüfen",
+            "set_ptr": "Reverse DNS setzen",
+            "ptr_manual": "Setzen Sie es im Panel des Unternehmens, von dem die Adresse stammt, und klicken Sie dann auf Prüfen.",
+            "checking": "Wird geprüft…"
         }
     },
     "high_confidence_data": "Hohe Datenqualität",
@@ -8903,7 +8990,7 @@
                 "headers": "Header"
             },
             "after_save_hint": "Rückläufer und das Lesen von Antworten richten Sie nach dem Speichern des Postfachs ein.",
-            "fix_errors": "Nicht gespeichert: Korrigieren Sie die rot markierten Felder."
+            "save_errors": "Das Postfach konnte nicht gespeichert werden:"
         },
         "notifications": {
             "created": "Postfach wurde erstellt.",
@@ -9132,7 +9219,46 @@
         "no_limit": "ohne Limit",
         "switch_label": "Eingeschaltet: {name}",
         "actions_for": "Aktionen für das Postfach: {name}",
-        "testing": "Test läuft…"
+        "testing": "Test läuft…",
+        "nmi": {
+            "info": "Die E-Mails gehen über den eigenen Mailserver von NetSendo (MTA). Wählen Sie die verifizierte Domain, von der Sie senden; den Login beim MTA vergibt NetSendo selbst.",
+            "domain": "Versanddomain",
+            "domain_placeholder": "-- Verifizierte Domain wählen --",
+            "no_domains": "Noch keine verifizierte Domain. Fügen Sie Ihre Domain zuerst unter Zustellbarkeit hinzu und verifizieren Sie sie.",
+            "manage_domains": "Zustellbarkeit öffnen",
+            "from_hint": "Die Absenderadresse muss in dieser Domain liegen.",
+            "ip": "Dedizierte IP",
+            "ip_none": "Keine (eigene Adresse des MTA)",
+            "ip_taken": "einer anderen Domain zugewiesen",
+            "ip_help": "Eine dedizierte IP signiert mit dem DKIM-Schlüssel einer Domain. Eine freie IP wird beim Speichern dieser Domain zugewiesen.",
+            "manage_ips": "IP-Pools verwalten",
+            "mta_checking": "NetSendo MTA wird geprüft…",
+            "mta_online": "NetSendo MTA ist online ({address}).",
+            "mta_offline": "NetSendo MTA ist nicht erreichbar ({address}). Starten Sie den Container (docker compose --profile nmi up -d) und prüfen Sie erneut.",
+            "mta_recheck": "Erneut prüfen",
+            "mta_required": "Neue NetSendo-MTA-Postfächer können angelegt werden, sobald der MTA antwortet.",
+            "sends_as": "NetSendo MTA · {domain}",
+            "no_domain": "NetSendo MTA · keine Domain",
+            "ip_bound": "Der MTA sendet von dieser Adresse.",
+            "ip_not_bound": "Der MTA besitzt diese Adresse nicht, daher verlässt die E-Mail den MTA über dessen eigene Adresse. Um von dedizierten IPs zu senden, betreiben Sie den MTA im Netzwerk des Servers (docker-compose.nmi-host.yml, siehe docs/NMI.md).",
+            "dkim": {
+                "title": "DKIM-Signatur",
+                "loading": "DKIM-Schlüssel wird geprüft…",
+                "created_on_save": "Beim Speichern wird ein DKIM-Schlüssel für diese Domain erstellt. Der DNS-Eintrag wird hier angezeigt.",
+                "no_key": "Diese Domain hat noch keinen DKIM-Schlüssel.",
+                "generate": "Schlüssel erzeugen",
+                "status_verified": "Verifiziert",
+                "status_pending": "Nicht verifiziert",
+                "verified": "E-Mails dieser Domain werden mit diesem Schlüssel signiert.",
+                "pending": "Veröffentlichen Sie diesen TXT-Eintrag im DNS der Domain und verifizieren Sie ihn dann. Bis dahin gehen E-Mails dieses Postfachs ohne DKIM-Signatur hinaus.",
+                "pending_ip_key": "Veröffentlichen Sie diesen TXT-Eintrag im DNS der Domain und verifizieren Sie ihn dann. Bis dahin wird mit dem Schlüssel der dedizierten IP signiert.",
+                "record_name": "Name (TXT)",
+                "record_value": "Wert",
+                "verify": "Eintrag verifizieren",
+                "verify_again": "Erneut prüfen",
+                "copy": "Kopieren"
+            }
+        }
     },
     "mcp": {
         "agent_prompt_content": "Sie sind ein KI-Assistent mit Zugriff auf NetSendo — eine E-Mail/SMS-Marketing-Plattform.\n\nVERFÜGBARE TOOLS:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)\n- list_templates, get_template, create_template, update_template\n- list_system_emails, update_system_email, list_system_pages, update_system_page\n- get_automation_options, list_automations, create_automation, update_automation\n- list_forms, get_form, create_form, update_form\n- create_tag, create_custom_field, list_webhooks, create_webhook\n- list_placeholders, test_connection, get_account_info\n\nPLATZHALTER IM INHALT:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - Abonnentendaten\n- [[!fname]] - Vorname im Vokativ (Polnisch)\n- [[unsubscribe_link]] - ERFORDERLICH in jeder E-Mail\n- [[manage]] - Link zur Verwaltung der Einstellungen\n- {'{'}{'{'}männlich|weiblich{'}'}{'}'}  - geschlechtsabhängige Form, z. B. {'{'}{'{'}Lieber|Liebe{'}'}{'}'} \n\nKAMPAGNEN-WORKFLOW:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nWICHTIG:\n- Verwenden Sie zu Beginn immer list_placeholders, um die verfügbaren Platzhalter zu kennen\n- Jede E-Mail MUSS [[unsubscribe_link]] enthalten\n- Vor dem Versand einer Kampagne MÜSSEN Sie Listen zuweisen (set_campaign_lists)",

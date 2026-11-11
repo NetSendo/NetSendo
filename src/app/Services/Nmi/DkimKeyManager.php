@@ -4,11 +4,16 @@ namespace App\Services\Nmi;
 
 use App\Models\DedicatedIpAddress;
 use App\Models\DomainConfiguration;
+use App\Services\Deliverability\DnsLookupService;
 use Illuminate\Support\Facades\Log;
-use phpseclib3\Crypt\RSA;
+use RuntimeException;
 
 class DkimKeyManager
 {
+    public function __construct(
+        private DnsLookupService $dns
+    ) {}
+
     /**
      * DKIM key size (2048 recommended, 1024 for compatibility)
      */
@@ -25,12 +30,20 @@ class DkimKeyManager
     {
         $selector = $selector ?? $this->generateSelector();
 
-        // Generate RSA key pair
-        $privateKey = RSA::createKey(self::KEY_SIZE);
-        $publicKey = $privateKey->getPublicKey();
+        // Generate the RSA key pair with PHP's OpenSSL extension. (The code used
+        // phpseclib here, which was never a dependency of NetSendo: generating a key
+        // ended in "Class phpseclib3\Crypt\RSA not found".)
+        $key = openssl_pkey_new([
+            'private_key_type' => OPENSSL_KEYTYPE_RSA,
+            'private_key_bits' => max(1024, (int) config('nmi.dkim.key_size', self::KEY_SIZE)),
+        ]);
 
-        // Extract the public key in format suitable for DNS
-        $publicKeyPem = $publicKey->toString('PKCS8');
+        if ($key === false || ! openssl_pkey_export($key, $privateKeyPem)) {
+            throw new RuntimeException('Could not generate a DKIM key: ' . (openssl_error_string() ?: 'OpenSSL error'));
+        }
+
+        // The public key as PEM (SubjectPublicKeyInfo): its base64 body is the DNS "p=" value
+        $publicKeyPem = openssl_pkey_get_details($key)['key'];
         $publicKeyBase64 = $this->extractPublicKeyForDns($publicKeyPem);
 
         // Format the DNS TXT record value
@@ -38,7 +51,7 @@ class DkimKeyManager
 
         return [
             'selector' => $selector,
-            'private_key' => $privateKey->toString('PKCS8'),
+            'private_key' => $privateKeyPem,
             'public_key' => $publicKeyPem,
             'dns_record' => $dnsRecord,
             'dns_name' => "{$selector}._domainkey.{$domain}",
@@ -73,6 +86,83 @@ class DkimKeyManager
         ]);
 
         return $keyPair;
+    }
+
+    /**
+     * The domain's own DKIM key: generated once, kept until replaced on purpose.
+     * A new key starts unverified, so mail is signed again only after its DNS record
+     * has been published and checked (verifyForDomain).
+     */
+    public function generateForDomain(DomainConfiguration $domain, bool $replace = false): array
+    {
+        if ($domain->hasNmiDkimKey() && ! $replace) {
+            return $this->getDomainDnsInstructions($domain);
+        }
+
+        $keyPair = $this->generateKeyPair($domain->domain);
+
+        $domain->forceFill([
+            'nmi_dkim_selector' => $keyPair['selector'],
+            'nmi_dkim_private_key' => $keyPair['private_key'],
+            'nmi_dkim_public_key' => $keyPair['public_key'],
+            'nmi_dkim_generated_at' => now(),
+            'nmi_dkim_verified_at' => null,
+        ])->save();
+
+        Log::info('DKIM key generated for domain', [
+            'domain_id' => $domain->id,
+            'domain' => $domain->domain,
+            'selector' => $keyPair['selector'],
+        ]);
+
+        return $this->getDomainDnsInstructions($domain);
+    }
+
+    /**
+     * The TXT record to publish for the domain's key, null when it has none
+     */
+    public function getDomainDnsInstructions(DomainConfiguration $domain): ?array
+    {
+        if (! $domain->hasNmiDkimKey()) {
+            return null;
+        }
+
+        return [
+            'record_type' => 'TXT',
+            'selector' => $domain->nmi_dkim_selector,
+            'name' => "{$domain->nmi_dkim_selector}._domainkey.{$domain->domain}",
+            'value' => $this->formatDkimDnsRecord($this->extractPublicKeyForDns($domain->nmi_dkim_public_key)),
+            'ttl' => 3600,
+        ];
+    }
+
+    /**
+     * Look the domain's DKIM record up in DNS. Mail is signed with the key from the moment
+     * the record is seen; a record that has disappeared since switches signing off again.
+     */
+    public function verifyForDomain(DomainConfiguration $domain): bool
+    {
+        if (! $domain->hasNmiDkimKey()) {
+            return false;
+        }
+
+        $name = "{$domain->nmi_dkim_selector}._domainkey.{$domain->domain}";
+        $this->dns->clearCache($name);
+
+        $expected = preg_replace('/\s+/', '', $this->extractPublicKeyForDns($domain->nmi_dkim_public_key));
+        $found = false;
+
+        foreach ($this->dns->lookupTxt($name) as $record) {
+            // A long key is published as several quoted strings: compare without the seams
+            if (str_contains(preg_replace('/[\s"]+/', '', (string) $record), $expected)) {
+                $found = true;
+                break;
+            }
+        }
+
+        $domain->forceFill(['nmi_dkim_verified_at' => $found ? ($domain->nmi_dkim_verified_at ?? now()) : null])->save();
+
+        return $found;
     }
 
     /**

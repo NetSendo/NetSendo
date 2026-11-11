@@ -194,10 +194,17 @@ services:
       - "127.0.0.1:${NMI_SUBMISSION_PORT:-2587}:587"
     volumes:
       - ./docker/haraka/config:/opt/haraka/config
+      # NetSendo's own Haraka plugins (SMTP AUTH against the logins NetSendo issues)
+      - ./docker/haraka/plugins:/opt/haraka/plugins:ro
+      # The app's storage (bind-mounted ./src): the MTA reads the login file from it
+      - ./src/storage/app:/opt/haraka/netsendo-storage:ro
       - nmi-queue:/opt/haraka/queue
       - nmi-logs:/opt/haraka/logs
     environment:
       - NODE_ENV=development
+      - NMI_AUTH_FILE=/opt/haraka/netsendo-storage/nmi-mta/auth.json
+      - NMI_HELO_HOST=${NMI_HELO_HOST:-}
+      - NMI_BIND_MAP=${NMI_BIND_MAP:-}
     networks:
       - netsendo-network
     healthcheck:

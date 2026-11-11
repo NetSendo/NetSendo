@@ -49,6 +49,55 @@ class DnsLookupService
     }
 
     /**
+     * Host names an IP address points back to (its PTR records), lower-case, without
+     * the trailing dot. Not cached: it is asked for right after the record was changed.
+     */
+    public function lookupPtr(string $ip): array
+    {
+        $packed = @inet_pton($ip);
+        if ($packed === false) {
+            return [];
+        }
+
+        // 1.2.3.4 -> 4.3.2.1.in-addr.arpa, IPv6 -> nibbles under ip6.arpa
+        $name = strlen($packed) === 4
+            ? implode('.', array_reverse(explode('.', $ip))) . '.in-addr.arpa'
+            : implode('.', array_reverse(str_split(bin2hex($packed)))) . '.ip6.arpa';
+
+        try {
+            $records = @dns_get_record($name, DNS_PTR) ?: [];
+        } catch (\Throwable $e) {
+            Log::warning("DNS PTR lookup failed for {$ip}: " . $e->getMessage());
+
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            fn ($record) => strtolower(rtrim((string) ($record['target'] ?? ''), '.')),
+            $records
+        )));
+    }
+
+    /**
+     * Addresses a host name resolves to (A and AAAA). Not cached, for the same reason.
+     */
+    public function lookupAddresses(string $host): array
+    {
+        try {
+            $records = @dns_get_record($host, DNS_A | DNS_AAAA) ?: [];
+        } catch (\Throwable $e) {
+            Log::warning("DNS address lookup failed for {$host}: " . $e->getMessage());
+
+            return [];
+        }
+
+        return array_values(array_filter(array_map(
+            fn ($record) => $record['ip'] ?? $record['ipv6'] ?? null,
+            $records
+        )));
+    }
+
+    /**
      * Get SPF record for a domain
      */
     public function getSpfRecord(string $domain): ?string

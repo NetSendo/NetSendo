@@ -76,7 +76,8 @@ Schedule::command('automations:process-date-triggers')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/cron-automations.log'));
 
-// Sprawdzanie dostępnych aktualizacji NetSendo - co godzinę
+// Available NetSendo updates: runs hourly but asks GitHub only when the cached release list
+// has expired (12-18 h) or a failed attempt's pause is over (UpdateCheckService)
 Schedule::command('netsendo:check-updates')
     ->hourly()
     ->withoutOverlapping()
@@ -208,6 +209,14 @@ Schedule::command('mailbox:check-reputation')
 |--------------------------------------------------------------------------
 | These jobs only run when NMI is enabled.
 */
+
+// NMI - MTA login file: saving an NMI mailbox writes it; this restores it after the
+// shared volume was recreated. Sending through an NMI set up earlier needs no GOLD,
+// so neither does this.
+Schedule::command('nmi:sync-mta-auth')
+    ->when(fn () => (bool) config('nmi.features.enabled'))
+    ->everyTenMinutes()
+    ->withoutOverlapping();
 
 // NMI - Procesowanie aktualizacji IP warming - raz dziennie o 6:00
 Schedule::command('nmi:process-warming')

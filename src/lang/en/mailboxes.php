@@ -53,4 +53,41 @@ return [
         'key_placeholder' => 'e.g. Feedback-ID',
         'value_placeholder' => 'e.g. campaign1:user123:netsendo',
     ],
+
+    // NetSendo MTA (NMI) mailboxes: a verified domain and, optionally, a dedicated IP
+    'nmi' => [
+        'errors' => [
+            'domain_required' => 'Choose one of your verified domains for the NetSendo MTA mailbox.',
+            'domain_not_verified' => 'The domain :domain is not verified yet. Verify it in Deliverability first.',
+            'domain_missing' => 'This NetSendo MTA mailbox has no sending domain any more (the domain was removed). Edit the mailbox and choose a verified domain.',
+            'from_domain_mismatch' => 'The sender address must be in the chosen domain (@:domain).',
+            'ip_invalid' => 'Choose an active dedicated IP from one of your IP pools, or none.',
+            'ip_other_domain' => 'The IP address :ip is already assigned to another domain.',
+            'mta_login_file' => 'NetSendo could not write the MTA login file (:file). Check that the directory exists and is writable, then save again.',
+            'mta_login_refused' => 'The MTA does not know this domain\'s login: it must read the login file NetSendo writes (the nmi-auth volume in docker-compose.yml).',
+        ],
+        // Added to the result of "Test connection" of an NMI mailbox
+        'test' => [
+            'ip_not_on_mta' => 'Note: the MTA does not own :ip, so this message left from the MTA\'s own address.',
+            'unsigned' => 'Note: the message was not DKIM-signed. Publish the domain\'s DKIM record and verify it in the mailbox form.',
+        ],
+    ],
+
+    // Field names in validation messages of the mailbox form
+    'attributes' => [
+        'name' => 'mailbox name',
+        'provider' => 'provider',
+        'from_email' => 'sender address',
+        'from_name' => 'sender name',
+        'reply_to' => 'Reply-To address',
+        'allowed_types' => 'allowed message types',
+        'credentials' => 'server login details',
+        'daily_limit' => 'daily sending limit',
+        'time_restriction' => 'minimum interval',
+        'custom_headers.*.key' => 'header name',
+        'custom_headers.*.value' => 'header value',
+        'domain_configuration_id' => 'sending domain',
+        'dedicated_ip_id' => 'dedicated IP',
+        'reply_imap_host' => 'reply IMAP host',
+    ],
 ];

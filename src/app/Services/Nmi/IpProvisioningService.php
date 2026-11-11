@@ -4,292 +4,219 @@ namespace App\Services\Nmi;
 
 use App\Models\DedicatedIpAddress;
 use App\Models\IpPool;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Http;
+use App\Models\IpProviderSetting;
+use App\Services\Nmi\Providers\DigitalOceanProvider;
+use App\Services\Nmi\Providers\IpProvider;
+use App\Services\Nmi\Providers\IpProviderException;
+use App\Services\Nmi\Providers\LinodeProvider;
+use App\Services\Nmi\Providers\VultrProvider;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Dedicated IP addresses ordered from a hosting company through its API.
+ *
+ * Each account connects a provider with its own API key (IpProviderSetting). Ordering an
+ * address means: add one more public IPv4 to the server the NetSendo MTA runs on, point
+ * its reverse DNS at the IP's host name where the provider's API can, and remember what
+ * is needed to give the address back. What the API cannot do (configuring the address in
+ * the server's operating system, the forward DNS record) is listed for the person as
+ * next steps by the panel.
+ */
 class IpProvisioningService
 {
     /**
-     * Supported providers
+     * @var array<string, class-string<IpProvider>>
      */
-    private const PROVIDERS = ['vultr', 'linode', 'digitalocean'];
+    public const PROVIDERS = [
+        'vultr' => VultrProvider::class,
+        'linode' => LinodeProvider::class,
+        'digitalocean' => DigitalOceanProvider::class,
+    ];
 
     /**
-     * Get list of available (configured) providers
+     * A provider's API with a given key
      */
-    public function getAvailableProviders(): array
+    public function client(string $provider, string $apiKey): IpProvider
     {
-        $providers = [];
+        $class = self::PROVIDERS[$provider] ?? null;
 
-        foreach (self::PROVIDERS as $provider) {
-            $config = config("nmi.ip_providers.{$provider}");
-
-            $providers[$provider] = [
-                'name' => $this->getProviderName($provider),
-                'enabled' => $config['enabled'] ?? false,
-                'configured' => !empty($config['api_key']),
-            ];
+        if ($class === null) {
+            throw new IpProviderException("Unknown provider: {$provider}");
         }
 
-        return $providers;
+        return new $class($apiKey);
     }
 
     /**
-     * Get provider display name
+     * A provider's API with the key the account connected
      */
-    private function getProviderName(string $provider): string
+    public function clientFor(int $userId, string $provider): IpProvider
     {
-        return match ($provider) {
-            'vultr' => 'Vultr',
-            'linode' => 'Linode',
-            'digitalocean' => 'DigitalOcean',
-            default => ucfirst($provider),
-        };
-    }
+        $apiKey = IpProviderSetting::getApiKey($userId, $provider);
 
-    /**
-     * Provision a new IP address from provider
-     */
-    public function provisionIp(string $provider, IpPool $pool, string $region = 'ams'): DedicatedIpAddress
-    {
-        $config = config("nmi.ip_providers.{$provider}");
-
-        if (!$config['enabled'] || empty($config['api_key'])) {
-            throw new \Exception("Provider {$provider} is not configured.");
+        if (! $apiKey) {
+            throw new IpProviderException(__('nmi.provider_not_configured'));
         }
 
-        $apiKey = $config['api_key'];
-
-        return match ($provider) {
-            'vultr' => $this->provisionFromVultr($apiKey, $pool, $region),
-            'linode' => $this->provisionFromLinode($apiKey, $pool, $region),
-            'digitalocean' => $this->provisionFromDigitalOcean($apiKey, $pool, $region),
-            default => throw new \Exception("Unknown provider: {$provider}"),
-        };
+        return $this->client($provider, $apiKey);
     }
 
     /**
-     * Provision IP from Vultr
+     * Connect a provider: the key is stored only after the provider has accepted it.
+     *
+     * @return array{name: ?string, email: ?string} whose account the key belongs to
      */
-    private function provisionFromVultr(string $apiKey, IpPool $pool, string $region): DedicatedIpAddress
+    public function connect(int $userId, string $provider, string $apiKey): array
     {
-        // Vultr API: Create Reserved IP
-        // https://www.vultr.com/api/#operation/create-reserved-ip
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$apiKey}",
-            'Content-Type' => 'application/json',
-        ])->post('https://api.vultr.com/v2/reserved-ips', [
-            'region' => $region,
-            'ip_type' => 'v4',
-            'label' => "nmi-pool-{$pool->id}",
-        ]);
+        $account = $this->client($provider, trim($apiKey))->account();
 
-        if (!$response->successful()) {
-            Log::error('Vultr IP provisioning failed', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-            throw new \Exception('Failed to provision IP from Vultr: ' . $response->json('error.message', 'Unknown error'));
-        }
+        IpProviderSetting::updateOrCreate(
+            ['user_id' => $userId, 'provider' => $provider],
+            ['api_key' => trim($apiKey), 'enabled' => true]
+        );
 
-        $data = $response->json('reserved_ip');
+        return $account;
+    }
 
-        return DedicatedIpAddress::create([
-            'ip_pool_id' => $pool->id,
-            'ip_address' => $data['subnet'],
-            'hostname' => $data['label'] ?? 'vultr-' . $data['id'],
-            'ip_version' => 4,
-            'provider' => DedicatedIpAddress::PROVIDER_VULTR,
-            'provider_id' => $data['id'],
-            'warming_status' => DedicatedIpAddress::WARMING_NEW,
-            'reputation_score' => 100,
-            'is_active' => true,
-            'status_message' => "Provisioned from Vultr region {$region}",
-        ]);
+    public function disconnect(int $userId, string $provider): void
+    {
+        IpProviderSetting::where('user_id', $userId)->where('provider', $provider)->delete();
     }
 
     /**
-     * Provision IP from Linode
+     * The account's servers at the provider: one of them runs the NetSendo MTA
      */
-    private function provisionFromLinode(string $apiKey, IpPool $pool, string $region): DedicatedIpAddress
+    public function servers(int $userId, string $provider): array
     {
-        // Linode API: Allocate IP Address
-        // https://www.linode.com/docs/api/networking/#ip-address-allocate
-        // Note: Linode requires a Linode instance to allocate additional IPs
-
-        throw new \Exception('Linode IP provisioning requires an existing Linode instance. Please use manual IP addition or contact support.');
+        return $this->clientFor($userId, $provider)->servers();
     }
 
     /**
-     * Provision IP from DigitalOcean
+     * Order an address for a server and add it to the pool.
+     *
+     * Reverse DNS is attempted right away; when the provider refuses (typically because
+     * the host name does not resolve to the new address yet) the address is kept and the
+     * reason returned, so it can be set again later (setReverseDns).
+     *
+     * @return array{ip: DedicatedIpAddress, reverse_dns: array{supported: bool, set: bool, message: ?string}}
      */
-    private function provisionFromDigitalOcean(string $apiKey, IpPool $pool, string $region): DedicatedIpAddress
+    public function provision(int $userId, IpPool $pool, string $provider, string $serverId, string $hostname): array
     {
-        // DigitalOcean API: Create Reserved IP
-        // https://docs.digitalocean.com/reference/api/api-reference/#operation/reservedIPs_create
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$apiKey}",
-            'Content-Type' => 'application/json',
-        ])->post('https://api.digitalocean.com/v2/reserved_ips', [
-            'region' => $this->mapToDoRegion($region),
-        ]);
+        $client = $this->clientFor($userId, $provider);
+        $hostname = strtolower(trim($hostname));
 
-        if (!$response->successful()) {
-            Log::error('DigitalOcean IP provisioning failed', [
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-            throw new \Exception('Failed to provision IP from DigitalOcean: ' . $response->json('message', 'Unknown error'));
-        }
-
-        $data = $response->json('reserved_ip');
-
-        return DedicatedIpAddress::create([
-            'ip_pool_id' => $pool->id,
-            'ip_address' => $data['ip'],
-            'hostname' => 'do-' . str_replace('.', '-', $data['ip']),
-            'ip_version' => 4,
-            'provider' => DedicatedIpAddress::PROVIDER_DIGITALOCEAN,
-            'provider_id' => $data['ip'], // DO uses IP as identifier
-            'warming_status' => DedicatedIpAddress::WARMING_NEW,
-            'reputation_score' => 100,
-            'is_active' => true,
-            'status_message' => "Provisioned from DigitalOcean region {$data['region']['slug']}",
-        ]);
-    }
-
-    /**
-     * Map generic region code to DigitalOcean region
-     */
-    private function mapToDoRegion(string $region): string
-    {
-        return match ($region) {
-            'ams' => 'ams3',
-            'nyc' => 'nyc3',
-            'sfo' => 'sfo3',
-            'lon' => 'lon1',
-            'fra' => 'fra1',
-            'sgp' => 'sgp1',
-            default => 'ams3',
-        };
-    }
-
-    /**
-     * Release IP back to provider
-     */
-    public function releaseIp(DedicatedIpAddress $ip): bool
-    {
-        if (empty($ip->provider_id)) {
-            // Manual IP, just delete
-            return true;
-        }
-
-        $config = config("nmi.ip_providers.{$ip->provider}");
-
-        if (empty($config['api_key'])) {
-            Log::warning('Cannot release IP - provider not configured', [
-                'ip_id' => $ip->id,
-                'provider' => $ip->provider,
-            ]);
-            return true; // Allow deletion anyway
-        }
-
-        $apiKey = $config['api_key'];
+        $address = $client->addAddress($serverId, $hostname);
 
         try {
-            return match ($ip->provider) {
-                DedicatedIpAddress::PROVIDER_VULTR => $this->releaseVultrIp($apiKey, $ip),
-                DedicatedIpAddress::PROVIDER_DIGITALOCEAN => $this->releaseDoIp($apiKey, $ip),
-                default => true,
-            };
-        } catch (\Exception $e) {
-            Log::error('Failed to release IP from provider', [
-                'ip_id' => $ip->id,
-                'error' => $e->getMessage(),
+            DedicatedIpAddress::forgetRemoved($address['address']);
+
+            $ip = DedicatedIpAddress::create([
+                'ip_pool_id' => $pool->id,
+                'ip_address' => $address['address'],
+                'hostname' => $hostname,
+                'ip_version' => 'ipv4',
+                'provider' => $provider,
+                'provider_id' => $address['provider_id'],
+                'provider_server_id' => $serverId,
+                'provider_region' => $address['region'],
+                'bind_address' => $address['bind_address'],
+                'warming_status' => DedicatedIpAddress::WARMING_NEW,
+                'reputation_score' => 100,
+                'is_active' => true,
             ]);
-            return false;
+        } catch (\Throwable $e) {
+            // Never leave a paid address at the provider that NetSendo knows nothing about
+            try {
+                $client->releaseAddress($serverId, $address['provider_id'], $address['address']);
+            } catch (IpProviderException $release) {
+                Log::error('NMI: an ordered address could be neither stored nor released', [
+                    'provider' => $provider,
+                    'address' => $address['address'],
+                    'error' => $release->getMessage(),
+                ]);
+            }
+
+            throw $e;
         }
+
+        Log::info('NMI: address ordered from provider', [
+            'provider' => $provider,
+            'ip_id' => $ip->id,
+            'address' => $ip->ip_address,
+            'server' => $serverId,
+        ]);
+
+        return ['ip' => $ip, 'reverse_dns' => $this->trySetReverseDns($client, $ip)];
     }
 
     /**
-     * Release Vultr IP
+     * Point the address back at the IP's host name through the provider's API.
+     *
+     * @return array{supported: bool, set: bool, message: ?string}
      */
-    private function releaseVultrIp(string $apiKey, DedicatedIpAddress $ip): bool
+    public function setReverseDns(int $userId, DedicatedIpAddress $ip): array
     {
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$apiKey}",
-        ])->delete("https://api.vultr.com/v2/reserved-ips/{$ip->provider_id}");
+        if (! $this->isManaged($ip)) {
+            return ['supported' => false, 'set' => false, 'message' => null];
+        }
 
-        return $response->successful() || $response->status() === 404;
+        return $this->trySetReverseDns($this->clientFor($userId, $ip->provider), $ip);
     }
 
     /**
-     * Release DigitalOcean IP
+     * Give the address back to the provider. An address added by hand has nothing to
+     * give back.
+     *
+     * @throws IpProviderException when the provider refuses: the address is still billed
      */
-    private function releaseDoIp(string $apiKey, DedicatedIpAddress $ip): bool
+    public function release(int $userId, DedicatedIpAddress $ip): void
     {
-        $response = Http::withHeaders([
-            'Authorization' => "Bearer {$apiKey}",
-        ])->delete("https://api.digitalocean.com/v2/reserved_ips/{$ip->provider_id}");
+        if (! $this->isManaged($ip)) {
+            return;
+        }
 
-        return $response->successful() || $response->status() === 404;
+        $this->clientFor($userId, $ip->provider)
+            ->releaseAddress((string) $ip->provider_server_id, (string) $ip->provider_id, $ip->ip_address);
+
+        Log::info('NMI: address released at provider', [
+            'provider' => $ip->provider,
+            'ip_id' => $ip->id,
+            'address' => $ip->ip_address,
+        ]);
     }
 
     /**
-     * Get available regions for a provider
+     * Whether the address was ordered through a provider's API (and can be released there)
      */
-    public function getRegions(string $provider, ?string $apiKey = null): array
+    public function isManaged(DedicatedIpAddress $ip): bool
     {
-        return match ($provider) {
-            'vultr' => [
-                'ams' => 'Amsterdam',
-                'atl' => 'Atlanta',
-                'cdg' => 'Paris',
-                'dfw' => 'Dallas',
-                'ewr' => 'New Jersey',
-                'fra' => 'Frankfurt',
-                'lhr' => 'London',
-                'nrt' => 'Tokyo',
-                'ord' => 'Chicago',
-                'sea' => 'Seattle',
-                'sgp' => 'Singapore',
-                'sjc' => 'Silicon Valley',
-                'syd' => 'Sydney',
-            ],
-            'digitalocean' => [
-                'ams' => 'Amsterdam',
-                'nyc' => 'New York',
-                'sfo' => 'San Francisco',
-                'lon' => 'London',
-                'fra' => 'Frankfurt',
-                'sgp' => 'Singapore',
-                'blr' => 'Bangalore',
-                'tor' => 'Toronto',
-                'syd' => 'Sydney',
-            ],
-            'linode' => [
-                'eu-west' => 'London, UK',
-                'us-east' => 'Newark, NJ',
-                'us-west' => 'Fremont, CA',
-                'ap-south' => 'Singapore',
-                'eu-central' => 'Frankfurt',
-            ],
-            default => [],
-        };
+        return isset(self::PROVIDERS[$ip->provider]) && filled($ip->provider_id);
     }
 
     /**
-     * Provision IP with user's API key from database
+     * Whether the address's reverse DNS can be set through the API of its provider
      */
-    public function provisionIpWithUserKey(string $provider, IpPool $pool, string $region, string $apiKey): DedicatedIpAddress
+    public function canSetReverseDns(DedicatedIpAddress $ip): bool
     {
-        return match ($provider) {
-            'vultr' => $this->provisionFromVultr($apiKey, $pool, $region),
-            'linode' => $this->provisionFromLinode($apiKey, $pool, $region),
-            'digitalocean' => $this->provisionFromDigitalOcean($apiKey, $pool, $region),
-            default => throw new \Exception("Unknown provider: {$provider}"),
-        };
+        return $this->isManaged($ip) && $this->client($ip->provider, '')->supportsReverseDns();
+    }
+
+    private function trySetReverseDns(IpProvider $client, DedicatedIpAddress $ip): array
+    {
+        if (! $client->supportsReverseDns()) {
+            return ['supported' => false, 'set' => false, 'message' => null];
+        }
+
+        if (! filled($ip->hostname)) {
+            return ['supported' => true, 'set' => false, 'message' => __('nmi.ptr.no_hostname')];
+        }
+
+        try {
+            $client->setReverseDns((string) $ip->provider_server_id, (string) $ip->provider_id, $ip->ip_address, $ip->hostname);
+        } catch (IpProviderException $e) {
+            return ['supported' => true, 'set' => false, 'message' => $e->getMessage()];
+        }
+
+        return ['supported' => true, 'set' => true, 'message' => null];
     }
 }
-

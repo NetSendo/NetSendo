@@ -53,4 +53,41 @@ return [
         'key_placeholder' => 'z.B. Feedback-ID',
         'value_placeholder' => 'z.B. campaign1:user123:netsendo',
     ],
+
+    // NetSendo MTA (NMI) mailboxes: a verified domain and, optionally, a dedicated IP
+    'nmi' => [
+        'errors' => [
+            'domain_required' => 'Wählen Sie eine Ihrer verifizierten Domains für das NetSendo-MTA-Postfach.',
+            'domain_not_verified' => 'Die Domain :domain ist noch nicht verifiziert. Verifizieren Sie sie zuerst unter Zustellbarkeit.',
+            'domain_missing' => 'Dieses NetSendo-MTA-Postfach hat keine Versanddomain mehr (die Domain wurde entfernt). Bearbeiten Sie das Postfach und wählen Sie eine verifizierte Domain.',
+            'from_domain_mismatch' => 'Die Absenderadresse muss in der gewählten Domain liegen (@:domain).',
+            'ip_invalid' => 'Wählen Sie eine aktive dedizierte IP aus einem Ihrer IP-Pools oder keine.',
+            'ip_other_domain' => 'Die IP-Adresse :ip ist bereits einer anderen Domain zugewiesen.',
+            'mta_login_file' => 'NetSendo konnte die MTA-Login-Datei (:file) nicht schreiben. Prüfen Sie, ob das Verzeichnis existiert und beschreibbar ist, und speichern Sie erneut.',
+            'mta_login_refused' => 'Der MTA kennt den Login dieser Domain nicht: Er muss die von NetSendo geschriebene Login-Datei lesen (Volume nmi-auth in docker-compose.yml).',
+        ],
+        // Added to the result of "Test connection" of an NMI mailbox
+        'test' => [
+            'ip_not_on_mta' => 'Hinweis: Der MTA besitzt :ip nicht, daher wurde diese Nachricht von der eigenen Adresse des MTA gesendet.',
+            'unsigned' => 'Hinweis: Die Nachricht wurde nicht DKIM-signiert. Veröffentlichen Sie den DKIM-Eintrag der Domain und verifizieren Sie ihn im Postfach-Formular.',
+        ],
+    ],
+
+    // Field names in validation messages of the mailbox form
+    'attributes' => [
+        'name' => 'Name des Postfachs',
+        'provider' => 'Anbieter',
+        'from_email' => 'Absenderadresse',
+        'from_name' => 'Absendername',
+        'reply_to' => 'Reply-To-Adresse',
+        'allowed_types' => 'erlaubte Nachrichtentypen',
+        'credentials' => 'Server-Zugangsdaten',
+        'daily_limit' => 'tägliches Versandlimit',
+        'time_restriction' => 'Mindestabstand',
+        'custom_headers.*.key' => 'Header-Name',
+        'custom_headers.*.value' => 'Header-Wert',
+        'domain_configuration_id' => 'Versanddomain',
+        'dedicated_ip_id' => 'dedizierte IP',
+        'reply_imap_host' => 'IMAP-Host für Antworten',
+    ],
 ];

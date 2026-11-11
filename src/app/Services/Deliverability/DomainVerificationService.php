@@ -223,9 +223,16 @@ class DomainVerificationService
         $customSelectors = self::parseDkimSelectors($domain->dkim_selector);
         $providers = array_values(array_unique($providers));
 
+        // So are the keys NetSendo's own MTA signs with: the domain's key and the keys of
+        // the dedicated IPs assigned to it (their selectors are generated, never guessable)
+        $nmiSelectors = array_values(array_filter(array_merge(
+            [$domain->nmi_dkim_selector],
+            $domain->dedicatedIps()->whereNotNull('dkim_selector')->pluck('dkim_selector')->all()
+        )));
+
         return [
             'spf_includes' => array_values(array_unique($allIncludes)),
-            'dkim_selectors' => array_values(array_unique(array_merge($customSelectors, $allSelectors))),
+            'dkim_selectors' => array_values(array_unique(array_merge($customSelectors, $nmiSelectors, $allSelectors))),
             'custom_dkim_selectors' => $customSelectors,
             'provider_name' => count($providers) === 1 ? $providers[0] : null,
             'providers' => $providers,

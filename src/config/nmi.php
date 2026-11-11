@@ -25,26 +25,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | IP Provider Settings
+    | MTA Login File
     |--------------------------------------------------------------------------
     |
-    | Configuration for automatic IP provisioning via cloud providers.
+    | NetSendo issues one SMTP login per sending domain and writes them (as
+    | password hashes) to this file. The MTA container reads it from the same
+    | volume: see docker-compose.yml (nmi-auth) and
+    | docker/haraka/plugins/netsendo_auth.js.
     |
     */
-    'ip_providers' => [
-        'vultr' => [
-            'enabled' => env('NMI_VULTR_ENABLED', false),
-            'api_key' => env('NMI_VULTR_API_KEY'),
-        ],
-        'linode' => [
-            'enabled' => env('NMI_LINODE_ENABLED', false),
-            'api_key' => env('NMI_LINODE_API_KEY'),
-        ],
-        'digitalocean' => [
-            'enabled' => env('NMI_DO_ENABLED', false),
-            'api_key' => env('NMI_DO_API_KEY'),
-        ],
-    ],
+    'mta_auth_file' => env('NMI_MTA_AUTH_FILE', storage_path('app/nmi-mta/auth.json')),
 
     /*
     |--------------------------------------------------------------------------

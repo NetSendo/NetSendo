@@ -2,15 +2,22 @@
 
 namespace App\Http\Controllers;
 
+use App\Licensing\Feature;
+use App\Models\DedicatedIpAddress;
+use App\Models\DomainConfiguration;
 use App\Models\Mailbox;
+use App\Services\LicenseService;
 use App\Services\Mail\BounceMailboxService;
 use App\Services\Mail\BounceWebhookAuthenticator;
 use App\Services\Mail\MailProviderService;
 use App\Services\Mail\MailboxReputationService;
 use App\Services\Mail\ReplyMailboxService;
+use App\Services\Nmi\DkimKeyManager;
+use App\Services\Nmi\MtaCredentialService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 
 class MailboxController extends Controller
@@ -21,7 +28,10 @@ class MailboxController extends Controller
         private MailProviderService $providerService,
         private BounceMailboxService $bounceService,
         private MailboxReputationService $reputationService,
-        private ReplyMailboxService $replyService
+        private ReplyMailboxService $replyService,
+        private MtaCredentialService $mtaCredentials,
+        private LicenseService $license,
+        private DkimKeyManager $dkimKeys
     ) {}
 
     /**
@@ -30,6 +40,7 @@ class MailboxController extends Controller
     public function index()
     {
         $mailboxes = Mailbox::forUser(Auth::id())
+            ->with(['domainConfiguration:id,domain', 'dedicatedIp:id,ip_address'])
             ->orderByDesc('is_default')
             ->orderBy('name')
             ->get()
@@ -62,6 +73,11 @@ class MailboxController extends Controller
                     'reply_to' => $mailbox->reply_to,
                     'time_restriction' => $mailbox->time_restriction,
                     'google_integration_id' => $mailbox->google_integration_id,
+                    // NetSendo MTA (NMI): the domain the mailbox sends as and its dedicated IP
+                    'domain_configuration_id' => $mailbox->domain_configuration_id,
+                    'dedicated_ip_id' => $mailbox->dedicated_ip_id,
+                    'nmi_domain' => $mailbox->domainConfiguration?->domain,
+                    'nmi_ip' => $mailbox->dedicatedIp?->ip_address,
                     // Bounce mailbox monitoring
                     'bounce_enabled' => $mailbox->bounce_enabled,
                     'bounce_imap_host' => $mailbox->bounce_imap_host,
@@ -93,13 +109,15 @@ class MailboxController extends Controller
 
         return Inertia::render('Settings/Mailboxes/Index', [
             'mailboxes' => $mailboxes,
-            'providers' => Mailbox::getProviders(),
+            'providers' => Mailbox::getPanelProviders(),
             'gmail_configured' => \App\Models\GoogleIntegration::where('user_id', Auth::id())->where('status', 'active')->exists() || \App\Models\Setting::where('key', 'google_client_id')->exists() || !empty(config('services.google.client_id')),
             'providerFields' => [
                 Mailbox::PROVIDER_SMTP => MailProviderService::getProviderFields(Mailbox::PROVIDER_SMTP),
                 Mailbox::PROVIDER_SENDGRID => MailProviderService::getProviderFields(Mailbox::PROVIDER_SENDGRID),
                 Mailbox::PROVIDER_GMAIL => MailProviderService::getProviderFields(Mailbox::PROVIDER_GMAIL),
+                Mailbox::PROVIDER_NMI => MailProviderService::getProviderFields(Mailbox::PROVIDER_NMI),
             ],
+            'nmi' => $this->nmiFormOptions(),
             'messageTypes' => [
                 Mailbox::TYPE_BROADCAST => __('mailboxes.types.broadcast'),
                 Mailbox::TYPE_AUTORESPONDER => __('mailboxes.types.autoresponder'),
@@ -129,14 +147,17 @@ class MailboxController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'provider' => ['required', Rule::in([Mailbox::PROVIDER_SMTP, Mailbox::PROVIDER_SENDGRID, Mailbox::PROVIDER_GMAIL])],
+            'provider' => ['required', Rule::in(Mailbox::panelProviders())],
             'from_email' => ['required', 'email', 'max:255'],
             'from_name' => ['required', 'string', 'max:255'],
             'reply_to' => ['nullable', 'email', 'max:255'],
             'is_active' => ['boolean'],
             'allowed_types' => ['required', 'array', 'min:1'],
             'allowed_types.*' => [Rule::in([Mailbox::TYPE_BROADCAST, Mailbox::TYPE_AUTORESPONDER, Mailbox::TYPE_SYSTEM])],
-            'credentials' => [Rule::requiredIf(fn () => $request->provider !== Mailbox::PROVIDER_GMAIL), 'array'],
+            // Gmail logs in with OAuth, the NetSendo MTA with the login of the chosen domain
+            'credentials' => [Rule::requiredIf(fn () => !in_array($request->provider, [Mailbox::PROVIDER_GMAIL, Mailbox::PROVIDER_NMI], true)), 'array'],
+            'domain_configuration_id' => [Rule::requiredIf(fn () => $request->provider === Mailbox::PROVIDER_NMI), 'nullable', 'integer'],
+            'dedicated_ip_id' => ['nullable', 'integer'],
             'daily_limit' => ['nullable', 'integer', 'min:1'],
             'time_restriction' => ['nullable', 'integer', 'min:0'],
             'google_integration_id' => ['nullable', 'exists:google_integrations,id'],
@@ -144,7 +165,9 @@ class MailboxController extends Controller
             'custom_headers' => ['nullable', 'array'],
             'custom_headers.*.key' => ['required_with:custom_headers', 'string', 'max:255'],
             'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
-        ]);
+        ], [], $this->fieldNames());
+
+        $nmi = $this->resolveNmiLink($validated);
 
         $mailbox = Mailbox::create([
             'user_id' => Auth::id(),
@@ -155,13 +178,17 @@ class MailboxController extends Controller
             'reply_to' => $validated['reply_to'] ?? null,
             'is_active' => $validated['is_active'] ?? true,
             'allowed_types' => array_values($validated['allowed_types']),
-            'credentials' => $validated['credentials'] ?? [],
+            'credentials' => $nmi ? [] : ($validated['credentials'] ?? []),
             'daily_limit' => $validated['daily_limit'] ?? null,
             'time_restriction' => $validated['time_restriction'] ?? null,
             'google_integration_id' => $validated['google_integration_id'] ?? null,
+            'domain_configuration_id' => ($nmi['domain'] ?? null)?->id,
+            'dedicated_ip_id' => ($nmi['ip'] ?? null)?->id,
             'custom_headers' => $validated['custom_headers'] ?? null,
             'tracking_enabled' => $validated['tracking_enabled'] ?? true,
         ]);
+
+        $this->claimDedicatedIp($nmi);
 
         // Set as default if it's the first mailbox
         if (Mailbox::forUser(Auth::id())->count() === 1) {
@@ -233,7 +260,9 @@ class MailboxController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'provider' => ['required', Rule::in([Mailbox::PROVIDER_SMTP, Mailbox::PROVIDER_SENDGRID, Mailbox::PROVIDER_GMAIL])],
+            // The mailbox's own provider stays valid: an NMI mailbox remains editable on
+            // an installation where the NetSendo MTA has been switched off since
+            'provider' => ['required', Rule::in(array_unique([...Mailbox::panelProviders(), $mailbox->provider]))],
             'from_email' => ['required', 'email', 'max:255'],
             'from_name' => ['required', 'string', 'max:255'],
             'reply_to' => ['nullable', 'email', 'max:255'],
@@ -241,6 +270,8 @@ class MailboxController extends Controller
             'allowed_types' => ['required', 'array', 'min:1'],
             'allowed_types.*' => [Rule::in([Mailbox::TYPE_BROADCAST, Mailbox::TYPE_AUTORESPONDER, Mailbox::TYPE_SYSTEM])],
             'credentials' => ['sometimes', 'array'],
+            'domain_configuration_id' => ['sometimes', 'nullable', 'integer'],
+            'dedicated_ip_id' => ['sometimes', 'nullable', 'integer'],
             'daily_limit' => ['nullable', 'integer', 'min:1'],
             'time_restriction' => ['nullable', 'integer', 'min:0'],
             'google_integration_id' => ['nullable', 'exists:google_integrations,id'],
@@ -248,7 +279,7 @@ class MailboxController extends Controller
             'custom_headers' => ['nullable', 'array'],
             'custom_headers.*.key' => ['required_with:custom_headers', 'string', 'max:255'],
             'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
-        ]);
+        ], [], $this->fieldNames());
 
         $webhookValidated = $request->validate([
             'bounce_webhook_sendgrid_key' => [
@@ -273,7 +304,7 @@ class MailboxController extends Controller
             'reply_imap_folder' => ['nullable', 'string', 'max:100'],
             'reply_imap_username' => ['nullable', 'string', 'max:255'],
             'reply_imap_password' => ['nullable', 'string', 'max:1024'],
-        ]) : null;
+        ], [], $this->fieldNames()) : null;
 
         $updateData = [
             'name' => $validated['name'],
@@ -293,9 +324,22 @@ class MailboxController extends Controller
             'tracking_enabled' => $validated['tracking_enabled'] ?? $mailbox->tracking_enabled ?? true,
         ];
 
+        // NetSendo MTA: the domain (and dedicated IP) the mailbox sends through. Any other
+        // provider has neither, so switching away drops the link.
+        $nmi = $this->resolveNmiLink($validated, $mailbox);
+        if (! $nmi || $nmi['domain']) {
+            $updateData['domain_configuration_id'] = ($nmi['domain'] ?? null)?->id;
+            $updateData['dedicated_ip_id'] = ($nmi['ip'] ?? null)?->id;
+        }
+
+        if ($nmi) {
+            // A login typed in for another provider is of no use to the NetSendo MTA
+            $updateData['credentials'] = [];
+        }
+
         // Only update credentials if provided
         // Handle credentials update with merging
-        if (!empty($validated['credentials'])) {
+        if (!$nmi && !empty($validated['credentials'])) {
             $currentCredentials = $mailbox->getDecryptedCredentials();
             $newCredentials = $validated['credentials'];
 
@@ -318,6 +362,8 @@ class MailboxController extends Controller
         }
 
         $mailbox->update($updateData);
+
+        $this->claimDedicatedIp($nmi);
 
         // Handle bounce mailbox configuration separately
         if ($request->has('bounce_enabled')) {
@@ -474,6 +520,185 @@ class MailboxController extends Controller
             'message' => __('mailboxes.bounce_webhooks.token_generated'),
             'bounce_webhook' => $this->bounceWebhookSettings($mailbox->fresh()),
         ]);
+    }
+
+    /**
+     * What the mailbox form needs to offer the "NetSendo MTA" provider: the account's
+     * verified domains and its dedicated IPs. Empty lists where the MTA is switched off.
+     */
+    private function nmiFormOptions(): array
+    {
+        if (! Mailbox::nmiAvailable()) {
+            return ['enabled' => false, 'domains' => [], 'ips' => []];
+        }
+
+        $userId = Auth::id();
+
+        return [
+            'enabled' => true,
+            'domains' => DomainConfiguration::forUser($userId)
+                ->verified()
+                ->orderBy('domain')
+                ->get(['id', 'domain'])
+                ->map(fn (DomainConfiguration $domain) => [
+                    'id' => $domain->id,
+                    'domain' => $domain->domain,
+                ])
+                ->values(),
+            'ips' => DedicatedIpAddress::query()
+                ->whereHas('pool', fn ($pool) => $pool->where('user_id', $userId))
+                ->active()
+                ->orderBy('ip_address')
+                ->get(['id', 'ip_address', 'hostname', 'domain_configuration_id', 'warming_status'])
+                ->map(fn (DedicatedIpAddress $ip) => [
+                    'id' => $ip->id,
+                    'ip_address' => $ip->ip_address,
+                    'hostname' => $ip->hostname,
+                    // An IP signs with the DKIM key of one domain: null = free to take
+                    'domain_configuration_id' => $ip->domain_configuration_id,
+                    'warming_status' => $ip->warming_status,
+                ])
+                ->values(),
+        ];
+    }
+
+    /**
+     * The verified domain and the dedicated IP an NMI mailbox is saved with, checked
+     * against the account; null for every other provider.
+     *
+     * Setting NMI up needs GOLD (Feature::MailInfrastructure): creating an NMI mailbox,
+     * switching a mailbox to NMI, changing its domain or IP. Saving anything else on an
+     * NMI mailbox does not, in line with the settings/nmi routes: what was set up under
+     * GOLD keeps working and stays editable.
+     *
+     * The domain's login to the MTA is issued here, before the mailbox is saved, so a
+     * mailbox that cannot log in is never stored.
+     *
+     * @return array{domain: ?DomainConfiguration, ip: ?DedicatedIpAddress}|null
+     */
+    private function resolveNmiLink(array $validated, ?Mailbox $mailbox = null): ?array
+    {
+        if ($validated['provider'] !== Mailbox::PROVIDER_NMI) {
+            return null;
+        }
+
+        $wasNmi = $mailbox?->isNmi() ?? false;
+
+        // A partial update (the active switch in the list) carries no domain: keep the link
+        $partial = $wasNmi && ! array_key_exists('domain_configuration_id', $validated);
+
+        $domainId = $partial
+            ? $mailbox->domain_configuration_id
+            : ($validated['domain_configuration_id'] ?? null);
+        $ipId = array_key_exists('dedicated_ip_id', $validated)
+            ? $validated['dedicated_ip_id']
+            : ($partial ? $mailbox->dedicated_ip_id : null);
+
+        $changed = ! $wasNmi
+            || (int) $domainId !== (int) $mailbox->domain_configuration_id
+            || (int) $ipId !== (int) $mailbox->dedicated_ip_id;
+
+        if ($changed) {
+            $this->license->ensureAllows(Feature::MailInfrastructure);
+        }
+
+        $domain = $domainId
+            ? DomainConfiguration::forUser(Auth::id())->find($domainId)
+            : null;
+
+        if (! $domain) {
+            // A mailbox whose domain was removed cannot send, but the list must still be
+            // able to switch it off: nothing to check, and the stored link is left alone
+            if ($partial) {
+                return ['domain' => null, 'ip' => null];
+            }
+
+            throw ValidationException::withMessages([
+                'domain_configuration_id' => __('mailboxes.nmi.errors.domain_required'),
+            ]);
+        }
+
+        $fromDomain = strtolower((string) substr(strrchr($validated['from_email'], '@') ?: '', 1));
+        if ($fromDomain !== strtolower($domain->domain)) {
+            throw ValidationException::withMessages([
+                'from_email' => __('mailboxes.nmi.errors.from_domain_mismatch', ['domain' => $domain->domain]),
+            ]);
+        }
+
+        $ip = $ipId
+            ? DedicatedIpAddress::query()
+                ->whereHas('pool', fn ($pool) => $pool->where('user_id', Auth::id()))
+                ->find($ipId)
+            : null;
+
+        // The link the mailbox already has is not judged again: a domain that lost its
+        // verification or an IP that was paused must not stop the mailbox from being
+        // renamed or switched off
+        if (! $changed) {
+            return ['domain' => $domain, 'ip' => $ip];
+        }
+
+        if (! $domain->cname_verified) {
+            throw ValidationException::withMessages([
+                'domain_configuration_id' => __('mailboxes.nmi.errors.domain_not_verified', ['domain' => $domain->domain]),
+            ]);
+        }
+
+        if ($ipId) {
+            if (! $ip || ! $ip->is_active) {
+                throw ValidationException::withMessages([
+                    'dedicated_ip_id' => __('mailboxes.nmi.errors.ip_invalid'),
+                ]);
+            }
+
+            if ($ip->domain_configuration_id !== null && (int) $ip->domain_configuration_id !== (int) $domain->id) {
+                throw ValidationException::withMessages([
+                    'dedicated_ip_id' => __('mailboxes.nmi.errors.ip_other_domain', ['ip' => $ip->ip_address]),
+                ]);
+            }
+        }
+
+        try {
+            $this->mtaCredentials->ensureFor($domain);
+        } catch (\RuntimeException $e) {
+            report($e);
+
+            throw ValidationException::withMessages([
+                'domain_configuration_id' => __('mailboxes.nmi.errors.mta_login_file', ['file' => $this->mtaCredentials->authFile()]),
+            ]);
+        }
+
+        // The domain's DKIM key, so its DNS record can be published right away. Without
+        // it the mailbox still sends (unsigned), so a failure here does not stop the save.
+        try {
+            $this->dkimKeys->generateForDomain($domain);
+        } catch (\RuntimeException $e) {
+            report($e);
+        }
+
+        return ['domain' => $domain, 'ip' => $ip];
+    }
+
+    /**
+     * A dedicated IP belongs to the domain of the first mailbox that sends through it:
+     * its DKIM key is generated for, and published under, that domain (DkimKeyManager).
+     */
+    private function claimDedicatedIp(?array $nmi): void
+    {
+        if ($nmi && $nmi['domain'] && $nmi['ip'] && $nmi['ip']->domain_configuration_id === null) {
+            $nmi['ip']->update(['domain_configuration_id' => $nmi['domain']->id]);
+        }
+    }
+
+    /**
+     * Readable field names for the form's validation messages ("credentials" alone means
+     * nothing to the person filling in the form).
+     */
+    private function fieldNames(): array
+    {
+        $names = __('mailboxes.attributes');
+
+        return is_array($names) ? $names : [];
     }
 
     /**

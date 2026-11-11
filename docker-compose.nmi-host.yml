@@ -1,0 +1,35 @@
+# =============================================================================
+# NetSendo Mail Infrastructure: sending from dedicated IPs
+# =============================================================================
+# By default the MTA container sits on NetSendo's Docker network and all mail
+# leaves from the server's main address. To send from dedicated IPs the MTA has
+# to own them, which a container can only do on the server's own network.
+#
+# USAGE (Docker Compose 2.24 or newer, Linux):
+#   docker compose -f docker-compose.yml -f docker-compose.nmi-host.yml --profile nmi up -d
+#
+# In .env:
+#   NMI_MTA_HOST=10.58.0.1
+#   NMI_MTA_PORT=2525
+#   NMI_HELO_HOST=mta.example.com          # resolves to the server, matches its PTR
+#
+# The dedicated IPs must be configured on the server (ip addr), each with a PTR
+# record. Where the provider translates a public address to a private one on the
+# server (DigitalOcean anchor IPs, Google Cloud, AWS), say which belongs to which:
+#   NMI_BIND_MAP=203.0.113.10=10.19.0.5,203.0.113.11=10.19.0.6
+#
+# The mailbox form shows, for the chosen dedicated IP, whether the MTA sends from
+# it. Details: docs/NMI.md, "Sending from dedicated IPs".
+# =============================================================================
+
+services:
+  nmi-mta:
+    network_mode: host
+    ports: !reset []
+    networks: !reset []
+    volumes:
+      # Listen on the Docker network's gateway only (10.58.0.1:2525), not on every
+      # address of the server
+      - ./docker/haraka/host-network/smtp.ini:/opt/haraka/config/smtp.ini:ro
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 10.58.0.1 2525 || exit 1"]

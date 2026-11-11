@@ -10,7 +10,9 @@ use App\Services\Mail\Providers\NmiProvider;
 use App\Services\Mail\Providers\SendGridProvider;
 use App\Services\Mail\Providers\SmtpProvider;
 use App\Services\Mail\GmailOAuthService;
+use App\Services\Nmi\MtaCredentialService;
 use InvalidArgumentException;
+use RuntimeException;
 
 class MailProviderService
 {
@@ -49,16 +51,39 @@ class MailProviderService
                 fromName: $mailbox->from_name
             ),
 
-            Mailbox::PROVIDER_NMI => new NmiProvider(
-                domain: $mailbox->domainConfiguration,
-                dedicatedIp: $mailbox->dedicatedIp,
-                fromEmail: $mailbox->from_email,
-                fromName: $mailbox->from_name,
-                replyTo: $mailbox->reply_to
-            ),
+            Mailbox::PROVIDER_NMI => $this->nmiProvider($mailbox),
 
             default => throw new InvalidArgumentException("Unknown provider: {$mailbox->provider}"),
         };
+    }
+
+    /**
+     * The NetSendo MTA sends as the mailbox's verified domain, with that domain's login.
+     *
+     * @throws RuntimeException when the mailbox has lost its domain (removed in
+     *                          Deliverability) or the MTA's login file cannot be written
+     */
+    private function nmiProvider(Mailbox $mailbox): NmiProvider
+    {
+        $domain = $mailbox->domainConfiguration;
+
+        if (! $domain) {
+            throw new RuntimeException(__('mailboxes.nmi.errors.domain_missing'));
+        }
+
+        // Issued when the mailbox was saved; a login lost since then is issued again.
+        // Resolved here, not in the constructor, which subclasses call with one argument.
+        if (! $domain->nmi_enabled || ! $domain->hasNmiCredentials()) {
+            app(MtaCredentialService::class)->ensureFor($domain);
+        }
+
+        return new NmiProvider(
+            domain: $domain,
+            dedicatedIp: $mailbox->dedicatedIp,
+            fromEmail: $mailbox->from_email,
+            fromName: $mailbox->from_name,
+            replyTo: $mailbox->reply_to
+        );
     }
 
     /**
@@ -124,8 +149,9 @@ class MailProviderService
             ],
 
             Mailbox::PROVIDER_NMI => [
-                // NMI requires domain configuration, not manual credentials
-                // Configuration is done through Domain Settings page
+                // No login to type in: the mailbox form picks a verified domain (and
+                // optionally a dedicated IP), and NetSendo issues the domain's login
+                // to the MTA itself (MtaCredentialService)
             ],
 
             default => [],

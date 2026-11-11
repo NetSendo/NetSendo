@@ -3,12 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\DedicatedIpAddress;
+use App\Models\DomainConfiguration;
 use App\Models\IpPool;
 use App\Models\IpProviderSetting;
 use App\Services\Nmi\BlacklistMonitorService;
 use App\Services\Nmi\DkimKeyManager;
 use App\Services\Nmi\IpProvisioningService;
 use App\Services\Nmi\IpWarmingService;
+use App\Services\Nmi\MtaStatusService;
+use App\Services\Nmi\Providers\IpProviderException;
+use App\Services\Nmi\ReverseDnsChecker;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -21,7 +25,8 @@ class NmiController extends Controller
         private DkimKeyManager $dkimManager,
         private IpWarmingService $warmingService,
         private BlacklistMonitorService $blacklistService,
-        private IpProvisioningService $provisioningService
+        private IpProvisioningService $provisioningService,
+        private ReverseDnsChecker $reverseDns
     ) {}
 
     /**
@@ -50,7 +55,9 @@ class NmiController extends Controller
             'stats' => $stats,
             'pools' => $pools,
             'ips' => $ips->map(fn($ip) => $this->formatIpForResponse($ip)),
-            'nmiEnabled' => config('netsendo.nmi.enabled', false),
+            // NMI_ENABLED (config/nmi.php). The key read here before, netsendo.nmi.enabled,
+            // never existed, so the dashboard always showed the "setup required" banner.
+            'nmiEnabled' => (bool) config('nmi.features.enabled', false),
         ];
 
         // Return JSON for AJAX requests
@@ -178,6 +185,8 @@ class NmiController extends Controller
             'warming' => $this->warmingService->getWarmingStatus($ip),
             'blacklist' => $this->blacklistService->getSummary($ip),
             'dkim' => $this->dkimManager->getDnsInstructions($ip),
+            // How the address reached NetSendo and what it still needs on the server
+            'setup' => $this->formatIpSetup($ip),
         ];
 
         // Return JSON for AJAX requests
@@ -314,9 +323,79 @@ class NmiController extends Controller
             'delivery_rate' => $ip->getDeliveryRate(),
             'total_sent' => $ip->total_sent,
             'dkim_configured' => !empty($ip->dkim_selector),
-            'ptr_verified' => $ip->ptr_verified,
+            'ptr_record' => $ip->ptr_record,
+            'ptr_verified' => (bool) $ip->ptr_verified,
+            'provider_managed' => $this->provisioningService->isManaged($ip),
+            'bind_address' => $ip->bind_address,
             'is_active' => $ip->is_active,
         ];
+    }
+
+    /**
+     * What the IP's page shows about setting the address up: where it came from, its
+     * reverse DNS, and whether the provider's API can change that.
+     */
+    private function formatIpSetup(DedicatedIpAddress $ip): array
+    {
+        $managed = $this->provisioningService->isManaged($ip);
+
+        return [
+            'provider' => $ip->provider,
+            'managed' => $managed,
+            'region' => $ip->provider_region,
+            'bind_address' => $ip->bind_address,
+            'hostname' => $ip->hostname,
+            'ptr_record' => $ip->ptr_record,
+            'ptr_verified' => (bool) $ip->ptr_verified,
+            'ptr_verified_at' => $ip->ptr_verified_at?->toIso8601String(),
+            'can_set_ptr' => $this->provisioningService->canSetReverseDns($ip),
+        ];
+    }
+
+    /**
+     * Look the address's reverse DNS up: it has to name the IP's host, and that host has
+     * to resolve back to the address
+     */
+    public function checkPtr(Request $request, DedicatedIpAddress $ip): JsonResponse
+    {
+        $this->authorizeIp($request, $ip);
+
+        $result = $this->reverseDns->check($ip);
+
+        return response()->json([
+            'success' => true,
+            'message' => $result['verified'] ? __('nmi.ptr.verified') : __('nmi.ptr.not_verified'),
+            'data' => ['check' => $result, 'setup' => $this->formatIpSetup($ip->refresh())],
+        ]);
+    }
+
+    /**
+     * Set the address's reverse DNS at the provider it was ordered from, then look it up
+     */
+    public function setPtr(Request $request, DedicatedIpAddress $ip): JsonResponse
+    {
+        $this->authorizeIp($request, $ip);
+
+        try {
+            $outcome = $this->provisioningService->setReverseDns($request->user()->id, $ip);
+        } catch (IpProviderException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        if (! $outcome['set']) {
+            return response()->json([
+                'success' => false,
+                'message' => $outcome['message'] ?? __('nmi.ptr.not_supported'),
+            ], 422);
+        }
+
+        $result = $this->reverseDns->check($ip);
+
+        return response()->json([
+            'success' => true,
+            'message' => __('nmi.ptr.set'),
+            'data' => ['check' => $result, 'setup' => $this->formatIpSetup($ip->refresh())],
+        ]);
     }
 
     /**
@@ -342,47 +421,92 @@ class NmiController extends Controller
     /**
      * Check MTA container status
      */
-    public function getMtaStatus(): JsonResponse
+    public function getMtaStatus(MtaStatusService $mta): JsonResponse
     {
-        $host = config('nmi.mta_host', 'netsendo-mta');
-        $port = (int) config('nmi.mta_port', 25);
-        $timeout = 3; // seconds
+        return response()->json([
+            'success' => true,
+            'data' => $mta->probe(),
+        ]);
+    }
 
-        $isOnline = false;
-        $message = '';
+    /**
+     * The DKIM key of a sending domain: the DNS record to publish and whether it has been
+     * seen. Mail of the domain's NMI mailboxes is signed once it has.
+     */
+    public function getDomainDkim(Request $request, DomainConfiguration $domain): JsonResponse
+    {
+        $this->authorizeDomain($request, $domain);
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->formatDomainDkim($domain),
+        ]);
+    }
+
+    /**
+     * Generate the domain's DKIM key. With `replace` an existing key is thrown away:
+     * mail goes out unsigned until the new record is published and verified.
+     */
+    public function generateDomainDkim(Request $request, DomainConfiguration $domain): JsonResponse
+    {
+        $this->authorizeDomain($request, $domain);
 
         try {
-            $socket = @fsockopen($host, $port, $errno, $errstr, $timeout);
-
-            if ($socket) {
-                // Read the SMTP greeting
-                $response = fgets($socket, 1024);
-                fclose($socket);
-
-                // Check for valid SMTP greeting (starts with 220)
-                if (str_starts_with(trim($response), '220')) {
-                    $isOnline = true;
-                    $message = 'MTA is online and accepting connections';
-                } else {
-                    $message = 'MTA responded but with unexpected greeting';
-                }
-            } else {
-                $message = "Cannot connect to MTA: {$errstr} (error {$errno})";
-            }
-        } catch (\Exception $e) {
-            $message = 'Connection error: ' . $e->getMessage();
+            $this->dkimManager->generateForDomain($domain, $request->boolean('replace'));
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'online' => $isOnline,
-                'host' => $host,
-                'port' => $port,
-                'message' => $message,
-                'checked_at' => now()->toIso8601String(),
-            ],
+            'message' => __('nmi.dkim_generated'),
+            'data' => $this->formatDomainDkim($domain->refresh()),
         ]);
+    }
+
+    /**
+     * Look the domain's DKIM record up in DNS
+     */
+    public function verifyDomainDkim(Request $request, DomainConfiguration $domain): JsonResponse
+    {
+        $this->authorizeDomain($request, $domain);
+
+        $verified = $this->dkimManager->verifyForDomain($domain);
+
+        return response()->json([
+            'success' => true,
+            'message' => $verified ? __('nmi.dkim_verified') : __('nmi.dkim_not_verified'),
+            'data' => $this->formatDomainDkim($domain->refresh()),
+        ]);
+    }
+
+    private function formatDomainDkim(DomainConfiguration $domain): array
+    {
+        $record = $this->dkimManager->getDomainDnsInstructions($domain);
+
+        return [
+            'domain' => $domain->domain,
+            'has_key' => $record !== null,
+            'selector' => $record['selector'] ?? null,
+            'dns_name' => $record['name'] ?? null,
+            'dns_value' => $record['value'] ?? null,
+            'verified' => $domain->nmiDkimReady(),
+            'verified_at' => $domain->nmi_dkim_verified_at?->toIso8601String(),
+            'generated_at' => $domain->nmi_dkim_generated_at?->toIso8601String(),
+            // Dedicated IPs of the domain that carry a key of their own (used while the
+            // domain's key is not verified)
+            'ip_keys' => $domain->dedicatedIps()
+                ->whereNotNull('dkim_selector')
+                ->pluck('id')
+                ->all(),
+        ];
+    }
+
+    private function authorizeDomain(Request $request, DomainConfiguration $domain): void
+    {
+        if ($domain->user_id !== $request->user()->id) {
+            abort(403, 'Unauthorized access to this domain');
+        }
     }
 
     /**
@@ -416,8 +540,10 @@ class NmiController extends Controller
             'description' => ['nullable', 'string', 'max:500'],
         ]);
 
-        // Determine IP version
-        $ipVersion = filter_var($validated['ip_address'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 6 : 4;
+        // Determine IP version (the column is an enum of 'ipv4' and 'ipv6')
+        $ipVersion = filter_var($validated['ip_address'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 'ipv6' : 'ipv4';
+
+        DedicatedIpAddress::forgetRemoved($validated['ip_address']);
 
         $ip = DedicatedIpAddress::create([
             'ip_pool_id' => $pool->id,
@@ -458,6 +584,20 @@ class NmiController extends Controller
             ], 400);
         }
 
+        // An address ordered through a provider's API is given back first: otherwise it
+        // would stay on the bill. `keep_at_provider` removes it from NetSendo only.
+        if (! $request->boolean('keep_at_provider')) {
+            try {
+                $this->provisioningService->release($request->user()->id, $ip);
+            } catch (IpProviderException $e) {
+                return response()->json([
+                    'success' => false,
+                    'release_failed' => true,
+                    'message' => __('nmi.ip_release_failed', ['reason' => $e->getMessage()]),
+                ], 422);
+            }
+        }
+
         $poolId = $ip->ip_pool_id;
         $ip->delete();
 
@@ -473,22 +613,7 @@ class NmiController extends Controller
     }
 
     /**
-     * Get available IP providers
-     */
-    public function getProviders(): JsonResponse
-    {
-        $providers = $this->provisioningService->getAvailableProviders();
-
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'providers' => $providers,
-            ],
-        ]);
-    }
-
-    /**
-     * Provision a new IP from a cloud provider
+     * Order an address for one of the account's servers at a provider and add it to the pool
      */
     public function provisionIp(Request $request, IpPool $pool): JsonResponse
     {
@@ -503,61 +628,57 @@ class NmiController extends Controller
         }
 
         $validated = $request->validate([
-            'provider' => ['required', 'string', Rule::in(['vultr', 'linode', 'digitalocean'])],
-            'region' => ['required', 'string', 'max:20'],
-        ]);
-
-        // Get user's API key for the provider
-        $apiKey = IpProviderSetting::getApiKey($request->user()->id, $validated['provider']);
-
-        if (!$apiKey) {
-            return response()->json([
-                'success' => false,
-                'message' => __('nmi.provider_not_configured'),
-            ], 400);
-        }
+            'provider' => ['required', 'string', Rule::in(array_keys(IpProvisioningService::PROVIDERS))],
+            'server_id' => ['required', 'string', 'max:64'],
+            // The name the address will answer to: its PTR record and the MTA's HELO
+            'hostname' => ['required', 'string', 'max:253', 'regex:/^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/i'],
+        ], [], ['hostname' => __('nmi.provision.hostname'), 'server_id' => __('nmi.provision.server')]);
 
         try {
-            $ip = $this->provisioningService->provisionIpWithUserKey(
-                $validated['provider'],
+            $result = $this->provisioningService->provision(
+                $request->user()->id,
                 $pool,
-                $validated['region'],
-                $apiKey
+                $validated['provider'],
+                $validated['server_id'],
+                $validated['hostname']
             );
-
-            return response()->json([
-                'success' => true,
-                'message' => __('nmi.ip_provisioned'),
-                'data' => $this->formatIpForResponse($ip),
-            ], 201);
-        } catch (\Exception $e) {
+        } catch (IpProviderException $e) {
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage(),
-            ], 400);
+            ], 422);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('nmi.ip_provisioned'),
+            'data' => [
+                ...$this->formatIpForResponse($result['ip']),
+                'reverse_dns' => $result['reverse_dns'],
+            ],
+        ], 201);
     }
 
     /**
-     * Get regions for a provider
+     * The account's servers at a provider: the address goes to the one the MTA runs on
      */
-    public function getProviderRegions(Request $request, string $provider): JsonResponse
+    public function getProviderServers(Request $request, string $provider): JsonResponse
     {
-        $apiKey = IpProviderSetting::getApiKey($request->user()->id, $provider);
+        abort_unless(isset(IpProvisioningService::PROVIDERS[$provider]), 404);
 
-        if (!$apiKey) {
+        try {
+            $servers = $this->provisioningService->servers($request->user()->id, $provider);
+        } catch (IpProviderException $e) {
             return response()->json([
                 'success' => false,
-                'message' => __('nmi.provider_not_configured'),
-            ], 400);
+                'message' => $e->getMessage(),
+            ], 422);
         }
-
-        $regions = $this->provisioningService->getRegions($provider, $apiKey);
 
         return response()->json([
             'success' => true,
             'data' => [
-                'regions' => $regions,
+                'servers' => $servers,
             ],
         ]);
     }
@@ -578,34 +699,31 @@ class NmiController extends Controller
     }
 
     /**
-     * Save provider settings for current user
+     * Connect a provider (the key is checked with the provider before it is stored) or,
+     * with an empty key, disconnect it
      */
     public function saveProviderSettings(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'provider' => ['required', 'string', Rule::in(['vultr', 'linode', 'digitalocean'])],
+            'provider' => ['required', 'string', Rule::in(array_keys(IpProvisioningService::PROVIDERS))],
             'api_key' => ['nullable', 'string', 'max:255'],
             'enabled' => ['boolean'],
         ]);
 
         $user = $request->user();
+        $account = null;
 
         if (empty($validated['api_key'])) {
-            // Delete the setting if API key is empty
-            IpProviderSetting::where('user_id', $user->id)
-                ->where('provider', $validated['provider'])
-                ->delete();
+            $this->provisioningService->disconnect($user->id, $validated['provider']);
         } else {
-            IpProviderSetting::updateOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'provider' => $validated['provider'],
-                ],
-                [
-                    'api_key' => $validated['api_key'],
-                    'enabled' => $validated['enabled'] ?? true,
-                ]
-            );
+            try {
+                $account = $this->provisioningService->connect($user->id, $validated['provider'], $validated['api_key']);
+            } catch (IpProviderException $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
         }
 
         return response()->json([
@@ -613,6 +731,7 @@ class NmiController extends Controller
             'message' => __('nmi.provider_saved'),
             'data' => [
                 'providers' => IpProviderSetting::getForUser($user->id),
+                'account' => $account,
             ],
         ]);
     }

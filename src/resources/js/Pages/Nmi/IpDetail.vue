@@ -3,6 +3,8 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, router } from "@inertiajs/vue3";
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
+import axios from "axios";
+import { requireGold } from "@/Composables/useLicense";
 
 const { t } = useI18n();
 
@@ -11,10 +13,63 @@ const props = defineProps({
     warming: { type: Object, default: () => ({}) },
     blacklist: { type: Object, default: () => ({}) },
     dkim: { type: Object, default: () => ({}) },
+    // Where the address came from and its reverse DNS (NmiController::formatIpSetup)
+    setup: { type: Object, default: () => ({}) },
 });
+
+// ---- Address setup: reverse DNS, and giving the address back ----
+const PROVIDER_NAMES = { vultr: "Vultr", linode: "Linode", digitalocean: "DigitalOcean" };
+
+const setupState = ref({ ...props.setup });
+const ptrBusy = ref(null);
+const ptrMessage = ref(null);
+
+// "check" looks the record up; "set" writes it at the provider first (ordered addresses)
+const ptrAction = async (action) => {
+    if (ptrBusy.value) return;
+
+    ptrBusy.value = action;
+    ptrMessage.value = null;
+    try {
+        const response = await axios.post(route(`settings.nmi.ips.ptr.${action}`, props.ip.id));
+        setupState.value = response.data.data.setup;
+        ptrMessage.value = { text: response.data.message, ok: response.data.data.check.verified };
+    } catch (error) {
+        if (error.response?.status === 402) {
+            requireGold("mail_infrastructure");
+        } else {
+            ptrMessage.value = { text: error.response?.data?.message || t("common.error"), ok: false };
+        }
+    } finally {
+        ptrBusy.value = null;
+    }
+};
+
+const showDelete = ref(false);
+const deleting = ref(false);
+const deleteError = ref(null);
+
+const deleteIp = async (keepAtProvider = false) => {
+    deleting.value = true;
+    try {
+        await axios.delete(route("settings.nmi.ips.destroy", props.ip.id), {
+            data: { keep_at_provider: keepAtProvider },
+        });
+        router.visit(route("settings.nmi.dashboard"));
+    } catch (error) {
+        deleteError.value = {
+            text: error.response?.data?.message || t("common.error"),
+            // The provider refused to take the address back: it can still be removed here
+            releaseFailed: error.response?.data?.release_failed === true,
+        };
+    } finally {
+        deleting.value = false;
+    }
+};
 
 // Warming status colors
 const warmingColors = {
+    new: { bg: "bg-slate-500/20", text: "text-slate-400", label: "New" },
     cold: { bg: "bg-slate-500/20", text: "text-slate-400", label: "Cold" },
     warming: { bg: "bg-amber-500/20", text: "text-amber-500", label: "Warming" },
     warmed: { bg: "bg-emerald-500/20", text: "text-emerald-500", label: "Warmed" },
@@ -85,6 +140,132 @@ const copyToClipboard = (text) => {
         </template>
 
         <div class="space-y-6">
+            <!-- Address setup: where it came from, reverse DNS -->
+            <div class="rounded-xl border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800" data-test="nmi-ip-setup">
+                <div class="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ $t("nmi.setup.title") }}</h3>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            {{ $t("nmi.setup.source") }}:
+                            {{ setupState.managed ? $t("nmi.setup.source_provider", { provider: PROVIDER_NAMES[setupState.provider] || setupState.provider }) : $t("nmi.setup.source_manual") }}
+                            <template v-if="setupState.region"> · {{ $t("nmi.setup.region") }}: {{ setupState.region }}</template>
+                            <template v-if="setupState.bind_address"> · {{ $t("nmi.setup.bind_address") }}: <span class="font-mono">{{ setupState.bind_address }}</span></template>
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        @click="showDelete = true; deleteError = null"
+                        class="rounded-lg border border-rose-300 px-3 py-1.5 text-sm font-medium text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-900/20"
+                    >
+                        {{ $t("nmi.delete_ip.button") }}
+                    </button>
+                </div>
+
+                <div class="mt-4 rounded-lg border border-gray-200 p-4 dark:border-slate-700">
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                        <span class="text-sm font-medium text-gray-900 dark:text-white">{{ $t("nmi.setup.ptr_title") }}</span>
+                        <span
+                            class="rounded-full px-2 py-0.5 text-xs font-medium"
+                            :class="setupState.ptr_verified
+                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                : setupState.ptr_record
+                                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
+                                  : 'bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-300'"
+                        >
+                            {{ setupState.ptr_verified ? $t("nmi.setup.ptr_ok") : setupState.ptr_record ? $t("nmi.setup.ptr_wrong") : $t("nmi.setup.ptr_unchecked") }}
+                        </span>
+                    </div>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $t("nmi.setup.ptr_help") }}</p>
+
+                    <dl class="mt-3 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+                        <div>
+                            <dt class="text-gray-500 dark:text-gray-400">{{ $t("nmi.setup.ptr_expected") }}</dt>
+                            <dd class="font-mono text-gray-900 dark:text-white">{{ setupState.hostname || $t("nmi.no_hostname") }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-gray-500 dark:text-gray-400">{{ $t("nmi.setup.ptr_found") }}</dt>
+                            <dd class="font-mono text-gray-900 dark:text-white">{{ setupState.ptr_record || $t("nmi.setup.ptr_none") }}</dd>
+                        </div>
+                    </dl>
+
+                    <p v-if="!setupState.can_set_ptr && !setupState.ptr_verified" class="mt-3 text-xs text-gray-500 dark:text-gray-400">
+                        {{ $t("nmi.setup.ptr_manual") }}
+                    </p>
+                    <p
+                        v-if="ptrMessage"
+                        class="mt-3 text-sm"
+                        :class="ptrMessage.ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-300'"
+                        role="status"
+                    >
+                        {{ ptrMessage.text }}
+                    </p>
+
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        <button
+                            v-if="setupState.can_set_ptr"
+                            type="button"
+                            :disabled="ptrBusy !== null"
+                            @click="ptrAction('set')"
+                            class="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                        >
+                            {{ ptrBusy === 'set' ? $t("nmi.setup.checking") : $t("nmi.setup.set_ptr") }}
+                        </button>
+                        <button
+                            type="button"
+                            :disabled="ptrBusy !== null"
+                            @click="ptrAction('check')"
+                            class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:text-gray-200 dark:hover:bg-slate-700"
+                        >
+                            {{ ptrBusy === 'check' ? $t("nmi.setup.checking") : $t("nmi.setup.check_ptr") }}
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete the address -->
+            <Teleport to="body">
+                <div v-if="showDelete" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800" data-test="nmi-ip-delete">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t("nmi.delete_ip.title") }}</h3>
+                        <p class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                            {{ $t("nmi.delete_ip.confirm") }} <span class="font-mono">{{ ip.ip_address }}</span>
+                        </p>
+                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                            {{ setupState.managed ? $t("nmi.delete_ip.release_note") : $t("nmi.delete_ip.warning") }}
+                        </p>
+                        <p v-if="deleteError" class="mt-3 rounded-lg bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-300" role="alert">
+                            {{ deleteError.text }}
+                        </p>
+                        <div class="mt-6 flex flex-wrap justify-end gap-3">
+                            <button
+                                type="button"
+                                @click="showDelete = false"
+                                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700"
+                            >
+                                {{ $t("common.cancel") }}
+                            </button>
+                            <button
+                                v-if="deleteError?.releaseFailed"
+                                type="button"
+                                :disabled="deleting"
+                                @click="deleteIp(true)"
+                                class="rounded-lg border border-rose-300 px-4 py-2 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50 dark:border-rose-800 dark:text-rose-300"
+                            >
+                                {{ $t("nmi.delete_ip.keep_at_provider") }}
+                            </button>
+                            <button
+                                type="button"
+                                :disabled="deleting"
+                                @click="deleteIp(false)"
+                                class="rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+                            >
+                                {{ deleting ? $t("nmi.delete_ip.deleting") : $t("nmi.delete_ip.button") }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </Teleport>
+
             <!-- Status Cards Row -->
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <!-- Warming Status -->
@@ -109,7 +290,7 @@ const copyToClipboard = (text) => {
                         </p>
                     </div>
                     <button
-                        v-else-if="ip.warming_status === 'cold'"
+                        v-else-if="ip.warming_status === 'new' || ip.warming_status === 'cold'"
                         @click="startWarming"
                         :disabled="startingWarming"
                         class="mt-4 w-full rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"

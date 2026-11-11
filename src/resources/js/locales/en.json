@@ -262,8 +262,7 @@
             "confirm_action": "Are you sure you want to proceed?",
             "action_irreversible": "This action is irreversible.",
             "exported_failed": "Export failed.",
-            "imported_failed": "Import failed.",
-            "error": "Something went wrong"
+            "imported_failed": "Import failed."
         },
         "days": {
             "monday": "Monday",
@@ -319,7 +318,12 @@
             "per_page": "Per page",
             "label": "Pages"
         },
-        "clear_filters": "Clear filters"
+        "clear_filters": "Clear filters",
+        "adding": "Adding...",
+        "creating": "Creating...",
+        "checking": "Checking...",
+        "generating": "Generating...",
+        "starting": "Starting..."
     },
     "ab_tests": {
         "enable_testing": "Enable A/B Testing",
@@ -4586,7 +4590,7 @@
                 "headers": "Headers"
             },
             "after_save_hint": "Bounces and reply reading can be set up once the mailbox is saved.",
-            "fix_errors": "Not saved: correct the fields marked in red."
+            "save_errors": "The mailbox could not be saved:"
         },
         "info": {
             "title": "Provider Information",
@@ -4800,7 +4804,46 @@
         "no_limit": "no limit",
         "switch_label": "On: {name}",
         "actions_for": "Actions for the mailbox: {name}",
-        "testing": "Testing…"
+        "testing": "Testing…",
+        "nmi": {
+            "info": "Mail goes out through NetSendo's own mail server (MTA). Choose the verified domain to send as; NetSendo issues the login to the MTA itself.",
+            "domain": "Sending domain",
+            "domain_placeholder": "-- Choose a verified domain --",
+            "no_domains": "No verified domain yet. Add your domain in Deliverability and verify it first.",
+            "manage_domains": "Open Deliverability",
+            "from_hint": "The sender address must be in this domain.",
+            "ip": "Dedicated IP",
+            "ip_none": "None (the MTA's own address)",
+            "ip_taken": "assigned to another domain",
+            "ip_help": "A dedicated IP signs with the DKIM key of one domain. A free IP is assigned to this domain when you save.",
+            "manage_ips": "Manage IP pools",
+            "mta_checking": "Checking the NetSendo MTA…",
+            "mta_online": "NetSendo MTA is online ({address}).",
+            "mta_offline": "NetSendo MTA is not reachable ({address}). Start its container (docker compose --profile nmi up -d), then check again.",
+            "mta_recheck": "Check again",
+            "mta_required": "New NetSendo MTA mailboxes can be added once the MTA answers.",
+            "sends_as": "NetSendo MTA · {domain}",
+            "no_domain": "NetSendo MTA · no domain",
+            "ip_bound": "The MTA sends from this address.",
+            "ip_not_bound": "The MTA does not own this address, so mail will leave from the MTA's own address. To send from dedicated IPs, run the MTA on the server's network (docker-compose.nmi-host.yml, see docs/NMI.md).",
+            "dkim": {
+                "title": "DKIM signature",
+                "loading": "Checking the DKIM key…",
+                "created_on_save": "A DKIM key for this domain is created when you save. Its DNS record will be shown here.",
+                "no_key": "This domain has no DKIM key yet.",
+                "generate": "Generate key",
+                "status_verified": "Verified",
+                "status_pending": "Not verified",
+                "verified": "Mail from this domain is signed with this key.",
+                "pending": "Publish this TXT record in the domain's DNS, then verify it. Until then mail from this mailbox goes out without a DKIM signature.",
+                "pending_ip_key": "Publish this TXT record in the domain's DNS, then verify it. Until then mail is signed with the key of the dedicated IP.",
+                "record_name": "Name (TXT)",
+                "record_value": "Value",
+                "verify": "Verify record",
+                "verify_again": "Check again",
+                "copy": "Copy"
+            }
+        }
     },
     "funnels": {
         "title": "Email Funnels",
@@ -9046,12 +9089,17 @@
             "description": "Description (optional)",
             "description_placeholder": "Optional notes about this IP",
             "submit": "Add IP",
-            "cancel": "Cancel"
+            "cancel": "Cancel",
+            "manual_hint": "For an address you ordered yourself. It must already be configured on the server, with reverse DNS pointing to the host name. See Configure Providers → Another company."
         },
         "delete_ip": {
             "title": "Delete IP Address",
             "confirm": "Are you sure you want to delete this IP address?",
-            "warning": "This action cannot be undone."
+            "warning": "This action cannot be undone.",
+            "button": "Delete address",
+            "release_note": "The address was ordered through the provider's API: it is given back there first, so it is no longer billed.",
+            "keep_at_provider": "Remove from NetSendo only",
+            "deleting": "Deleting…"
         },
         "provision": {
             "title": "Provision IP from Cloud",
@@ -9062,7 +9110,31 @@
             "submit": "Provision IP",
             "cancel": "Cancel",
             "no_providers": "No providers configured. Click Configure Providers to add your API keys.",
-            "provisioning": "Provisioning..."
+            "provisioning": "Provisioning...",
+            "server": "Server",
+            "select_server": "Select the server NetSendo runs on",
+            "loading_servers": "Loading your servers…",
+            "no_servers": "No server found in this account.",
+            "smtp_restricted": "outbound SMTP restricted",
+            "hostname": "Host name of the address",
+            "hostname_placeholder": "e.g. mail2.yourdomain.com",
+            "hostname_help": "The address will answer to this name: it becomes its reverse DNS (PTR) and the name the MTA introduces itself with.",
+            "cost_note": "The address is ordered at once and billed by the provider until you delete it here.",
+            "connect_first": "Connect a provider first: Configure Providers.",
+            "done_title": "Address {ip} was ordered",
+            "ptr_set": "Reverse DNS was set to {hostname}.",
+            "ptr_not_set": "Reverse DNS could not be set yet: {reason}",
+            "next_title": "What is left to do",
+            "open_ip": "Open the address",
+            "done": "Done",
+            "next": {
+                "a_record": "Create an A record in DNS: {hostname} → {ip}.",
+                "vultr_os": "Configure the address on the server: add {ip}/32 to the network interface (the Vultr panel generates the netplan file under the instance's Settings → IPv4), apply it and restart the server.",
+                "linode_ptr": "Once the A record resolves, click Set reverse DNS on the address's page: Akamai refuses it before that.",
+                "linode_os": "Reboot the Linode: Network Helper configures the address at boot. With Network Helper off, add {ip}/24 to the interface by hand.",
+                "host_network": "Run the MTA on the server's network (docker-compose.nmi-host.yml), so it owns the address.",
+                "finish": "On the address's page check reverse DNS and start warming, then choose the address in a NetSendo MTA mailbox. The mailbox form says whether the MTA sends from it."
+            }
         },
         "providers": {
             "vultr": "Vultr",
@@ -9075,11 +9147,65 @@
             "connected": "Connected",
             "not_connected": "Not connected",
             "api_key_placeholder": "Enter API key...",
-            "info": "API keys are securely encrypted. Providers are used to automatically provision IP addresses for your email infrastructure."
+            "info": "API keys are securely encrypted. Providers are used to automatically provision IP addresses for your email infrastructure.",
+            "connect": "Connect",
+            "connected_as": "Connected as {name}",
+            "unavailable": "Not suitable for mail",
+            "guide_title": "How to connect",
+            "intro": "A dedicated IP comes from the company that hosts your server: an address can only be used by a server at that same company. NetSendo can order it for you through the company's API, or you add an address you ordered yourself.",
+            "api_key_label": "API key",
+            "other_title": "Another company (Hetzner, OVH, your own data centre…)",
+            "guide": {
+                "vultr": {
+                    "s1": "Your NetSendo server must be a Vultr instance: an address from Vultr can only be attached to a server at Vultr.",
+                    "s2": "In the Vultr panel open Account → API, enable the API and copy your key. If access is limited to certain addresses there, add this server's address.",
+                    "s3": "Paste the key here and click Connect. NetSendo asks Vultr whose key it is and stores it only when Vultr accepts it.",
+                    "s4": "Vultr blocks outbound port 25 on new accounts. Open a support ticket there (what you send, SPF and DKIM, expected volume) and wait until the block is lifted.",
+                    "s5": "An address costs about 3 USD a month, billed by Vultr until you delete the address in NetSendo."
+                },
+                "linode": {
+                    "s1": "Your NetSendo server must be a Linode (Akamai Cloud).",
+                    "s2": "Ask Akamai's support for additional IPv4 addresses first: open a ticket with a technical justification (a dedicated sending address for email). Without their approval the order is refused.",
+                    "s3": "In Cloud Manager open your profile → API Tokens and create a Personal Access Token with the scope Linodes: Read/Write.",
+                    "s4": "Paste the token here and click Connect.",
+                    "s5": "On newer accounts outbound ports 25, 465 and 587 are restricted. The server list marks such servers; a support ticket lifts the restriction.",
+                    "s6": "Akamai bills each additional address by the hour until you delete it in NetSendo."
+                },
+                "digitalocean": {
+                    "s1": "DigitalOcean's Reserved IPs cannot send mail: SMTP ports 25, 465 and 587 are blocked on them, they cannot have reverse DNS, and a Droplet can hold only one. Use another company for dedicated sending addresses."
+                },
+                "other": {
+                    "s1": "Order an additional IPv4 address for your NetSendo server in your hosting company's panel.",
+                    "s2": "Configure the address on the server the way that company describes.",
+                    "s3": "Choose a host name for it (for example mail2.yourdomain.com), create its A record pointing to the address, and set the address's reverse DNS (PTR) to that host name in the company's panel.",
+                    "s4": "Add it in NetSendo with Add IP: the address and its host name.",
+                    "s5": "On the address's page check its reverse DNS. In the mailbox form the IP picker says whether the MTA sends from it."
+                }
+            }
         },
         "provider_not_configured": "This provider is not configured. Please add your API key in provider settings.",
         "provider_saved": "Provider settings saved successfully!",
-        "ip_provisioned": "IP address provisioned successfully!"
+        "ip_provisioned": "IP address provisioned successfully!",
+        "setup": {
+            "title": "Address setup",
+            "source": "Source",
+            "source_manual": "Added by hand",
+            "source_provider": "Ordered from {provider}",
+            "region": "Region",
+            "bind_address": "Local address",
+            "ptr_title": "Reverse DNS (PTR)",
+            "ptr_help": "Receiving servers distrust mail from an address unless it names a host and that host points back to the address. The MTA introduces itself with the same name.",
+            "ptr_expected": "Should name",
+            "ptr_found": "Names now",
+            "ptr_none": "nothing",
+            "ptr_ok": "Correct",
+            "ptr_wrong": "Not correct",
+            "ptr_unchecked": "Not checked",
+            "check_ptr": "Check",
+            "set_ptr": "Set reverse DNS",
+            "ptr_manual": "Set it in the panel of the company the address comes from, then click Check.",
+            "checking": "Checking…"
+        }
     },
     "high_confidence_data": "High Confidence Data",
     "brain": {

@@ -14,12 +14,16 @@ import SegmentedControl from "@/Components/Ui/SegmentedControl.vue";
 import StatusPill from "@/Components/Ui/StatusPill.vue";
 import Switch from "@/Components/Ui/Switch.vue";
 import Toast from "@/Components/Ui/Toast.vue";
+import GoldBadge from "@/Components/License/GoldBadge.vue";
+import GoldNotice from "@/Components/License/GoldNotice.vue";
+import { useLicense } from "@/Composables/useLicense";
 import { useToast } from "@/Composables/useToast";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
 const { t, te, locale } = useI18n();
+const { can, requireGold } = useLicense();
 
 const number = (value) => new Intl.NumberFormat(locale.value).format(value ?? 0);
 
@@ -47,6 +51,12 @@ const props = defineProps({
     google_integrations: {
         type: Array,
         default: () => [],
+    },
+    // NetSendo MTA (NMI): whether this installation runs it, the account's verified
+    // domains and its dedicated IPs
+    nmi: {
+        type: Object,
+        default: () => ({ enabled: false, domains: [], ips: [] }),
     },
 });
 
@@ -186,6 +196,9 @@ const form = useForm({
     daily_limit: null,
     time_restriction: 2,
     google_integration_id: null,
+    // NetSendo MTA: the verified domain to send as and, optionally, a dedicated IP
+    domain_configuration_id: null,
+    dedicated_ip_id: null,
     // Bounce IMAP monitoring
     bounce_enabled: false,
     bounce_imap_host: "",
@@ -249,6 +262,7 @@ const providerIcons = {
     smtp: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M2 6l10 7 10-7"/></svg>`,
     sendgrid: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M1.344 0v8.009h8.009V0zm6.912 6.912H2.441V1.097h5.815zM10.49 0v8.009h8.009V0zm6.912 6.912h-5.815V1.097h5.815zM5.613 8.009v8.009h8.009V8.009zm6.912 6.912H6.71v-5.815h5.815zM14.759 8.009v8.009h8.009V8.009zm6.912 6.912h-5.815v-5.815h5.815zM1.344 16.018v8.009h8.009v-8.009zm6.912 6.912H2.441v-5.815h5.815zM10.49 16.018v8.009h8.009v-8.009zm6.912 6.912h-5.815v-5.815h5.815z"/></svg>`,
     gmail: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>`,
+    nmi: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>`,
 };
 
 // Provider colors
@@ -256,18 +270,213 @@ const providerColors = {
     smtp: "#6366F1",
     sendgrid: "#1A82E2",
     gmail: "#EA4335",
+    nmi: "#F59E0B",
 };
 
-// A service can be chosen when this page knows which fields it needs. One that is listed
-// without them (NetSendo MTA, until its settings arrive here) would only lead to a refused
-// save; a mailbox that already uses it keeps its tile.
-const selectableProviders = computed(() =>
-    Object.fromEntries(
-        Object.entries(props.providers).filter(
-            ([key]) => props.providerFields[key] !== undefined || editingMailbox.value?.provider === key,
-        ),
-    ),
+// ---- NetSendo MTA (NMI) ----
+const NMI_FEATURE = "mail_infrastructure";
+const nmiLicensed = computed(() => can(NMI_FEATURE));
+
+// Whether the MTA container answers (settings.nmi.mta.status); null = not asked yet
+const mtaStatus = ref(null);
+const mtaChecking = ref(false);
+const mtaOnline = computed(() => mtaStatus.value?.online === true);
+const mtaAddress = computed(() =>
+    mtaStatus.value ? `${mtaStatus.value.host}:${mtaStatus.value.port}` : "",
 );
+
+const checkMta = async () => {
+    if (!props.nmi.enabled || mtaChecking.value) return;
+
+    mtaChecking.value = true;
+    try {
+        const response = await fetch(route("settings.nmi.mta.status"), {
+            headers: {
+                Accept: "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        });
+        const payload = await response.json();
+        mtaStatus.value = payload.data ?? { online: false, host: "", port: "" };
+    } catch (error) {
+        mtaStatus.value = { online: false, host: "", port: "" };
+    } finally {
+        mtaChecking.value = false;
+    }
+};
+
+// The mailbox being edited already sends through the MTA: it stays editable whatever
+// the licence or the MTA say. Choosing NMI anew needs GOLD and an MTA that answers.
+const editingNmi = computed(() => editingMailbox.value?.provider === "nmi");
+const nmiSelectable = computed(
+    () => editingNmi.value || (nmiLicensed.value && mtaOnline.value),
+);
+// Domain and IP of an NMI mailbox can only be changed with GOLD
+const nmiLocked = computed(() => !nmiLicensed.value);
+
+const selectProvider = (key) => {
+    if (key === "nmi" && !editingNmi.value) {
+        if (!nmiLicensed.value) {
+            requireGold(NMI_FEATURE);
+            return;
+        }
+        if (!mtaOnline.value) {
+            return;
+        }
+    }
+    form.provider = key;
+};
+
+const emailDomain = (email) => {
+    const at = String(email ?? "").lastIndexOf("@");
+    return at === -1 ? "" : String(email).slice(at + 1).trim().toLowerCase();
+};
+
+const nmiDomain = computed(
+    () =>
+        props.nmi.domains.find(
+            (domain) => domain.id === form.domain_configuration_id,
+        ) || null,
+);
+
+// An IP signs with the DKIM key of one domain: IPs of other domains cannot be chosen
+const nmiIpOptions = computed(() =>
+    props.nmi.ips.map((ip) => ({
+        ...ip,
+        taken:
+            ip.domain_configuration_id !== null &&
+            ip.domain_configuration_id !== form.domain_configuration_id,
+    })),
+);
+
+// Preselect the domain of the sender address, or the only domain there is
+const preselectNmiDomain = () => {
+    if (form.domain_configuration_id) return;
+
+    const domains = props.nmi.domains;
+    const match = domains.find(
+        (domain) => domain.domain.toLowerCase() === emailDomain(form.from_email),
+    );
+    if (match) {
+        form.domain_configuration_id = match.id;
+    } else if (domains.length === 1) {
+        form.domain_configuration_id = domains[0].id;
+    }
+};
+
+watch(
+    () => form.domain_configuration_id,
+    () => {
+        const ip = nmiIpOptions.value.find(
+            (option) => option.id === form.dedicated_ip_id,
+        );
+        if (ip?.taken) {
+            form.dedicated_ip_id = null;
+        }
+    },
+);
+
+// One spelling per address, so IPv6 written differently compares equal
+const normaliseIp = (ip) => {
+    const value = String(ip ?? "").trim().toLowerCase();
+    if (!value.includes(":")) return value;
+    try {
+        return new URL(`http://[${value}]/`).hostname.slice(1, -1);
+    } catch (error) {
+        return value;
+    }
+};
+
+// Whether the MTA really sends from the chosen dedicated IP: it lists the addresses it
+// owns (settings.nmi.mta.status). null = no IP chosen, or the MTA does not say.
+const nmiIpBound = computed(() => {
+    const ip = props.nmi.ips.find((option) => option.id === form.dedicated_ip_id);
+    const addresses = mtaStatus.value?.bind_addresses;
+    if (!ip || !Array.isArray(addresses)) return null;
+
+    return addresses.map(normaliseIp).includes(normaliseIp(ip.ip_address));
+});
+
+// DKIM key of the chosen domain: its DNS record and whether it has been verified
+const nmiDkim = ref(null);
+const nmiDkimLoading = ref(false);
+const nmiDkimBusy = ref(null);
+let nmiDkimRequest = 0;
+
+const jsonHeaders = () => ({
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content,
+    "X-Requested-With": "XMLHttpRequest",
+});
+
+const loadNmiDkim = async () => {
+    const domainId = form.domain_configuration_id;
+    const request = ++nmiDkimRequest;
+    nmiDkim.value = null;
+
+    if (!showModal.value || form.provider !== "nmi" || !domainId) return;
+
+    nmiDkimLoading.value = true;
+    try {
+        const response = await fetch(
+            route("settings.nmi.domains.dkim.show", domainId),
+            { headers: jsonHeaders() },
+        );
+        const payload = await response.json();
+        // The domain may have been changed while the answer was on its way
+        if (request === nmiDkimRequest) {
+            nmiDkim.value = response.ok ? payload.data : null;
+        }
+    } catch (error) {
+        if (request === nmiDkimRequest) nmiDkim.value = null;
+    } finally {
+        if (request === nmiDkimRequest) nmiDkimLoading.value = false;
+    }
+};
+
+watch(
+    [() => form.domain_configuration_id, () => form.provider, showModal],
+    loadNmiDkim,
+);
+
+// The mail is signed with the key of the dedicated IP while the domain's is not verified
+const nmiDkimIpKey = computed(
+    () => !!nmiDkim.value?.ip_keys?.includes(form.dedicated_ip_id),
+);
+
+const nmiDkimAction = async (action) => {
+    if (!nmiDkim.value || nmiDkimBusy.value) return;
+
+    const domainId = form.domain_configuration_id;
+    nmiDkimBusy.value = action;
+    try {
+        const response = await fetch(
+            route(`settings.nmi.domains.dkim.${action}`, domainId),
+            { method: "POST", headers: jsonHeaders(), body: "{}" },
+        );
+        const payload = await response.json();
+
+        if (response.status === 402) {
+            requireGold(NMI_FEATURE);
+            return;
+        }
+        if (payload.data && domainId === form.domain_configuration_id) {
+            nmiDkim.value = payload.data;
+        }
+        if (payload.message) {
+            showToast(
+                payload.message,
+                response.ok && (action !== "verify" || payload.data?.verified),
+            );
+        }
+    } catch (error) {
+        showToast(t("common.error") + ": " + error.message, false);
+    } finally {
+        nmiDkimBusy.value = null;
+    }
+};
+
 
 // Current provider fields
 const currentProviderFields = computed(() => {
@@ -305,6 +514,10 @@ watch(
         // Reset credentials when provider changes
         form.credentials = {};
         showPassword.value = {};
+
+        if (newProvider === "nmi") {
+            preselectNmiDomain();
+        }
     },
 );
 
@@ -330,6 +543,8 @@ const openModal = (mailbox = null) => {
         form.daily_limit = mailbox.daily_limit;
         form.time_restriction = mailbox.time_restriction;
         form.google_integration_id = mailbox.google_integration_id || null;
+        form.domain_configuration_id = mailbox.domain_configuration_id || null;
+        form.dedicated_ip_id = mailbox.dedicated_ip_id || null;
         // Populate bounce IMAP fields
         form.bounce_enabled = mailbox.bounce_enabled || false;
         form.bounce_imap_host = mailbox.bounce_imap_host || "";
@@ -379,6 +594,8 @@ const openModal = (mailbox = null) => {
     form.clearErrors();
     dismiss();
     showModal.value = true;
+    // NMI is offered only while the MTA answers: ask every time the form opens
+    checkMta();
 };
 
 // Preselect the webhook tab of the service the mailbox sends through
@@ -418,7 +635,7 @@ const copyToClipboard = async (text) => {
         await navigator.clipboard.writeText(text);
         showToast(t("common.copied"));
     } catch (error) {
-        showToast(t("common.notifications.error"), false);
+        showToast(t("common.notifications.error_occurred"), false);
     }
 };
 
@@ -459,17 +676,23 @@ const generateWebhookToken = async () => {
         showToast(data.message);
         router.reload({ only: ["mailboxes"] });
     } catch (error) {
-        showToast(t("common.notifications.error") + ": " + error.message, false);
+        showToast(t("common.error") + ": " + error.message, false);
     } finally {
         generatingWebhookToken.value = false;
     }
 };
+
+// Every validation message of the last save, each once
+const formErrorMessages = computed(() => [
+    ...new Set(Object.values(form.errors).filter(Boolean)),
+]);
 
 // Close modal
 const closeModal = () => {
     showModal.value = false;
     editingMailbox.value = null;
     form.reset();
+    form.clearErrors();
     testResult.value = null;
     bounceTestResult.value = null;
     replyTestResult.value = null;
@@ -500,7 +723,7 @@ const testBounceConnection = async () => {
         showToast(data.message, data.success);
     } catch (error) {
         bounceTestResult.value = { success: false, message: error.message };
-        showToast(t("common.notifications.error") + ": " + error.message, false);
+        showToast(t("common.error") + ": " + error.message, false);
     } finally {
         testingBounce.value = false;
     }
@@ -531,7 +754,7 @@ const testReplyConnection = async () => {
         showToast(data.message, data.success);
     } catch (error) {
         replyTestResult.value = { success: false, message: error.message };
-        showToast(t("common.notifications.error") + ": " + error.message, false);
+        showToast(t("common.error") + ": " + error.message, false);
     } finally {
         testingReply.value = false;
     }
@@ -548,6 +771,23 @@ const submitForm = () => {
         form.reply_to = null;
         form.credentials = {}; // Ensure no garbage credentials are sent
     }
+
+    // The NetSendo MTA logs in with the login of the chosen domain; every other
+    // provider has no domain or dedicated IP
+    if (form.provider === "nmi") {
+        form.credentials = {};
+    } else {
+        form.domain_configuration_id = null;
+        form.dedicated_ip_id = null;
+    }
+
+    // A header row added and left empty is not a header: skip it instead of
+    // failing the whole save on "header name is required"
+    form.custom_headers = form.custom_headers.filter(
+        (header) =>
+            String(header.key ?? "").trim() !== "" ||
+            String(header.value ?? "").trim() !== "",
+    );
 
     if (modalMode.value === "edit") {
         form.put(route("settings.mailboxes.update", editingMailbox.value.id), {
@@ -614,7 +854,7 @@ const testConnection = async (mailbox) => {
         router.reload({ only: ["mailboxes"] });
     } catch (error) {
         showToast(
-            t("common.notifications.error") + ": " + error.message,
+            t("common.error") + ": " + error.message,
             false,
         );
     } finally {
@@ -752,7 +992,7 @@ const disconnectGmail = () => {
                 showToast(t("mailboxes.oauth.disconnected"));
             },
             onError: () => {
-                showToast(t("common.notifications.error"), false);
+                showToast(t("common.notifications.error_occurred"), false);
             },
         },
     );
@@ -849,7 +1089,7 @@ const isBroadcastDisabled = computed(() => {
                                             <span
                                                 class="h-4 w-4"
                                                 :style="{ color: providerColors[mailbox.provider] }"
-                                                v-html="providerIcons[mailbox.provider]"
+                                                v-html="providerIcons[mailbox.provider] || providerIcons.smtp"
                                             ></span>
                                         </span>
                                         <div class="min-w-0 flex-1">
@@ -873,6 +1113,22 @@ const isBroadcastDisabled = computed(() => {
                                                 {{ mailbox.from_email }}
                                                 <span aria-hidden="true">·</span>
                                                 {{ providers[mailbox.provider]?.label || mailbox.provider }}
+                                            </p>
+                                            <!-- NetSendo MTA: the domain (and dedicated IP) it sends through -->
+                                            <p
+                                                v-if="mailbox.provider === 'nmi'"
+                                                class="truncate text-xs"
+                                                :class="
+                                                    mailbox.nmi_domain
+                                                        ? 'text-slate-600 dark:text-slate-400'
+                                                        : 'text-rose-700 dark:text-rose-300'
+                                                "
+                                            >
+                                                {{
+                                                    mailbox.nmi_domain
+                                                        ? $t("mailboxes.nmi.sends_as", { domain: mailbox.nmi_domain })
+                                                        : $t("mailboxes.nmi.no_domain")
+                                                }}{{ mailbox.nmi_ip ? " · " + mailbox.nmi_ip : "" }}
                                             </p>
                                             <!-- On a phone the status has no column of its own: it sits under the name -->
                                             <div class="mt-1.5 sm:hidden">
@@ -1054,20 +1310,30 @@ const isBroadcastDisabled = computed(() => {
                             >
                                 {{ $t("mailboxes.modal.provider") }}
                             </label>
-                            <div class="mt-2 grid grid-cols-3 gap-2">
+                            <div
+                                class="mt-2 grid gap-2"
+                                :class="Object.keys(providers).length > 3 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'"
+                            >
                                 <button
-                                    v-for="(provider, key) in selectableProviders"
+                                    v-for="(provider, key) in providers"
                                     :key="key"
                                     type="button"
                                     :aria-pressed="form.provider === key"
-                                    @click="form.provider = key"
-                                    class="flex flex-col items-center gap-2 rounded-xl border p-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-                                    :class="
+                                    :aria-disabled="key === 'nmi' && !nmiSelectable"
+                                    @click="selectProvider(key)"
+                                    class="relative flex flex-col items-center gap-2 rounded-xl border p-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                                    :class="[
                                         form.provider === key
                                             ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500 dark:bg-indigo-500/10'
-                                            : 'border-slate-300 hover:border-slate-400 dark:border-slate-600 dark:hover:border-slate-500'
-                                    "
+                                            : 'border-slate-300 hover:border-slate-400 dark:border-slate-600 dark:hover:border-slate-500',
+                                        key === 'nmi' && nmiLicensed && !nmiSelectable ? 'cursor-not-allowed opacity-50' : '',
+                                    ]"
                                 >
+                                    <GoldBadge
+                                        v-if="key === 'nmi' && !nmiLicensed"
+                                        locked
+                                        class="absolute -right-1 -top-2"
+                                    />
                                     <div
                                         class="h-6 w-6"
                                         :style="{ color: providerColors[key] }"
@@ -1079,6 +1345,361 @@ const isBroadcastDisabled = computed(() => {
                                         {{ provider.label }}
                                     </span>
                                 </button>
+                            </div>
+
+                            <!-- NetSendo MTA: whether its container answers. A new NMI
+                                 mailbox can only be added while it does. -->
+                            <p
+                                v-if="
+                                    nmi.enabled &&
+                                    (nmiLicensed || editingNmi) &&
+                                    (form.provider === 'nmi' || !mtaOnline)
+                                "
+                                class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs"
+                                :class="
+                                    mtaChecking || mtaStatus === null
+                                        ? 'text-slate-500 dark:text-slate-400'
+                                        : mtaOnline
+                                          ? 'text-emerald-600 dark:text-emerald-400'
+                                          : 'text-amber-700 dark:text-amber-300'
+                                "
+                                data-test="nmi-mta-status"
+                            >
+                                <span v-if="mtaChecking || mtaStatus === null">
+                                    {{ $t("mailboxes.nmi.mta_checking") }}
+                                </span>
+                                <span v-else-if="mtaOnline">
+                                    {{
+                                        $t("mailboxes.nmi.mta_online", {
+                                            address: mtaAddress,
+                                        })
+                                    }}
+                                </span>
+                                <template v-else>
+                                    <span>
+                                        {{
+                                            $t("mailboxes.nmi.mta_offline", {
+                                                address: mtaAddress,
+                                            })
+                                        }}
+                                        <template v-if="!editingNmi">
+                                            {{ $t("mailboxes.nmi.mta_required") }}
+                                        </template>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        class="font-medium underline"
+                                        @click="checkMta"
+                                    >
+                                        {{ $t("mailboxes.nmi.mta_recheck") }}
+                                    </button>
+                                </template>
+                            </p>
+                        </div>
+
+                        <!-- NetSendo MTA: the verified domain to send as and a dedicated IP -->
+                        <div
+                            v-if="form.provider === 'nmi'"
+                            class="space-y-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700/60"
+                            data-test="nmi-section"
+                        >
+                            <p class="text-sm text-slate-700 dark:text-slate-300">
+                                {{ $t("mailboxes.nmi.info") }}
+                            </p>
+
+                            <GoldNotice
+                                v-if="nmiLocked"
+                                :feature="NMI_FEATURE"
+                                :message="$t('license.gating.nmi_locked')"
+                            />
+
+                            <!-- Sending domain -->
+                            <div>
+                                <label
+                                    for="nmi-domain"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ $t("mailboxes.nmi.domain") }}
+                                </label>
+                                <select
+                                    id="nmi-domain"
+                                    v-model="form.domain_configuration_id"
+                                    :disabled="nmiLocked"
+                                    class="mt-1 block w-full disabled:opacity-60 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white"
+                                    :class="{
+                                        '!border-rose-500':
+                                            form.errors.domain_configuration_id,
+                                    }"
+                                >
+                                    <option :value="null">
+                                        {{
+                                            $t(
+                                                "mailboxes.nmi.domain_placeholder",
+                                            )
+                                        }}
+                                    </option>
+                                    <option
+                                        v-for="domain in nmi.domains"
+                                        :key="domain.id"
+                                        :value="domain.id"
+                                    >
+                                        {{ domain.domain }}
+                                    </option>
+                                </select>
+                                <p
+                                    v-if="form.errors.domain_configuration_id"
+                                    class="mt-1 text-sm text-rose-600"
+                                >
+                                    {{ form.errors.domain_configuration_id }}
+                                </p>
+                                <p
+                                    v-if="nmi.domains.length === 0"
+                                    class="mt-1 text-sm text-amber-700 dark:text-amber-300"
+                                >
+                                    {{ $t("mailboxes.nmi.no_domains") }}
+                                    <Link
+                                        :href="route('deliverability.index')"
+                                        class="font-medium underline"
+                                    >
+                                        {{ $t("mailboxes.nmi.manage_domains") }}
+                                    </Link>
+                                </p>
+                            </div>
+
+                            <!-- Dedicated IP -->
+                            <div>
+                                <label
+                                    for="nmi-ip"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ $t("mailboxes.nmi.ip") }}
+                                    <span class="font-normal text-slate-500">
+                                        ({{ $t("mailboxes.modal.optional") }})
+                                    </span>
+                                </label>
+                                <select
+                                    id="nmi-ip"
+                                    v-model="form.dedicated_ip_id"
+                                    :disabled="nmiLocked"
+                                    class="mt-1 block w-full disabled:opacity-60 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white"
+                                    :class="{
+                                        '!border-rose-500':
+                                            form.errors.dedicated_ip_id,
+                                    }"
+                                >
+                                    <option :value="null">
+                                        {{ $t("mailboxes.nmi.ip_none") }}
+                                    </option>
+                                    <option
+                                        v-for="ip in nmiIpOptions"
+                                        :key="ip.id"
+                                        :value="ip.id"
+                                        :disabled="ip.taken"
+                                    >
+                                        {{ ip.ip_address
+                                        }}{{
+                                            ip.hostname
+                                                ? " · " + ip.hostname
+                                                : ""
+                                        }}{{
+                                            ip.taken
+                                                ? " (" +
+                                                  $t("mailboxes.nmi.ip_taken") +
+                                                  ")"
+                                                : ""
+                                        }}
+                                    </option>
+                                </select>
+                                <p
+                                    v-if="form.errors.dedicated_ip_id"
+                                    class="mt-1 text-sm text-rose-600"
+                                >
+                                    {{ form.errors.dedicated_ip_id }}
+                                </p>
+                                <p
+                                    class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{ $t("mailboxes.nmi.ip_help") }}
+                                    <Link
+                                        :href="route('settings.nmi.dashboard')"
+                                        class="font-medium underline"
+                                    >
+                                        {{ $t("mailboxes.nmi.manage_ips") }}
+                                    </Link>
+                                </p>
+                                <!-- Whether mail really leaves from the chosen address -->
+                                <p
+                                    v-if="nmiIpBound !== null"
+                                    class="mt-1 text-xs"
+                                    :class="
+                                        nmiIpBound
+                                            ? 'text-emerald-600 dark:text-emerald-400'
+                                            : 'text-amber-700 dark:text-amber-300'
+                                    "
+                                    data-test="nmi-ip-bound"
+                                >
+                                    {{
+                                        nmiIpBound
+                                            ? $t("mailboxes.nmi.ip_bound")
+                                            : $t("mailboxes.nmi.ip_not_bound")
+                                    }}
+                                </p>
+                            </div>
+
+                            <!-- DKIM key of the domain: the record to publish, verified or not -->
+                            <div
+                                v-if="form.domain_configuration_id"
+                                class="rounded-xl border border-slate-200 p-3 dark:border-slate-700/60"
+                                data-test="nmi-dkim"
+                            >
+                                <div class="flex items-center justify-between gap-2">
+                                    <span
+                                        class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{ $t("mailboxes.nmi.dkim.title") }}
+                                    </span>
+                                    <span
+                                        v-if="nmiDkim?.has_key"
+                                        class="rounded-full px-2 py-0.5 text-xs font-medium"
+                                        :class="
+                                            nmiDkim.verified
+                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                                : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
+                                        "
+                                    >
+                                        {{
+                                            nmiDkim.verified
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.status_verified",
+                                                  )
+                                                : $t(
+                                                      "mailboxes.nmi.dkim.status_pending",
+                                                  )
+                                        }}
+                                    </span>
+                                </div>
+
+                                <p
+                                    v-if="nmiDkimLoading"
+                                    class="mt-2 text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{ $t("mailboxes.nmi.dkim.loading") }}
+                                </p>
+
+                                <!-- No key yet -->
+                                <div
+                                    v-else-if="!nmiDkim?.has_key"
+                                    class="mt-2 flex flex-wrap items-center justify-between gap-2"
+                                >
+                                    <p
+                                        class="text-xs text-slate-500 dark:text-slate-400"
+                                    >
+                                        {{
+                                            modalMode === "create"
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.created_on_save",
+                                                  )
+                                                : $t("mailboxes.nmi.dkim.no_key")
+                                        }}
+                                    </p>
+                                    <button
+                                        v-if="
+                                            nmiDkim &&
+                                            modalMode === 'edit' &&
+                                            !nmiLocked
+                                        "
+                                        type="button"
+                                        class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+                                        :disabled="nmiDkimBusy !== null"
+                                        @click="nmiDkimAction('generate')"
+                                    >
+                                        {{ $t("mailboxes.nmi.dkim.generate") }}
+                                    </button>
+                                </div>
+
+                                <!-- The record to publish -->
+                                <div v-else class="mt-2 space-y-2">
+                                    <p
+                                        class="text-xs"
+                                        :class="
+                                            nmiDkim.verified
+                                                ? 'text-emerald-600 dark:text-emerald-400'
+                                                : 'text-amber-700 dark:text-amber-300'
+                                        "
+                                    >
+                                        {{
+                                            nmiDkim.verified
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.verified",
+                                                  )
+                                                : nmiDkimIpKey
+                                                  ? $t(
+                                                        "mailboxes.nmi.dkim.pending_ip_key",
+                                                    )
+                                                  : $t(
+                                                        "mailboxes.nmi.dkim.pending",
+                                                    )
+                                        }}
+                                    </p>
+                                    <div
+                                        v-for="field in [
+                                            {
+                                                label: $t(
+                                                    'mailboxes.nmi.dkim.record_name',
+                                                ),
+                                                value: nmiDkim.dns_name,
+                                            },
+                                            {
+                                                label: $t(
+                                                    'mailboxes.nmi.dkim.record_value',
+                                                ),
+                                                value: nmiDkim.dns_value,
+                                            },
+                                        ]"
+                                        :key="field.label"
+                                    >
+                                        <div
+                                            class="flex items-center justify-between"
+                                        >
+                                            <span
+                                                class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                                            >
+                                                {{ field.label }}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                class="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                                                @click="
+                                                    copyToClipboard(field.value)
+                                                "
+                                            >
+                                                {{
+                                                    $t(
+                                                        "mailboxes.nmi.dkim.copy",
+                                                    )
+                                                }}
+                                            </button>
+                                        </div>
+                                        <code
+                                            class="mt-0.5 block max-h-24 overflow-auto break-all rounded bg-slate-100 px-2 py-1 text-xs text-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                                            >{{ field.value }}</code
+                                        >
+                                    </div>
+                                    <button
+                                        type="button"
+                                        class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-500 dark:text-slate-200 dark:hover:bg-slate-700"
+                                        :disabled="nmiDkimBusy !== null"
+                                        @click="nmiDkimAction('verify')"
+                                    >
+                                        {{
+                                            nmiDkim.verified
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.verify_again",
+                                                  )
+                                                : $t("mailboxes.nmi.dkim.verify")
+                                        }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
@@ -1156,6 +1777,13 @@ const isBroadcastDisabled = computed(() => {
                                 class="mt-1 text-sm text-rose-600"
                             >
                                 {{ form.errors.from_email }}
+                            </p>
+                            <p
+                                v-else-if="form.provider === 'nmi' && nmiDomain"
+                                class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                            >
+                                {{ $t("mailboxes.nmi.from_hint") }}
+                                ({{ nmiDomain.domain }})
                             </p>
                         </div>
                         <div
@@ -2363,10 +2991,25 @@ const isBroadcastDisabled = computed(() => {
                     </div>
                 </div>
 
+                <!-- Why the save failed: above the buttons, because the fields the messages belong
+                     to may be in another section or (credentials, custom headers) show none -->
+                <div
+                    v-if="formErrorMessages.length"
+                    role="alert"
+                    class="max-h-32 shrink-0 overflow-y-auto border-t border-rose-200 bg-rose-50 px-6 py-3 dark:border-rose-500/30 dark:bg-rose-500/10"
+                >
+                    <p class="text-sm font-medium text-rose-900 dark:text-rose-200">
+                        {{ $t("mailboxes.modal.save_errors") }}
+                    </p>
+                    <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-rose-800 dark:text-rose-300">
+                        <li v-for="message in formErrorMessages" :key="message">{{ message }}</li>
+                    </ul>
+                </div>
+
                 <footer
                     class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-slate-200 px-6 py-4 dark:border-slate-700/60"
                 >
-                    <!-- What just happened (a test, a copied address), a refused save, or what comes after the first save -->
+                    <!-- What just happened (a test, a copied address), or what comes after the first save -->
                     <p
                         v-if="toast"
                         :role="toast.success ? 'status' : 'alert'"
@@ -2378,13 +3021,6 @@ const isBroadcastDisabled = computed(() => {
                             :class="toast.success ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-rose-600 dark:bg-rose-400'"
                         ></span>
                         <span class="min-w-0">{{ toast.message }}</span>
-                    </p>
-                    <p
-                        v-else-if="form.hasErrors"
-                        role="alert"
-                        class="min-w-0 flex-1 text-sm text-rose-700 max-sm:basis-full dark:text-rose-300"
-                    >
-                        {{ $t("mailboxes.modal.fix_errors") }}
                     </p>
                     <p
                         v-else-if="modalMode === 'create'"
