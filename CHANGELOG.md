@@ -35,6 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - The seven unlabelled icons at the end of a row became a "Statistics" link and a menu with named actions (edit, duplicate, send again, queue statistics, switch the queue on or off, delete).
   - Sortable columns show their direction; the page size moved to the foot of the list, next to "1–30 of 43".
 - **The subscriber list is rebuilt on the same pattern.** Status tabs (everyone, active, inactive, bounced, unsubscribed) replace the status menu; search, list type, list and the column settings sit in one row; the status is a labelled pill; the four icons at the end of a row became a menu of named actions (card, edit, add to CRM, delete); ticked rows are highlighted and the bulk actions appear right above the table. Column choice and order, the page size and every bulk action work as before.
+- **"E-mail lists" and "SMS lists" are one page in two flavours.** A table by default (name with description, visibility, group and tags, subscribers, created), cards as the other view; the choice is remembered. The subscriber count leads to the subscribers of that list, the five icons of a row are a menu of named actions, and the page size can be chosen (it was fixed at 12). "Clear filters" also clears the visibility filter, which it used to leave set.
 - **The SMS campaign list follows the e-mail list**: the same tabs with counts, one row per campaign with the text people will receive under its name, a menu of named actions, and a page size the reader chooses (it was fixed at 10).
 - **Buttons, text fields and dialogs share one look.** The primary button is the indigo of the rest of the panel (it was dark grey in capitals), text fields have a visible border again (the colour classes alone drew none since Tailwind 4), dialogs have the panel's rounded card.
 - **The sign-in screens are rebuilt**: sign in, first administrator, forgotten and new password, password confirmation, e-mail verification, two-factor code and team invitation.
@@ -56,6 +57,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **The sort direction of the e-mail and the SMS message list went into SQL as the request wrote it** (`?sort=effective_date&direction=…` was pasted into `ORDER BY`). A signed-in user, a team member included, could run their own SQL through it. The direction is now one of two literals, `asc` or `desc`.
 
 - **SMS campaigns were open to every account of the installation.** The SMS pages read campaigns without asking whose they are: a team member could list, open, change and delete the administrator's campaigns, and pick any contact list of the installation for their own. A campaign now belongs to the account that wrote it, as an e-mail message does, and the list choice is limited to the lists the account may use (its own and the ones shared with it). An administrator no longer sees team members' SMS campaigns on the list, as with their e-mail messages.
+
+### Performance
+
+- The list pages counted the active subscribers of every row with a query of its own, although the page had already counted them all in one. The second count is gone.
 
 ### API
 

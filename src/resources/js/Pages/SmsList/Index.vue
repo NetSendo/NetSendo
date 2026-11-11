@@ -1,50 +1,20 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head, Link, router } from "@inertiajs/vue3";
-import { contrastTextColor } from "@/Composables/useColorContrast";
-import { ref, watch } from "vue";
-import { debounce } from "lodash";
+import { Head, Link, usePage } from "@inertiajs/vue3";
+import { onMounted, ref } from "vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
+import ListsBrowser from "@/Components/ContactLists/ListsBrowser.vue";
 import DeleteListModal from "./Partials/DeleteListModal.vue";
 import CopyListModal from "./Partials/CopyListModal.vue";
 
 const props = defineProps({
     lists: Object,
-    filters: Object,
+    filters: [Object, Array],
     groups: Array,
     tags: Array,
 });
 
-const form = ref({
-    search: props.filters.search || "",
-    group_id: props.filters.group_id || "",
-    tag_id: props.filters.tag_id || "",
-    visibility: props.filters.visibility || "",
-    sort_col: props.filters.sort_col || "created_at",
-    sort_dir: props.filters.sort_dir || "desc",
-});
-
-const reset = () => {
-    form.value = {
-        search: "",
-        group_id: "",
-        tag_id: "",
-        sort_col: "created_at",
-        sort_dir: "desc",
-    };
-};
-
-watch(
-    form,
-    debounce(() => {
-        router.get(route("sms-lists.index"), form.value, {
-            preserveState: true,
-            replace: true,
-        });
-    }, 300),
-    { deep: true },
-);
-
-// Delete Modal Logic
+// Delete dialog
 const confirmingListDeletion = ref(false);
 const listToDelete = ref(null);
 
@@ -65,7 +35,7 @@ const availableListsHelper = (currentListId) => {
     return props.lists.data.filter((l) => l.id !== currentListId);
 };
 
-// Copy Modal Logic
+// Copy dialog
 const confirmingListCopy = ref(false);
 const listToCopy = ref(null);
 
@@ -81,11 +51,19 @@ const closeCopyModal = () => {
     }, 300);
 };
 
-// View Mode Logic
-const viewMode = ref(localStorage.getItem("smsList_viewMode") || "grid");
+// Flash messages of the last action
+const toast = ref(null);
+const showToast = (message, success = true) => {
+    toast.value = { message, success };
+    setTimeout(() => {
+        toast.value = null;
+    }, 4000);
+};
 
-watch(viewMode, (newMode) => {
-    localStorage.setItem("smsList_viewMode", newMode);
+onMounted(() => {
+    const flash = usePage().props.flash;
+    if (flash?.success) showToast(flash.success);
+    if (flash?.error) showToast(flash.error, false);
 });
 </script>
 
@@ -99,982 +77,88 @@ watch(viewMode, (newMode) => {
         @close="closeDeleteModal"
     />
 
-    <CopyListModal
-        :show="confirmingListCopy"
-        :list="listToCopy"
-        @close="closeCopyModal"
-    />
+    <CopyListModal :show="confirmingListCopy" :list="listToCopy" @close="closeCopyModal" />
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1
-                        class="text-2xl font-bold text-slate-900 dark:text-white"
-                    >
-                        {{ $t("sms_lists.title") }}
-                    </h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                        {{ $t("sms_lists.subtitle") }}
-                    </p>
-                </div>
+            <PageHeader :title="$t('sms_lists.title')" :subtitle="$t('sms_lists.subtitle')">
                 <Link
                     :href="route('sms-lists.create')"
-                    class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:bg-indigo-500 hover:shadow-indigo-500/25"
+                    class="inline-flex min-h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 >
                     <svg
-                        class="h-5 w-5"
+                        aria-hidden="true"
+                        class="h-4 w-4"
+                        viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        viewBox="0 0 24 24"
+                        stroke-width="2.4"
+                        stroke-linecap="round"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 4v16m8-8H4"
-                        />
+                        <path d="M12 5v14M5 12h14" />
                     </svg>
                     {{ $t("sms_lists.new_list") }}
                 </Link>
-            </div>
+            </PageHeader>
         </template>
 
-        <!-- Filters -->
-        <div
-            class="mb-6 flex flex-col gap-4 rounded-xl bg-white p-4 shadow-sm dark:bg-slate-900 md:flex-row md:items-center md:justify-between"
-        >
-            <div class="flex flex-1 flex-col gap-4 md:flex-row">
-                <div class="relative w-full md:max-w-xs">
-                    <div
-                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"
-                    >
-                        <svg
-                            class="h-5 w-5 text-slate-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                        </svg>
-                    </div>
-                    <input
-                        v-model="form.search"
-                        type="text"
-                        :placeholder="$t('sms_lists.search_placeholder')"
-                        class="block w-full rounded-xl border-slate-200 bg-slate-50 pl-10 text-sm text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
-                    />
-                </div>
+        <div class="mx-auto flex max-w-screen-2xl flex-col gap-4">
+            <ListsBrowser
+                :lists="lists"
+                :filters="filters"
+                :groups="groups"
+                :tags="tags"
+                ns="sms_lists"
+                list-type="sms"
+                index-route="sms-lists.index"
+                create-route="sms-lists.create"
+                edit-route="sms-lists.edit"
+                message-route="sms.create"
+                :message-label="$t('sms_lists.create_sms')"
+                view-key="smsList_viewMode"
+                @delete="confirmDeleteList"
+                @copy="confirmCopyList"
+            />
+        </div>
 
-                <select
-                    v-model="form.group_id"
-                    class="block w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white md:w-48"
-                >
-                    <option value="">{{ $t("sms_lists.all_groups") }}</option>
-                    <option
-                        v-for="group in groups"
-                        :key="group.id"
-                        :value="group.id"
-                    >
-                        {{ "—".repeat(group.depth || 0)
-                        }}{{ (group.depth || 0) > 0 ? " " : ""
-                        }}{{ group.name }}
-                    </option>
-                </select>
-
-                <select
-                    v-model="form.visibility"
-                    class="block w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white md:w-40"
-                >
-                    <option value="">{{ $t("sms_lists.status") }}</option>
-                    <option value="public">{{ $t("sms_lists.public") }}</option>
-                    <option value="private">
-                        {{ $t("sms_lists.private") }}
-                    </option>
-                </select>
-
-                <select
-                    v-model="form.tag_id"
-                    class="block w-full rounded-xl border-slate-200 bg-slate-50 text-sm text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white md:w-48"
-                >
-                    <option value="">{{ $t("sms_lists.all_tags") }}</option>
-                    <option v-for="tag in tags" :key="tag.id" :value="tag.id">
-                        {{ tag.name }}
-                    </option>
-                </select>
-            </div>
-
-            <div class="flex items-center gap-2">
+        <!-- What the last action did -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transform transition duration-300 ease-out"
+                enter-from-class="translate-y-2 opacity-0"
+                enter-to-class="translate-y-0 opacity-100"
+                leave-active-class="transition duration-100 ease-in"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
+            >
                 <div
-                    class="flex items-center rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800"
+                    v-if="toast"
+                    role="status"
+                    class="fixed bottom-6 right-6 z-50 flex max-w-sm items-start gap-3 rounded-xl border bg-white px-4 py-3 text-sm text-slate-900 shadow-lg dark:bg-slate-800 dark:text-white"
+                    :class="
+                        toast.success
+                            ? 'border-emerald-200 dark:border-emerald-500/30'
+                            : 'border-rose-200 dark:border-rose-500/30'
+                    "
                 >
+                    <span
+                        aria-hidden="true"
+                        class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                        :class="toast.success ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-rose-600 dark:bg-rose-400'"
+                    ></span>
+                    <span class="min-w-0 flex-1">{{ toast.message }}</span>
                     <button
-                        @click="viewMode = 'grid'"
-                        class="rounded-md p-1.5 transition-colors"
-                        :class="
-                            viewMode === 'grid'
-                                ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-700 dark:text-indigo-400'
-                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                        "
-                        :title="$t('sms_lists.grid_view')"
+                        type="button"
+                        :aria-label="$t('common.close')"
+                        class="-mr-1 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/60"
+                        @click="toast = null"
                     >
-                        <svg
-                            class="h-5 w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                            />
-                        </svg>
-                    </button>
-                    <button
-                        @click="viewMode = 'list'"
-                        class="rounded-md p-1.5 transition-colors"
-                        :class="
-                            viewMode === 'list'
-                                ? 'bg-white text-indigo-600 shadow-sm dark:bg-slate-700 dark:text-indigo-400'
-                                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
-                        "
-                        :title="$t('sms_lists.list_view')"
-                    >
-                        <svg
-                            class="h-5 w-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M4 6h16M4 12h16M4 18h16"
-                            />
+                        <svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
                         </svg>
                     </button>
                 </div>
-
-                <button
-                    v-if="form.search || form.group_id || form.tag_id"
-                    @click="reset"
-                    class="ml-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-                >
-                    {{ $t("sms_lists.clear_filters") }}
-                </button>
-            </div>
-        </div>
-
-        <!-- Empty State -->
-        <div
-            v-if="lists.data.length === 0"
-            class="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-white py-16 text-center dark:border-slate-700 dark:bg-slate-900"
-        >
-            <div
-                class="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-indigo-50 dark:bg-indigo-900/20"
-            >
-                <svg
-                    class="h-8 w-8 text-indigo-500 dark:text-indigo-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                    />
-                </svg>
-            </div>
-            <h3 class="text-lg font-medium text-slate-900 dark:text-white">
-                {{ $t("sms_lists.empty_title") }}
-            </h3>
-            <p class="mt-1 text-slate-500 dark:text-slate-400">
-                {{ $t("sms_lists.empty_description") }}
-            </p>
-            <Link
-                :href="route('sms-lists.create')"
-                class="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:bg-indigo-500 hover:shadow-indigo-500/25"
-            >
-                <svg
-                    class="h-5 w-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 4v16m8-8H4"
-                    />
-                </svg>
-                {{ $t("sms_lists.create_list") }}
-            </Link>
-        </div>
-
-        <!-- Lists Grid -->
-        <div
-            v-else-if="viewMode === 'grid'"
-            class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
-        >
-            <div
-                v-for="list in lists.data"
-                :key="list.id"
-                class="group relative flex flex-col justify-between overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md dark:border-slate-700 dark:bg-slate-900"
-            >
-                <div>
-                    <div class="mb-4 flex items-start justify-between">
-                        <div
-                            class="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
-                        >
-                            <!-- Helper icon for SMS -->
-                            <svg
-                                class="w-6 h-6"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-                                />
-                            </svg>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <Link
-                                :href="
-                                    route('subscribers.index', {
-                                        list_id: list.id,
-                                        list_type: 'sms',
-                                    })
-                                "
-                                class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-                                :title="$t('sms_lists.view_subscribers')"
-                            >
-                                <svg
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                    />
-                                </svg>
-                            </Link>
-                            <Link
-                                :href="
-                                    route('sms.create', { list_id: list.id })
-                                "
-                                class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
-                                :title="$t('sms_lists.create_sms')"
-                            >
-                                <svg
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                                    />
-                                </svg>
-                            </Link>
-                            <Link
-                                :href="route('sms-lists.edit', list.id)"
-                                class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
-                                :title="$t('sms_lists.edit')"
-                            >
-                                <svg
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                    />
-                                </svg>
-                            </Link>
-                            <button
-                                @click="confirmCopyList(list)"
-                                class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400"
-                                :title="$t('sms_lists.copy')"
-                            >
-                                <svg
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                                    />
-                                </svg>
-                            </button>
-                            <button
-                                @click="confirmDeleteList(list)"
-                                class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                                :title="$t('sms_lists.delete')"
-                            >
-                                <svg
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <h3
-                        class="mb-1 text-lg font-bold text-slate-900 dark:text-white"
-                    >
-                        <Link
-                            :href="route('sms-lists.edit', list.id)"
-                            class="hover:text-indigo-600 dark:hover:text-indigo-400 focus:outline-none"
-                        >
-                            <span
-                                class="absolute inset-0"
-                                aria-hidden="true"
-                            ></span>
-                            {{ list.name }}
-                        </Link>
-                    </h3>
-                    <p
-                        class="mb-4 line-clamp-2 text-sm text-slate-500 dark:text-slate-400"
-                    >
-                        {{ list.description || $t("sms_lists.no_description") }}
-                    </p>
-
-                    <div class="mb-4">
-                        <div class="mb-2 flex flex-wrap gap-2">
-                            <!-- Visibility Badge -->
-                            <div
-                                class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium"
-                                :class="
-                                    list.is_public
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-                                "
-                            >
-                                <span
-                                    class="h-1.5 w-1.5 rounded-full"
-                                    :class="
-                                        list.is_public
-                                            ? 'bg-green-500'
-                                            : 'bg-slate-400'
-                                    "
-                                ></span>
-                                {{
-                                    list.is_public
-                                        ? $t("sms_lists.public")
-                                        : $t("sms_lists.private")
-                                }}
-                            </div>
-
-                            <!-- Group -->
-                            <div
-                                v-if="list.group"
-                                class="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
-                            >
-                                <svg
-                                    class="h-3 w-3"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                                    />
-                                </svg>
-                                {{ list.group.name }}
-                            </div>
-                        </div>
-
-                        <!-- Tags -->
-                        <div class="flex flex-wrap gap-1">
-                            <span
-                                v-for="tag in list.tags"
-                                :key="tag.id"
-                                class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm"
-                                :style="{ backgroundColor: tag.color, color: contrastTextColor(tag.color) }"
-                            >
-                                {{ tag.name }}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    class="flex items-center justify-between border-t border-slate-100 pt-4 dark:border-slate-800"
-                >
-                    <div
-                        class="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400"
-                    >
-                        <svg
-                            class="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                            />
-                        </svg>
-                        <span
-                            class="font-semibold text-slate-900 dark:text-white"
-                            >{{ list.subscribers_count }}</span
-                        >
-                        {{ $t("sms_lists.subscribers") }}
-                    </div>
-                    <span class="text-xs text-slate-400">
-                        {{ list.created_at }}
-                    </span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Lists Table -->
-        <div
-            v-else
-            class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
-        >
-            <div class="overflow-x-auto">
-                <table
-                    class="w-full text-left text-sm text-slate-500 dark:text-slate-400"
-                >
-                    <thead
-                        class="bg-slate-50 text-xs uppercase text-slate-700 dark:bg-slate-800 dark:text-slate-200"
-                    >
-                        <tr>
-                            <th
-                                scope="col"
-                                class="px-6 py-3 cursor-pointer group"
-                                @click="
-                                    form.sort_col = 'id';
-                                    form.sort_dir =
-                                        form.sort_col === 'id' &&
-                                        form.sort_dir === 'asc'
-                                            ? 'desc'
-                                            : 'asc';
-                                "
-                            >
-                                <div class="flex items-center gap-1">
-                                    {{ $t("sms_lists.table.list_id") }}
-                                    <span class="flex flex-col">
-                                        <svg
-                                            class="h-2 w-2"
-                                            :class="
-                                                form.sort_col === 'id' &&
-                                                form.sort_dir === 'asc'
-                                                    ? 'text-indigo-600 dark:text-indigo-400'
-                                                    : 'text-slate-300 dark:text-slate-600'
-                                            "
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="4"
-                                                d="M5 15l7-7 7 7"
-                                            />
-                                        </svg>
-                                        <svg
-                                            class="h-2 w-2"
-                                            :class="
-                                                form.sort_col === 'id' &&
-                                                form.sort_dir === 'desc'
-                                                    ? 'text-indigo-600 dark:text-indigo-400'
-                                                    : 'text-slate-300 dark:text-slate-600'
-                                            "
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="4"
-                                                d="M19 9l-7 7-7-7"
-                                            />
-                                        </svg>
-                                    </span>
-                                </div>
-                            </th>
-                            <th
-                                scope="col"
-                                class="px-6 py-3 cursor-pointer group"
-                                @click="
-                                    form.sort_col = 'name';
-                                    form.sort_dir =
-                                        form.sort_col === 'name' &&
-                                        form.sort_dir === 'asc'
-                                            ? 'desc'
-                                            : 'asc';
-                                "
-                            >
-                                <div class="flex items-center gap-1">
-                                    {{ $t("sms_lists.table.name") }}
-                                    <span class="flex flex-col">
-                                        <svg
-                                            class="h-2 w-2"
-                                            :class="
-                                                form.sort_col === 'name' &&
-                                                form.sort_dir === 'asc'
-                                                    ? 'text-indigo-600 dark:text-indigo-400'
-                                                    : 'text-slate-300 dark:text-slate-600'
-                                            "
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="4"
-                                                d="M5 15l7-7 7 7"
-                                            />
-                                        </svg>
-                                        <svg
-                                            class="h-2 w-2"
-                                            :class="
-                                                form.sort_col === 'name' &&
-                                                form.sort_dir === 'desc'
-                                                    ? 'text-indigo-600 dark:text-indigo-400'
-                                                    : 'text-slate-300 dark:text-slate-600'
-                                            "
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="4"
-                                                d="M19 9l-7 7-7-7"
-                                            />
-                                        </svg>
-                                    </span>
-                                </div>
-                            </th>
-                            <th scope="col" class="px-6 py-3">
-                                {{ $t("sms_lists.table.status") }}
-                            </th>
-                            <th scope="col" class="px-6 py-3">
-                                {{ $t("sms_lists.table.groups_tags") }}
-                            </th>
-                            <th
-                                scope="col"
-                                class="px-6 py-3 text-center cursor-pointer group"
-                                @click="
-                                    form.sort_col = 'subscribers_count';
-                                    form.sort_dir =
-                                        form.sort_col === 'subscribers_count' &&
-                                        form.sort_dir === 'desc'
-                                            ? 'asc'
-                                            : 'desc';
-                                "
-                            >
-                                <div
-                                    class="flex items-center justify-center gap-1"
-                                >
-                                    {{ $t("sms_lists.table.subscribers") }}
-                                    <span class="flex flex-col">
-                                        <svg
-                                            class="h-2 w-2"
-                                            :class="
-                                                form.sort_col ===
-                                                    'subscribers_count' &&
-                                                form.sort_dir === 'asc'
-                                                    ? 'text-indigo-600 dark:text-indigo-400'
-                                                    : 'text-slate-300 dark:text-slate-600'
-                                            "
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="4"
-                                                d="M5 15l7-7 7 7"
-                                            />
-                                        </svg>
-                                        <svg
-                                            class="h-2 w-2"
-                                            :class="
-                                                form.sort_col ===
-                                                    'subscribers_count' &&
-                                                form.sort_dir === 'desc'
-                                                    ? 'text-indigo-600 dark:text-indigo-400'
-                                                    : 'text-slate-300 dark:text-slate-600'
-                                            "
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="4"
-                                                d="M19 9l-7 7-7-7"
-                                            />
-                                        </svg>
-                                    </span>
-                                </div>
-                            </th>
-                            <th
-                                scope="col"
-                                class="px-6 py-3 cursor-pointer group"
-                                @click="
-                                    form.sort_col = 'created_at';
-                                    form.sort_dir =
-                                        form.sort_col === 'created_at' &&
-                                        form.sort_dir === 'asc'
-                                            ? 'desc'
-                                            : 'asc';
-                                "
-                            >
-                                <div class="flex items-center gap-1">
-                                    {{ $t("sms_lists.table.created_at") }}
-                                    <span class="flex flex-col">
-                                        <svg
-                                            class="h-2 w-2"
-                                            :class="
-                                                form.sort_col ===
-                                                    'created_at' &&
-                                                form.sort_dir === 'asc'
-                                                    ? 'text-indigo-600 dark:text-indigo-400'
-                                                    : 'text-slate-300 dark:text-slate-600'
-                                            "
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="4"
-                                                d="M5 15l7-7 7 7"
-                                            />
-                                        </svg>
-                                        <svg
-                                            class="h-2 w-2"
-                                            :class="
-                                                form.sort_col ===
-                                                    'created_at' &&
-                                                form.sort_dir === 'desc'
-                                                    ? 'text-indigo-600 dark:text-indigo-400'
-                                                    : 'text-slate-300 dark:text-slate-600'
-                                            "
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="4"
-                                                d="M19 9l-7 7-7-7"
-                                            />
-                                        </svg>
-                                    </span>
-                                </div>
-                            </th>
-                            <th scope="col" class="px-6 py-3 text-right">
-                                {{ $t("sms_lists.table.actions") }}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody
-                        class="divide-y divide-slate-200 dark:divide-slate-700"
-                    >
-                        <tr
-                            v-for="list in lists.data"
-                            :key="list.id"
-                            class="hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                        >
-                            <td
-                                class="px-6 py-4 text-slate-500 dark:text-slate-400 font-mono text-xs"
-                            >
-                                {{ list.id }}
-                            </td>
-                            <td
-                                class="px-6 py-4 font-medium text-slate-900 dark:text-white"
-                            >
-                                <Link
-                                    :href="route('sms-lists.edit', list.id)"
-                                    class="hover:text-indigo-600 dark:hover:text-indigo-400"
-                                >
-                                    {{ list.name }}
-                                </Link>
-                                <div
-                                    class="text-xs text-slate-500 dark:text-slate-400"
-                                >
-                                    {{
-                                        list.description
-                                            ? list.description.substring(
-                                                  0,
-                                                  50,
-                                              ) +
-                                              (list.description.length > 50
-                                                  ? "..."
-                                                  : "")
-                                            : ""
-                                    }}
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div
-                                    class="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium"
-                                    :class="
-                                        list.is_public
-                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                                            : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'
-                                    "
-                                >
-                                    <span
-                                        class="h-1.5 w-1.5 rounded-full"
-                                        :class="
-                                            list.is_public
-                                                ? 'bg-green-500'
-                                                : 'bg-slate-400'
-                                        "
-                                    ></span>
-                                    {{
-                                        list.is_public
-                                            ? $t("sms_lists.public")
-                                            : $t("sms_lists.private")
-                                    }}
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="flex flex-col gap-1">
-                                    <div
-                                        v-if="list.group"
-                                        class="inline-flex w-fit items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400"
-                                    >
-                                        <svg
-                                            class="h-3 w-3"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                                            />
-                                        </svg>
-                                        {{ list.group.name }}
-                                    </div>
-                                    <div class="flex flex-wrap gap-1">
-                                        <span
-                                            v-for="tag in list.tags"
-                                            :key="tag.id"
-                                            class="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold shadow-sm"
-                                            :style="{
-                                                backgroundColor: tag.color,
-                                                color: contrastTextColor(tag.color),
-                                            }"
-                                        >
-                                            {{ tag.name }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span
-                                    class="font-semibold text-slate-900 dark:text-white"
-                                    >{{ list.subscribers_count }}</span
-                                >
-                            </td>
-                            <td class="px-6 py-4 text-xs">
-                                {{ list.created_at }}
-                            </td>
-                            <td class="px-6 py-4 text-right">
-                                <div class="flex justify-end gap-2">
-                                    <Link
-                                        :href="
-                                            route('subscribers.index', {
-                                                list_id: list.id,
-                                                list_type: 'sms',
-                                            })
-                                        "
-                                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
-                                        :title="
-                                            $t('sms_lists.view_subscribers')
-                                        "
-                                    >
-                                        <svg
-                                            class="h-5 w-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                            />
-                                        </svg>
-                                    </Link>
-                                    <Link
-                                        :href="
-                                            route('sms.create', {
-                                                list_id: list.id,
-                                            })
-                                        "
-                                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-emerald-50 hover:text-emerald-600 dark:hover:bg-emerald-900/20 dark:hover:text-emerald-400"
-                                        :title="$t('sms_lists.create_sms')"
-                                    >
-                                        <svg
-                                            class="h-5 w-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"
-                                            />
-                                        </svg>
-                                    </Link>
-                                    <Link
-                                        :href="route('sms-lists.edit', list.id)"
-                                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-indigo-600 dark:hover:bg-slate-800 dark:hover:text-indigo-400"
-                                        :title="$t('sms_lists.edit')"
-                                    >
-                                        <svg
-                                            class="h-5 w-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                            />
-                                        </svg>
-                                    </Link>
-                                    <button
-                                        @click="confirmCopyList(list)"
-                                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400"
-                                        :title="$t('sms_lists.copy')"
-                                    >
-                                        <svg
-                                            class="h-5 w-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
-                                            />
-                                        </svg>
-                                    </button>
-                                    <button
-                                        @click="confirmDeleteList(list)"
-                                        class="rounded-lg p-2 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
-                                        :title="$t('sms_lists.delete')"
-                                    >
-                                        <svg
-                                            class="h-5 w-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Pagination -->
-        <div
-            v-if="lists.links.length > 3"
-            class="mt-6 flex items-center justify-between rounded-xl bg-white px-6 py-4 shadow-sm dark:bg-slate-900"
-        >
-            <div class="text-sm text-slate-500 dark:text-slate-400">
-                {{ $t("common.showing") }} {{ lists.from }} - {{ lists.to }}
-                {{ $t("common.of") }}
-                {{ lists.total }}
-            </div>
-            <div class="flex gap-1">
-                <Link
-                    v-for="(link, i) in lists.links"
-                    :key="i"
-                    :href="link.url || '#'"
-                    class="rounded-lg px-3 py-1 text-sm"
-                    :class="{
-                        'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400':
-                            link.active,
-                        'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800':
-                            !link.active && link.url,
-                        'opacity-50 cursor-not-allowed': !link.url,
-                    }"
-                    v-html="link.label"
-                />
-            </div>
-        </div>
+            </Transition>
+        </Teleport>
     </AuthenticatedLayout>
 </template>

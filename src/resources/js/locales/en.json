@@ -9399,5 +9399,11 @@
         "notice_enable": "Turn on",
         "notice_details": "See what is sent",
         "notice_dismiss": "No, thanks"
+    },
+    "lists_browser": {
+        "visibility": "Visibility",
+        "visibility_all": "Any visibility",
+        "view": "View",
+        "actions_for": "Actions for the list: {name}"
     }
 }
