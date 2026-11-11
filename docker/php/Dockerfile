@@ -52,6 +52,10 @@ RUN cd /var/www && composer install --no-dev --optimize-autoloader --no-interact
 # Build frontend assets
 RUN cd /var/www && npm ci && npm run build && rm -rf node_modules
 
+# Scripts, styles and the other text assets also get a .gz twin. The bundled nginx serves it
+# as is (gzip_static), so they travel compressed even where no proxy compresses them.
+RUN find /var/www/public/build -type f \( -name '*.js' -o -name '*.css' -o -name '*.json' -o -name '*.svg' \) -size +1k -exec gzip -9 -k {} +
+
 # =============================================================================
 # CREATE BACKUP OF PUBLIC DIRECTORY FOR PRODUCTION SYNC
 # =============================================================================

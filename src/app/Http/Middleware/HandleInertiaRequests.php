@@ -7,6 +7,7 @@ use App\Services\LicenseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Vite;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -33,6 +34,14 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+        // A signed-in user gets the scripts of the other pages fetched in the background
+        // after the page has loaded, so moving around the panel does not wait for them.
+        // Guests do not: the sign-in page and the public pages would download the whole
+        // panel (several megabytes) for a visitor who may never open it.
+        if ($request->user()) {
+            Vite::prefetch(concurrency: 3);
+        }
+
         // Get license status directly from database
         $licenseActive = false;
         $licensePlan = null;

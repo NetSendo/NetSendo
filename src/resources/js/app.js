@@ -16,7 +16,7 @@ import { createInertiaApp, router } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
-import { setupI18n } from './i18n';
+import { loadMessages, setLocale, setupI18n } from './i18n';
 
 // Initialize theme immediately
 import { useTheme } from './Composables/useTheme';
@@ -30,9 +30,14 @@ router.on('navigate', (event) => {
     const current = event.detail.page.props.locale?.current;
     const i18n = window.__VUE_I18N__?.global;
     if (current && i18n && i18n.locale.value !== current) {
-        i18n.locale.value = current;
+        setLocale(current).catch(() => {});
     }
 });
+
+// The language of the first page is on <html lang>. Its texts start downloading now, next
+// to the page's own script, instead of after the application has started.
+const firstLocale = (document.documentElement.lang || 'en').slice(0, 2);
+const firstMessages = loadMessages(firstLocale).catch(() => ({}));
 
 
 const appName = 'NetSendo';
@@ -44,13 +49,17 @@ createInertiaApp({
             `./Pages/${name}.vue`,
             import.meta.glob('./Pages/**/*.vue'),
         ),
-    setup({ el, App, props, plugin }) {
+    async setup({ el, App, props, plugin }) {
         // Set initial page props for composables
         window.__page = props.initialPage;
 
         // Get initial locale from Inertia shared props
         const initialLocale = props.initialPage.props.locale?.current || 'en';
-        const i18n = setupI18n(initialLocale);
+        const messages =
+            initialLocale === firstLocale
+                ? await firstMessages
+                : await loadMessages(initialLocale).catch(() => ({}));
+        const i18n = setupI18n(initialLocale, messages);
 
         // Date and number helpers outside components read the language from here. Without it
         // they fell back to the props of the previous page, so dates stayed in the old

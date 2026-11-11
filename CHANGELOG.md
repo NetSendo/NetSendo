@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Performance
+
+- **The first load is about a quarter of what it was.** Every page, the sign-in page included, downloaded all four interface languages inside the start-up script (1.85 MB). Now only the language in use is downloaded, as a file of its own that the browser fetches together with the script: 0.42 MB of script and about 0.36 MB of texts. English, the fallback for a missing text, is fetched only when a text really is missing; switching the language downloads the new one first.
+- **Guests no longer download the whole panel in the background.** After every full page load the browser fetched the scripts of all pages (286 files, 7.7 MB) so that later navigation is instant. That now happens only for a signed-in user. On the sign-in page a visit went from about 250 requests and 9 MB to 15 requests and 1.2 MB.
+- **Built scripts and styles are compressed in the image.** Each has a ready `.gz` file next to it, which the bundled nginx serves as is. Until now they travelled uncompressed unless a proxy in front compressed them, and nginx's default compresses HTML only.
+
+### Changed
+
+- **`docker/nginx/default.conf`:** compression is on for pages, API answers and text assets, also for requests that arrive through a proxy speaking HTTP/1.0, and files under `/build/assets/` (their names carry a hash) are cached for a year as immutable. The file is mounted from the installation's folder, so an existing installation gets this by taking the new file and restarting the `webserver` container.
+- After a language switch the page's `lang` attribute follows the new language.
+
 ## [2.9.0] – New panel look, NetSendo MTA mailboxes, unsubscribing that never subscribes - 2026-11-11
 
 **Release date:** 2026-11-11
