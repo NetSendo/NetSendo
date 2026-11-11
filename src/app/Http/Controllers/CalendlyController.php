@@ -41,6 +41,8 @@ class CalendlyController extends Controller
                     'calendly_user_email' => $integration->calendly_user_email,
                     'calendly_user_name' => $integration->calendly_user_name,
                     'is_active' => $integration->is_active,
+                    // The app details were saved, the consent on Calendly's side was never given
+                    'is_pending' => empty($integration->access_token),
                     'has_credentials' => !empty($integration->client_id) && !empty($integration->client_secret),
                     'settings' => $integration->settings ?? CalendlyIntegration::getDefaultSettings(),
                     'event_types' => $integration->event_types ?? [],

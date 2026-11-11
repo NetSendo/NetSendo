@@ -9773,5 +9773,123 @@
         "connect_button": "Zoom-Konto verbinden",
         "config_required": "Zuerst die Zugangsdaten",
         "config_required_text": "Speichern Sie oben die Zugangsdaten Ihrer Zoom-OAuth-App; danach lässt sich das Konto verbinden."
+    },
+    "calendly_settings": {
+        "title": "Calendly",
+        "subtitle": "Calendly-Buchungen landen im CRM und in deinen Listen",
+        "marketplace": "Marketplace",
+        "breadcrumb_settings": "Einstellungen",
+        "connected": "Verbunden",
+        "not_connected": "Nicht verbunden",
+        "account_fallback": "Calendly-Konto",
+        "connect_button": "Calendly-Konto verbinden",
+        "connect_another": "Weiteres Konto verbinden",
+        "status": {
+            "active": "Verbunden",
+            "inactive": "Inaktiv",
+            "pending": "Wartet auf Autorisierung"
+        },
+        "pending": {
+            "title": "Die Autorisierung wurde nicht abgeschlossen",
+            "text": "Die App-Daten sind gespeichert, aber die Zustimmung bei Calendly wurde nicht erteilt. Verbinde das Konto erneut mit denselben Daten oder lösche diesen Eintrag."
+        },
+        "actions": {
+            "configure": "Einstellungen",
+            "sync": "Ereignistypen aktualisieren",
+            "syncing": "Wird aktualisiert…",
+            "test": "Webhook prüfen",
+            "disconnect": "Trennen",
+            "menu_for": "{name}: Aktionen"
+        },
+        "event_types": "Ereignistypen",
+        "no_event_types": "Keine Ereignistypen. Aktualisiere sie über das Menü, sobald du einen in Calendly angelegt hast.",
+        "recent": {
+            "title": "Letzte Buchungen",
+            "empty": "Es gab noch keine Buchungen.",
+            "invitee": "Eingeladene Person",
+            "event": "Ereignis",
+            "date": "Termin"
+        },
+        "booking_status": {
+            "scheduled": "Geplant",
+            "canceled": "Abgesagt",
+            "no_show": "Nicht erschienen",
+            "completed": "Stattgefunden"
+        },
+        "empty": {
+            "title": "Kein Calendly-Konto verbunden",
+            "description": "Nach dem Verbinden legt jede Buchung einen CRM-Kontakt an, fügt die eingeladene Person den gewählten Listen hinzu und kann Automatisierungen starten."
+        },
+        "webhook": {
+            "title": "Webhook-Adresse",
+            "hint": "Wird beim Verbinden eines Kontos automatisch in Calendly eingerichtet. Du musst sie nirgends einfügen."
+        },
+        "connect": {
+            "title": "Calendly-Konto verbinden",
+            "intro": "Zum Verbinden brauchst du eine eigene OAuth-App bei Calendly:",
+            "step_open": "Öffne {link}.",
+            "step_create": "Lege eine neue OAuth-Anwendung an.",
+            "step_redirect": "Füge als Redirect URI die unten angezeigte Adresse ein.",
+            "step_copy": "Kopiere Client ID und Client Secret in die Felder unten.",
+            "redirect_uri": "Redirect URI",
+            "client_id": "Client ID",
+            "client_secret": "Client Secret",
+            "submit": "Weiter zu Calendly",
+            "connecting": "Wird verbunden…"
+        },
+        "disconnect": {
+            "title": "Calendly-Konto trennen?",
+            "message": "Neue Buchungen erreichen NetSendo nicht mehr. Bisher angelegte Kontakte und Aufgaben bleiben erhalten."
+        },
+        "toast": {
+            "connected": "Calendly-Konto verbunden",
+            "disconnected": "Calendly-Konto getrennt",
+            "saved": "Einstellungen gespeichert",
+            "synced": "Ereignistypen aktualisiert",
+            "webhook_ok": "Der Webhook funktioniert"
+        },
+        "selected": "Ausgewählt: {count}",
+        "settings": {
+            "title": "Was eine Buchung auslöst"
+        },
+        "tabs": {
+            "label": "Teil der Einstellungen",
+            "crm": "CRM",
+            "lists": "Listen und Tags",
+            "event_types": "Ereignistypen",
+            "automation": "Automatisierungen"
+        },
+        "crm": {
+            "enabled": "Aus jeder Buchung einen CRM-Kontakt anlegen",
+            "create_tasks": "Für jedes Treffen eine CRM-Aufgabe anlegen",
+            "default_status": "Status eines neuen Kontakts",
+            "default_owner": "Zuständige Person",
+            "no_owner": "Niemand zuständig"
+        },
+        "lists": {
+            "enabled": "Eingeladene Personen zu Listen hinzufügen",
+            "default_lists": "Listen",
+            "default_tags": "Tags",
+            "search_lists": "Listen suchen",
+            "search_tags": "Tags suchen",
+            "no_lists": "Keine Listen",
+            "no_tags": "Keine Tags"
+        },
+        "per_type": {
+            "intro": "Ausgewählte Ereignistypen können eigene Listen und Tags haben. Die übrigen nutzen die Einstellungen aus dem Tab „Listen und Tags“.",
+            "lists_off": "Das Hinzufügen zu Listen ist aus. Schalte es im Tab „Listen und Tags“ ein, um Ausnahmen für Ereignistypen festzulegen.",
+            "none": "Dieses Konto hat noch keine Ereignistypen. Aktualisiere sie über das Menü des Kontos.",
+            "custom": "Eigene Listen und Tags",
+            "default": "Standardeinstellungen",
+            "switch_label": "Eigene Listen und Tags für „{name}“",
+            "lists": "Listen für diesen Typ",
+            "tags": "Tags für diesen Typ"
+        },
+        "automation": {
+            "intro": "Calendly-Ereignisse, die Automatisierungen starten.",
+            "booking": "Neue Buchung",
+            "cancellation": "Treffen abgesagt",
+            "no_show": "Eingeladene Person nicht erschienen"
+        }
     }
 }

@@ -9773,5 +9773,123 @@
         "connect_button": "Connect Zoom account",
         "config_required": "App credentials first",
         "config_required_text": "Save the credentials of your Zoom OAuth app above; the account can be connected after that."
+    },
+    "calendly_settings": {
+        "title": "Calendly",
+        "subtitle": "Calendly bookings go to the CRM and to your lists",
+        "marketplace": "Marketplace",
+        "breadcrumb_settings": "Settings",
+        "connected": "Connected",
+        "not_connected": "Not connected",
+        "account_fallback": "Calendly account",
+        "connect_button": "Connect a Calendly account",
+        "connect_another": "Connect another account",
+        "status": {
+            "active": "Connected",
+            "inactive": "Inactive",
+            "pending": "Awaiting authorisation"
+        },
+        "pending": {
+            "title": "The authorisation was not finished",
+            "text": "The app details are saved, but consent was never given on Calendly's side. Connect the account again with the same details, or delete this entry."
+        },
+        "actions": {
+            "configure": "Settings",
+            "sync": "Refresh event types",
+            "syncing": "Refreshing…",
+            "test": "Check the webhook",
+            "disconnect": "Disconnect",
+            "menu_for": "{name}: actions"
+        },
+        "event_types": "Event types",
+        "no_event_types": "No event types. Refresh them from the menu once you have created one in Calendly.",
+        "recent": {
+            "title": "Recent bookings",
+            "empty": "There have been no bookings yet.",
+            "invitee": "Invitee",
+            "event": "Event",
+            "date": "Time"
+        },
+        "booking_status": {
+            "scheduled": "Scheduled",
+            "canceled": "Cancelled",
+            "no_show": "No-show",
+            "completed": "Completed"
+        },
+        "empty": {
+            "title": "No Calendly account is connected",
+            "description": "Once connected, every booking creates a CRM contact, adds the invitee to the lists you choose and can start automations."
+        },
+        "webhook": {
+            "title": "Webhook address",
+            "hint": "Set in Calendly automatically when an account is connected. You do not have to paste it anywhere."
+        },
+        "connect": {
+            "title": "Connect a Calendly account",
+            "intro": "Connecting needs your own OAuth app at Calendly:",
+            "step_open": "Go to {link}.",
+            "step_create": "Create a new OAuth application.",
+            "step_redirect": "As the Redirect URI, paste the address shown below.",
+            "step_copy": "Copy the Client ID and Client Secret into the fields below.",
+            "redirect_uri": "Redirect URI",
+            "client_id": "Client ID",
+            "client_secret": "Client Secret",
+            "submit": "Continue to Calendly",
+            "connecting": "Connecting…"
+        },
+        "disconnect": {
+            "title": "Disconnect the Calendly account?",
+            "message": "New bookings will stop reaching NetSendo. Contacts and tasks created so far stay."
+        },
+        "toast": {
+            "connected": "Calendly account connected",
+            "disconnected": "Calendly account disconnected",
+            "saved": "Settings saved",
+            "synced": "Event types refreshed",
+            "webhook_ok": "The webhook works"
+        },
+        "selected": "Selected: {count}",
+        "settings": {
+            "title": "What a booking does"
+        },
+        "tabs": {
+            "label": "Part of the settings",
+            "crm": "CRM",
+            "lists": "Lists and tags",
+            "event_types": "Event types",
+            "automation": "Automations"
+        },
+        "crm": {
+            "enabled": "Create a CRM contact from every booking",
+            "create_tasks": "Create a CRM task for every meeting",
+            "default_status": "Status of a new contact",
+            "default_owner": "Contact owner",
+            "no_owner": "No owner"
+        },
+        "lists": {
+            "enabled": "Add invitees to lists",
+            "default_lists": "Lists",
+            "default_tags": "Tags",
+            "search_lists": "Search lists",
+            "search_tags": "Search tags",
+            "no_lists": "No lists",
+            "no_tags": "No tags"
+        },
+        "per_type": {
+            "intro": "Chosen event types can have their own lists and tags. The others use the settings from the “Lists and tags” tab.",
+            "lists_off": "Adding to lists is off. Turn it on in the “Lists and tags” tab to set exceptions for event types.",
+            "none": "This account has no event types yet. Refresh them from the account's menu.",
+            "custom": "Own lists and tags",
+            "default": "Default settings",
+            "switch_label": "Own lists and tags for “{name}”",
+            "lists": "Lists for this type",
+            "tags": "Tags for this type"
+        },
+        "automation": {
+            "intro": "Calendly events that start automations.",
+            "booking": "New booking",
+            "cancellation": "Meeting cancelled",
+            "no_show": "Invitee did not show up"
+        }
     }
 }

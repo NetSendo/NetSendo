@@ -9773,5 +9773,123 @@
         "connect_button": "Conectar cuenta de Zoom",
         "config_required": "Primero las credenciales",
         "config_required_text": "Guarda arriba las credenciales de tu app OAuth de Zoom; después se podrá conectar la cuenta."
+    },
+    "calendly_settings": {
+        "title": "Calendly",
+        "subtitle": "Las reservas de Calendly llegan al CRM y a tus listas",
+        "marketplace": "Marketplace",
+        "breadcrumb_settings": "Ajustes",
+        "connected": "Conectado",
+        "not_connected": "Sin conectar",
+        "account_fallback": "Cuenta de Calendly",
+        "connect_button": "Conectar una cuenta de Calendly",
+        "connect_another": "Conectar otra cuenta",
+        "status": {
+            "active": "Conectada",
+            "inactive": "Inactiva",
+            "pending": "Pendiente de autorización"
+        },
+        "pending": {
+            "title": "La autorización no se completó",
+            "text": "Los datos de la aplicación están guardados, pero no se dio el consentimiento en Calendly. Conecta la cuenta de nuevo con los mismos datos o elimina esta entrada."
+        },
+        "actions": {
+            "configure": "Ajustes",
+            "sync": "Actualizar tipos de evento",
+            "syncing": "Actualizando…",
+            "test": "Comprobar el webhook",
+            "disconnect": "Desconectar",
+            "menu_for": "{name}: acciones"
+        },
+        "event_types": "Tipos de evento",
+        "no_event_types": "No hay tipos de evento. Actualízalos desde el menú cuando hayas creado uno en Calendly.",
+        "recent": {
+            "title": "Reservas recientes",
+            "empty": "Todavía no ha habido reservas.",
+            "invitee": "Invitado",
+            "event": "Evento",
+            "date": "Fecha"
+        },
+        "booking_status": {
+            "scheduled": "Programada",
+            "canceled": "Cancelada",
+            "no_show": "No se presentó",
+            "completed": "Realizada"
+        },
+        "empty": {
+            "title": "No hay ninguna cuenta de Calendly conectada",
+            "description": "Una vez conectada, cada reserva crea un contacto en el CRM, añade al invitado a las listas que elijas y puede iniciar automatizaciones."
+        },
+        "webhook": {
+            "title": "Dirección del webhook",
+            "hint": "Se configura en Calendly automáticamente al conectar una cuenta. No hace falta pegarla en ningún sitio."
+        },
+        "connect": {
+            "title": "Conectar una cuenta de Calendly",
+            "intro": "Para conectar necesitas tu propia aplicación OAuth en Calendly:",
+            "step_open": "Entra en {link}.",
+            "step_create": "Crea una nueva aplicación OAuth.",
+            "step_redirect": "Como Redirect URI, pega la dirección que aparece abajo.",
+            "step_copy": "Copia el Client ID y el Client Secret en los campos de abajo.",
+            "redirect_uri": "Redirect URI",
+            "client_id": "Client ID",
+            "client_secret": "Client Secret",
+            "submit": "Continuar a Calendly",
+            "connecting": "Conectando…"
+        },
+        "disconnect": {
+            "title": "¿Desconectar la cuenta de Calendly?",
+            "message": "Las nuevas reservas dejarán de llegar a NetSendo. Los contactos y las tareas creados hasta ahora se conservan."
+        },
+        "toast": {
+            "connected": "Cuenta de Calendly conectada",
+            "disconnected": "Cuenta de Calendly desconectada",
+            "saved": "Ajustes guardados",
+            "synced": "Tipos de evento actualizados",
+            "webhook_ok": "El webhook funciona"
+        },
+        "selected": "Seleccionados: {count}",
+        "settings": {
+            "title": "Qué hace una reserva"
+        },
+        "tabs": {
+            "label": "Parte de los ajustes",
+            "crm": "CRM",
+            "lists": "Listas y etiquetas",
+            "event_types": "Tipos de evento",
+            "automation": "Automatizaciones"
+        },
+        "crm": {
+            "enabled": "Crear un contacto en el CRM con cada reserva",
+            "create_tasks": "Crear una tarea en el CRM para cada reunión",
+            "default_status": "Estado de un contacto nuevo",
+            "default_owner": "Responsable del contacto",
+            "no_owner": "Sin responsable"
+        },
+        "lists": {
+            "enabled": "Añadir a los invitados a listas",
+            "default_lists": "Listas",
+            "default_tags": "Etiquetas",
+            "search_lists": "Buscar listas",
+            "search_tags": "Buscar etiquetas",
+            "no_lists": "No hay listas",
+            "no_tags": "No hay etiquetas"
+        },
+        "per_type": {
+            "intro": "Los tipos de evento elegidos pueden tener sus propias listas y etiquetas. Los demás usan los ajustes de la pestaña «Listas y etiquetas».",
+            "lists_off": "Añadir a listas está desactivado. Actívalo en la pestaña «Listas y etiquetas» para definir excepciones por tipo de evento.",
+            "none": "Esta cuenta aún no tiene tipos de evento. Actualízalos desde el menú de la cuenta.",
+            "custom": "Listas y etiquetas propias",
+            "default": "Ajustes predeterminados",
+            "switch_label": "Listas y etiquetas propias para «{name}»",
+            "lists": "Listas para este tipo",
+            "tags": "Etiquetas para este tipo"
+        },
+        "automation": {
+            "intro": "Eventos de Calendly que inician automatizaciones.",
+            "booking": "Nueva reserva",
+            "cancellation": "Reunión cancelada",
+            "no_show": "El invitado no se presentó"
+        }
     }
 }
