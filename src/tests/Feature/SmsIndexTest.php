@@ -50,6 +50,37 @@ class SmsIndexTest extends TestCase
         return $subjects;
     }
 
+    public function test_the_tabs_filter_by_type_and_status_and_carry_counts(): void
+    {
+        $this->sms(['subject' => 'Draft']);
+        $this->sms(['subject' => 'Scheduled', 'status' => 'scheduled', 'scheduled_at' => now()->addDay()]);
+        $this->sms(['subject' => 'Sent', 'status' => 'sent']);
+        $this->sms(['subject' => 'Queue', 'type' => 'autoresponder', 'status' => 'sent', 'day' => 1]);
+        $this->sms(['subject' => 'E-mail', 'channel' => 'email']);
+
+        $this->assertSame(['Draft'], $this->subjects(['type' => 'broadcast', 'status' => 'draft']));
+        $this->assertSame(['Scheduled'], $this->subjects(['type' => 'broadcast', 'status' => 'scheduled']));
+        $this->assertSame(['Sent'], $this->subjects(['type' => 'broadcast', 'status' => 'sent']));
+        $this->assertSame(['Queue'], $this->subjects(['type' => 'autoresponder']));
+        $this->assertCount(4, $this->subjects());
+
+        $this->index(['type' => 'broadcast', 'status' => 'sent'])->assertInertia(fn (Assert $page) => $page
+            ->where('counts', ['all' => 4, 'draft' => 1, 'scheduled' => 1, 'sent' => 1, 'autoresponder' => 1])
+            ->where('filters.status', 'sent'));
+    }
+
+    public function test_the_page_size_is_chosen_by_the_reader_within_limits(): void
+    {
+        foreach (range(1, 12) as $i) {
+            $this->sms(['subject' => "Campaign {$i}"]);
+        }
+
+        $this->assertCount(12, $this->subjects());
+        $this->assertCount(10, $this->subjects(['per_page' => 10]));
+        $this->assertCount(12, $this->subjects(['per_page' => 5000]));
+        $this->assertCount(1, $this->subjects(['per_page' => 0]));
+    }
+
     public function test_the_sort_direction_is_never_taken_from_the_request_as_written(): void
     {
         $older = $this->sms(['subject' => 'Older']);

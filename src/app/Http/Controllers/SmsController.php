@@ -32,6 +32,10 @@ class SmsController extends Controller
             ->when($request->type, function ($query, $type) {
                 $query->where('type', $type);
             })
+            // The tabs of the list: drafts, scheduled, sent
+            ->when(in_array($request->input('status'), ['draft', 'scheduled', 'sent'], true), function ($query) use ($request) {
+                $query->where('status', $request->input('status'));
+            })
             ->when($request->campaign_plan_id, function ($query, $campaignPlanId) {
                 $query->where('campaign_plan_id', $campaignPlanId);
             });
@@ -63,8 +67,10 @@ class SmsController extends Controller
             $messages = $messages->latest();
         }
 
+        $perPage = max(1, min((int) $request->input('per_page', 30), 100));
+
         $messages = $messages
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString()
             ->through(fn ($message) => [
                 'id' => $message->id,
@@ -79,6 +85,7 @@ class SmsController extends Controller
                     : null,
                 'created_at' => DateHelper::formatForUser($message->created_at),
                 'list_name' => $message->contactLists->first()->name ?? '-',
+                'list_names' => $message->contactLists->pluck('name')->values()->all(),
                 'recipients_count' => $message->contactLists->first()?->subscribers()->count() ?? 0,
             ]);
 
@@ -92,7 +99,9 @@ class SmsController extends Controller
 
         return Inertia::render('Sms/Index', [
             'messages' => $messages,
-            'filters' => $request->only(['search', 'type', 'list_id', 'campaign_plan_id', 'sort', 'direction']),
+            // An object even when empty: as an empty JSON list its "sort" would be Array.prototype.sort
+            'filters' => (object) $request->only(['search', 'type', 'status', 'list_id', 'campaign_plan_id', 'sort', 'direction', 'per_page']),
+            'counts' => $this->indexCounts(),
             'lists' => $lists,
             'groups' => [], // Placeholder if we want to add group support later
             'campaignPlans' => \App\Models\CampaignPlan::forUser(auth()->id())
@@ -101,6 +110,27 @@ class SmsController extends Controller
                 ->orderBy('name')
                 ->get(),
         ]);
+    }
+
+    /**
+     * How many SMS messages each tab of the list holds: all, and broadcasts by status / queues.
+     */
+    private function indexCounts(): array
+    {
+        $rows = Message::sms()
+            ->selectRaw('type, status, COUNT(*) as total')
+            ->groupBy('type', 'status')
+            ->get();
+
+        $broadcasts = $rows->where('type', 'broadcast');
+
+        return [
+            'all' => (int) $rows->sum('total'),
+            'draft' => (int) $broadcasts->where('status', 'draft')->sum('total'),
+            'scheduled' => (int) $broadcasts->where('status', 'scheduled')->sum('total'),
+            'sent' => (int) $broadcasts->where('status', 'sent')->sum('total'),
+            'autoresponder' => (int) $rows->where('type', 'autoresponder')->sum('total'),
+        ];
     }
 
     /**
