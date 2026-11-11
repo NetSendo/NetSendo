@@ -19,9 +19,15 @@ class RegistrationController extends Controller
             $client = $clients->register(is_array($metadata) ? $metadata : []);
         } catch (OAuthException $e) {
             // RFC 7591 §3.2.2 names its own error for everything that is not a redirect URI.
-            $error = $e->error === 'invalid_redirect_uri' || $e->error === 'access_denied' ? $e->error : 'invalid_client_metadata';
+            $error = in_array($e->error, ['invalid_redirect_uri', 'access_denied', 'temporarily_unavailable'], true)
+                ? $e->error
+                : 'invalid_client_metadata';
 
-            return response()->json(['error' => $error, 'error_description' => $e->getMessage()], $e->status, ['Cache-Control' => 'no-store']);
+            return response()->json(
+                ['error' => $error, 'error_description' => $e->getMessage()],
+                $e->status,
+                ['Cache-Control' => 'no-store'] + ($e->status === 503 ? ['Retry-After' => '300'] : []),
+            );
         }
 
         return response()->json(array_filter([

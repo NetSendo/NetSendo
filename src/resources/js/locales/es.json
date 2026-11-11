@@ -9934,6 +9934,8 @@
             "verified": "Identidad confirmada",
             "unverified": "No verificada",
             "verified_text": "La identidad de esta aplicación está publicada en {host}.",
+            "mismatch": "Comprueba adónde vuelve",
+            "mismatch_text": "Esta aplicación publica su identidad en {publisher}, pero tras tu decisión irías a {redirect}, que es otro sitio. En algunos sitios puede publicar cualquiera, así que el nombre de arriba no está confirmado. Continúa solo si has iniciado esta conexión tú mismo.",
             "unverified_text": "Esta aplicación se registró por sí misma, así que NetSendo no puede confirmar su nombre. Continúa solo si acabas de iniciar esta conexión tú mismo.",
             "returns_to": "Tras tu decisión volverás a {host}.",
             "returns_local": "Tras tu decisión volverás a una aplicación de este ordenador.",

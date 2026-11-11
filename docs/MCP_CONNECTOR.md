@@ -95,7 +95,20 @@ The connector is its own OAuth 2.1 authorization server:
 - redirect addresses must be https, or http on a loopback address (desktop and command-line apps), or one of the app URL schemes in `MCP_CONNECTOR_REDIRECT_SCHEMES`;
 - access tokens live one hour; refresh tokens are single-use and replaced on every refresh. A refresh token that turns up again later ends the connection. An app that is not used for 90 days has to sign in again;
 - only SHA-256 hashes of tokens are stored (tables `connector_clients`, `connector_connections`, `connector_tokens`, `connector_auth_codes`);
-- `php artisan connector:prune` (scheduled daily) removes expired codes, tokens and connections.
+- `php artisan connector:prune` (scheduled daily) removes expired codes, tokens and connections. A self-registered client that was connected once is kept for 90 days after its last use, so that a host can reconnect with the `client_id` it remembers; one that never got as far as a connection is removed after a day.
+
+### Limits on what needs no sign-in
+
+Discovery, registration and the token endpoint are reachable by anyone, so they are kept cheap:
+
+- the token endpoint never downloads anything: a client metadata document is fetched only when a signed-in user opens the consent screen, at most once a day per client, with a time limit on the DNS lookup and on the download, and a failed download is not repeated for five minutes;
+- a registration stores at most 5 redirect addresses of up to 255 characters, and at most 500 self-registered clients may exist without a connected app. At that number the oldest unused ones are removed to make room; if all of them are younger than ten minutes, `/oauth/register` answers `503 temporarily_unavailable`;
+- the discovery documents are sent with `Cache-Control: no-store`, because their addresses follow the host of the request;
+- a broken authorization request of a self-registered client is shown as an error in NetSendo and not redirected to the client's address.
+
+### Limits on a connected app
+
+A tool call starts a Node.js process and holds a PHP worker until it ends. By default one app may send 120 requests a minute and run 2 tool calls at the same time, and all apps together 3. A call over the limit is not started: the tool answers "NetSendo is busy … call the tool again", which the assistant does by itself. The limits use cache locks and work with every cache store (file, database, Redis).
 
 ### Permissions
 
@@ -120,7 +133,10 @@ All settings are optional and go into `.env`. Defaults are in `src/config/connec
 | `MCP_CONNECTOR_REDIRECT_SCHEMES` | `cursor,vscode,vscode-insiders,windsurf,zed,claude` | App URL schemes accepted as redirect targets |
 | `MCP_CONNECTOR_ACCESS_TOKEN_TTL` | `3600` | Lifetime of an access token, seconds |
 | `MCP_CONNECTOR_REFRESH_TOKEN_TTL` | `7776000` | How long an unused connection stays valid, seconds (90 days) |
-| `MCP_CONNECTOR_RATE_LIMIT` | `300` | Requests per minute for one connected app |
+| `MCP_CONNECTOR_RATE_LIMIT` | `120` | Requests per minute for one connected app |
+| `MCP_CONNECTOR_CONCURRENT_CALLS_PER_APP` | `2` | Tool calls of one connected app that may run at the same time (`0` = no limit) |
+| `MCP_CONNECTOR_CONCURRENT_CALLS` | `3` | Tool calls of all apps together that may run at the same time (`0` = no limit). Keep it below the number of PHP-FPM workers (5 in the stock image), so that the panel stays responsive |
+| `MCP_CONNECTOR_MAX_UNCONNECTED_CLIENTS` | `500` | Self-registered clients that may exist without a connected app |
 | `MCP_CONNECTOR_TOOL_TIMEOUT` | `150` | Seconds one tool call may take |
 | `MCP_CONNECTOR_NODE` | `node` | The Node.js binary |
 | `MCP_CONNECTOR_BRIDGE` | empty | Path of `bridge.js`, if it is not at `/opt/netsendo-mcp/dist/bridge.js` |
@@ -150,6 +166,9 @@ To block it at the proxy as well, deny `/mcp`, `/oauth/` and `/.well-known/oauth
 | A tool answers "Error 403 … permission" | The permission was not ticked on the consent screen. Disconnect the app and connect it again |
 | `401` on every call after it worked | The app was disconnected in the panel, the connector was turned off, or the app was not used for 90 days. Sign in again from the app |
 | `429` | More than `MCP_CONNECTOR_RATE_LIMIT` requests per minute from one app |
+| Tools often answer "NetSendo is busy" | More tool calls at once than `MCP_CONNECTOR_CONCURRENT_CALLS_PER_APP` / `MCP_CONNECTOR_CONCURRENT_CALLS` allow. The assistant retries by itself; raise the limits only together with the number of PHP-FPM workers |
+| `/oauth/register` answers `503 temporarily_unavailable` | A burst of registrations that never continued to a sign-in. It clears by itself within ten minutes; hosts with a published identity (Claude, ChatGPT, VS Code, Hermes) are not affected |
+| The consent screen says "Check where it returns" | The app publishes its identity on one site and returns to another. Genuine hosts return to their own site or to the user's computer |
 | A browser-based MCP tool gets `403 Forbidden: The request origin is not allowed` | Add its origin to `MCP_ALLOWED_ORIGINS` |
 
 ## For developers

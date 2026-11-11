@@ -20,6 +20,9 @@ class ClientMetadataFetcher
 
     private const TIMEOUT = 5;
 
+    /** The DNS lookup may take this long at most. */
+    protected const RESOLVE_SECONDS = 4;
+
     /**
      * @return array<string, mixed> the decoded document
      *
@@ -93,7 +96,7 @@ class ClientMetadataFetcher
     /** Resolve the host and return one address, refusing private, loopback and reserved ranges. */
     protected function publicAddress(string $host): string
     {
-        $addresses = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : (gethostbynamel($host) ?: []);
+        $addresses = filter_var($host, FILTER_VALIDATE_IP) ? [$host] : $this->resolve($host);
 
         if ($addresses === []) {
             throw new OAuthException('invalid_client', 'The host of the client metadata document could not be resolved.', 400);
@@ -106,6 +109,67 @@ class ClientMetadataFetcher
         }
 
         return $addresses[0];
+    }
+
+    /**
+     * The IPv4 addresses of a host, or none when the lookup fails or takes
+     * longer than a few seconds.
+     *
+     * PHP's own lookup cannot be given a time limit and waits as long as the
+     * system resolver does (half a minute for a name server that never
+     * answers), with a PHP worker held all that time. The lookup is therefore
+     * done by Node.js, which the connector needs anyway, with a limit of its
+     * own and one more around the process.
+     *
+     * @return list<string>
+     */
+    protected function resolve(string $host): array
+    {
+        $script = 'const { Resolver } = require("node:dns").promises;'
+            .'new Resolver({ timeout: 1500, tries: 2 }).resolve4(process.argv[1])'
+            .'.then((a) => console.log(JSON.stringify(a)), () => console.log("[]"));';
+
+        $process = @proc_open(
+            [(string) config('connector.engine.node', 'node'), '-e', $script, $host],
+            [0 => ['file', '/dev/null', 'r'], 1 => ['pipe', 'w'], 2 => ['file', '/dev/null', 'w']],
+            $pipes,
+            null,
+            ['PATH' => getenv('PATH') ?: '/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'],
+        );
+
+        if (! is_resource($process)) {
+            return [];
+        }
+
+        stream_set_blocking($pipes[1], false);
+        $deadline = microtime(true) + static::RESOLVE_SECONDS;
+        $output = '';
+
+        try {
+            while (! feof($pipes[1]) && ($remaining = $deadline - microtime(true)) > 0) {
+                $read = [$pipes[1]];
+                $write = $except = null;
+
+                if (@stream_select($read, $write, $except, 0, (int) min($remaining * 1_000_000, 200_000)) === false) {
+                    break;
+                }
+
+                $output .= (string) stream_get_contents($pipes[1]);
+            }
+        } finally {
+            fclose($pipes[1]);
+
+            if (proc_get_status($process)['running'] ?? false) {
+                proc_terminate($process, 9);
+            }
+            proc_close($process);
+        }
+
+        $addresses = json_decode(trim($output), true);
+
+        return is_array($addresses)
+            ? array_values(array_filter($addresses, fn ($address) => is_string($address) && filter_var($address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)))
+            : [];
     }
 
     public static function isPublicAddress(string $address): bool

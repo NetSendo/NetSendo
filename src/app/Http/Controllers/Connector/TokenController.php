@@ -27,8 +27,10 @@ class TokenController extends Controller
             }
 
             // Public clients name themselves in the body; a host may also put
-            // the client_id in HTTP Basic with an empty secret.
-            $client = $this->clients->find($this->string($request, 'client_id') ?? (string) $request->getUser());
+            // the client_id in HTTP Basic with an empty secret. Only a client
+            // that is already stored is accepted: this endpoint needs no
+            // sign-in and must never download a metadata document.
+            $client = $this->clients->findStored($this->string($request, 'client_id') ?? (string) $request->getUser());
 
             $response = match ($this->string($request, 'grant_type')) {
                 'authorization_code' => $this->tokens->exchangeAuthorizationCode(

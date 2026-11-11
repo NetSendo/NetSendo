@@ -72,6 +72,23 @@ class ConnectorDiscoveryTest extends TestCase
         }
     }
 
+    public function test_discovery_documents_are_not_cacheable_by_a_proxy(): void
+    {
+        // Their addresses follow the request host; a shared cache must not serve
+        // one host's document to another.
+        foreach (['/.well-known/oauth-protected-resource/mcp', '/.well-known/oauth-authorization-server'] as $path) {
+            $cacheControl = (string) $this->getJson($path)->assertOk()->headers->get('Cache-Control');
+
+            $this->assertStringContainsString('no-store', $cacheControl);
+            $this->assertStringNotContainsString('public', $cacheControl);
+        }
+
+        $this->withHeaders(['X-Forwarded-Host' => 'other.example', 'X-Forwarded-Proto' => 'https'])
+            ->getJson('/.well-known/oauth-authorization-server')
+            ->assertJsonPath('issuer', 'https://other.example')
+            ->assertHeader('Cache-Control', 'no-store, private');
+    }
+
     public function test_the_endpoint_has_no_get_stream_and_no_sessions(): void
     {
         $this->get('/mcp', ['Accept' => 'text/event-stream'])->assertStatus(405)->assertHeader('Allow', 'POST');

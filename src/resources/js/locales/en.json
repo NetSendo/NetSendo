@@ -9934,6 +9934,8 @@
             "verified": "Identity confirmed",
             "unverified": "Not verified",
             "verified_text": "The identity of this app is published at {host}.",
+            "mismatch": "Check where it returns",
+            "mismatch_text": "This app publishes its identity at {publisher}, but after your decision you would go to {redirect}, which is a different site. Anyone can publish on some sites, so the name above is not confirmed. Continue only if you started this connection yourself.",
             "unverified_text": "This app registered itself, so NetSendo cannot confirm its name. Continue only if you started this connection yourself a moment ago.",
             "returns_to": "After your decision you go back to {host}.",
             "returns_local": "After your decision you go back to an app running on this computer.",
