@@ -81,7 +81,8 @@ class MessageController extends Controller
         // Default: use scheduled_at/send_at for sent/scheduled messages, created_at for drafts
         // For autoresponders (queues), always use created_at
         $sortField = $request->input('sort', 'effective_date');
-        $sortDirection = $request->input('direction', 'desc');
+        // The direction goes into raw SQL below, so it is one of two literals, never the request's text
+        $sortDirection = strtolower((string) $request->input('direction', 'desc')) === 'asc' ? 'asc' : 'desc';
 
         // Allow sorting by valid fields
         if (in_array($sortField, ['id', 'subject', 'status', 'created_at', 'type', 'day'])) {
