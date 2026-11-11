@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.10.0] – AI connector: connect Claude and other AI apps by sign-in, faster first load - 2026-11-11
+
+**Release date:** 2026-11-11
+
 ### Added
 
 - **AI connector: connect Claude, Hermes and other AI apps by address and sign-in.** Every installation now serves a remote MCP endpoint at `https://<your-domain>/mcp`. You paste that address into the AI app, the app sends you to NetSendo, you sign in and choose what it may do, and it works with your account through the same 140 tools as the npm MCP client. No API key to create or paste, and no Node.js on your computer.
@@ -34,6 +38,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **The first load is about a quarter of what it was.** Every page, the sign-in page included, downloaded all four interface languages inside the start-up script (1.85 MB). Now only the language in use is downloaded, as a file of its own that the browser fetches together with the script: 0.42 MB of script and about 0.36 MB of texts. English, the fallback for a missing text, is fetched only when a text really is missing; switching the language downloads the new one first.
 - **Guests no longer download the whole panel in the background.** After every full page load the browser fetched the scripts of all pages (286 files, 7.7 MB) so that later navigation is instant. That now happens only for a signed-in user. On the sign-in page a visit went from about 250 requests and 9 MB to 15 requests and 1.2 MB.
 - **Built scripts and styles are compressed in the image.** Each has a ready `.gz` file next to it, which the bundled nginx serves as is. Until now they travelled uncompressed unless a proxy in front compressed them, and nginx's default compresses HTML only.
+
+### Upgrading
+
+- **Docker:** update as usual (`docker compose pull && docker compose up -d`). The migration adds the connector's four tables.
+- **The AI connector is on after the update.** It answers at `/mcp`, `/oauth/*` and `/.well-known/oauth-*` and does nothing until someone signs in and approves an app. To turn it off, set `MCP_CONNECTOR_ENABLED=false` in `.env` and restart the containers. Cloud AI apps reach it only on an installation with a public HTTPS address.
+- **Compressed assets, optional:** take the new `docker/nginx/default.conf` and restart the `webserver` container. Without it the panel works as before; with a proxy in front that speaks HTTP/1.0 to NetSendo's nginx, scripts and styles keep travelling uncompressed until the file is replaced or the proxy compresses them itself.
+- **Custom image builds** need the two new steps in `docker/php/Dockerfile` (the MCP tools under `/opt/netsendo-mcp` and the `.gz` files of the built assets).
 
 ## [2.9.0] – New panel look, NetSendo MTA mailboxes, unsubscribing that never subscribes - 2026-11-11
 
