@@ -17,6 +17,7 @@ import ABTestingPanel from "@/Components/Message/ABTestingPanel.vue";
 import CrmContactSelector from "@/Components/CrmContactSelector.vue";
 import FieldFilterBuilder from "@/Components/FieldFilterBuilder.vue";
 import GoldBadge from "@/Components/License/GoldBadge.vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
 import { useLicense } from "@/Composables/useLicense";
 import { computed, ref, watch, nextTick } from "vue";
 import { debounce } from "lodash";
@@ -94,23 +95,19 @@ const messageTabs = computed(() => [
     {
         id: "content",
         label: t("messages.tabs.content"),
-        emoji: "✏️",
     },
     {
         id: "settings",
         label: t("messages.tabs.settings"),
-        emoji: "⚙️",
     },
     {
         id: "triggers",
         label: t("messages.tabs.triggers"),
-        emoji: "⚡",
         indicator: !!form.trigger_type,
     },
     {
         id: "ab_testing",
         label: t("messages.tabs.ab_testing"),
-        emoji: "📊",
         indicator: form.ab_test_config?.enabled,
     },
 ]);
@@ -1395,35 +1392,23 @@ watch(
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1
-                        class="text-2xl font-bold text-slate-900 dark:text-white"
-                    >
-                        {{
-                            isEditing
-                                ? $t("messages.edit_title")
-                                : $t("messages.create_title")
-                        }}
-                    </h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                        {{
-                            isEditing
-                                ? $t("messages.edit_subtitle")
-                                : $t("messages.create_subtitle")
-                        }}
-                    </p>
-                </div>
+            <PageHeader
+                :title="isEditing ? $t('messages.edit_title') : $t('messages.create_title')"
+                :subtitle="isEditing ? $t('messages.edit_subtitle') : $t('messages.create_subtitle')"
+            >
                 <Link
                     :href="route('messages.index')"
-                    class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                    class="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700/60"
                 >
+                    <svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M15 19l-7-7 7-7" />
+                    </svg>
                     {{ $t("messages.back_to_list") }}
                 </Link>
-            </div>
+            </PageHeader>
         </template>
 
-        <div class="rounded-2xl bg-white shadow-sm dark:bg-slate-900">
+        <div class="mx-auto max-w-screen-2xl rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900">
             <!-- Responsive Tabs -->
             <div class="px-4 pt-4">
                 <ResponsiveTabs v-model="activeTab" :tabs="messageTabs" />
@@ -1454,7 +1439,7 @@ watch(
                                             type="radio"
                                             v-model="form.type"
                                             value="broadcast"
-                                            class="text-indigo-600 focus:ring-indigo-500"
+                                            class="h-4 w-4 accent-indigo-600"
                                         />
                                         <div>
                                             <span
@@ -1487,7 +1472,7 @@ watch(
                                             type="radio"
                                             v-model="form.type"
                                             value="autoresponder"
-                                            class="text-indigo-600 focus:ring-indigo-500"
+                                            class="h-4 w-4 accent-indigo-600"
                                         />
                                         <div>
                                             <span
@@ -1615,7 +1600,10 @@ watch(
                                         class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                                         title="Emoji"
                                     >
-                                        <span class="text-lg">😊</span>
+                                        <svg aria-hidden="true" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="9" />
+                                            <path d="M8.5 14.5a4.5 4.5 0 007 0M9 9.5h.01M15 9.5h.01" />
+                                        </svg>
                                     </button>
                                     <!-- Emoji Dropdown for Subject -->
                                     <div
@@ -1769,7 +1757,7 @@ watch(
                                 </InputLabel>
                                 <textarea
                                     id="plain_text"
-                                    class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono"
+                                    class="border bg-white px-3 py-2 mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono focus:outline-none focus:ring-1"
                                     rows="6"
                                     v-model="form.plain_text"
                                     :placeholder="
@@ -1790,7 +1778,7 @@ watch(
                             <!-- PDF Attachments Section -->
                             <div class="mt-6">
                                 <InputLabel class="mb-2">
-                                    📎 {{ $t("messages.attachments.title") }}
+                                    {{ $t("messages.attachments.title") }}
                                     <span
                                         class="text-slate-400 font-normal ml-1"
                                         >({{ $t("common.optional") }})</span
@@ -2024,7 +2012,7 @@ watch(
                                 class="mt-6"
                             >
                                 <InputLabel class="mb-2">
-                                    🌐 {{ $t("messages.translations.title") }}
+                                    {{ $t("messages.translations.title") }}
                                     <span
                                         class="text-slate-400 font-normal ml-1"
                                         >({{ $t("common.optional") }})</span
@@ -2292,7 +2280,7 @@ watch(
                                                 </InputLabel>
                                                 <textarea
                                                     :id="'trans_content_' + idx"
-                                                    class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                    class="border bg-white px-3 py-2 mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm focus:outline-none focus:ring-1"
                                                     rows="8"
                                                     v-model="
                                                         form.translations[idx]
@@ -2468,7 +2456,7 @@ watch(
 
                                 <select
                                     v-model="form.webinar_id"
-                                    class="w-full rounded-lg border-slate-300 text-sm transition-colors focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                    class="border bg-white px-3 py-2 w-full rounded-lg border-slate-300 text-sm transition-colors focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-1"
                                 >
                                     <option :value="null">
                                         {{ $t("messages.webinar.none") }}
@@ -2492,7 +2480,7 @@ watch(
                                         <input
                                             type="checkbox"
                                             v-model="form.webinar_auto_register"
-                                            class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                            class="h-4 w-4 accent-indigo-600"
                                         />
                                         {{
                                             $t("messages.webinar.auto_register")
@@ -2528,7 +2516,7 @@ watch(
                                     class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"
                                 >
                                     <svg
-                                        class="h-4 w-4 text-purple-500"
+                                        class="h-4 w-4 text-indigo-600 dark:text-indigo-400"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -2545,7 +2533,7 @@ watch(
                                 <button
                                     type="button"
                                     @click="showAiPanel = true"
-                                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:from-indigo-600 hover:to-purple-700"
+                                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500"
                                 >
                                     <svg
                                         class="h-5 w-5"
@@ -2662,7 +2650,7 @@ watch(
                                                     $t('common.search') ||
                                                     'Szukaj...'
                                                 "
-                                                class="block w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                                class="border bg-white px-3 py-2 block w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                                                 @keyup.enter="
                                                     fetchPreviewSubscribers
                                                 "
@@ -2691,7 +2679,7 @@ watch(
                                         <!-- Select dropdown -->
                                         <select
                                             v-model="previewSubscriber"
-                                            class="block w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                            class="border bg-white px-3 py-2 block w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                                         >
                                             <option :value="null">
                                                 {{
@@ -2909,7 +2897,7 @@ watch(
                         <select
                             id="tracking_enabled"
                             v-model="form.tracking_enabled"
-                            class="w-full rounded-lg border-slate-300 text-sm transition-colors focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                            class="border bg-white px-3 py-2 w-full rounded-lg border-slate-300 text-sm transition-colors focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-1"
                         >
                             <option :value="null">
                                 {{ $t("messages.fields.tracking_mailbox") }}
@@ -2955,7 +2943,7 @@ watch(
                                     <!-- List Type Filter -->
                                     <select
                                         v-model="listTypeFilter"
-                                        class="block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                        class="border bg-white px-3 py-2 block w-full rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1"
                                     >
                                         <option value="">
                                             {{
@@ -2982,7 +2970,7 @@ watch(
                                         :placeholder="
                                             $t('common.search') + '...'
                                         "
-                                        class="block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                        class="border bg-white px-3 py-2 block w-full rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1"
                                     />
                                 </div>
 
@@ -2997,7 +2985,7 @@ watch(
                                             type="checkbox"
                                             :checked="areAllListsSelected"
                                             @change="toggleSelectAll"
-                                            class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
+                                            class="h-4 w-4 accent-indigo-600"
                                         />
                                         {{ $t("messages.fields.select_all") }}
                                     </label>
@@ -3099,7 +3087,7 @@ watch(
                                                 "
                                                 @click.stop
                                                 @change="toggleGroup(group)"
-                                                class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
+                                                class="h-4 w-4 accent-indigo-600"
                                             />
                                             <svg
                                                 v-if="group.id"
@@ -3139,7 +3127,7 @@ watch(
                                                     v-model="
                                                         form.contact_list_ids
                                                     "
-                                                    class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
+                                                    class="h-4 w-4 accent-indigo-600"
                                                 />
                                                 <span
                                                     class="flex-1 text-sm text-slate-700 dark:text-slate-300"
@@ -3319,7 +3307,7 @@ watch(
                                                 type="checkbox"
                                                 :value="list.id"
                                                 v-model="form.excluded_list_ids"
-                                                class="rounded border-slate-300 text-red-600 focus:ring-red-500 dark:border-slate-600 dark:bg-slate-800"
+                                                class="h-4 w-4 accent-rose-600"
                                             />
                                             <span
                                                 class="flex-1 text-sm text-slate-700 dark:text-slate-300"
@@ -3562,7 +3550,7 @@ watch(
 
                             <select
                                 v-model="form.mailbox_id"
-                                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                class="border bg-white px-3 py-2 block w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                             >
                                 <!-- Use Default (null = auto-resolve) -->
                                 <optgroup
@@ -3730,7 +3718,7 @@ watch(
                                             type="radio"
                                             v-model="autoresponderTimeMode"
                                             value="signup"
-                                            class="text-indigo-600 focus:ring-indigo-500"
+                                            class="h-4 w-4 accent-indigo-600"
                                         />
                                         <span
                                             class="text-sm text-slate-700 dark:text-slate-300"
@@ -3746,7 +3734,7 @@ watch(
                                             type="radio"
                                             v-model="autoresponderTimeMode"
                                             value="custom"
-                                            class="text-indigo-600 focus:ring-indigo-500"
+                                            class="h-4 w-4 accent-indigo-600"
                                         />
                                         <span
                                             class="text-sm text-slate-700 dark:text-slate-300"
@@ -3766,7 +3754,7 @@ watch(
                                     <input
                                         type="time"
                                         v-model="form.time_of_day"
-                                        class="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                        class="border bg-white px-3 py-2 block w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                                     />
                                     <InputError
                                         class="mt-2"
@@ -3793,7 +3781,7 @@ watch(
                                             type="radio"
                                             v-model="scheduleMode"
                                             value="now"
-                                            class="text-indigo-600 focus:ring-indigo-500"
+                                            class="h-4 w-4 accent-indigo-600"
                                         />
                                         <span
                                             class="text-sm font-medium text-slate-700 dark:text-slate-300"
@@ -3811,7 +3799,7 @@ watch(
                                             type="radio"
                                             v-model="scheduleMode"
                                             value="later"
-                                            class="text-indigo-600 focus:ring-indigo-500"
+                                            class="h-4 w-4 accent-indigo-600"
                                         />
                                         <span
                                             class="text-sm font-medium text-slate-700 dark:text-slate-300"
@@ -3837,7 +3825,7 @@ watch(
                                         id="send_at"
                                         v-model="form.send_at"
                                         :min="minDateTime"
-                                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:[color-scheme:dark]"
+                                        class="border bg-white px-3 py-2 mt-1 block w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:[color-scheme:dark] focus:outline-none focus:ring-1"
                                     />
                                     <InputError
                                         class="mt-2"
@@ -3859,7 +3847,7 @@ watch(
                             <select
                                 id="timezone"
                                 v-model="form.timezone"
-                                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                class="border bg-white px-3 py-2 block w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                             >
                                 <option :value="null">
                                     {{ $t("messages.fields.timezone_default") }}
@@ -3889,7 +3877,7 @@ watch(
                                 type="checkbox"
                                 id="send_in_subscriber_timezone"
                                 v-model="form.send_in_subscriber_timezone"
-                                class="mt-0.5 rounded border-slate-300 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900"
+                                class="h-4 w-4 accent-indigo-600 mt-0.5"
                             />
                             <label
                                 for="send_in_subscriber_timezone"
@@ -3963,7 +3951,6 @@ watch(
                                 class="cursor-pointer rounded-lg border p-4 transition-all"
                             >
                                 <div class="flex items-center gap-3">
-                                    <span class="text-2xl">🚫</span>
                                     <div>
                                         <p
                                             class="text-sm font-medium text-slate-900 dark:text-white"
@@ -4000,9 +3987,6 @@ watch(
                                 class="cursor-pointer rounded-lg border p-4 transition-all"
                             >
                                 <div class="flex items-center gap-3">
-                                    <span class="text-2xl">{{
-                                        trigger.icon
-                                    }}</span>
                                     <div>
                                         <p
                                             class="text-sm font-medium text-slate-900 dark:text-white"
@@ -4028,7 +4012,7 @@ watch(
                         <h4
                             class="mb-4 text-sm font-semibold text-slate-900 dark:text-white"
                         >
-                            ⚙️ {{ $t("messages.triggers.config_title") }}
+                            {{ $t("messages.triggers.config_title") }}
                         </h4>
 
                         <!-- Inactivity config -->
@@ -4046,7 +4030,7 @@ watch(
                                 />
                                 <select
                                     v-model="form.trigger_config.inactive_days"
-                                    class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                    class="border bg-white px-3 py-2 mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                                 >
                                     <option :value="7">
                                         7 {{ $t("common.days_unit") }}
@@ -4107,7 +4091,7 @@ watch(
                                 />
                                 <select
                                     v-model="form.trigger_config.tag_id"
-                                    class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                    class="border bg-white px-3 py-2 mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                                 >
                                     <option :value="null">
                                         {{
@@ -4160,7 +4144,7 @@ watch(
                                             "
                                             min="1"
                                             max="365"
-                                            class="w-20 rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 text-center"
+                                            class="border bg-white px-3 py-2 w-20 rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 text-center focus:outline-none focus:ring-1"
                                         />
                                         <span
                                             class="text-sm text-slate-600 dark:text-slate-400"
@@ -4224,7 +4208,7 @@ watch(
                                 <!-- Messages dropdown -->
                                 <select
                                     v-model="form.trigger_config.message_id"
-                                    class="mt-2 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                    class="border bg-white px-3 py-2 mt-2 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                                 >
                                     <option :value="null">
                                         {{
@@ -4268,7 +4252,6 @@ watch(
                             class="text-sm text-slate-500 dark:text-slate-400"
                         >
                             <p>
-                                ✅
                                 {{
                                     $t(
                                         "messages.triggers.config.no_config_needed",
@@ -4322,9 +4305,10 @@ watch(
                     />
                 </div>
 
-                <!-- Actions Footer -->
+                <!-- Actions: stuck to the bottom of the window, so saving and sending never
+                     need a scroll to the end of a form two screens long -->
                 <div
-                    class="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-6 dark:border-slate-800"
+                    class="sticky bottom-0 z-10 -mx-6 -mb-6 mt-6 flex flex-wrap items-center justify-between gap-4 rounded-b-2xl border-t border-slate-200 bg-white px-6 py-4 dark:border-slate-700/60 dark:bg-slate-900"
                 >
                     <Link
                         :href="route('messages.index')"
@@ -4782,7 +4766,7 @@ watch(
                         <p
                             class="text-sm text-emerald-700 dark:text-emerald-300"
                         >
-                            ✓ {{ deliverabilityResult.provider_info }}
+                            {{ deliverabilityResult.provider_info }}
                         </p>
                     </div>
 
@@ -4792,7 +4776,6 @@ watch(
                         class="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20"
                     >
                         <p class="text-sm text-amber-700 dark:text-amber-300">
-                            ⚠️
                             {{
                                 deliverabilityResult.provider_info ||
                                 $t("messages.deliverability.no_domain")
@@ -4876,23 +4859,6 @@ watch(
                                 }}
                             </p>
                             <div class="mt-2 flex items-center gap-2">
-                                <span
-                                    class="text-2xl"
-                                    v-if="
-                                        deliverabilityResult.predicted_folder ===
-                                        'inbox'
-                                    "
-                                    >📥</span
-                                >
-                                <span
-                                    class="text-2xl"
-                                    v-else-if="
-                                        deliverabilityResult.predicted_folder ===
-                                        'promotions'
-                                    "
-                                    >📢</span
-                                >
-                                <span class="text-2xl" v-else>🗑️</span>
                                 <span
                                     class="text-xl font-semibold text-slate-900 dark:text-white"
                                 >
@@ -4984,10 +4950,10 @@ watch(
                                 >
                                     {{
                                         issue.severity === "critical"
-                                            ? "🔴"
+                                            ? "●"
                                             : issue.severity === "warning"
-                                              ? "🟡"
-                                              : "🔵"
+                                              ? "●"
+                                              : "●"
                                     }}
                                 </span>
                                 <span
@@ -5010,7 +4976,6 @@ watch(
                         <p
                             class="mb-3 text-sm font-medium text-emerald-700 dark:text-emerald-300"
                         >
-                            💡
                             {{ $t("messages.deliverability.recommendations") }}
                         </p>
                         <ul class="space-y-2">
@@ -5059,13 +5024,15 @@ watch(
             leave-from-class="opacity-100"
             leave-to-class="opacity-0"
         >
+            <!-- Above the action bar, which is stuck to the bottom of the window -->
             <div
                 v-if="toast"
-                class="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl px-4 py-3 shadow-lg max-w-md"
+                role="status"
+                class="fixed bottom-24 right-6 z-50 flex max-w-md items-center gap-3 rounded-xl border bg-white px-4 py-3 text-sm text-slate-900 shadow-lg dark:bg-slate-800 dark:text-white"
                 :class="[
                     toast.success
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-red-500 text-white',
+                        ? 'border-emerald-300 [&>svg]:text-emerald-700 dark:border-emerald-500/40 dark:[&>svg]:text-emerald-400'
+                        : 'border-rose-300 [&>svg]:text-rose-700 dark:border-rose-500/40 dark:[&>svg]:text-rose-400',
                 ]"
             >
                 <svg
@@ -5098,8 +5065,10 @@ watch(
                 </svg>
                 <span class="font-medium">{{ toast.message }}</span>
                 <button
+                    type="button"
+                    :aria-label="$t('common.close')"
                     @click="toast = null"
-                    class="ml-2 rounded-full p-1 hover:bg-white/20 flex-shrink-0"
+                    class="ml-2 flex-shrink-0 rounded-lg p-1 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/60"
                 >
                     <svg
                         class="h-4 w-4"
