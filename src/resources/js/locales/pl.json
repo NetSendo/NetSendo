@@ -317,7 +317,8 @@
             "range": "{from}–{to} z {total}",
             "per_page": "Na stronie",
             "label": "Strony"
-        }
+        },
+        "clear_filters": "Wyczyść filtry"
     },
     "ab_tests": {
         "enable_testing": "Włącz testy A/B",
@@ -2590,7 +2591,11 @@
                 "ip_address": "Adres IP",
                 "created_at": "Data dodania"
             }
-        }
+        },
+        "views": {
+            "all": "Wszyscy"
+        },
+        "actions_for": "Akcje subskrybenta: {email}"
     },
     "subscriber_card": {
         "title": "Karta Subskrybenta",

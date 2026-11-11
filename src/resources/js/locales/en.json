@@ -317,7 +317,8 @@
             "range": "{from}–{to} of {total}",
             "per_page": "Per page",
             "label": "Pages"
-        }
+        },
+        "clear_filters": "Clear filters"
     },
     "ab_tests": {
         "enable_testing": "Enable A/B Testing",
@@ -2590,7 +2591,11 @@
                 "ip_address": "IP address",
                 "created_at": "Added on"
             }
-        }
+        },
+        "views": {
+            "all": "All"
+        },
+        "actions_for": "Actions for the subscriber: {email}"
     },
     "subscriber_card": {
         "title": "Subscriber Card",

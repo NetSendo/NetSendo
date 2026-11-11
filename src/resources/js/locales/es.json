@@ -317,7 +317,8 @@
             "range": "{from}–{to} de {total}",
             "per_page": "Por página",
             "label": "Páginas"
-        }
+        },
+        "clear_filters": "Borrar filtros"
     },
     "ab_tests": {
         "enable_testing": "Habilitar pruebas A/B",
@@ -3016,7 +3017,11 @@
                 "ip_address": "Dirección IP",
                 "created_at": "Añadido el"
             }
-        }
+        },
+        "views": {
+            "all": "Todos"
+        },
+        "actions_for": "Acciones del suscriptor: {email}"
     },
     "groups": {
         "title": "Grupos de listas de correo",

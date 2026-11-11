@@ -362,7 +362,8 @@
             "range": "{from}–{to} von {total}",
             "per_page": "Pro Seite",
             "label": "Seiten"
-        }
+        },
+        "clear_filters": "Filter zurücksetzen"
     },
     "ab_tests": {
         "enable_testing": "A/B-Tests aktivieren",
@@ -3061,7 +3062,11 @@
                 "ip_address": "IP-Adresse",
                 "created_at": "Hinzugefügt am"
             }
-        }
+        },
+        "views": {
+            "all": "Alle"
+        },
+        "actions_for": "Aktionen für den Abonnenten: {email}"
     },
     "groups": {
         "title": "Mailinglisten-Gruppen",
