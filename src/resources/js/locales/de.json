@@ -25,7 +25,10 @@
                 "ecommerce": "E-Commerce",
                 "transactional": "Transaktional",
                 "notification": "Benachrichtigung"
-            }
+            },
+            "hide": "Ausblenden",
+            "show": "Anzeigen",
+            "subtitle_plain": "Fertige Layouts. Die gewählte Vorlage landet als bearbeitbare Kopie in Ihren Vorlagen."
         },
         "empty_title": "Noch keine Vorlagen",
         "empty_description": "Erstellen Sie Ihre erste Vorlage, um zu beginnen",
@@ -49,7 +52,14 @@
         "default_content": "<p>Beginnen Sie mit der Bearbeitung Ihrer Vorlage...</p>",
         "builder_badge": "Builder",
         "edit_subtitle": "Aktualisieren Sie Ihre Nachrichtenvorlage",
-        "edit_title": "Vorlage bearbeiten"
+        "edit_title": "Vorlage bearbeiten",
+        "search_placeholder": "Vorlage suchen",
+        "categories_label": "Kategorie",
+        "actions_for": "Aktionen für die Vorlage: {name}",
+        "empty_filtered": "Keine Vorlage passt zu den Filtern",
+        "delete_title": "Vorlage löschen?",
+        "delete_description": "Nachrichten, die bereits daraus entstanden sind, bleiben unverändert.",
+        "deleted": "Vorlage gelöscht"
     },
     "affiliate": {
         "title": "Partnerprogramm",
@@ -4097,7 +4107,21 @@
         "deactivated": "Formular wurde deaktiviert",
         "deleted": "Formular wurde gelöscht",
         "duplicated": "Formular wurde dupliziert",
-        "saved_success": "Formular wurde gespeichert"
+        "saved_success": "Formular wurde gespeichert",
+        "subtitle": "Formulare, über die sich Menschen in Ihre Listen eintragen",
+        "views": {
+            "label": "Formularstatus",
+            "all": "Alle",
+            "active": "Aktiv",
+            "draft": "Entwürfe",
+            "disabled": "Deaktiviert"
+        },
+        "no_list": "Ohne Liste",
+        "no_submissions": "Noch keine Anmeldungen",
+        "actions_for": "Aktionen für das Formular: {name}",
+        "empty_filtered": "Kein Formular passt zu den Filtern",
+        "delete_title": "Formular löschen?",
+        "delete_description": "Das Formular nimmt auf den Seiten, in die es eingebettet ist, keine Anmeldungen mehr an. Das lässt sich nicht rückgängig machen."
     },
     "funnels": {
         "title": "Verkaufstrichter",
@@ -4106,7 +4130,7 @@
         "edit_funnel": "Trichter bearbeiten",
         "search_placeholder": "Trichter suchen...",
         "all_statuses": "Alle Status",
-        "all_triggers": "Alle Trigger",
+        "all_triggers": "Alle Auslöser",
         "builder": {
             "name_placeholder": "Funnel-Name...",
             "blocks": "Blöcke",
@@ -4302,7 +4326,30 @@
         "notifications": {
             "saved": "Funnel gespeichert.",
             "created": "Funnel erstellt."
-        }
+        },
+        "subtitle": "Abfolgen von Schritten, durch die Sie Abonnenten führen",
+        "views": {
+            "label": "Trichterstatus",
+            "all": "Alle",
+            "active": "Aktiv",
+            "paused": "Angehalten",
+            "draft": "Entwürfe"
+        },
+        "triggers": {
+            "list_signup": "Anmeldung zur Liste",
+            "tag_added": "Tag hinzugefügt",
+            "form_submit": "Formular abgeschickt",
+            "manual": "Manuell"
+        },
+        "trigger_filter": "Auslöser",
+        "actions_for": "Aktionen für den Trichter: {name}",
+        "empty_filtered": "Kein Trichter passt zu den Filtern",
+        "delete_title": "Trichter löschen?",
+        "completed_share": "{percent}% der Teilnehmer",
+        "activated": "Trichter läuft",
+        "paused": "Trichter angehalten",
+        "deleted": "Trichter gelöscht",
+        "delete_description": "Die Teilnehmer erhalten keine weiteren Schritte mehr. Das lässt sich nicht rückgängig machen."
     },
     "automations": {
         "title": "Automatisierungen",
@@ -4318,7 +4365,7 @@
         "confirm_duplicate": "Möchten Sie diese Automatisierung duplizieren?",
         "confirm_delete": "Sind Sie sicher, dass Sie diese Automatisierung löschen möchten?",
         "restore_defaults": "Standardeinstellungen wiederherstellen",
-        "confirm_restore": "Dadurch werden 6 Standard-AutoTag Pro-Automatisierungen wiederhergestellt. Bestehende Standardautomatisierungen werden auf Werkseinstellungen zurückgesetzt.",
+        "confirm_restore": "Fügt die Standard-Automatisierungen hinzu, die im Konto fehlen, und schaltet sie sofort ein. Bestehende werden nicht verändert.",
         "restore": "Wiederherstellen",
         "default": "Standard",
         "builder": {
@@ -4406,7 +4453,71 @@
             },
             "empty": "Keine Ausführungen",
             "empty_hint": "Diese Automatisierung wurde noch nicht ausgeführt."
-        }
+        },
+        "subtitle": "Regeln, die von selbst auf Ereignisse reagieren",
+        "views": {
+            "label": "Zustand der Automatisierungen",
+            "all": "Alle",
+            "active": "Eingeschaltet",
+            "inactive": "Ausgeschaltet"
+        },
+        "search_placeholder": "Automatisierungen suchen",
+        "all_triggers": "Alle Auslöser",
+        "name": "Automatisierung",
+        "enabled": "Eingeschaltet",
+        "last_run": "Zuletzt: {date}",
+        "never_run": "Noch nicht ausgeführt",
+        "switch_label": "Eingeschaltet: {name}",
+        "actions_for": "Aktionen für die Automatisierung: {name}",
+        "empty_filtered": "Keine Automatisierung passt zu den Filtern",
+        "delete_title": "Automatisierung löschen?",
+        "delete_description": "Sie reagiert dann nicht mehr auf Ereignisse. Auch ihr Ausführungsverlauf verschwindet.",
+        "restore_title": "Standard-Automatisierungen wiederherstellen?",
+        "activated": "Automatisierung eingeschaltet",
+        "deactivated": "Automatisierung ausgeschaltet",
+        "deleted": "Automatisierung gelöscht",
+        "triggers": {
+            "subscriber_signup": "Anmeldung zur Liste",
+            "subscriber_activated": "Abonnent aktiviert",
+            "list_join": "Liste beigetreten",
+            "email_opened": "E-Mail geöffnet",
+            "email_clicked": "Link angeklickt",
+            "subscriber_unsubscribed": "Abmeldung",
+            "email_bounced": "E-Mail zurückgewiesen",
+            "form_submitted": "Formular abgeschickt",
+            "tag_added": "Tag hinzugefügt",
+            "tag_removed": "Tag entfernt",
+            "field_updated": "Feld geändert",
+            "page_visited": "Seite besucht",
+            "specific_link_clicked": "Bestimmter Link angeklickt",
+            "date_reached": "Datum erreicht",
+            "read_time_threshold": "Lesezeit-Schwelle",
+            "subscriber_birthday": "Geburtstag des Abonnenten",
+            "subscription_anniversary": "Jahrestag der Anmeldung",
+            "subscriber_inactive": "Keine Aktivität",
+            "purchase": "Kauf (Webhook)",
+            "pixel_page_visited": "Pixel: Seite besucht",
+            "pixel_product_viewed": "Pixel: Produkt angesehen",
+            "pixel_add_to_cart": "Pixel: in den Warenkorb gelegt",
+            "pixel_checkout_started": "Pixel: Kasse begonnen",
+            "pixel_cart_abandoned": "Pixel: Warenkorb abgebrochen",
+            "pixel_return_visit": "Pixel: erneuter Besuch",
+            "crm_deal_stage_changed": "CRM: Deal-Phase geändert",
+            "crm_deal_won": "CRM: Deal gewonnen",
+            "crm_deal_lost": "CRM: Deal verloren",
+            "crm_deal_created": "CRM: Deal erstellt",
+            "crm_deal_idle": "CRM: Deal ohne Aktivität",
+            "crm_task_completed": "CRM: Aufgabe erledigt",
+            "crm_task_overdue": "CRM: Aufgabe überfällig",
+            "crm_contact_created": "CRM: Kontakt erstellt",
+            "crm_contact_status_changed": "CRM: Kontaktstatus geändert",
+            "crm_score_threshold": "CRM: Lead-Score-Schwelle",
+            "crm_activity_logged": "CRM: Aktivität erfasst",
+            "crm_contact_replied": "CRM: Kontakt hat geantwortet"
+        },
+        "trigger_filter": "Auslöser",
+        "more_actions": "Weitere Aktionen",
+        "steps": "Aktionen"
     },
     "segmentation": {
         "title": "Verhaltens-Segmentierung",

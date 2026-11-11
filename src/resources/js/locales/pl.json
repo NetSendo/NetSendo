@@ -2778,8 +2778,18 @@
                 "ecommerce": "E-commerce",
                 "transactional": "Transakcyjny",
                 "notification": "Powiadomienie"
-            }
-        }
+            },
+            "hide": "Ukryj",
+            "show": "Pokaż",
+            "subtitle_plain": "Gotowe układy. Wybrany trafia do Twoich szablonów jako kopia do edycji."
+        },
+        "search_placeholder": "Szukaj szablonu",
+        "categories_label": "Kategoria",
+        "actions_for": "Akcje szablonu: {name}",
+        "empty_filtered": "Żaden szablon nie pasuje do filtrów",
+        "delete_title": "Usunąć szablon?",
+        "delete_description": "Wiadomości, które już z niego powstały, zostają bez zmian.",
+        "deleted": "Szablon usunięty"
     },
     "setup": {
         "title": "Instalacja NetSendo",
@@ -4957,7 +4967,21 @@
             "status": "Status",
             "source": "Źródło",
             "date": "Data"
-        }
+        },
+        "subtitle": "Formularze, przez które ludzie zapisują się na Twoje listy",
+        "views": {
+            "label": "Status formularzy",
+            "all": "Wszystkie",
+            "active": "Aktywne",
+            "draft": "Szkice",
+            "disabled": "Wyłączone"
+        },
+        "no_list": "Bez listy",
+        "no_submissions": "Brak zapisów",
+        "actions_for": "Akcje formularza: {name}",
+        "empty_filtered": "Żaden formularz nie pasuje do filtrów",
+        "delete_title": "Usunąć formularz?",
+        "delete_description": "Formularz przestanie przyjmować zapisy na stronach, na których jest osadzony. Tej operacji nie można cofnąć."
     },
     "funnels": {
         "title": "Lejki Email",
@@ -4973,7 +4997,7 @@
         "no_funnels": "Brak lejków",
         "no_funnels_desc": "Utwórz swój pierwszy lejek email, aby zautomatyzować komunikację z subskrybentami.",
         "all_statuses": "Wszystkie statusy",
-        "all_triggers": "Wszystkie triggery",
+        "all_triggers": "Wszystkie wyzwalacze",
         "builder": {
             "name_placeholder": "Nazwa lejka...",
             "blocks": "Bloki",
@@ -5162,7 +5186,30 @@
         "notifications": {
             "saved": "Lejek został zapisany.",
             "created": "Lejek został utworzony."
-        }
+        },
+        "subtitle": "Sekwencje kroków, przez które prowadzisz subskrybentów",
+        "views": {
+            "label": "Status lejków",
+            "all": "Wszystkie",
+            "active": "Aktywne",
+            "paused": "Wstrzymane",
+            "draft": "Szkice"
+        },
+        "triggers": {
+            "list_signup": "Zapis na listę",
+            "tag_added": "Dodanie tagu",
+            "form_submit": "Wypełnienie formularza",
+            "manual": "Ręcznie"
+        },
+        "trigger_filter": "Wyzwalacz",
+        "actions_for": "Akcje lejka: {name}",
+        "empty_filtered": "Żaden lejek nie pasuje do filtrów",
+        "delete_title": "Usunąć lejek?",
+        "completed_share": "{percent}% uczestników",
+        "activated": "Lejek działa",
+        "paused": "Lejek wstrzymany",
+        "deleted": "Lejek usunięty",
+        "delete_description": "Uczestnicy przestaną dostawać kolejne kroki. Tej operacji nie można cofnąć."
     },
     "automations": {
         "title": "Automatyzacje",
@@ -5178,7 +5225,7 @@
         "confirm_duplicate": "Czy chcesz zduplikować tę automatyzację?",
         "confirm_delete": "Czy na pewno chcesz usunąć tę automatyzację?",
         "restore_defaults": "Przywróć domyślne",
-        "confirm_restore": "Spowoduje to przywrócenie 6 domyślnych automatyzacji AutoTag Pro. Istniejące domyślne automatyzacje zostaną zresetowane do ustawień fabrycznych.",
+        "confirm_restore": "Dodaje te domyślne automatyzacje, których brakuje na koncie, i od razu je włącza. Istniejących nie zmienia.",
         "restore": "Przywróć",
         "default": "Domyślna",
         "builder": {
@@ -5266,7 +5313,71 @@
             },
             "empty": "Brak wykonań",
             "empty_hint": "Ta automatyzacja nie została jeszcze wykonana."
-        }
+        },
+        "subtitle": "Reguły, które same reagują na zdarzenia",
+        "views": {
+            "label": "Stan automatyzacji",
+            "all": "Wszystkie",
+            "active": "Włączone",
+            "inactive": "Wyłączone"
+        },
+        "search_placeholder": "Szukaj automatyzacji",
+        "all_triggers": "Wszystkie wyzwalacze",
+        "name": "Automatyzacja",
+        "enabled": "Włączona",
+        "last_run": "Ostatnio: {date}",
+        "never_run": "Jeszcze nie zadziałała",
+        "switch_label": "Włączona: {name}",
+        "actions_for": "Akcje automatyzacji: {name}",
+        "empty_filtered": "Żadna automatyzacja nie pasuje do filtrów",
+        "delete_title": "Usunąć automatyzację?",
+        "delete_description": "Przestanie reagować na zdarzenia. Historia jej wykonań też zniknie.",
+        "restore_title": "Przywrócić domyślne automatyzacje?",
+        "activated": "Automatyzacja włączona",
+        "deactivated": "Automatyzacja wyłączona",
+        "deleted": "Automatyzacja usunięta",
+        "triggers": {
+            "subscriber_signup": "Zapis na listę",
+            "subscriber_activated": "Aktywacja subskrybenta",
+            "list_join": "Dołączenie do listy",
+            "email_opened": "Otwarcie e-maila",
+            "email_clicked": "Kliknięcie w link",
+            "subscriber_unsubscribed": "Wypisanie z listy",
+            "email_bounced": "Odbicie e-maila",
+            "form_submitted": "Wypełnienie formularza",
+            "tag_added": "Dodanie tagu",
+            "tag_removed": "Usunięcie tagu",
+            "field_updated": "Zmiana pola",
+            "page_visited": "Odwiedziny strony",
+            "specific_link_clicked": "Kliknięcie w konkretny link",
+            "date_reached": "Osiągnięcie daty",
+            "read_time_threshold": "Próg czasu czytania",
+            "subscriber_birthday": "Urodziny subskrybenta",
+            "subscription_anniversary": "Rocznica zapisu",
+            "subscriber_inactive": "Brak aktywności",
+            "purchase": "Zakup (webhook)",
+            "pixel_page_visited": "Pixel: odwiedziny strony",
+            "pixel_product_viewed": "Pixel: wyświetlenie produktu",
+            "pixel_add_to_cart": "Pixel: dodanie do koszyka",
+            "pixel_checkout_started": "Pixel: rozpoczęcie zamówienia",
+            "pixel_cart_abandoned": "Pixel: porzucony koszyk",
+            "pixel_return_visit": "Pixel: powrót na stronę",
+            "crm_deal_stage_changed": "CRM: zmiana etapu szansy",
+            "crm_deal_won": "CRM: szansa wygrana",
+            "crm_deal_lost": "CRM: szansa przegrana",
+            "crm_deal_created": "CRM: nowa szansa",
+            "crm_deal_idle": "CRM: brak aktywności w szansie",
+            "crm_task_completed": "CRM: ukończenie zadania",
+            "crm_task_overdue": "CRM: zadanie po terminie",
+            "crm_contact_created": "CRM: nowy kontakt",
+            "crm_contact_status_changed": "CRM: zmiana statusu kontaktu",
+            "crm_score_threshold": "CRM: próg oceny leada",
+            "crm_activity_logged": "CRM: nowa aktywność",
+            "crm_contact_replied": "CRM: kontakt odpowiedział"
+        },
+        "trigger_filter": "Wyzwalacz",
+        "more_actions": "Więcej akcji",
+        "steps": "Akcje"
     },
     "segmentation": {
         "title": "Segmentacja Behawioralna",

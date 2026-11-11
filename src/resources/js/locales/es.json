@@ -3108,11 +3108,21 @@
                 "ecommerce": "E-commerce",
                 "transactional": "Transaccional",
                 "notification": "Notificación"
-            }
+            },
+            "hide": "Ocultar",
+            "show": "Mostrar",
+            "subtitle_plain": "Diseños listos. El que elijas llega a tus plantillas como una copia para editar."
         },
         "confirm_delete": "¿Está seguro de que desea eliminar esta plantilla?",
         "duplicate": "Duplicar plantilla",
-        "updated_at": "Actualizado"
+        "updated_at": "Actualizado",
+        "search_placeholder": "Buscar plantilla",
+        "categories_label": "Categoría",
+        "actions_for": "Acciones de la plantilla: {name}",
+        "empty_filtered": "Ninguna plantilla coincide con los filtros",
+        "delete_title": "¿Eliminar la plantilla?",
+        "delete_description": "Los mensajes que ya se crearon con ella quedan como están.",
+        "deleted": "Plantilla eliminada"
     },
     "setup": {
         "title": "Instalación de NetSendo",
@@ -4003,7 +4013,21 @@
         "deactivated": "El formulario ha sido desactivado",
         "deleted": "El formulario ha sido eliminado",
         "duplicated": "El formulario ha sido duplicado",
-        "saved_success": "El formulario ha sido guardado"
+        "saved_success": "El formulario ha sido guardado",
+        "subtitle": "Los formularios con los que la gente se apunta a tus listas",
+        "views": {
+            "label": "Estado de los formularios",
+            "all": "Todos",
+            "active": "Activos",
+            "draft": "Borradores",
+            "disabled": "Desactivados"
+        },
+        "no_list": "Sin lista",
+        "no_submissions": "Aún sin altas",
+        "actions_for": "Acciones del formulario: {name}",
+        "empty_filtered": "Ningún formulario coincide con los filtros",
+        "delete_title": "¿Eliminar el formulario?",
+        "delete_description": "El formulario dejará de aceptar altas en las páginas donde está incrustado. Esto no se puede deshacer."
     },
     "funnels": {
         "title": "Embudos de venta",
@@ -4208,7 +4232,30 @@
         "notifications": {
             "saved": "Embudo guardado.",
             "created": "Embudo creado."
-        }
+        },
+        "subtitle": "Secuencias de pasos por las que llevas a los suscriptores",
+        "views": {
+            "label": "Estado de los embudos",
+            "all": "Todos",
+            "active": "Activos",
+            "paused": "Pausados",
+            "draft": "Borradores"
+        },
+        "triggers": {
+            "list_signup": "Alta en la lista",
+            "tag_added": "Etiqueta añadida",
+            "form_submit": "Formulario enviado",
+            "manual": "Manual"
+        },
+        "trigger_filter": "Disparador",
+        "actions_for": "Acciones del embudo: {name}",
+        "empty_filtered": "Ningún embudo coincide con los filtros",
+        "delete_title": "¿Eliminar el embudo?",
+        "completed_share": "{percent}% de los participantes",
+        "activated": "El embudo está en marcha",
+        "paused": "Embudo pausado",
+        "deleted": "Embudo eliminado",
+        "delete_description": "Los participantes dejarán de recibir los pasos siguientes. Esto no se puede deshacer."
     },
     "campaign_architect": {
         "title": "Arquitecto de Campañas",
@@ -4318,7 +4365,7 @@
         "confirm_duplicate": "¿Desea duplicar esta automatización?",
         "confirm_delete": "¿Está seguro de que desea eliminar esta automatización?",
         "restore_defaults": "Restaurar predeterminados",
-        "confirm_restore": "Esto restaurará 6 automatizaciones predeterminadas de AutoTag Pro. Las automatizaciones predeterminadas existentes se restablecerán a la configuración de fábrica.",
+        "confirm_restore": "Añade las automatizaciones predeterminadas que faltan en la cuenta y las activa de inmediato. Las existentes no se modifican.",
         "restore": "Restaurar",
         "default": "Predeterminada",
         "builder": {
@@ -4406,7 +4453,71 @@
             },
             "empty": "No hay ejecuciones",
             "empty_hint": "Esta automatización aún no se ha ejecutado."
-        }
+        },
+        "subtitle": "Reglas que reaccionan solas a los eventos",
+        "views": {
+            "label": "Estado de las automatizaciones",
+            "all": "Todas",
+            "active": "Activadas",
+            "inactive": "Desactivadas"
+        },
+        "search_placeholder": "Buscar automatizaciones",
+        "all_triggers": "Todos los disparadores",
+        "name": "Automatización",
+        "enabled": "Activada",
+        "last_run": "Última vez: {date}",
+        "never_run": "Aún no se ha ejecutado",
+        "switch_label": "Activada: {name}",
+        "actions_for": "Acciones de la automatización: {name}",
+        "empty_filtered": "Ninguna automatización coincide con los filtros",
+        "delete_title": "¿Eliminar la automatización?",
+        "delete_description": "Dejará de reaccionar a los eventos. Su historial de ejecuciones también desaparece.",
+        "restore_title": "¿Restaurar las automatizaciones predeterminadas?",
+        "activated": "Automatización activada",
+        "deactivated": "Automatización desactivada",
+        "deleted": "Automatización eliminada",
+        "triggers": {
+            "subscriber_signup": "Alta en la lista",
+            "subscriber_activated": "Suscriptor activado",
+            "list_join": "Se unió a una lista",
+            "email_opened": "Correo abierto",
+            "email_clicked": "Clic en un enlace",
+            "subscriber_unsubscribed": "Baja de la lista",
+            "email_bounced": "Correo rebotado",
+            "form_submitted": "Formulario enviado",
+            "tag_added": "Etiqueta añadida",
+            "tag_removed": "Etiqueta eliminada",
+            "field_updated": "Campo modificado",
+            "page_visited": "Página visitada",
+            "specific_link_clicked": "Clic en un enlace concreto",
+            "date_reached": "Fecha alcanzada",
+            "read_time_threshold": "Umbral de tiempo de lectura",
+            "subscriber_birthday": "Cumpleaños del suscriptor",
+            "subscription_anniversary": "Aniversario del alta",
+            "subscriber_inactive": "Sin actividad",
+            "purchase": "Compra (webhook)",
+            "pixel_page_visited": "Pixel: página visitada",
+            "pixel_product_viewed": "Pixel: producto visto",
+            "pixel_add_to_cart": "Pixel: añadido al carrito",
+            "pixel_checkout_started": "Pixel: pago iniciado",
+            "pixel_cart_abandoned": "Pixel: carrito abandonado",
+            "pixel_return_visit": "Pixel: visita de regreso",
+            "crm_deal_stage_changed": "CRM: etapa del trato cambiada",
+            "crm_deal_won": "CRM: trato ganado",
+            "crm_deal_lost": "CRM: trato perdido",
+            "crm_deal_created": "CRM: trato creado",
+            "crm_deal_idle": "CRM: trato sin actividad",
+            "crm_task_completed": "CRM: tarea completada",
+            "crm_task_overdue": "CRM: tarea vencida",
+            "crm_contact_created": "CRM: contacto creado",
+            "crm_contact_status_changed": "CRM: estado del contacto cambiado",
+            "crm_score_threshold": "CRM: umbral de puntuación",
+            "crm_activity_logged": "CRM: actividad registrada",
+            "crm_contact_replied": "CRM: el contacto respondió"
+        },
+        "trigger_filter": "Disparador",
+        "more_actions": "Más acciones",
+        "steps": "Acciones"
     },
     "segmentation": {
         "title": "Segmentación Conductual",

@@ -67,6 +67,8 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),
+                // "Nothing to do" outcomes, e.g. restoring defaults that are all in place
+                'info' => fn () => $request->session()->get('info'),
                 // A GOLD feature was refused (App\Licensing\FeatureRequiresGold): opens the upgrade dialog
                 'gold_required' => fn () => $request->session()->get('gold_required'),
             ],

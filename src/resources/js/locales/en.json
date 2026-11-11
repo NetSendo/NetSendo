@@ -3027,7 +3027,21 @@
             "status": "Status",
             "source": "Source",
             "date": "Date"
-        }
+        },
+        "subtitle": "The forms people use to join your lists",
+        "views": {
+            "label": "Form status",
+            "all": "All",
+            "active": "Active",
+            "draft": "Drafts",
+            "disabled": "Disabled"
+        },
+        "no_list": "No list",
+        "no_submissions": "No signups yet",
+        "actions_for": "Actions for the form: {name}",
+        "empty_filtered": "No form matches the filters",
+        "delete_title": "Delete the form?",
+        "delete_description": "The form will stop taking signups on the pages where it is embedded. This cannot be undone."
     },
     "groups": {
         "title": "Mailing List Groups",
@@ -3237,8 +3251,18 @@
                 "ecommerce": "E-commerce",
                 "transactional": "Transactional",
                 "notification": "Notification"
-            }
-        }
+            },
+            "hide": "Hide",
+            "show": "Show",
+            "subtitle_plain": "Ready-made layouts. The one you pick lands in your templates as a copy to edit."
+        },
+        "search_placeholder": "Search templates",
+        "categories_label": "Category",
+        "actions_for": "Actions for the template: {name}",
+        "empty_filtered": "No template matches the filters",
+        "delete_title": "Delete the template?",
+        "delete_description": "Messages already made from it stay as they are.",
+        "deleted": "Template deleted"
     },
     "template_builder": {
         "insert_variable": "Insert variable",
@@ -4952,7 +4976,30 @@
         "notifications": {
             "saved": "Funnel saved.",
             "created": "Funnel created."
-        }
+        },
+        "subtitle": "Sequences of steps you lead subscribers through",
+        "views": {
+            "label": "Funnel status",
+            "all": "All",
+            "active": "Active",
+            "paused": "Paused",
+            "draft": "Drafts"
+        },
+        "triggers": {
+            "list_signup": "List signup",
+            "tag_added": "Tag added",
+            "form_submit": "Form submitted",
+            "manual": "Manual"
+        },
+        "trigger_filter": "Trigger",
+        "actions_for": "Actions for the funnel: {name}",
+        "empty_filtered": "No funnel matches the filters",
+        "delete_title": "Delete the funnel?",
+        "completed_share": "{percent}% of participants",
+        "activated": "Funnel is running",
+        "paused": "Funnel paused",
+        "deleted": "Funnel deleted",
+        "delete_description": "People in it will stop getting the next steps. This cannot be undone."
     },
     "automations": {
         "title": "Automations",
@@ -4968,7 +5015,7 @@
         "confirm_duplicate": "Do you want to duplicate this automation?",
         "confirm_delete": "Are you sure you want to delete this automation?",
         "restore_defaults": "Restore Defaults",
-        "confirm_restore": "This will restore 6 default AutoTag Pro automations. Existing default automations will be reset to factory settings.",
+        "confirm_restore": "Adds the default automations that are missing from the account and turns them on right away. Existing ones are not changed.",
         "restore": "Restore",
         "default": "Default",
         "builder": {
@@ -5056,7 +5103,71 @@
             },
             "empty": "No executions",
             "empty_hint": "This automation has not been executed yet."
-        }
+        },
+        "subtitle": "Rules that react to events on their own",
+        "views": {
+            "label": "Automation state",
+            "all": "All",
+            "active": "On",
+            "inactive": "Off"
+        },
+        "search_placeholder": "Search automations",
+        "all_triggers": "All triggers",
+        "name": "Automation",
+        "enabled": "On",
+        "last_run": "Last run: {date}",
+        "never_run": "Has not run yet",
+        "switch_label": "On: {name}",
+        "actions_for": "Actions for the automation: {name}",
+        "empty_filtered": "No automation matches the filters",
+        "delete_title": "Delete the automation?",
+        "delete_description": "It will stop reacting to events. Its run history goes too.",
+        "restore_title": "Restore the default automations?",
+        "activated": "Automation turned on",
+        "deactivated": "Automation turned off",
+        "deleted": "Automation deleted",
+        "triggers": {
+            "subscriber_signup": "List signup",
+            "subscriber_activated": "Subscriber activated",
+            "list_join": "Joined a list",
+            "email_opened": "E-mail opened",
+            "email_clicked": "Link clicked",
+            "subscriber_unsubscribed": "Unsubscribed",
+            "email_bounced": "E-mail bounced",
+            "form_submitted": "Form submitted",
+            "tag_added": "Tag added",
+            "tag_removed": "Tag removed",
+            "field_updated": "Field changed",
+            "page_visited": "Page visited",
+            "specific_link_clicked": "Specific link clicked",
+            "date_reached": "Date reached",
+            "read_time_threshold": "Reading time threshold",
+            "subscriber_birthday": "Subscriber birthday",
+            "subscription_anniversary": "Signup anniversary",
+            "subscriber_inactive": "No activity",
+            "purchase": "Purchase (webhook)",
+            "pixel_page_visited": "Pixel: page visited",
+            "pixel_product_viewed": "Pixel: product viewed",
+            "pixel_add_to_cart": "Pixel: added to cart",
+            "pixel_checkout_started": "Pixel: checkout started",
+            "pixel_cart_abandoned": "Pixel: cart abandoned",
+            "pixel_return_visit": "Pixel: return visit",
+            "crm_deal_stage_changed": "CRM: deal stage changed",
+            "crm_deal_won": "CRM: deal won",
+            "crm_deal_lost": "CRM: deal lost",
+            "crm_deal_created": "CRM: deal created",
+            "crm_deal_idle": "CRM: deal idle",
+            "crm_task_completed": "CRM: task completed",
+            "crm_task_overdue": "CRM: task overdue",
+            "crm_contact_created": "CRM: contact created",
+            "crm_contact_status_changed": "CRM: contact status changed",
+            "crm_score_threshold": "CRM: lead score threshold",
+            "crm_activity_logged": "CRM: activity logged",
+            "crm_contact_replied": "CRM: contact replied"
+        },
+        "trigger_filter": "Trigger",
+        "more_actions": "More actions",
+        "steps": "Actions"
     },
     "segmentation": {
         "title": "Behavioral Segmentation",
