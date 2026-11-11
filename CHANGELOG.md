@@ -96,6 +96,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Updates**: whether the installation is current is a pill in the header; each release is a panel with its size, date and notes; the update commands are blocks to copy, and the "specific version" example names the newest version instead of 1.1.0.
   - **Telemetry**: the opt-in is one switch in a framed row with its state in words; the installation id, the last report and the exact report that would be sent are below.
   - **Google integration**: connections are a list with their state and a "Connect with Google" button; the redirect address has a Copy button; deleting asks in a dialog that names the connection, in place of the browser's own prompt.
+- **Zoom and Google Calendar settings rebuilt.** The Zoom page was English in every language; it is now translated (pl, en, de, es), shows the connected account with the permissions it was granted, and asks before disconnecting in the panel's own dialog. The Google Calendar page is laid out as panels (connection and sync, bulk sync, push notifications, task colours, the OAuth redirect address) and works in the light theme and on a phone.
 - **Buttons, text fields and dialogs share one look.** The primary button is the indigo of the rest of the panel (it was dark grey in capitals), text fields have a visible border again (the colour classes alone drew none since Tailwind 4), dialogs have the panel's rounded card.
 - **The sign-in screens are rebuilt**: sign in, first administrator, forgotten and new password, password confirmation, e-mail verification, two-factor code and team invitation.
   - Two panes: the brand on a dark ground, and the form in the visitor's theme, light or dark. On a phone the brand pane is a strip with the logo.
@@ -121,6 +122,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - The name import button read `common.importing` while a file was being sent (the text did not exist).
 - **A WooCommerce shop that could not be saved closed its dialog without a word.** When the shop did not answer or its address was already taken, the dialog closed, the entries were gone and no reason was shown. The dialog now stays open with the reason next to its buttons.
 - **The Updates page was written for the dark theme only.** In the light theme its title was white on the light page, and the release notes were light grey on a half-transparent grey card. It now follows the theme.
+- After switching the language, dates and "x hours ago" texts stayed in the previous language until the page was reloaded (the date helpers read the language of the page that was open before the switch). The language now changes before the page is rebuilt, and follows what the server answers with.
+- A failed save on the Google Calendar settings page showed a missing translation key instead of an error message.
 - The password confirmation label on the "new password" page showed nothing (it pointed at a group of texts, not a text).
 
 - **NetSendo Mail Infrastructure could not be set up at all.** Found while finishing the NetSendo MTA provider:

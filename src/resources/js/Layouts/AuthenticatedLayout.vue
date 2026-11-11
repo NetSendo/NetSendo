@@ -26,14 +26,19 @@ const supportedLocales = computed(() => page.props.locale?.supported || {});
 const switchLocale = (code) => {
     if (code === currentLocale.value) return;
 
+    // Switched before the request, so the page the answer brings is built in the new language
+    // from its first render (texts and dates read once at setup would keep the old one)
+    const previous = locale.value;
+    locale.value = code;
+
     router.post(
         route("locale.update"),
         { locale: code },
         {
             preserveState: false,
             preserveScroll: true,
-            onSuccess: () => {
-                locale.value = code;
+            onError: () => {
+                locale.value = previous;
             },
         },
     );
