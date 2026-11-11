@@ -869,7 +869,13 @@
             "subscribers": "Subscribers",
             "opens": "Opens",
             "empty_title": "No data yet",
-            "empty_description": "Activity data will appear after the first email send."
+            "empty_description": "Activity data will appear after the first email send.",
+            "heading": "Sending activity",
+            "clicks": "Clicks",
+            "new_subscribers": "New subscribers",
+            "series": "Chart series",
+            "empty_period": "Nothing was sent in the selected period.",
+            "chart_label": "Chart of daily activity in the selected period"
         },
         "quick_actions": {
             "title": "Quick Actions",
@@ -897,7 +903,15 @@
                 "sent": "Sent",
                 "scheduled": "Scheduled",
                 "draft": "Draft"
-            }
+            },
+            "columns": {
+                "campaign": "Campaign",
+                "sent": "Sent",
+                "opens": "Opens",
+                "clicks": "Clicks"
+            },
+            "no_subject": "(no subject)",
+            "no_list": "No list"
         },
         "cron": {
             "status_title": "⏰ CRON Status",
@@ -924,7 +938,21 @@
             "open_chat": "Open AI Chat",
             "settings": "Settings",
             "unavailable": "Brain AI unavailable",
-            "configure": "Configure"
+            "configure": "Configure",
+            "untitled_plan": "Untitled plan",
+            "approved": "Approved.",
+            "rejected": "Rejected.",
+            "decision_failed": "The decision could not be saved. Try again.",
+            "waiting": "Waiting for your decision: {count}",
+            "nothing_waiting": "Nothing is waiting for your decision.",
+            "goal_proposal": "Goal proposal",
+            "plan_steps": "Plan · steps: {count}",
+            "approve": "Approve",
+            "reject": "Reject",
+            "more": "See the rest ({count})",
+            "ask_label": "Ask Brain",
+            "ask_placeholder": "e.g. Which list is growing fastest?",
+            "ask_send": "Send question"
         },
         "clock": {
             "title": "Current Time",
@@ -946,6 +974,71 @@
             "no_recent_activity": "No recent activity",
             "just_now": "just now",
             "ago": "ago"
+        },
+        "greeting": {
+            "morning": "Good morning, {name}",
+            "afternoon": "Good afternoon, {name}",
+            "evening": "Good evening, {name}"
+        },
+        "period": {
+            "label": "Period",
+            "days": "{count} days"
+        },
+        "overview": {
+            "title": "Overview",
+            "compared": "Compared with the previous {count} days"
+        },
+        "kpi": {
+            "title": "Key figures",
+            "subscribers": "Active subscribers",
+            "sent": "E-mails sent",
+            "open_rate": "Open rate",
+            "click_rate": "Click rate",
+            "points": "pts",
+            "up": "up",
+            "down": "down",
+            "new_subscribers": "new: {count} · previously {previous}",
+            "previously": "previously {value}"
+        },
+        "attention": {
+            "title": "Needs attention",
+            "count": "Needs attention: {count}",
+            "license": "The NetSendo licence is inactive.",
+            "cron_instructions": "See instructions",
+            "cron_stale": "CRON is not running: last run {when}. Scheduled messages are not going out.",
+            "cron_failed": "Failed CRON runs in the last 24 hours: {count}.",
+            "check": "Check",
+            "no_mailbox": "You have no sending mailbox, so e-mails cannot go out.",
+            "add_mailbox": "Add a mailbox",
+            "no_ai": "No AI integration: Brain and the content assistants are off.",
+            "connect_ai": "Connect AI",
+            "audit_critical": "Campaign audit: critical issues ({count}).",
+            "see": "View"
+        },
+        "scheduled": {
+            "title": "Scheduled",
+            "empty": "No sends are scheduled.",
+            "plan": "Schedule a message",
+            "recipients": "recipients: {count}"
+        },
+        "health": {
+            "title": "Campaign health",
+            "score_label": "Score {score} out of 100",
+            "last_audit": "last audit {when}",
+            "open": "Open the audit"
+        },
+        "system": {
+            "cron_never": "CRON has not run yet",
+            "cron_unknown": "CRON: no data",
+            "cron_last_run": "CRON: last run {when}",
+            "queue": "In queue: {count}",
+            "mailboxes": "Mailboxes: {count}",
+            "cron_settings": "CRON settings"
+        },
+        "create": {
+            "button": "Create",
+            "email": "New e-mail message",
+            "sms": "New SMS message"
         }
     },
     "mailing_lists": {

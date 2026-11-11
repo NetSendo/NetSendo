@@ -1335,7 +1335,21 @@
             "open_chat": "KI-Chat öffnen",
             "settings": "Einstellungen",
             "unavailable": "Brain KI nicht verfügbar",
-            "configure": "Konfigurieren"
+            "configure": "Konfigurieren",
+            "untitled_plan": "Plan ohne Titel",
+            "approved": "Genehmigt.",
+            "rejected": "Abgelehnt.",
+            "decision_failed": "Die Entscheidung konnte nicht gespeichert werden. Bitte erneut versuchen.",
+            "waiting": "Wartet auf deine Entscheidung: {count}",
+            "nothing_waiting": "Nichts wartet auf deine Entscheidung.",
+            "goal_proposal": "Zielvorschlag",
+            "plan_steps": "Plan · Schritte: {count}",
+            "approve": "Genehmigen",
+            "reject": "Ablehnen",
+            "more": "Die übrigen ansehen ({count})",
+            "ask_label": "Brain fragen",
+            "ask_placeholder": "z. B. Welche Liste wächst am schnellsten?",
+            "ask_send": "Frage senden"
         },
         "brain_activity": {
             "bar_title": "Brain arbeitet...",
@@ -1368,7 +1382,13 @@
             "subscribers": "Abonnenten",
             "opens": "Öffnungen",
             "empty_description": "Aktivitätsdaten erscheinen nach dem ersten Versand.",
-            "empty_title": "Keine Daten"
+            "empty_title": "Keine Daten",
+            "heading": "Versandaktivität",
+            "clicks": "Klicks",
+            "new_subscribers": "Neue Abonnenten",
+            "series": "Datenreihen im Diagramm",
+            "empty_period": "Im gewählten Zeitraum wurde nichts versendet.",
+            "chart_label": "Diagramm der täglichen Aktivität im gewählten Zeitraum"
         },
         "quick_actions": {
             "title": "Schnellaktionen",
@@ -1396,7 +1416,15 @@
             },
             "create_first": "Nachricht erstellen",
             "empty_description": "Erstellen Sie Ihre erste Nachricht, um sie hier zu sehen.",
-            "empty_title": "Keine Kampagnen"
+            "empty_title": "Keine Kampagnen",
+            "columns": {
+                "campaign": "Kampagne",
+                "sent": "Gesendet",
+                "opens": "Öffnungen",
+                "clicks": "Klicks"
+            },
+            "no_subject": "(ohne Betreff)",
+            "no_list": "Keine Liste"
         },
         "cron": {
             "status_title": "⏰ CRON-Status",
@@ -1417,6 +1445,71 @@
         "clock": {
             "timezone_label": "Zeitzone",
             "title": "Aktuelle Uhrzeit"
+        },
+        "greeting": {
+            "morning": "Guten Morgen, {name}",
+            "afternoon": "Guten Tag, {name}",
+            "evening": "Guten Abend, {name}"
+        },
+        "period": {
+            "label": "Zeitraum",
+            "days": "{count} Tage"
+        },
+        "overview": {
+            "title": "Überblick",
+            "compared": "Verglichen mit den vorherigen {count} Tagen"
+        },
+        "kpi": {
+            "title": "Kennzahlen",
+            "subscribers": "Aktive Abonnenten",
+            "sent": "Gesendete E-Mails",
+            "open_rate": "Öffnungsrate",
+            "click_rate": "Klickrate",
+            "points": "PP",
+            "up": "gestiegen um",
+            "down": "gesunken um",
+            "new_subscribers": "neu: {count} · zuvor {previous}",
+            "previously": "zuvor {value}"
+        },
+        "attention": {
+            "title": "Erfordert Aufmerksamkeit",
+            "count": "Erfordert Aufmerksamkeit: {count}",
+            "license": "Die NetSendo-Lizenz ist inaktiv.",
+            "cron_instructions": "Anleitung ansehen",
+            "cron_stale": "CRON läuft nicht: letzter Lauf {when}. Geplante Nachrichten werden nicht versendet.",
+            "cron_failed": "Fehlgeschlagene CRON-Läufe in den letzten 24 Stunden: {count}.",
+            "check": "Prüfen",
+            "no_mailbox": "Es gibt kein Absenderpostfach, daher können keine E-Mails versendet werden.",
+            "add_mailbox": "Postfach hinzufügen",
+            "no_ai": "Keine KI-Integration: Brain und die Inhaltsassistenten sind aus.",
+            "connect_ai": "KI verbinden",
+            "audit_critical": "Kampagnen-Audit: kritische Probleme ({count}).",
+            "see": "Ansehen"
+        },
+        "scheduled": {
+            "title": "Geplant",
+            "empty": "Es ist kein Versand geplant.",
+            "plan": "Nachricht planen",
+            "recipients": "Empfänger: {count}"
+        },
+        "health": {
+            "title": "Kampagnen-Zustand",
+            "score_label": "Ergebnis {score} von 100",
+            "last_audit": "letztes Audit {when}",
+            "open": "Audit öffnen"
+        },
+        "system": {
+            "cron_never": "CRON ist noch nie gelaufen",
+            "cron_unknown": "CRON: keine Daten",
+            "cron_last_run": "CRON: letzter Lauf {when}",
+            "queue": "In der Warteschlange: {count}",
+            "mailboxes": "Postfächer: {count}",
+            "cron_settings": "CRON-Einstellungen"
+        },
+        "create": {
+            "button": "Erstellen",
+            "email": "Neue E-Mail-Nachricht",
+            "sms": "Neue SMS-Nachricht"
         }
     },
     "mailing_lists": {

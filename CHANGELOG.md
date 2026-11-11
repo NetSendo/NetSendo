@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Changed
+
+- **The dashboard is rebuilt around three questions: does anything need my reaction, how is sending going, what should I do next.** It works in the light and the dark theme and on a phone.
+  - **Needs attention.** One strip at the top replaces the licence badge, the setup bar and the CRON widget. It appears only when something is wrong (inactive licence, CRON that never ran or stopped, failed CRON runs, no mailbox, no AI integration, critical audit findings), and each item links to where it is fixed. CRON that last ran more than 15 minutes ago is now reported as stopped; before, the widget said "CRON active" as long as it had run once, ever.
+  - **Period.** A 7 / 30 / 90 day switch (remembered in the browser) drives the figures and the chart. Each figure is compared with the same number of days before and has a trend line. The comparison used to be labelled "vs last week" while it compared calendar months, and the open and click rates had no comparison at all.
+  - **Figures.** Rate changes are shown in percentage points. The subscriber tile says how many joined in the period and in the one before, instead of a percentage of new sign-ups printed under the total.
+  - **Activity chart.** Sent mail as bars with unique opens, unique clicks and new subscribers as lines that can be switched on and off, one value per day of the chosen period, in the user's timezone.
+  - **Brain.** One panel instead of three widgets: the plans and goal proposals that wait for a decision, with Approve and Reject on the spot, and a field to ask a question.
+  - **Recent campaigns** is a table (lists, status, sent, open rate, click rate, date) placed next to **Scheduled**, a new list of the next broadcasts with their send time and recipient count, and the campaign health score.
+  - **Create.** The six quick-action tiles became one "Create" button in the dashboard header.
+  - The live clock is gone; today's date is under the greeting and the timezone is in the status line at the bottom, with the last CRON run, the queue length, the mailbox count and the version.
+- **On a phone the page title has its own row under the top-bar buttons** on every page; it used to be squeezed to a few letters. The account name and e-mail next to the avatar show from 1280 px up (they are still in the account menu).
+- `GET /api/dashboard/stats` takes `period=7|30|90` (default 30; it used to be the current calendar month) and also returns `period`, `previous` values for every figure, `queue_pending`, `scheduled`, and one `activity_chart` row per day with `date`, `emails`, `subscribers`, `opens` and `clicks`. `recent_campaigns` carries `channel`, `lists`, `sent`, `open_rate` and `click_rate`; its `opens` and `clicks` now count each recipient once.
+
+### Performance
+
+- `cron_job_logs` has an index on `started_at`. The dashboard sums sent mail by day, and without it every sum read the whole table, which grows by several thousand rows a day.
+
 ## [2.8.7] – Installations on Podman update again - 2026-11-10
 
 **Release date:** 2026-11-10

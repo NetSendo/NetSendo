@@ -869,7 +869,13 @@
             "subscribers": "Subskrybenci",
             "opens": "Otwarcia",
             "empty_title": "Brak danych",
-            "empty_description": "Dane aktywności pojawią się po pierwszej wysyłce."
+            "empty_description": "Dane aktywności pojawią się po pierwszej wysyłce.",
+            "heading": "Aktywność wysyłek",
+            "clicks": "Kliknięcia",
+            "new_subscribers": "Nowi subskrybenci",
+            "series": "Serie na wykresie",
+            "empty_period": "W wybranym okresie nic nie zostało wysłane.",
+            "chart_label": "Wykres dziennej aktywności w wybranym okresie"
         },
         "quick_actions": {
             "title": "Szybkie akcje",
@@ -897,7 +903,15 @@
                 "sent": "Wysłano",
                 "scheduled": "Zaplanowano",
                 "draft": "Szkic"
-            }
+            },
+            "columns": {
+                "campaign": "Kampania",
+                "sent": "Wysłane",
+                "opens": "Otwarcia",
+                "clicks": "Kliknięcia"
+            },
+            "no_subject": "(bez tematu)",
+            "no_list": "Bez listy"
         },
         "cron": {
             "status_title": "⏰ Status CRON",
@@ -924,7 +938,21 @@
             "open_chat": "Otwórz Chat AI",
             "settings": "Ustawienia",
             "unavailable": "Brain AI niedostępny",
-            "configure": "Skonfiguruj"
+            "configure": "Skonfiguruj",
+            "untitled_plan": "Plan bez tytułu",
+            "approved": "Zatwierdzono.",
+            "rejected": "Odrzucono.",
+            "decision_failed": "Nie udało się zapisać decyzji. Spróbuj ponownie.",
+            "waiting": "Czeka na Twoją decyzję: {count}",
+            "nothing_waiting": "Nic nie czeka na Twoją decyzję.",
+            "goal_proposal": "Propozycja celu",
+            "plan_steps": "Plan · kroki: {count}",
+            "approve": "Zatwierdź",
+            "reject": "Odrzuć",
+            "more": "Zobacz pozostałe ({count})",
+            "ask_label": "Zapytaj Brain",
+            "ask_placeholder": "np. Która lista rośnie najszybciej?",
+            "ask_send": "Wyślij pytanie"
         },
         "clock": {
             "title": "Aktualny czas",
@@ -946,6 +974,71 @@
             "no_recent_activity": "Brak ostatniej aktywności",
             "just_now": "przed chwilą",
             "ago": "temu"
+        },
+        "greeting": {
+            "morning": "Dzień dobry, {name}",
+            "afternoon": "Dzień dobry, {name}",
+            "evening": "Dobry wieczór, {name}"
+        },
+        "period": {
+            "label": "Okres",
+            "days": "{count} dni"
+        },
+        "overview": {
+            "title": "Przegląd",
+            "compared": "Porównanie z poprzednimi {count} dniami"
+        },
+        "kpi": {
+            "title": "Kluczowe wskaźniki",
+            "subscribers": "Aktywni subskrybenci",
+            "sent": "Wysłane e-maile",
+            "open_rate": "Otwarcia",
+            "click_rate": "Kliknięcia",
+            "points": "pp",
+            "up": "wzrost o",
+            "down": "spadek o",
+            "new_subscribers": "nowi: {count} · poprzednio {previous}",
+            "previously": "poprzednio {value}"
+        },
+        "attention": {
+            "title": "Wymaga uwagi",
+            "count": "Wymaga uwagi: {count}",
+            "license": "Licencja NetSendo jest nieaktywna.",
+            "cron_instructions": "Zobacz instrukcję",
+            "cron_stale": "CRON nie działa: ostatnie uruchomienie {when}. Zaplanowane wiadomości nie wychodzą.",
+            "cron_failed": "Nieudane uruchomienia CRON w ostatnich 24 godzinach: {count}.",
+            "check": "Sprawdź",
+            "no_mailbox": "Nie masz żadnej skrzynki nadawczej, więc e-maile nie mogą wychodzić.",
+            "add_mailbox": "Dodaj skrzynkę",
+            "no_ai": "Brak integracji AI: Brain i asystenci treści są wyłączeni.",
+            "connect_ai": "Podłącz AI",
+            "audit_critical": "Audyt kampanii: krytyczne problemy ({count}).",
+            "see": "Zobacz"
+        },
+        "scheduled": {
+            "title": "Zaplanowane",
+            "empty": "Żadna wysyłka nie jest zaplanowana.",
+            "plan": "Zaplanuj wiadomość",
+            "recipients": "odbiorcy: {count}"
+        },
+        "health": {
+            "title": "Kondycja kampanii",
+            "score_label": "Wynik {score} na 100",
+            "last_audit": "ostatni audyt {when}",
+            "open": "Otwórz audyt"
+        },
+        "system": {
+            "cron_never": "CRON jeszcze się nie uruchomił",
+            "cron_unknown": "CRON: brak danych",
+            "cron_last_run": "CRON: ostatnie uruchomienie {when}",
+            "queue": "W kolejce: {count}",
+            "mailboxes": "Skrzynki: {count}",
+            "cron_settings": "Ustawienia CRON"
+        },
+        "create": {
+            "button": "Utwórz",
+            "email": "Nowa wiadomość e-mail",
+            "sms": "Nowa wiadomość SMS"
         }
     },
     "mailing_lists": {

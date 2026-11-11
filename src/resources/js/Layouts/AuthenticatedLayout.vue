@@ -198,11 +198,13 @@ const toggleMobileMenu = () => {
             <header
                 class="sticky top-0 z-20 border-b border-slate-200/50 bg-white/80 backdrop-blur-xl dark:border-slate-700/50 dark:bg-slate-900/80"
             >
+                <!-- On a phone the buttons take the whole first row, so the page title gets a
+                     row of its own below them instead of being squeezed to nothing -->
                 <div
-                    class="flex min-h-16 py-2 items-center justify-between px-4 sm:px-6 lg:px-8"
+                    class="flex min-h-16 py-2 items-center justify-between gap-x-3 gap-y-2 px-4 max-sm:flex-wrap sm:px-6 lg:px-8"
                 >
                     <!-- Left side -->
-                    <div class="flex items-center gap-4 min-w-0 flex-1">
+                    <div class="flex items-center gap-4 min-w-0 flex-1 max-sm:contents">
                         <!-- Mobile menu button -->
                         <button
                             @click="toggleMobileMenu"
@@ -224,13 +226,16 @@ const toggleMobileMenu = () => {
                         </button>
 
                         <!-- Page title slot -->
-                        <div v-if="$slots.header" class="min-w-0 flex-1">
+                        <div
+                            v-if="$slots.header"
+                            class="min-w-0 flex-1 max-sm:order-last max-sm:basis-full"
+                        >
                             <slot name="header" />
                         </div>
                     </div>
 
                     <!-- Right side -->
-                    <div class="flex items-center gap-3 shrink-0">
+                    <div class="flex items-center gap-3 shrink-0 max-sm:ml-auto max-sm:gap-1.5">
                         <!-- Search Trigger -->
                         <button
                             @click="showSearchPanel = true"
@@ -300,7 +305,7 @@ const toggleMobileMenu = () => {
                         <Dropdown align="right" width="48">
                             <template #trigger>
                                 <button
-                                    class="flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                                    class="flex items-center gap-3 rounded-xl px-3 py-2 transition-colors hover:bg-slate-100 max-sm:px-1 dark:hover:bg-slate-800"
                                 >
                                     <div
                                         class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-medium text-white"
@@ -311,7 +316,7 @@ const toggleMobileMenu = () => {
                                                 .toUpperCase()
                                         }}
                                     </div>
-                                    <div class="hidden text-left md:block">
+                                    <div class="hidden text-left xl:block">
                                         <div
                                             class="text-sm font-medium text-slate-700 dark:text-slate-200"
                                         >
@@ -324,7 +329,7 @@ const toggleMobileMenu = () => {
                                         </div>
                                     </div>
                                     <svg
-                                        class="hidden h-4 w-4 text-slate-400 md:block"
+                                        class="hidden h-4 w-4 text-slate-400 xl:block"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
