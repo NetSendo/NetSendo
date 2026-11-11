@@ -4652,7 +4652,9 @@
             "funnels_read": "Embudos (lectura)",
             "funnels_write": "Embudos (escritura)",
             "brain_read": "NetSendo Brain (lectura)",
-            "brain_write": "NetSendo Brain (escritura)"
+            "brain_write": "NetSendo Brain (escritura)",
+            "lists_write": "Listas (escritura)",
+            "notifications_write": "Notificaciones (envío)"
         },
         "status": {
             "expired": "expirado",
@@ -4695,7 +4697,19 @@
         "mcp_key_hint": "Usa esta clave para integraciones con Claude, Cursor o VS Code",
         "mcp_plain_key_hint": "Pega tu clave API para poder probar la conexión MCP",
         "mcp_plain_key_label": "Clave API para cifrar",
-        "mcp_plain_key_placeholder": "ns_live_..."
+        "mcp_plain_key_placeholder": "ns_live_...",
+        "full_access": "Acceso completo",
+        "more_permissions": "y {count} más",
+        "actions_for": "Acciones de la clave: {name}",
+        "select_all": "Seleccionar todo",
+        "select_none": "Quitar todo",
+        "notifications": {
+            "updated": "Clave guardada",
+            "deleted": "Clave eliminada"
+        },
+        "errors": {
+            "session_expired": "La sesión ha caducado. La página se recargará enseguida."
+        }
     },
     "inserts": {
         "title": "Fragmentos y Firmas",
@@ -9676,7 +9690,22 @@
         },
         "team_members": "Miembros del equipo",
         "team_members_subtitle": "Usuarios con acceso a su cuenta de NetSendo",
-        "title": "Gestión de Usuarios"
+        "title": "Gestión de Usuarios",
+        "no_lists": "Aún no tienes ninguna lista que compartir.",
+        "permission_level_for": "Nivel de acceso a la lista {name}",
+        "permissions_short": "Permisos",
+        "actions_for": "Acciones del usuario: {name}",
+        "list_with_edit": "{name} (edición)",
+        "more_lists": "y {count} más",
+        "delete_title": "¿Quitar al usuario del equipo?",
+        "cancel_invitation_title": "¿Cancelar la invitación?",
+        "cancel_invitation": "Cancelar invitación",
+        "notifications": {
+            "added": "Usuario añadido al equipo",
+            "permissions_saved": "Permisos guardados",
+            "removed": "Usuario quitado del equipo",
+            "invitation_cancelled": "Invitación cancelada"
+        }
     },
     "telemetry": {
         "title": "Telemetría",

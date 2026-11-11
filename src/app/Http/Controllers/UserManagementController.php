@@ -239,8 +239,10 @@ class UserManagementController extends Controller
             abort(403, 'Ten użytkownik nie należy do Twojego zespołu.');
         }
 
+        // "present", not "required": an empty set is how every list is taken away. With
+        // "required" a member who had access to one list could never lose it.
         $validated = $request->validate([
-            'list_permissions' => ['required', 'array'],
+            'list_permissions' => ['present', 'array'],
             'list_permissions.*.list_id' => ['required', 'exists:contact_lists,id'],
             'list_permissions.*.permission' => ['required', 'in:view,edit'],
         ]);

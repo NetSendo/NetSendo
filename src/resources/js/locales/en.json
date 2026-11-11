@@ -5705,7 +5705,9 @@
             "funnels_read": "Funnels (read)",
             "funnels_write": "Funnels (write)",
             "brain_read": "NetSendo Brain (read)",
-            "brain_write": "NetSendo Brain (write)"
+            "brain_write": "NetSendo Brain (write)",
+            "lists_write": "Lists (write)",
+            "notifications_write": "Notifications (send)"
         },
         "status": {
             "expired": "expired",
@@ -5748,7 +5750,19 @@
         },
         "mcp_plain_key_label": "API Key for encryption",
         "mcp_plain_key_hint": "Paste your API key to enable MCP connection testing",
-        "mcp_plain_key_placeholder": "ns_live_..."
+        "mcp_plain_key_placeholder": "ns_live_...",
+        "full_access": "Full access",
+        "more_permissions": "and {count} more",
+        "actions_for": "Actions for the key: {name}",
+        "select_all": "Select all",
+        "select_none": "Clear all",
+        "notifications": {
+            "updated": "Key saved",
+            "deleted": "Key deleted"
+        },
+        "errors": {
+            "session_expired": "The session expired. The page will reload in a moment."
+        }
     },
     "inserts": {
         "title": "Inserts & Signatures",
@@ -5953,6 +5967,21 @@
             "title": "User Permissions",
             "description": "Select lists the user will have access to and set permission levels.",
             "save": "Save Permissions"
+        },
+        "no_lists": "You have no list to share yet.",
+        "permission_level_for": "Access level for the list {name}",
+        "permissions_short": "Permissions",
+        "actions_for": "Actions for the user: {name}",
+        "list_with_edit": "{name} (edit)",
+        "more_lists": "and {count} more",
+        "delete_title": "Remove the user from the team?",
+        "cancel_invitation_title": "Cancel the invitation?",
+        "cancel_invitation": "Cancel invitation",
+        "notifications": {
+            "added": "User added to the team",
+            "permissions_saved": "Permissions saved",
+            "removed": "User removed from the team",
+            "invitation_cancelled": "Invitation cancelled"
         }
     },
     "license": {

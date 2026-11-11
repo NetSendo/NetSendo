@@ -1,13 +1,28 @@
 <script setup>
-import { ref, computed } from 'vue';
-import { Head, useForm, router } from '@inertiajs/vue3';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import GoldBadge from '@/Components/License/GoldBadge.vue';
-import GoldNotice from '@/Components/License/GoldNotice.vue';
-import { requireGold } from '@/Composables/useLicense';
-import { useI18n } from 'vue-i18n';
+import { computed, ref } from "vue";
+import { Head, router, useForm } from "@inertiajs/vue3";
+import { useI18n } from "vue-i18n";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
+import GoldBadge from "@/Components/License/GoldBadge.vue";
+import GoldNotice from "@/Components/License/GoldNotice.vue";
+import ActionMenu from "@/Components/Ui/ActionMenu.vue";
+import ActionMenuItem from "@/Components/Ui/ActionMenuItem.vue";
+import CreateLink from "@/Components/Ui/CreateLink.vue";
+import EmptyState from "@/Components/Ui/EmptyState.vue";
+import FormDialog from "@/Components/Ui/FormDialog.vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
+import Panel from "@/Components/Ui/Panel.vue";
+import Toast from "@/Components/Ui/Toast.vue";
+import { errorClass, fieldClass, hintClass, labelClass } from "@/Components/Ui/fieldClass";
+import { requireGold } from "@/Composables/useLicense";
+import { useToast } from "@/Composables/useToast";
+import ListPermissionsPicker from "./Partials/ListPermissionsPicker.vue";
 
 const { t } = useI18n();
+// The outcome of each action is worded here, in the user's language; the server's own
+// message is shown only when something went wrong
+const { toast, showToast, dismiss } = useToast({ flash: "error" });
 
 const props = defineProps({
     teamMembers: Array,
@@ -24,474 +39,388 @@ const teamFull = computed(
         (props.teamMembers?.length ?? 0) + (props.pendingInvitations?.length ?? 0) >= props.teamMemberLimit,
 );
 
-// Modal states
-const showAddUserModal = ref(false);
-const showPermissionsModal = ref(false);
-const selectedUser = ref(null);
+const messagesOf = (form) => [...new Set(Object.values(form.errors).filter(Boolean))];
 
-// Form for adding new user
+// ---- A new team member
+const showAddUserModal = ref(false);
+
 const addUserForm = useForm({
-    name: '',
-    email: '',
-    password: '',
-    password_confirmation: '',
+    name: "",
+    email: "",
+    password: "",
+    password_confirmation: "",
     list_permissions: [],
 });
 
-// Form for updating permissions
+const openAddUserModal = () => {
+    if (teamFull.value) {
+        requireGold("unlimited_team_members");
+        return;
+    }
+    addUserForm.reset();
+    addUserForm.clearErrors();
+    addUserForm.list_permissions = [];
+    dismiss();
+    showAddUserModal.value = true;
+};
+
+const closeAddUserModal = () => {
+    showAddUserModal.value = false;
+};
+
+const createUser = () => {
+    addUserForm.post(route("settings.users.create-user"), {
+        preserveScroll: true,
+        onSuccess: () => {
+            closeAddUserModal();
+            showToast(t("users.notifications.added"));
+        },
+    });
+};
+
+// ---- Which lists a member may open
+const showPermissionsModal = ref(false);
+const selectedUser = ref(null);
+
 const permissionsForm = useForm({
     list_permissions: [],
 });
 
-function openAddUserModal() {
-    if (teamFull.value) {
-        requireGold('unlimited_team_members');
-        return;
-    }
-    addUserForm.reset();
-    addUserForm.list_permissions = [];
-    showAddUserModal.value = true;
-}
-
-function closeAddUserModal() {
-    showAddUserModal.value = false;
-}
-
-function createUser() {
-    addUserForm.post(route('settings.users.create-user'), {
-        preserveScroll: true,
-        onSuccess: () => {
-            closeAddUserModal();
-        },
-    });
-}
-
-function openPermissionsModal(user) {
+const openPermissionsModal = (user) => {
     selectedUser.value = user;
-    permissionsForm.list_permissions = user.shared_lists.map(list => ({
+    permissionsForm.clearErrors();
+    permissionsForm.list_permissions = user.shared_lists.map((list) => ({
         list_id: list.id,
         permission: list.permission,
     }));
+    dismiss();
     showPermissionsModal.value = true;
-}
+};
 
-function closePermissionsModal() {
+const closePermissionsModal = () => {
     showPermissionsModal.value = false;
-    selectedUser.value = null;
-}
+};
 
-function updatePermissions() {
-    permissionsForm.put(route('settings.users.permissions', selectedUser.value.id), {
+const updatePermissions = () => {
+    permissionsForm.put(route("settings.users.permissions", selectedUser.value.id), {
         preserveScroll: true,
         onSuccess: () => {
             closePermissionsModal();
+            showToast(t("users.notifications.permissions_saved"));
         },
     });
-}
+};
 
-function toggleListPermission(listId) {
-    const index = permissionsForm.list_permissions.findIndex(p => p.list_id === listId);
-    if (index === -1) {
-        permissionsForm.list_permissions.push({ list_id: listId, permission: 'view' });
-    } else {
-        permissionsForm.list_permissions.splice(index, 1);
-    }
-}
+// ---- Removing a member, withdrawing an invitation
+const userToDelete = ref(null);
+const invitationToCancel = ref(null);
+const removing = ref(false);
 
-function getListPermission(listId) {
-    return permissionsForm.list_permissions.find(p => p.list_id === listId);
-}
+const deleteUser = () => {
+    if (!userToDelete.value) return;
+    removing.value = true;
+    router.delete(route("settings.users.destroy", userToDelete.value.id), {
+        preserveScroll: true,
+        onSuccess: () => showToast(t("users.notifications.removed")),
+        onFinish: () => {
+            removing.value = false;
+            userToDelete.value = null;
+        },
+    });
+};
 
-function setListPermissionLevel(listId, level) {
-    const perm = permissionsForm.list_permissions.find(p => p.list_id === listId);
-    if (perm) {
-        perm.permission = level;
-    }
-}
+const cancelInvitation = () => {
+    if (!invitationToCancel.value) return;
+    removing.value = true;
+    router.delete(route("settings.users.cancel-invitation", invitationToCancel.value.id), {
+        preserveScroll: true,
+        onSuccess: () => showToast(t("users.notifications.invitation_cancelled")),
+        onFinish: () => {
+            removing.value = false;
+            invitationToCancel.value = null;
+        },
+    });
+};
 
-function deleteUser(userId) {
-    if (confirm(t('users.delete_confirm'))) {
-        router.delete(route('settings.users.destroy', userId));
-    }
-}
+// "Customers (edit), Newsletter" and how many more there are
+const listsSummary = (member) =>
+    member.shared_lists
+        .slice(0, 2)
+        .map((list) => (list.permission === "edit" ? t("users.list_with_edit", { name: list.name }) : list.name))
+        .join(", ");
 
-function cancelInvitation(invitationId) {
-    if (confirm(t('users.cancel_invitation_confirm'))) {
-        router.delete(route('settings.users.cancel-invitation', invitationId));
-    }
-}
-
-const { locale } = useI18n();
-function formatDateTime(dateString) {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleString(locale.value);
-}
+const dialogOpen = computed(() => showAddUserModal.value || showPermissionsModal.value);
 </script>
 
 <template>
     <Head :title="t('users.title')" />
-    
+
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                    👥 {{ t('users.title') }}
-                </h2>
-                <button 
-                    @click="openAddUserModal"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-2"
-                >
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                    {{ t('users.add_user') }}
+            <PageHeader :title="t('users.title')" :subtitle="t('users.team_members_subtitle')">
+                <CreateLink @click="openAddUserModal">
+                    {{ t("users.add_user") }}
                     <GoldBadge v-if="teamFull" locked />
-                </button>
-            </div>
+                </CreateLink>
+            </PageHeader>
         </template>
 
-        <div class="py-6">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-                <GoldNotice
-                    v-if="teamFull"
-                    feature="unlimited_team_members"
-                    :message="t('license.gating.team_locked')"
-                />
-                <!-- Info Box -->
-                <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                    <div class="flex items-start gap-3">
-                        <svg class="h-5 w-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <div>
-                            <p class="text-sm font-medium text-blue-800 dark:text-blue-200">{{ t('users.info_title') }}</p>
-                            <p class="text-sm text-blue-600 dark:text-blue-300 mt-1">
-                                {{ t('users.info_text') }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+        <div class="mx-auto flex max-w-screen-2xl flex-col gap-4">
+            <GoldNotice
+                v-if="teamFull"
+                feature="unlimited_team_members"
+                :message="t('license.gating.team_locked')"
+            />
 
-                <!-- Team Members List -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                            {{ t('users.team_members') }}
-                        </h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                            {{ t('users.team_members_subtitle') }}
-                        </p>
-                    </div>
-                    
-                    <div v-if="teamMembers.length === 0" class="px-6 py-12 text-center">
-                        <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        <p class="mt-4 text-gray-500 dark:text-gray-400">
-                            {{ t('users.no_members') }}
-                        </p>
-                        <button 
-                            @click="openAddUserModal"
-                            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
-                        >
-                            {{ t('users.add_first_user') }}
-                        </button>
-                    </div>
+            <Panel flush :title="t('users.team_members')">
+                <p class="px-5 pb-4 text-sm text-slate-600 dark:text-slate-400">
+                    {{ t("users.info_text") }}
+                </p>
 
-                    <table v-else class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-900">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {{ t('users.table.user') }}
+                <EmptyState v-if="teamMembers.length === 0" :title="t('users.no_members')">
+                    <CreateLink @click="openAddUserModal">{{ t("users.add_first_user") }}</CreateLink>
+                </EmptyState>
+
+                <div v-else class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                    <table class="w-full text-sm sm:min-w-[720px]">
+                        <thead>
+                            <tr
+                                class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
+                            >
+                                <th scope="col" class="px-5 py-2.5 font-medium">{{ t("users.table.user") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
+                                    {{ t("users.table.lists_access") }}
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {{ t('users.table.email') }}
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
+                                    {{ t("users.table.added") }}
                                 </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {{ t('users.table.lists_access') }}
-                                </th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {{ t('users.table.added') }}
-                                </th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    {{ t('users.table.actions') }}
+                                <th scope="col" class="py-2.5 pl-3 pr-5 text-right font-medium">
+                                    <span class="sr-only">{{ t("users.table.actions") }}</span>
                                 </th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                            <tr v-for="member in teamMembers" :key="member.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center">
-                                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-medium">
+                        <tbody>
+                            <tr
+                                v-for="member in teamMembers"
+                                :key="member.id"
+                                class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-700/40 dark:hover:bg-slate-700/20"
+                            >
+                                <td class="max-w-0 px-5 py-3 max-sm:w-full sm:w-[40%]">
+                                    <div class="flex items-center gap-3">
+                                        <span
+                                            aria-hidden="true"
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-800 dark:bg-slate-700 dark:text-slate-100"
+                                        >
                                             {{ member.name.charAt(0).toUpperCase() }}
+                                        </span>
+                                        <div class="min-w-0">
+                                            <p class="truncate font-medium text-slate-900 dark:text-white" :title="member.name">
+                                                {{ member.name }}
+                                            </p>
+                                            <p class="truncate text-xs text-slate-600 dark:text-slate-400" :title="member.email">
+                                                {{ member.email }}
+                                            </p>
                                         </div>
-                                        <span class="ml-3 font-medium text-gray-900 dark:text-white">{{ member.name }}</span>
                                     </div>
                                 </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                    {{ member.email }}
+
+                                <td class="max-w-0 px-3 py-3 max-sm:hidden" style="width: 34%">
+                                    <template v-if="member.shared_lists.length">
+                                        <p
+                                            class="truncate text-slate-900 dark:text-slate-100"
+                                            :title="member.shared_lists.map((list) => list.name).join(', ')"
+                                        >
+                                            {{ listsSummary(member) }}
+                                        </p>
+                                        <p
+                                            v-if="member.shared_lists.length > 2"
+                                            class="text-xs tabular-nums text-slate-600 dark:text-slate-400"
+                                        >
+                                            {{ t("users.more_lists", { count: member.shared_lists.length - 2 }) }}
+                                        </p>
+                                    </template>
+                                    <span v-else class="text-slate-600 dark:text-slate-400">
+                                        {{ t("users.no_lists_assigned") }}
+                                    </span>
                                 </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-wrap gap-1">
-                                        <span 
-                                            v-for="list in member.shared_lists.slice(0, 3)" 
-                                            :key="list.id"
-                                            class="px-2 py-0.5 text-xs rounded-full"
-                                            :class="list.permission === 'edit' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'"
-                                        >
-                                            {{ list.name }}
-                                            <span class="ml-1 opacity-75">{{ list.permission === 'edit' ? '✏️' : '👁️' }}</span>
-                                        </span>
-                                        <span 
-                                            v-if="member.shared_lists.length > 3"
-                                            class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400"
-                                        >
-                                            +{{ member.shared_lists.length - 3 }}
-                                        </span>
-                                        <span 
-                                            v-if="member.shared_lists.length === 0"
-                                            class="text-sm text-gray-400 italic"
-                                        >
-                                            {{ t('users.no_lists_assigned') }}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+
+                                <td class="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600 max-sm:hidden dark:text-slate-400">
                                     {{ member.created_at }}
                                 </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex justify-end gap-2">
-                                        <button 
+
+                                <td class="py-3 pl-3 pr-5">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <button
+                                            type="button"
+                                            class="inline-flex min-h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 max-sm:hidden dark:text-slate-200 dark:hover:bg-slate-700/60 dark:hover:text-white"
                                             @click="openPermissionsModal(member)"
-                                            class="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                                            :title="t('users.manage_permissions')"
                                         >
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                                            </svg>
+                                            {{ t("users.permissions_short") }}
                                         </button>
-                                        <button 
-                                            @click="deleteUser(member.id)"
-                                            class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
-                                            :title="t('users.delete_user')"
-                                        >
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
+                                        <ActionMenu :label="t('users.actions_for', { name: member.name })">
+                                            <!-- On a phone the button beside the menu has no room: it is the first entry here -->
+                                            <ActionMenuItem class="sm:hidden" @click="openPermissionsModal(member)">
+                                                {{ t("users.manage_permissions") }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem danger @click="userToDelete = member">
+                                                {{ t("users.delete_user") }}
+                                            </ActionMenuItem>
+                                        </ActionMenu>
                                     </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+            </Panel>
 
-                <!-- Pending Invitations -->
-                <div v-if="pendingInvitations.length > 0" class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                            📧 {{ t('users.pending_invitations') }}
-                        </h3>
-                    </div>
-                    
-                    <div class="divide-y divide-gray-200 dark:divide-gray-700">
-                        <div v-for="invitation in pendingInvitations" :key="invitation.id" class="px-6 py-4 flex items-center justify-between">
-                            <div>
-                                <p class="font-medium text-gray-900 dark:text-white">{{ invitation.name }}</p>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ invitation.email }}</p>
-                            </div>
-                            <div class="flex items-center gap-4">
-                                <span class="text-sm text-gray-400">{{ t('users.sent') }}: {{ invitation.created_at }}</span>
-                                <button 
-                                    @click="cancelInvitation(invitation.id)"
-                                    class="text-red-600 hover:text-red-800 dark:text-red-400"
-                                >
-                                    {{ t('users.cancel') }}
-                                </button>
-                            </div>
+            <!-- Invitations nobody has accepted yet -->
+            <Panel v-if="pendingInvitations.length > 0" flush :title="t('users.pending_invitations')">
+                <ul class="divide-y divide-slate-100 border-t border-slate-200 dark:divide-slate-700/40 dark:border-slate-700/60">
+                    <li
+                        v-for="invitation in pendingInvitations"
+                        :key="invitation.id"
+                        class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 px-5 py-3"
+                    >
+                        <div class="min-w-0">
+                            <p class="truncate text-sm font-medium text-slate-900 dark:text-white">{{ invitation.name }}</p>
+                            <p class="truncate text-xs text-slate-600 dark:text-slate-400">{{ invitation.email }}</p>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add User Modal -->
-        <div 
-            v-if="showAddUserModal" 
-            class="fixed inset-0 z-50 overflow-y-auto"
-            @click.self="closeAddUserModal"
-        >
-            <div class="flex items-center justify-center min-h-screen px-4">
-                <div class="fixed inset-0 bg-black/50 transition-opacity"></div>
-                
-                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                        👤 {{ t('users.modal.add_title') }}
-                    </h3>
-                    
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                {{ t('users.modal.name') }}
-                            </label>
-                            <input 
-                                v-model="addUserForm.name"
-                                type="text"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                                required
-                            />
-                            <p v-if="addUserForm.errors.name" class="mt-1 text-sm text-red-600">{{ addUserForm.errors.name }}</p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                {{ t('users.modal.email') }}
-                            </label>
-                            <input 
-                                v-model="addUserForm.email"
-                                type="email"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                                required
-                            />
-                            <p v-if="addUserForm.errors.email" class="mt-1 text-sm text-red-600">{{ addUserForm.errors.email }}</p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                {{ t('users.modal.password') }}
-                            </label>
-                            <input 
-                                v-model="addUserForm.password"
-                                type="password"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                                required
-                            />
-                            <p v-if="addUserForm.errors.password" class="mt-1 text-sm text-red-600">{{ addUserForm.errors.password }}</p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                {{ t('users.modal.password_confirm') }}
-                            </label>
-                            <input 
-                                v-model="addUserForm.password_confirmation"
-                                type="password"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {{ t('users.modal.list_permissions') }}
-                            </label>
-                            <div class="max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
-                                <label 
-                                    v-for="list in availableLists" 
-                                    :key="list.id"
-                                    class="flex items-center gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer border-b border-gray-100 dark:border-gray-700 last:border-0"
-                                >
-                                    <input 
-                                        type="checkbox"
-                                        :value="{ list_id: list.id, permission: 'view' }"
-                                        v-model="addUserForm.list_permissions"
-                                        class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                    />
-                                    <div class="flex-1">
-                                        <span class="text-sm text-gray-900 dark:text-white">{{ list.name }}</span>
-                                        <span v-if="list.group" class="ml-2 text-xs text-gray-500">{{ list.group }}</span>
-                                    </div>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button 
-                            @click="closeAddUserModal"
-                            class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                            {{ t('common.cancel') }}
-                        </button>
-                        <button 
-                            @click="createUser"
-                            :disabled="addUserForm.processing || !addUserForm.name || !addUserForm.email || !addUserForm.password"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-colors"
-                        >
-                            {{ t('users.modal.create') }}
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Permissions Modal -->
-        <div 
-            v-if="showPermissionsModal && selectedUser" 
-            class="fixed inset-0 z-50 overflow-y-auto"
-            @click.self="closePermissionsModal"
-        >
-            <div class="flex items-center justify-center min-h-screen px-4">
-                <div class="fixed inset-0 bg-black/50 transition-opacity"></div>
-                
-                <div class="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full p-6">
-                    <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                        🔐 {{ t('users.permissions_modal.title') }}: {{ selectedUser.name }}
-                    </h3>
-                    
-                    <div class="mb-4">
-                        <p class="text-sm text-gray-600 dark:text-gray-400">
-                            {{ t('users.permissions_modal.description') }}
-                        </p>
-                    </div>
-
-                    <div class="max-h-96 overflow-y-auto border border-gray-200 dark:border-gray-600 rounded-lg">
-                        <div 
-                            v-for="list in availableLists" 
-                            :key="list.id"
-                            class="flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 border-b border-gray-100 dark:border-gray-700 last:border-0"
-                        >
-                            <div class="flex items-center gap-3">
-                                <input 
-                                    type="checkbox"
-                                    :checked="!!getListPermission(list.id)"
-                                    @change="toggleListPermission(list.id)"
-                                    class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                />
-                                <div>
-                                    <span class="text-sm text-gray-900 dark:text-white">{{ list.name }}</span>
-                                    <span v-if="list.group" class="ml-2 text-xs text-gray-500">{{ list.group }}</span>
-                                </div>
-                            </div>
-                            <select 
-                                v-if="getListPermission(list.id)"
-                                :value="getListPermission(list.id).permission"
-                                @change="setListPermissionLevel(list.id, $event.target.value)"
-                                class="text-sm border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 dark:bg-gray-700 dark:text-white"
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs tabular-nums text-slate-600 dark:text-slate-400">
+                                {{ t("users.sent") }}: {{ invitation.created_at }}
+                            </span>
+                            <button
+                                type="button"
+                                class="inline-flex min-h-9 items-center rounded-lg px-2.5 text-sm font-medium text-rose-700 transition-colors hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10"
+                                @click="invitationToCancel = invitation"
                             >
-                                <option value="view">👁️ {{ t('users.permission_view') }}</option>
-                                <option value="edit">✏️ {{ t('users.permission_edit') }}</option>
-                            </select>
+                                {{ t("users.cancel") }}
+                            </button>
                         </div>
+                    </li>
+                </ul>
+            </Panel>
+        </div>
+
+        <!-- A new team member: who, how they sign in, what they may open -->
+        <FormDialog
+            :show="showAddUserModal"
+            :title="t('users.modal.add_title')"
+            :processing="addUserForm.processing"
+            :submit-label="t('users.modal.create')"
+            :errors="messagesOf(addUserForm)"
+            :toast="toast"
+            @close="closeAddUserModal"
+            @submit="createUser"
+        >
+            <div class="space-y-4">
+                <div>
+                    <label for="team-name" :class="labelClass">{{ t("users.modal.name") }}</label>
+                    <input
+                        id="team-name"
+                        v-model="addUserForm.name"
+                        type="text"
+                        required
+                        autocomplete="off"
+                        class="mt-1"
+                        :class="[fieldClass, { '!border-rose-500': addUserForm.errors.name }]"
+                    />
+                    <p v-if="addUserForm.errors.name" :class="errorClass">{{ addUserForm.errors.name }}</p>
+                </div>
+                <div>
+                    <label for="team-email" :class="labelClass">{{ t("users.modal.email") }}</label>
+                    <input
+                        id="team-email"
+                        v-model="addUserForm.email"
+                        type="email"
+                        required
+                        autocomplete="off"
+                        class="mt-1"
+                        :class="[fieldClass, { '!border-rose-500': addUserForm.errors.email }]"
+                    />
+                    <p v-if="addUserForm.errors.email" :class="errorClass">{{ addUserForm.errors.email }}</p>
+                </div>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="team-password" :class="labelClass">{{ t("users.modal.password") }}</label>
+                        <input
+                            id="team-password"
+                            v-model="addUserForm.password"
+                            type="password"
+                            required
+                            autocomplete="new-password"
+                            class="mt-1"
+                            :class="[fieldClass, { '!border-rose-500': addUserForm.errors.password }]"
+                        />
+                        <p v-if="addUserForm.errors.password" :class="errorClass">{{ addUserForm.errors.password }}</p>
                     </div>
-                    
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button 
-                            @click="closePermissionsModal"
-                            class="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                        >
-                            {{ t('common.cancel') }}
-                        </button>
-                        <button 
-                            @click="updatePermissions"
-                            :disabled="permissionsForm.processing"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-colors"
-                        >
-                            {{ t('users.permissions_modal.save') }}
-                        </button>
+                    <div>
+                        <label for="team-password-confirm" :class="labelClass">
+                            {{ t("users.modal.password_confirm") }}
+                        </label>
+                        <input
+                            id="team-password-confirm"
+                            v-model="addUserForm.password_confirmation"
+                            type="password"
+                            required
+                            autocomplete="new-password"
+                            class="mt-1"
+                            :class="fieldClass"
+                        />
                     </div>
                 </div>
+                <div>
+                    <span :class="labelClass">{{ t("users.modal.list_permissions") }}</span>
+                    <p :class="hintClass" class="mb-2">{{ t("users.permissions_modal.description") }}</p>
+                    <ListPermissionsPicker v-model="addUserForm.list_permissions" :lists="availableLists" />
+                </div>
             </div>
-        </div>
+        </FormDialog>
+
+        <FormDialog
+            :show="showPermissionsModal"
+            :title="t('users.permissions_modal.title') + ': ' + (selectedUser?.name || '')"
+            :processing="permissionsForm.processing"
+            :submit-label="t('users.permissions_modal.save')"
+            :errors="messagesOf(permissionsForm)"
+            :toast="toast"
+            @close="closePermissionsModal"
+            @submit="updatePermissions"
+        >
+            <p class="mb-3 text-sm text-slate-600 dark:text-slate-400">
+                {{ t("users.permissions_modal.description") }}
+            </p>
+            <ListPermissionsPicker v-model="permissionsForm.list_permissions" :lists="availableLists" />
+        </FormDialog>
+
+        <ConfirmModal
+            :show="!!userToDelete"
+            type="danger"
+            :title="t('users.delete_title')"
+            :message="t('users.delete_confirm')"
+            :confirm-text="t('users.delete_user')"
+            :processing="removing"
+            @close="userToDelete = null"
+            @confirm="deleteUser"
+        >
+            {{ userToDelete?.name }} ({{ userToDelete?.email }})
+        </ConfirmModal>
+
+        <ConfirmModal
+            :show="!!invitationToCancel"
+            type="danger"
+            :title="t('users.cancel_invitation_title')"
+            :message="t('users.cancel_invitation_confirm')"
+            :confirm-text="t('users.cancel_invitation')"
+            :processing="removing"
+            @close="invitationToCancel = null"
+            @confirm="cancelInvitation"
+        >
+            {{ invitationToCancel?.email }}
+        </ConfirmModal>
+
+        <!-- In the corner of the page; an open dialog shows the same message in its footer -->
+        <Toast :toast="dialogOpen ? null : toast" @close="dismiss" />
     </AuthenticatedLayout>
 </template>

@@ -1,35 +1,82 @@
 <script setup>
-import { ref, computed } from "vue";
-import { Head, useForm, router, usePage } from "@inertiajs/vue3";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import Modal from "@/Components/Modal.vue";
-import DangerButton from "@/Components/DangerButton.vue";
-import SecondaryButton from "@/Components/SecondaryButton.vue";
+import { computed, ref } from "vue";
+import { Head, router, useForm } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
+import Modal from "@/Components/Modal.vue";
+import PrimaryButton from "@/Components/PrimaryButton.vue";
+import SecondaryButton from "@/Components/SecondaryButton.vue";
+import ActionMenu from "@/Components/Ui/ActionMenu.vue";
+import ActionMenuItem from "@/Components/Ui/ActionMenuItem.vue";
+import CreateLink from "@/Components/Ui/CreateLink.vue";
+import EmptyState from "@/Components/Ui/EmptyState.vue";
+import FormDialog from "@/Components/Ui/FormDialog.vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
+import Panel from "@/Components/Ui/Panel.vue";
+import StatusPill from "@/Components/Ui/StatusPill.vue";
+import Toast from "@/Components/Ui/Toast.vue";
+import { fieldClass, hintClass, labelClass } from "@/Components/Ui/fieldClass";
+import { useToast } from "@/Composables/useToast";
 
-const { t } = useI18n();
-const page = usePage();
-
-// API base URL
-const originUrl = computed(() =>
-    typeof window !== "undefined" ? window.location.origin : ""
-);
+const { t, locale } = useI18n();
+// The outcome of each action is worded here, in the user's language; the server's own
+// message is shown only when something went wrong
+const { toast, showToast, dismiss } = useToast({ flash: "error" });
 
 const props = defineProps({
     apiKeys: Array,
     availablePermissions: Array,
 });
 
-// Modal state
+// Where the API of this installation lives, for the example below the list
+const originUrl = computed(() => (typeof window !== "undefined" ? window.location.origin : ""));
+
+// What each permission lets a key do, in words
+const PERMISSION_LABELS = {
+    "subscribers:read": "api_keys.permissions.subscribers_read",
+    "subscribers:write": "api_keys.permissions.subscribers_write",
+    "lists:read": "api_keys.permissions.lists_read",
+    "lists:write": "api_keys.permissions.lists_write",
+    "tags:read": "api_keys.permissions.tags_read",
+    "notifications:write": "api_keys.permissions.notifications_write",
+    "webhooks:read": "api_keys.permissions.webhooks_read",
+    "webhooks:write": "api_keys.permissions.webhooks_write",
+    "sms:read": "api_keys.permissions.sms_read",
+    "sms:write": "api_keys.permissions.sms_write",
+    "messages:read": "api_keys.permissions.messages_read",
+    "messages:write": "api_keys.permissions.messages_write",
+    "email:read": "api_keys.permissions.email_read",
+    "email:write": "api_keys.permissions.email_write",
+    "funnels:read": "api_keys.permissions.funnels_read",
+    "funnels:write": "api_keys.permissions.funnels_write",
+    "brain:read": "api_keys.permissions.brain_read",
+    "brain:write": "api_keys.permissions.brain_write",
+};
+
+const permissionLabel = (permission) =>
+    PERMISSION_LABELS[permission] ? t(PERMISSION_LABELS[permission]) : permission;
+
+// "Full access", or the first two permissions and how many more there are
+const permissionsSummary = (key) => {
+    const permissions = key.permissions || [];
+    if (props.availablePermissions.every((permission) => permissions.includes(permission))) {
+        return { text: t("api_keys.full_access"), more: 0 };
+    }
+    return {
+        text: permissions.slice(0, 2).map(permissionLabel).join(", ") || "—",
+        more: Math.max(0, permissions.length - 2),
+    };
+};
+
+const formatDateTime = (dateString) => (dateString ? new Date(dateString).toLocaleString(locale.value) : "—");
+
+// ---- A new key. It is shown once, right after it is made.
 const showCreateModal = ref(false);
+const creating = ref(false);
 const newKeyResult = ref(null);
 const keyVisible = ref(false);
-const copySuccess = ref(false);
 const keyCopied = ref(false);
-
-// Delete Modal state
-const showDeleteConfirmModal = ref(false);
-const keyToDeleteId = ref(null);
 
 const form = useForm({
     name: "",
@@ -38,118 +85,25 @@ const form = useForm({
     is_mcp: false,
 });
 
-// Edit Modal state
-const showEditModal = ref(false);
-const editingKey = ref(null);
-const editForm = useForm({
-    name: "",
-    permissions: [],
-    is_mcp: false,
-    plain_key: "",
-});
-
-const permissionLabels = computed(() => ({
-    "subscribers:read": {
-        label: t("api_keys.permissions.subscribers_read"),
-        icon: "📧",
-        color: "blue",
-    },
-    "subscribers:write": {
-        label: t("api_keys.permissions.subscribers_write"),
-        icon: "✏️",
-        color: "green",
-    },
-    "lists:read": {
-        label: t("api_keys.permissions.lists_read"),
-        icon: "📋",
-        color: "purple",
-    },
-    "tags:read": {
-        label: t("api_keys.permissions.tags_read"),
-        icon: "🏷️",
-        color: "orange",
-    },
-    "webhooks:read": {
-        label: t("api_keys.permissions.webhooks_read"),
-        icon: "🔗",
-        color: "gray",
-    },
-    "webhooks:write": {
-        label: t("api_keys.permissions.webhooks_write"),
-        icon: "🔗",
-        color: "gray",
-    },
-    "sms:read": {
-        label: t("api_keys.permissions.sms_read"),
-        icon: "📱",
-        color: "teal",
-    },
-    "sms:write": {
-        label: t("api_keys.permissions.sms_write"),
-        icon: "📱",
-        color: "teal",
-    },
-    "messages:read": {
-        label: t("api_keys.permissions.messages_read"),
-        icon: "📨",
-        color: "indigo",
-    },
-    "messages:write": {
-        label: t("api_keys.permissions.messages_write"),
-        icon: "✉️",
-        color: "indigo",
-    },
-    "email:read": {
-        label: t("api_keys.permissions.email_read"),
-        icon: "📬",
-        color: "cyan",
-    },
-    "email:write": {
-        label: t("api_keys.permissions.email_write"),
-        icon: "📤",
-        color: "cyan",
-    },
-    "funnels:read": {
-        label: t("api_keys.permissions.funnels_read"),
-        icon: "🔄",
-        color: "amber",
-    },
-    "funnels:write": {
-        label: t("api_keys.permissions.funnels_write"),
-        icon: "🔄",
-        color: "amber",
-    },
-    "brain:read": {
-        label: t("api_keys.permissions.brain_read"),
-        icon: "🧠",
-        color: "violet",
-    },
-    "brain:write": {
-        label: t("api_keys.permissions.brain_write"),
-        icon: "🧠",
-        color: "violet",
-    },
-}));
-
-function openCreateModal() {
+const openCreateModal = () => {
     form.reset();
-    form.permissions = [...props.availablePermissions]; // All permissions by default
-    form.is_mcp = false;
+    form.clearErrors();
+    form.permissions = [...props.availablePermissions]; // everything, unless narrowed
     newKeyResult.value = null;
     keyVisible.value = false;
     keyCopied.value = false;
+    dismiss();
     showCreateModal.value = true;
-}
+};
 
-function closeCreateModal() {
+const closeCreateModal = () => {
     showCreateModal.value = false;
-    if (newKeyResult.value) {
-        // Refresh the page to show new key in list
-        router.reload();
-    }
-}
+};
 
-async function createKey() {
+const createKey = async () => {
+    if (creating.value) return;
+    creating.value = true;
+    form.clearErrors();
     try {
         const response = await window.axios.post(route("settings.api-keys.store"), {
             name: form.name,
@@ -157,93 +111,114 @@ async function createKey() {
             expires_at: form.expires_at || null,
             is_mcp: form.is_mcp,
         });
-
+        showCreateModal.value = false;
         newKeyResult.value = response.data;
         keyVisible.value = true;
-    } catch (e) {
-        if (e.response?.status === 419) {
-            // CSRF token mismatch - reload the page to get a fresh token
-            alert(t("api_keys.errors.session_expired") || "Sesja wygasła. Strona zostanie odświeżona.");
-            window.location.reload();
+        router.reload({ only: ["apiKeys"] });
+    } catch (error) {
+        if (error.response?.status === 419) {
+            // The session ran out: a fresh page brings a fresh token
+            showToast(t("api_keys.errors.session_expired"), false);
+            setTimeout(() => window.location.reload(), 2500);
+        } else if (error.response?.status === 422 && error.response.data?.errors) {
+            form.setError(
+                Object.fromEntries(
+                    Object.entries(error.response.data.errors).map(([field, messages]) => [field, messages[0]]),
+                ),
+            );
         } else {
-            const errorMessage = e.response?.data?.message || t("common.error");
-            alert(errorMessage);
+            showToast(error.response?.data?.message || t("common.notifications.error_occurred"), false);
         }
+    } finally {
+        creating.value = false;
     }
-}
+};
 
-async function copyToClipboard(text) {
+const closeKeyResult = () => {
+    newKeyResult.value = null;
+};
+
+const copyToClipboard = async (text) => {
     try {
         await navigator.clipboard.writeText(text);
-        copySuccess.value = true;
-        keyCopied.value = true;
-        setTimeout(() => (copySuccess.value = false), 2000);
-    } catch (e) {
+    } catch (error) {
+        // No clipboard permission (plain http): the old way still works
         const textarea = document.createElement("textarea");
         textarea.value = text;
         document.body.appendChild(textarea);
         textarea.select();
         document.execCommand("copy");
         document.body.removeChild(textarea);
-        copySuccess.value = true;
-        keyCopied.value = true;
-        setTimeout(() => (copySuccess.value = false), 2000);
     }
-}
+    keyCopied.value = true;
+};
 
-function confirmDeleteKey(keyId) {
-    keyToDeleteId.value = keyId;
-    showDeleteConfirmModal.value = true;
-}
+// ---- Changing a key
+const showEditModal = ref(false);
+const editingKey = ref(null);
 
-function closeModal() {
-    showDeleteConfirmModal.value = false;
-    keyToDeleteId.value = null;
-}
+const editForm = useForm({
+    name: "",
+    permissions: [],
+    is_mcp: false,
+    plain_key: "",
+});
 
-function deleteKey() {
-    if (keyToDeleteId.value) {
-        router.delete(route("settings.api-keys.destroy", keyToDeleteId.value), {
-            preserveScroll: true,
-            onSuccess: () => closeModal(),
-            onFinish: () => closeModal(),
-        });
-    }
-}
-
-function openEditModal(key) {
+const openEditModal = (key) => {
     editingKey.value = key;
+    editForm.clearErrors();
     editForm.name = key.name;
     editForm.permissions = [...(key.permissions || [])];
     editForm.is_mcp = key.is_mcp || false;
     editForm.plain_key = "";
+    dismiss();
     showEditModal.value = true;
-}
+};
 
-function closeEditModal() {
+const closeEditModal = () => {
     showEditModal.value = false;
-    editingKey.value = null;
-}
+};
 
-function updateKey() {
+const updateKey = () => {
     if (!editingKey.value) return;
+    editForm
+        .transform((data) => ({ ...data, plain_key: data.plain_key || null }))
+        .put(route("settings.api-keys.update", editingKey.value.id), {
+            preserveScroll: true,
+            onSuccess: () => {
+                closeEditModal();
+                showToast(t("api_keys.notifications.updated"));
+            },
+        });
+};
 
-    router.put(route("settings.api-keys.update", editingKey.value.id), {
-        name: editForm.name,
-        permissions: editForm.permissions,
-        is_mcp: editForm.is_mcp,
-        plain_key: editForm.plain_key || null,
-    }, {
+// ---- Deleting a key
+const keyToDelete = ref(null);
+const deleting = ref(false);
+
+const deleteKey = () => {
+    if (!keyToDelete.value) return;
+    deleting.value = true;
+    router.delete(route("settings.api-keys.destroy", keyToDelete.value.id), {
         preserveScroll: true,
-        onSuccess: () => closeEditModal(),
+        onSuccess: () => showToast(t("api_keys.notifications.deleted")),
+        onFinish: () => {
+            deleting.value = false;
+            keyToDelete.value = null;
+        },
     });
-}
+};
 
-const { locale } = useI18n();
-function formatDateTime(dateString) {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleString(locale.value);
-}
+const messagesOf = (target) => [...new Set(Object.values(target.errors).filter(Boolean))];
+
+const allSelected = (target) =>
+    props.availablePermissions.every((permission) => target.permissions.includes(permission));
+
+const toggleAll = (target) => {
+    target.permissions = allSelected(target) ? [] : [...props.availablePermissions];
+};
+
+const dialogOpen = computed(() => showCreateModal.value || showEditModal.value || !!newKeyResult.value);
 </script>
 
 <template>
@@ -251,625 +226,355 @@ function formatDateTime(dateString) {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2
-                    class="text-xl font-semibold text-gray-800 dark:text-gray-100"
-                >
-                    🔑 {{ t("api_keys.title") }}
-                </h2>
-                <button
-                    @click="openCreateModal"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center gap-2"
-                >
-                    <svg
-                        class="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 4v16m8-8H4"
-                        />
-                    </svg>
-                    {{ t("api_keys.generate_new") }}
-                </button>
-            </div>
+            <PageHeader :title="t('api_keys.title')" :subtitle="t('api_keys.subtitle')">
+                <CreateLink @click="openCreateModal">{{ t("api_keys.generate_new") }}</CreateLink>
+            </PageHeader>
         </template>
 
-        <div class="py-6">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-                <!-- API Documentation Link -->
-                <div
-                    class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4"
-                >
-                    <div class="flex items-start gap-3">
-                        <svg
-                            class="h-5 w-5 text-blue-500 mt-0.5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                            />
-                        </svg>
-                        <div>
-                            <p
-                                class="text-sm font-medium text-blue-800 dark:text-blue-200"
+        <div class="mx-auto flex max-w-screen-2xl flex-col gap-4">
+            <Panel flush>
+                <EmptyState v-if="apiKeys.length === 0" class="!border-t-0" :title="t('api_keys.empty_text')">
+                    <CreateLink @click="openCreateModal">{{ t("api_keys.generate_first") }}</CreateLink>
+                </EmptyState>
+
+                <div v-else class="relative -mt-3 overflow-x-auto">
+                    <table class="w-full text-sm sm:min-w-[860px]">
+                        <thead>
+                            <tr
+                                class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
                             >
-                                {{ t("api_keys.docs.title") }}
-                            </p>
-                            <p
-                                class="text-sm text-blue-600 dark:text-blue-300 mt-1"
-                            >
-                                {{ t("api_keys.docs.text") }}
-                                <a
-                                    href="/docs/api"
-                                    target="_blank"
-                                    class="underline font-medium hover:text-blue-800 dark:hover:text-blue-100"
-                                >
-                                    /docs/api
-                                </a>
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- API Keys List -->
-                <div
-                    class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden"
-                >
-                    <div
-                        class="px-6 py-4 border-b border-gray-200 dark:border-gray-700"
-                    >
-                        <h3
-                            class="text-lg font-medium text-gray-900 dark:text-white"
-                        >
-                            {{ t("api_keys.title") }}
-                        </h3>
-                        <p
-                            class="text-sm text-gray-500 dark:text-gray-400 mt-1"
-                        >
-                            {{ t("api_keys.subtitle") }}
-                        </p>
-                    </div>
-
-                    <div
-                        v-if="apiKeys.length === 0"
-                        class="px-6 py-12 text-center"
-                    >
-                        <svg
-                            class="w-12 h-12 mx-auto text-gray-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
-                            />
-                        </svg>
-                        <p class="mt-4 text-gray-500 dark:text-gray-400">
-                            {{ t("api_keys.empty_text") }}
-                        </p>
-                        <button
-                            @click="openCreateModal"
-                            class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
-                        >
-                            {{ t("api_keys.generate_first") }}
-                        </button>
-                    </div>
-
-                    <table
-                        v-else
-                        class="min-w-full divide-y divide-gray-200 dark:divide-gray-700"
-                    >
-                        <thead class="bg-gray-50 dark:bg-gray-900">
-                            <tr>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                                >
-                                    {{ t("api_keys.table.name") }}
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                                >
-                                    {{ t("api_keys.table.key") }}
-                                </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                                >
+                                <th scope="col" class="px-5 py-2.5 font-medium">{{ t("api_keys.table.name") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
                                     {{ t("api_keys.table.permissions") }}
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                                >
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
                                     {{ t("api_keys.table.last_used") }}
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                                >
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
                                     {{ t("api_keys.table.created") }}
                                 </th>
-                                <th
-                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-                                >
-                                    {{ t("api_keys.table.actions") }}
+                                <th scope="col" class="py-2.5 pl-3 pr-5 text-right font-medium">
+                                    <span class="sr-only">{{ t("api_keys.table.actions") }}</span>
                                 </th>
                             </tr>
                         </thead>
-                        <tbody
-                            class="divide-y divide-gray-200 dark:divide-gray-700"
-                        >
+                        <tbody>
                             <tr
                                 v-for="key in apiKeys"
                                 :key="key.id"
-                                class="hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-700/40 dark:hover:bg-slate-700/20"
                             >
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center">
-                                        <span
-                                            class="font-medium text-gray-900 dark:text-white"
-                                            >{{ key.name }}</span
+                                <!-- The key: its name and the first characters, enough to tell it from the others -->
+                                <td class="max-w-0 px-5 py-3 max-sm:w-full sm:w-[34%]">
+                                    <div class="flex items-center gap-2">
+                                        <button
+                                            type="button"
+                                            class="min-w-0 truncate text-left font-medium text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300"
+                                            :title="key.name"
+                                            @click="openEditModal(key)"
                                         >
-                                        <span
-                                            v-if="key.is_mcp"
-                                            class="ml-2 px-2 py-0.5 text-xs rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-                                        >
-                                            🤖 MCP
-                                        </span>
-                                        <span
-                                            v-if="key.is_expired"
-                                            class="ml-2 px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                                        >
+                                            {{ key.name }}
+                                        </button>
+                                        <StatusPill v-if="key.is_mcp" tone="info" class="shrink-0 max-sm:hidden">MCP</StatusPill>
+                                        <StatusPill v-if="key.is_expired" tone="danger" class="shrink-0 max-sm:hidden">
                                             {{ t("api_keys.status.expired") }}
-                                        </span>
+                                        </StatusPill>
                                     </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <code
-                                        class="px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded text-sm font-mono text-gray-600 dark:text-gray-300"
+                                    <p class="truncate font-mono text-xs text-slate-600 dark:text-slate-400">
+                                        {{ key.key_prefix }}…
+                                    </p>
+                                    <!-- On a phone the badges would squeeze the name: they sit under it -->
+                                    <div
+                                        v-if="key.is_mcp || key.is_expired"
+                                        class="mt-1.5 flex flex-wrap items-center gap-1.5 sm:hidden"
                                     >
-                                        {{ key.key_prefix }}...
-                                    </code>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <div class="flex flex-wrap gap-1">
-                                        <span
-                                            v-for="perm in key.permissions"
-                                            :key="perm"
-                                            class="px-2 py-0.5 text-xs rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                                        >
-                                            {{ permissionLabels[perm]?.icon }}
-                                            {{
-                                                permissionLabels[perm]?.label ||
-                                                perm
-                                            }}
-                                        </span>
+                                        <StatusPill v-if="key.is_mcp" tone="info">MCP</StatusPill>
+                                        <StatusPill v-if="key.is_expired" tone="danger">
+                                            {{ t("api_keys.status.expired") }}
+                                        </StatusPill>
                                     </div>
                                 </td>
-                                <td
-                                    class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400"
-                                >
-                                    {{
-                                        key.last_used_at
-                                            ? formatDateTime(key.last_used_at)
-                                            : t("api_keys.status.never_used")
-                                    }}
+
+                                <td class="max-w-0 px-3 py-3 max-sm:hidden" style="width: 30%">
+                                    <p
+                                        class="truncate text-slate-900 dark:text-slate-100"
+                                        :title="(key.permissions || []).map(permissionLabel).join(', ')"
+                                    >
+                                        {{ permissionsSummary(key).text }}
+                                    </p>
+                                    <p
+                                        v-if="permissionsSummary(key).more"
+                                        class="text-xs tabular-nums text-slate-600 dark:text-slate-400"
+                                    >
+                                        {{ t("api_keys.more_permissions", { count: permissionsSummary(key).more }) }}
+                                    </p>
                                 </td>
-                                <td
-                                    class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400"
-                                >
+
+                                <td class="whitespace-nowrap px-3 py-3 tabular-nums text-slate-900 max-sm:hidden dark:text-slate-100">
+                                    {{ key.last_used_at ? formatDateTime(key.last_used_at) : t("api_keys.status.never_used") }}
+                                </td>
+
+                                <td class="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600 max-sm:hidden dark:text-slate-400">
                                     {{ formatDateTime(key.created_at) }}
                                 </td>
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-2">
+
+                                <td class="py-3 pl-3 pr-5">
+                                    <div class="flex items-center justify-end gap-1">
                                         <button
+                                            type="button"
+                                            class="inline-flex min-h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 max-sm:hidden dark:text-slate-200 dark:hover:bg-slate-700/60 dark:hover:text-white"
                                             @click="openEditModal(key)"
-                                            class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200"
-                                            :title="t('api_keys.edit') || 'Edytuj'"
                                         >
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
+                                            {{ t("common.edit") }}
                                         </button>
-                                        <button
-                                            @click="confirmDeleteKey(key.id)"
-                                            class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                                        >
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
+                                        <ActionMenu :label="t('api_keys.actions_for', { name: key.name })">
+                                            <!-- On a phone the button beside the menu has no room: it is the first entry here -->
+                                            <ActionMenuItem class="sm:hidden" @click="openEditModal(key)">
+                                                {{ t("common.edit") }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem danger @click="keyToDelete = key">
+                                                {{ t("common.delete") }}
+                                            </ActionMenuItem>
+                                        </ActionMenu>
                                     </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
+            </Panel>
 
-                <!-- API Usage Examples -->
-                <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                    <h3
-                        class="text-lg font-medium text-gray-900 dark:text-white mb-4"
+            <!-- How to call the API with a key -->
+            <Panel :title="t('api_keys.docs.title')">
+                <p class="text-sm text-slate-600 dark:text-slate-400">
+                    {{ t("api_keys.docs.text") }}
+                    <a
+                        href="/docs/api"
+                        target="_blank"
+                        rel="noopener"
+                        class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                     >
-                        💡 {{ t("api_keys.examples.title") }}
-                    </h3>
-                    <div
-                        class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto"
-                    >
-                        <pre>
-# {{ t("api_keys.examples.get_subscribers") }}
-curl -H "Authorization: Bearer ns_live_TWOJ_KLUCZ" \
+                        /docs/api
+                    </a>
+                </p>
+                <p class="mt-4 text-sm font-medium text-slate-900 dark:text-white">
+                    {{ t("api_keys.examples.title") }}
+                </p>
+                <pre
+                    class="mt-2 overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs leading-relaxed text-slate-800 dark:border-slate-700/60 dark:bg-slate-900/60 dark:text-slate-200"
+                ># {{ t("api_keys.examples.get_subscribers") }}
+curl -H "Authorization: Bearer ns_live_…" \
      {{ originUrl }}/api/v1/subscribers
 
 # {{ t("api_keys.examples.add_subscriber") }}
 curl -X POST \
-     -H "Authorization: Bearer ns_live_TWOJ_KLUCZ" \
+     -H "Authorization: Bearer ns_live_…" \
      -H "Content-Type: application/json" \
      -d '{"email":"test@example.com","contact_list_id":1,"first_name":"Jan","last_name":"Kowalski"}' \
-     {{ originUrl }}/api/v1/subscribers</pre
-                        >
-                    </div>
-                </div>
-            </div>
+     {{ originUrl }}/api/v1/subscribers</pre>
+            </Panel>
         </div>
 
-        <!-- Create Key Modal -->
-        <Modal :show="showCreateModal" @close="closeCreateModal">
-            <div class="p-6">
-                <!-- Before key is created -->
-                <div v-if="!newKeyResult">
-                    <h3
-                        class="text-lg font-medium text-gray-900 dark:text-white mb-4"
-                    >
-                        🔑 {{ t("api_keys.modal.title") }}
-                    </h3>
-
-                    <div class="space-y-4">
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                            >
-                                {{ t("api_keys.modal.name_label") }}
-                            </label>
-                            <input
-                                v-model="form.name"
-                                type="text"
-                                :placeholder="
-                                    t('api_keys.modal.name_placeholder')
-                                "
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                            >
-                                {{ t("api_keys.modal.permissions_label") }}
-                            </label>
-                            <div class="space-y-2">
-                                <label
-                                    v-for="perm in availablePermissions"
-                                    :key="perm"
-                                    class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
-                                >
-                                    <input
-                                        type="checkbox"
-                                        v-model="form.permissions"
-                                        :value="perm"
-                                        class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                    />
-                                    <span class="text-lg">{{
-                                        permissionLabels[perm]?.icon
-                                    }}</span>
-                                    <span
-                                        class="text-sm text-gray-700 dark:text-gray-300"
-                                    >
-                                        {{
-                                            permissionLabels[perm]?.label ||
-                                            perm
-                                        }}
-                                    </span>
-                                </label>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                            >
-                                {{ t("api_keys.modal.expires_label") }}
-                            </label>
-                            <input
-                                v-model="form.expires_at"
-                                type="datetime-local"
-                                class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                            />
-                        </div>
-
-                        <!-- MCP Key Checkbox -->
-                        <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-                            <label class="flex items-center gap-3 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    v-model="form.is_mcp"
-                                    class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
-                                />
-                                <div>
-                                    <span class="font-medium text-purple-800 dark:text-purple-200">
-                                        🤖 {{ t("api_keys.mcp_key") || "Klucz MCP" }}
-                                    </span>
-                                    <p class="text-sm text-purple-600 dark:text-purple-300 mt-0.5">
-                                        {{ t("api_keys.mcp_key_hint") || "Użyj tego klucza do integracji z Claude, Cursor lub VS Code" }}
-                                    </p>
-                                </div>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 flex justify-end gap-3">
-                        <SecondaryButton @click="closeCreateModal">
-                            {{ t("api_keys.modal.cancel") }}
-                        </SecondaryButton>
-                        <button
-                            @click="createKey"
-                            :disabled="
-                                !form.name || form.permissions.length === 0
-                            "
-                            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-colors"
-                        >
-                            {{ t("api_keys.modal.generate") }}
-                        </button>
-                    </div>
+        <!-- A new key: what it is for, what it may do, how long it lives -->
+        <FormDialog
+            :show="showCreateModal"
+            :title="t('api_keys.modal.title')"
+            :processing="creating"
+            :submit-label="t('api_keys.modal.generate')"
+            :errors="messagesOf(form)"
+            :toast="toast"
+            @close="closeCreateModal"
+            @submit="createKey"
+        >
+            <div class="space-y-4">
+                <div>
+                    <label for="api-key-name" :class="labelClass">{{ t("api_keys.modal.name_label") }}</label>
+                    <input
+                        id="api-key-name"
+                        v-model="form.name"
+                        type="text"
+                        required
+                        :placeholder="t('api_keys.modal.name_placeholder')"
+                        class="mt-1"
+                        :class="[fieldClass, { '!border-rose-500': form.errors.name }]"
+                    />
                 </div>
 
-                <!-- After key is created -->
-                <div v-else>
-                    <div class="text-center mb-4">
-                        <div
-                            class="w-16 h-16 mx-auto bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4"
+                <fieldset>
+                    <div class="flex items-center justify-between gap-3">
+                        <legend :class="labelClass">{{ t("api_keys.modal.permissions_label") }}</legend>
+                        <button
+                            type="button"
+                            class="text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            @click="toggleAll(form)"
                         >
-                            <svg
-                                class="w-8 h-8 text-green-600 dark:text-green-400"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M5 13l4 4L19 7"
-                                />
-                            </svg>
-                        </div>
-                        <h3
-                            class="text-lg font-medium text-gray-900 dark:text-white"
-                        >
-                            {{ t("api_keys.modal.success_title") }}
-                        </h3>
+                            {{ allSelected(form) ? t("api_keys.select_none") : t("api_keys.select_all") }}
+                        </button>
                     </div>
-
                     <div
-                        class="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4"
+                        class="mt-2 grid max-h-56 grid-cols-1 gap-x-4 gap-y-1 overflow-y-auto rounded-xl border border-slate-200 p-3 sm:grid-cols-2 dark:border-slate-700/60"
                     >
-                        <div class="flex items-start gap-2">
-                            <svg
-                                class="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                                />
-                            </svg>
-                            <div>
-                                <p
-                                    class="text-sm font-medium text-amber-800 dark:text-amber-200"
-                                >
-                                    {{ t("api_keys.modal.warning_title") }}
-                                </p>
-                                <p
-                                    class="text-sm text-amber-700 dark:text-amber-300 mt-1"
-                                >
-                                    {{ t("api_keys.modal.warning_text") }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label
-                            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                        >
-                            {{ t("api_keys.modal.key_label") }}
+                        <label v-for="permission in availablePermissions" :key="permission" class="flex min-h-8 items-center gap-2.5">
+                            <input
+                                v-model="form.permissions"
+                                type="checkbox"
+                                :value="permission"
+                                class="h-4 w-4 shrink-0 accent-indigo-600"
+                            />
+                            <span class="text-sm text-slate-800 dark:text-slate-200">{{ permissionLabel(permission) }}</span>
                         </label>
-                        <div class="flex items-center gap-2">
-                            <code
-                                class="flex-1 px-3 py-2 bg-gray-900 text-green-400 rounded-lg text-sm font-mono overflow-x-auto"
-                            >
-                                {{
-                                    keyVisible
-                                        ? newKeyResult.key
-                                        : "••••••••••••••••••••••••••••••••••••"
-                                }}
-                            </code>
-                            <button
-                                @click="keyVisible = !keyVisible"
-                                class="px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
-                                :title="
-                                    keyVisible
-                                        ? t('api_keys.modal.hide')
-                                        : t('api_keys.modal.show')
-                                "
-                            >
-                                {{ keyVisible ? "👁️" : "👁️‍🗨️" }}
-                            </button>
-                            <button
-                                @click="copyToClipboard(newKeyResult.key)"
-                                class="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500"
-                            >
-                                {{
-                                    copySuccess
-                                        ? "✓ " + t("api_keys.modal.copied")
-                                        : "📋 " + t("api_keys.modal.copy")
-                                }}
-                            </button>
-                        </div>
                     </div>
+                </fieldset>
 
-                    <div class="mt-6 flex justify-end">
+                <div>
+                    <label for="api-key-expires" :class="labelClass">{{ t("api_keys.modal.expires_label") }}</label>
+                    <input
+                        id="api-key-expires"
+                        v-model="form.expires_at"
+                        type="datetime-local"
+                        class="mt-1"
+                        :class="[fieldClass, { '!border-rose-500': form.errors.expires_at }]"
+                    />
+                </div>
+
+                <label class="flex items-start gap-2.5">
+                    <input v-model="form.is_mcp" type="checkbox" class="mt-0.5 h-4 w-4 shrink-0 accent-indigo-600" />
+                    <span>
+                        <span class="block text-sm font-medium text-slate-800 dark:text-slate-200">
+                            {{ t("api_keys.mcp_key") }}
+                        </span>
+                        <span class="block text-xs text-slate-600 dark:text-slate-400">{{ t("api_keys.mcp_key_hint") }}</span>
+                    </span>
+                </label>
+            </div>
+        </FormDialog>
+
+        <!-- The new key, shown this once -->
+        <Modal :show="!!newKeyResult" max-width="xl" @close="closeKeyResult">
+            <div class="flex flex-col gap-4 p-6">
+                <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                    {{ t("api_keys.modal.success_title") }}
+                </h2>
+                <div
+                    role="alert"
+                    class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm dark:border-amber-500/30 dark:bg-amber-500/10"
+                >
+                    <p class="font-medium text-amber-900 dark:text-amber-200">{{ t("api_keys.modal.warning_title") }}</p>
+                    <p class="mt-0.5 text-amber-900 dark:text-amber-200">{{ t("api_keys.modal.warning_text") }}</p>
+                </div>
+                <div>
+                    <p :class="labelClass">{{ t("api_keys.modal.key_label") }}</p>
+                    <code
+                        class="mt-1 block break-all rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 font-mono text-sm text-slate-900 dark:border-slate-700/60 dark:bg-slate-900/60 dark:text-white"
+                    >
+                        {{ keyVisible ? newKeyResult?.key : "••••••••••••••••••••••••••••••••••••••••" }}
+                    </code>
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                        <SecondaryButton type="button" @click="keyVisible = !keyVisible">
+                            {{ keyVisible ? t("api_keys.modal.hide") : t("api_keys.modal.show") }}
+                        </SecondaryButton>
+                        <SecondaryButton type="button" @click="copyToClipboard(newKeyResult.key)">
+                            {{ t("api_keys.modal.copy") }}
+                        </SecondaryButton>
+                        <span v-if="keyCopied" role="status" class="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                            {{ t("api_keys.modal.copied") }}
+                        </span>
+                    </div>
+                </div>
+                <div class="flex justify-end">
+                    <PrimaryButton type="button" @click="closeKeyResult">{{ t("api_keys.modal.close") }}</PrimaryButton>
+                </div>
+            </div>
+        </Modal>
+
+        <FormDialog
+            :show="showEditModal"
+            :title="t('api_keys.edit_modal.title')"
+            :processing="editForm.processing"
+            :errors="messagesOf(editForm)"
+            :toast="toast"
+            @close="closeEditModal"
+            @submit="updateKey"
+        >
+            <div class="space-y-4">
+                <div>
+                    <label for="api-key-edit-name" :class="labelClass">{{ t("api_keys.modal.name_label") }}</label>
+                    <input
+                        id="api-key-edit-name"
+                        v-model="editForm.name"
+                        type="text"
+                        class="mt-1"
+                        :class="[fieldClass, { '!border-rose-500': editForm.errors.name }]"
+                    />
+                </div>
+
+                <fieldset>
+                    <div class="flex items-center justify-between gap-3">
+                        <legend :class="labelClass">{{ t("api_keys.modal.permissions_label") }}</legend>
                         <button
-                            @click="closeCreateModal"
-                            :class="[
-                                'px-4 py-2 rounded-lg transition-colors',
-                                keyCopied
-                                    ? 'bg-green-600 text-white hover:bg-green-500'
-                                    : 'bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500',
-                            ]"
+                            type="button"
+                            class="text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            @click="toggleAll(editForm)"
                         >
-                            {{
-                                keyCopied
-                                    ? "✓ " + t("api_keys.modal.close")
-                                    : t("api_keys.modal.close")
-                            }}
+                            {{ allSelected(editForm) ? t("api_keys.select_none") : t("api_keys.select_all") }}
                         </button>
                     </div>
-                </div>
-            </div>
-        </Modal>
-
-        <!-- Delete Confirmation Modal -->
-        <Modal :show="showDeleteConfirmModal" @close="closeModal">
-            <div class="p-6">
-                <h2
-                    class="text-lg font-medium text-gray-900 dark:text-gray-100"
-                >
-                    {{ t("api_keys.delete_confirm_title") || "Delete API Key" }}
-                </h2>
-
-                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    {{ t("api_keys.delete_confirm") }}
-                </p>
-
-                <div class="mt-6 flex justify-end">
-                    <SecondaryButton @click="closeModal">
-                        {{ t("common.cancel") || "Cancel" }}
-                    </SecondaryButton>
-
-                    <DangerButton class="ml-3" @click="deleteKey">
-                        {{ t("common.delete") || "Delete" }}
-                    </DangerButton>
-                </div>
-            </div>
-        </Modal>
-
-        <!-- Edit Key Modal -->
-        <Modal :show="showEditModal" @close="closeEditModal">
-            <div class="p-6">
-                <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                    ✏️ {{ t("api_keys.edit_modal.title") || "Edytuj klucz API" }}
-                </h3>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            {{ t("api_keys.modal.name_label") }}
-                        </label>
-                        <input
-                            v-model="editForm.name"
-                            type="text"
-                            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                        />
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            {{ t("api_keys.modal.permissions_label") }}
-                        </label>
-                        <div class="space-y-2">
-                            <label
-                                v-for="perm in availablePermissions"
-                                :key="perm"
-                                class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
-                            >
-                                <input
-                                    type="checkbox"
-                                    v-model="editForm.permissions"
-                                    :value="perm"
-                                    class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                />
-                                <span class="text-lg">{{ permissionLabels[perm]?.icon }}</span>
-                                <span class="text-sm text-gray-700 dark:text-gray-300">
-                                    {{ permissionLabels[perm]?.label || perm }}
-                                </span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- MCP Key Checkbox -->
-                    <div class="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-lg p-4">
-                        <label class="flex items-center gap-3 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                v-model="editForm.is_mcp"
-                                class="w-5 h-5 text-purple-600 rounded focus:ring-purple-500"
-                            />
-                            <div>
-                                <span class="font-medium text-purple-800 dark:text-purple-200">
-                                    🤖 {{ t("api_keys.mcp_key") || "Klucz MCP" }}
-                                </span>
-                                <p class="text-sm text-purple-600 dark:text-purple-300 mt-0.5">
-                                    {{ t("api_keys.mcp_key_hint") || "Użyj tego klucza do integracji z Claude, Cursor lub VS Code" }}
-                                </p>
-                            </div>
-                        </label>
-
-                        <!-- Plain Key Input (shown when MCP is checked) -->
-                        <div v-if="editForm.is_mcp" class="mt-4 pt-4 border-t border-purple-200 dark:border-purple-700">
-                            <label class="block text-sm font-medium text-purple-800 dark:text-purple-200 mb-1">
-                                🔑 {{ t("api_keys.mcp_plain_key_label") || "Klucz API do szyfrowania" }}
-                            </label>
-                            <input
-                                v-model="editForm.plain_key"
-                                type="text"
-                                :placeholder="t('api_keys.mcp_plain_key_placeholder') || 'ns_live_...'"
-                                class="w-full px-3 py-2 border border-purple-300 dark:border-purple-600 rounded-lg focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-white font-mono text-sm"
-                            />
-                            <p class="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                                {{ t("api_keys.mcp_plain_key_hint") || "Wklej swój klucz API, aby umożliwić testowanie połączenia MCP" }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-6 flex justify-end gap-3">
-                    <SecondaryButton @click="closeEditModal">
-                        {{ t("common.cancel") || "Anuluj" }}
-                    </SecondaryButton>
-                    <button
-                        @click="updateKey"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors"
+                    <div
+                        class="mt-2 grid max-h-56 grid-cols-1 gap-x-4 gap-y-1 overflow-y-auto rounded-xl border border-slate-200 p-3 sm:grid-cols-2 dark:border-slate-700/60"
                     >
-                        {{ t("common.save") || "Zapisz" }}
-                    </button>
+                        <label v-for="permission in availablePermissions" :key="permission" class="flex min-h-8 items-center gap-2.5">
+                            <input
+                                v-model="editForm.permissions"
+                                type="checkbox"
+                                :value="permission"
+                                class="h-4 w-4 shrink-0 accent-indigo-600"
+                            />
+                            <span class="text-sm text-slate-800 dark:text-slate-200">{{ permissionLabel(permission) }}</span>
+                        </label>
+                    </div>
+                </fieldset>
+
+                <label class="flex items-start gap-2.5">
+                    <input v-model="editForm.is_mcp" type="checkbox" class="mt-0.5 h-4 w-4 shrink-0 accent-indigo-600" />
+                    <span>
+                        <span class="block text-sm font-medium text-slate-800 dark:text-slate-200">
+                            {{ t("api_keys.mcp_key") }}
+                        </span>
+                        <span class="block text-xs text-slate-600 dark:text-slate-400">{{ t("api_keys.mcp_key_hint") }}</span>
+                    </span>
+                </label>
+
+                <!-- The MCP connection test needs the key itself, and only its owner has it -->
+                <div v-if="editForm.is_mcp">
+                    <label for="api-key-plain" :class="labelClass">{{ t("api_keys.mcp_plain_key_label") }}</label>
+                    <input
+                        id="api-key-plain"
+                        v-model="editForm.plain_key"
+                        type="text"
+                        autocomplete="off"
+                        :placeholder="t('api_keys.mcp_plain_key_placeholder')"
+                        class="mt-1 font-mono"
+                        :class="[fieldClass, { '!border-rose-500': editForm.errors.plain_key }]"
+                    />
+                    <p :class="hintClass">{{ t("api_keys.mcp_plain_key_hint") }}</p>
                 </div>
             </div>
-        </Modal>
+        </FormDialog>
+
+        <ConfirmModal
+            :show="!!keyToDelete"
+            type="danger"
+            :title="t('api_keys.delete_confirm_title')"
+            :message="t('api_keys.delete_confirm')"
+            :confirm-text="t('common.delete')"
+            :processing="deleting"
+            @close="keyToDelete = null"
+            @confirm="deleteKey"
+        >
+            {{ keyToDelete?.name }} ({{ keyToDelete?.key_prefix }}…)
+        </ConfirmModal>
+
+        <!-- In the corner of the page; an open dialog shows the same message in its footer -->
+        <Toast :toast="dialogOpen ? null : toast" @close="dismiss" />
     </AuthenticatedLayout>
 </template>

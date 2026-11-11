@@ -5685,7 +5685,9 @@
             "funnels_read": "Lejki (odczyt)",
             "funnels_write": "Lejki (zapis)",
             "brain_read": "NetSendo Brain (odczyt)",
-            "brain_write": "NetSendo Brain (zapis)"
+            "brain_write": "NetSendo Brain (zapis)",
+            "lists_write": "Listy (zapis)",
+            "notifications_write": "Powiadomienia (wysyłka)"
         },
         "status": {
             "expired": "wygasł",
@@ -5728,7 +5730,19 @@
         },
         "mcp_plain_key_label": "Klucz API do szyfrowania",
         "mcp_plain_key_hint": "Wklej swój klucz API, aby umożliwić testowanie połączenia MCP",
-        "mcp_plain_key_placeholder": "ns_live_..."
+        "mcp_plain_key_placeholder": "ns_live_...",
+        "full_access": "Pełny dostęp",
+        "more_permissions": "i jeszcze {count}",
+        "actions_for": "Akcje klucza: {name}",
+        "select_all": "Zaznacz wszystkie",
+        "select_none": "Odznacz wszystkie",
+        "notifications": {
+            "updated": "Klucz zapisany",
+            "deleted": "Klucz usunięty"
+        },
+        "errors": {
+            "session_expired": "Sesja wygasła. Strona zaraz się odświeży."
+        }
     },
     "inserts": {
         "title": "Wstawki i podpisy",
@@ -6175,6 +6189,21 @@
             "title": "Uprawnienia użytkownika",
             "description": "Wybierz listy, do których użytkownik będzie miał dostęp i ustaw poziom uprawnień.",
             "save": "Zapisz uprawnienia"
+        },
+        "no_lists": "Nie masz jeszcze żadnej listy do udostępnienia.",
+        "permission_level_for": "Poziom dostępu do listy {name}",
+        "permissions_short": "Uprawnienia",
+        "actions_for": "Akcje użytkownika: {name}",
+        "list_with_edit": "{name} (edycja)",
+        "more_lists": "i jeszcze {count}",
+        "delete_title": "Usunąć użytkownika z zespołu?",
+        "cancel_invitation_title": "Anulować zaproszenie?",
+        "cancel_invitation": "Anuluj zaproszenie",
+        "notifications": {
+            "added": "Użytkownik dodany do zespołu",
+            "permissions_saved": "Uprawnienia zapisane",
+            "removed": "Użytkownik usunięty z zespołu",
+            "invitation_cancelled": "Zaproszenie anulowane"
         }
     },
     "system_pages": {

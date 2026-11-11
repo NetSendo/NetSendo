@@ -4652,7 +4652,9 @@
             "funnels_read": "Funnels (Lesen)",
             "funnels_write": "Funnels (Schreiben)",
             "brain_read": "NetSendo Brain (Lesen)",
-            "brain_write": "NetSendo Brain (Schreiben)"
+            "brain_write": "NetSendo Brain (Schreiben)",
+            "lists_write": "Listen (Schreiben)",
+            "notifications_write": "Benachrichtigungen (Senden)"
         },
         "status": {
             "expired": "abgelaufen",
@@ -4695,7 +4697,19 @@
         "mcp_key_hint": "Verwenden Sie diesen Schlüssel für die Integration mit Claude, Cursor oder VS Code",
         "mcp_plain_key_hint": "Fügen Sie Ihren API-Schlüssel ein, um das Testen der MCP-Verbindung zu ermöglichen",
         "mcp_plain_key_label": "API-Schlüssel zur Verschlüsselung",
-        "mcp_plain_key_placeholder": "ns_live_..."
+        "mcp_plain_key_placeholder": "ns_live_...",
+        "full_access": "Vollzugriff",
+        "more_permissions": "und {count} weitere",
+        "actions_for": "Aktionen für den Schlüssel: {name}",
+        "select_all": "Alle auswählen",
+        "select_none": "Alle abwählen",
+        "notifications": {
+            "updated": "Schlüssel gespeichert",
+            "deleted": "Schlüssel gelöscht"
+        },
+        "errors": {
+            "session_expired": "Die Sitzung ist abgelaufen. Die Seite wird gleich neu geladen."
+        }
     },
     "inserts": {
         "title": "Bausteine und Signaturen",
@@ -9676,7 +9690,22 @@
         },
         "team_members": "Teammitglieder",
         "team_members_subtitle": "Benutzer mit Zugriff auf Ihr NetSendo-Konto",
-        "title": "Benutzerverwaltung"
+        "title": "Benutzerverwaltung",
+        "no_lists": "Sie haben noch keine Liste zum Freigeben.",
+        "permission_level_for": "Zugriffsstufe für die Liste {name}",
+        "permissions_short": "Berechtigungen",
+        "actions_for": "Aktionen für den Benutzer: {name}",
+        "list_with_edit": "{name} (Bearbeiten)",
+        "more_lists": "und {count} weitere",
+        "delete_title": "Benutzer aus dem Team entfernen?",
+        "cancel_invitation_title": "Einladung zurückziehen?",
+        "cancel_invitation": "Einladung zurückziehen",
+        "notifications": {
+            "added": "Benutzer zum Team hinzugefügt",
+            "permissions_saved": "Berechtigungen gespeichert",
+            "removed": "Benutzer aus dem Team entfernt",
+            "invitation_cancelled": "Einladung zurückgezogen"
+        }
     },
     "telemetry": {
         "title": "Telemetrie",
