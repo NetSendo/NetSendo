@@ -323,7 +323,8 @@
         "creating": "Tworzenie...",
         "checking": "Sprawdzanie...",
         "generating": "Generowanie...",
-        "starting": "Uruchamianie..."
+        "starting": "Uruchamianie...",
+        "testing": "Testowanie…"
     },
     "ab_tests": {
         "enable_testing": "Włącz testy A/B",
@@ -6130,7 +6131,8 @@
             "plugin_version": "Wtyczka",
             "stale_connection": "Nieaktywna wtyczka",
             "stale_plugin_hint": "Wtyczka nie komunikowała się od ponad 7 dni. Sprawdź, czy wtyczka jest poprawnie zainstalowana i skonfigurowana.",
-            "update_to": "Zaktualizuj do"
+            "update_to": "Zaktualizuj do",
+            "actions_for": "Akcje sklepu: {name}"
         }
     },
     "tracked_links": {
@@ -6696,7 +6698,8 @@
         "marketplace_go_to_settings": "Przejdź do ustawień Tpay",
         "marketplace_manage_products": "Zarządzaj produktami",
         "marketplace_help_description": "Sprawdź dokumentację Tpay, aby uzyskać szczegółowe instrukcje konfiguracji.",
-        "marketplace_webhook_info": "Użyj tego adresu URL jako endpointu webhooka w ustawieniach panelu Tpay."
+        "marketplace_webhook_info": "Użyj tego adresu URL jako endpointu webhooka w ustawieniach panelu Tpay.",
+        "settings_saved": "Ustawienia Tpay zostały zapisane."
     },
     "pixel": {
         "settings_title": "NetSendo Pixel",
