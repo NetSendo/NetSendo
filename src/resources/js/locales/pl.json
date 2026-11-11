@@ -876,7 +876,8 @@
             "sending": "Wysyłka",
             "integrations": "Integracje",
             "system": "System"
-        }
+        },
+        "connector": "Konektor AI"
     },
     "dashboard": {
         "welcome_back": "Witaj ponownie, {name}! 👋",
@@ -9890,6 +9891,113 @@
             "booking": "Nowa rezerwacja",
             "cancellation": "Odwołanie spotkania",
             "no_show": "Nieobecność zaproszonego"
+        }
+    },
+    "connector": {
+        "title": "Konektor AI",
+        "subtitle": "Podłącz Claude, Hermes i inne aplikacje AI do tego NetSendo przez adres i logowanie",
+        "status_on": "Aktywny",
+        "status_off": "Wyłączony",
+        "off_title": "Konektor jest wyłączony",
+        "off_text": "Ta instalacja działa z ustawieniem MCP_CONNECTOR_ENABLED=false, więc aplikacje AI nie mogą łączyć się przez adres. Klucze API i lokalny klient MCP działają jak dotąd.",
+        "engine_missing_title": "Narzędzia nie są zainstalowane",
+        "engine_missing_text": "Konektor nie mógł wczytać swoich narzędzi. Zaktualizuj NetSendo do aktualnego obrazu; przy własnej instalacji zajrzyj do docs/MCP_CONNECTOR.md.",
+        "not_public_title": "Ten adres nie jest dostępny z internetu przez HTTPS",
+        "not_public_text": "Claude, ChatGPT i inne aplikacje w chmurze łączą się ze swoich serwerów: potrzebują publicznego adresu https. Aplikacje działające na tym komputerze (Claude Code, Hermes, Cursor) mogą użyć tego adresu bez zmian.",
+        "address_title": "Adres konektora",
+        "address_text": "Wklej ten adres w swojej aplikacji AI. Aplikacja przekieruje Cię tutaj, żebyś się zalogował i wybrał, co jej wolno. Klucz API nie jest potrzebny.",
+        "address_label": "Adres",
+        "address_hint": "{count} narzędzi: listy, subskrybenci, kampanie, szablony, automatyzacje i inne",
+        "apps_title": "Podłączone aplikacje",
+        "apps_text": "Aplikacje, którym pozwoliłeś korzystać ze swojego konta.",
+        "apps_text_admin": "Aplikacje, którym Ty i członkowie Twojego zespołu pozwoliliście korzystać ze swoich kont.",
+        "apps_empty_title": "Żadna aplikacja nie jest podłączona",
+        "apps_empty_text": "Aplikacja pojawi się tutaj, gdy zatwierdzisz ją na ekranie logowania.",
+        "apps_self_registered": "Zarejestrowana samodzielnie",
+        "apps_user": "Konto: {name} ({email})",
+        "apps_connected": "Podłączona {date}",
+        "apps_last_used": "ostatnio użyta {date}",
+        "apps_never_used": "jeszcze nieużywana",
+        "apps_full_access": "Wszystkie uprawnienia",
+        "apps_permissions": "Uprawnienia: {count}",
+        "revoke": "Odłącz",
+        "revoke_title": "Odłączyć tę aplikację?",
+        "revoke_message": "Aplikacja od razu traci dostęp. Może poprosić o połączenie ponownie.",
+        "authorize": {
+            "title": "Podłączanie aplikacji",
+            "heading": "Podłączyć {app} do NetSendo?",
+            "intro": "{app} prosi o dostęp do Twojego konta na {host}.",
+            "app_title": "Aplikacja",
+            "verified": "Tożsamość potwierdzona",
+            "unverified": "Niezweryfikowana",
+            "verified_text": "Tożsamość tej aplikacji jest opublikowana pod adresem {host}.",
+            "unverified_text": "Ta aplikacja zarejestrowała się sama, więc NetSendo nie może potwierdzić jej nazwy. Kontynuuj tylko wtedy, gdy przed chwilą sam zacząłeś to połączenie.",
+            "returns_to": "Po decyzji wrócisz do {host}.",
+            "returns_local": "Po decyzji wrócisz do aplikacji działającej na tym komputerze.",
+            "account_title": "Twoje konto",
+            "team_member": "Jesteś członkiem zespołu konta: {owner}. Aplikacja dostanie dostęp do tego, do czego Ty masz dostęp, a nie do całego konta.",
+            "other_account": "Żeby podłączyć inne konto, wyloguj się w panelu i zacznij od nowa w aplikacji.",
+            "permissions_title": "Co aplikacja może robić",
+            "permissions_text": "Odznacz to, czego aplikacja ma nie robić. Uprawnienie do zapisu obejmuje też odczyt.",
+            "read_only": "Tylko odczyt",
+            "select_all": "Zaznacz wszystko",
+            "deny": "Odmów",
+            "allow": "Zezwól",
+            "revoke_hint": "Aplikację możesz odłączyć w każdej chwili w Ustawieniach → Konektor AI.",
+            "invalid_title": "Tej prośby o połączenie nie można pokazać",
+            "invalid_text": "Prośba wysłana przez aplikację jest nieprawidłowa.",
+            "invalid_hint": "Wróć do aplikacji i zacznij łączenie od nowa. Jeśli to się powtarza, usuń konektor w aplikacji i dodaj go ponownie."
+        },
+        "guide": {
+            "title": "Jak podłączyć",
+            "intro": "Wybierz swoją aplikację. W każdym przypadku wklejasz adres, logujesz się do NetSendo i wybierasz uprawnienia.",
+            "other": "Inne",
+            "claude": {
+                "intro": "Działa w Claude w przeglądarce, w aplikacji na komputer i w telefonie.",
+                "step_1": "Otwórz Claude i przejdź do Customize → Connectors. W organizacji Team lub Enterprise konektor dodaje właściciel w Organization settings → Connectors.",
+                "step_2": "Kliknij przycisk z plusem i wybierz „Add custom connector”.",
+                "step_3": "Wpisz nazwę, na przykład NetSendo, i wklej adres pokazany poniżej.",
+                "step_4": "Zostaw klienta OAuth na „Use Claude's published identity” i kliknij Add.",
+                "step_5": "Kliknij Connect. Claude otworzy NetSendo: zaloguj się, wybierz uprawnienia i kliknij Zezwól.",
+                "step_6": "W rozmowie włącz konektor NetSendo w menu narzędzi i zapytaj na przykład: Pokaż moje listy kontaktów.",
+                "note": "Claude łączy się z serwerów Anthropic, a nie z Twojego komputera, więc ten adres musi być dostępny z internetu przez HTTPS. W planie Free Claude pozwala na jeden własny konektor."
+            },
+            "claude_code": {
+                "intro": "Claude Code łączy się prosto z Twojego komputera, więc adres lokalny też zadziała.",
+                "step_1": "Uruchom w terminalu:",
+                "step_2": "Włącz Claude Code, wpisz /mcp, wybierz netsendo, a potem Authenticate.",
+                "step_3": "Przeglądarka otworzy NetSendo: zaloguj się, wybierz uprawnienia i kliknij Zezwól."
+            },
+            "hermes": {
+                "intro": "Hermes Agent (Nous Research) loguje się w ten sam sposób.",
+                "step_1": "Dodaj serwer i zaloguj się:",
+                "step_2": "Przeglądarka otworzy NetSendo: zaloguj się, wybierz uprawnienia i kliknij Zezwól. W trwającej sesji narzędzia wczyta polecenie /reload-mcp.",
+                "config": "Albo dopisz to do ~/.hermes/config.yaml i uruchom: hermes mcp login netsendo"
+            },
+            "chatgpt": {
+                "intro": "ChatGPT może używać konektora jako własnego serwera MCP. Miejsce tej opcji zależy od planu i ustawień ChatGPT.",
+                "step_1": "W ChatGPT otwórz ustawienia aplikacji i konektorów i wybierz dodanie własnego serwera MCP.",
+                "step_2": "Wklej adres pokazany poniżej (kończy się na /mcp).",
+                "step_3": "Jeśli ChatGPT zapyta o sposób logowania, wybierz OAuth.",
+                "step_4": "Zaloguj się do NetSendo, wybierz uprawnienia i kliknij Zezwól.",
+                "note": "ChatGPT też łączy się ze swoich serwerów: ten adres musi być dostępny z internetu przez HTTPS."
+            },
+            "generic": {
+                "intro": "Zadziała każdy host MCP, który obsługuje serwery zdalne (Streamable HTTP) z logowaniem OAuth: podaj mu adres z góry, a stronę logowania znajdzie sam.",
+                "cursor": "Dopisz to do ~/.cursor/mcp.json (albo .cursor/mcp.json w projekcie), a potem zaloguj się w ustawieniach MCP w Cursorze:",
+                "vscode": "Dopisz to do .vscode/mcp.json, uruchom serwer i zaloguj się, gdy VS Code o to poprosi:",
+                "stdio_title": "Aplikacje, które uruchamiają tylko lokalne polecenia",
+                "stdio": "Zaloguje się za nie pomost mcp-remote:",
+                "key_title": "Bez logowania: klucz API",
+                "key": "Aplikacja, która potrafi wysłać tylko stały nagłówek, może zamiast logowania użyć klucza API ze strony {link}:"
+            }
+        },
+        "safety": {
+            "title": "Co może podłączona aplikacja",
+            "account": "Działa jako użytkownik, który ją zatwierdził, i widzi tylko jego dane. Aplikacja podłączona przez członka zespołu nie dostaje dostępu właściciela konta.",
+            "permissions": "Może używać tylko uprawnień zaznaczonych na ekranie logowania. To te same uprawnienia, które mają klucze API. Żeby je zmienić, odłącz aplikację i podłącz ją ponownie.",
+            "tokens": "Odłączenie aplikacji tutaj zatrzymuje ją od razu. Aplikacja nieużywana przez 90 dni musi zalogować się ponownie. NetSendo przechowuje tylko skróty tokenów dostępu.",
+            "sending": "Z uprawnieniami do wysyłki aplikacja może wysyłać kampanie, e-maile i SMS-y do prawdziwych odbiorców. Nadawaj je tylko aplikacjom, którym ufasz, i sprawdzaj, co asystent zamierza wysłać."
         }
     }
 }

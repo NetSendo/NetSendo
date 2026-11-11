@@ -49,6 +49,10 @@ Schedule::command('cron:daily-maintenance')
 Schedule::command('queue:prune-batches --hours=48')
     ->dailyAt('04:30');
 
+// Connector (remote MCP): expired codes, tokens and connections of apps that are gone
+Schedule::command('connector:prune')
+    ->dailyAt('04:40');
+
 // Czyszczenie cache (opcjonalne, raz na tydzień)
 Schedule::command('cache:prune-stale-tags')
     ->weekly()
