@@ -9894,6 +9894,9 @@
         }
     },
     "connector": {
+        "marketplace_title": "Der schnellere Weg: der KI-Konnektor",
+        "marketplace_text": "Claude, Hermes, ChatGPT und andere Apps können sich per Adresse und Anmeldung mit diesem NetSendo verbinden, ohne API-Schlüssel und ohne Installation auf Ihrem Computer.",
+        "marketplace_link": "KI-Konnektor öffnen",
         "title": "KI-Konnektor",
         "subtitle": "Claude, Hermes und andere KI-Apps per Adresse und Anmeldung mit diesem NetSendo verbinden",
         "status_on": "Aktiv",

@@ -9894,6 +9894,9 @@
         }
     },
     "connector": {
+        "marketplace_title": "Una forma más rápida: el conector de IA",
+        "marketplace_text": "Claude, Hermes, ChatGPT y otras aplicaciones pueden conectarse a este NetSendo con la dirección e inicio de sesión, sin clave API y sin instalar nada en tu ordenador.",
+        "marketplace_link": "Abrir el conector de IA",
         "title": "Conector de IA",
         "subtitle": "Conecta Claude, Hermes y otras aplicaciones de IA a este NetSendo con la dirección e inicio de sesión",
         "status_on": "Activo",

@@ -20,6 +20,10 @@ use stdClass;
  */
 class BridgeTool extends Tool
 {
+    private const API_KEY_HINT = 'The API key is missing a permission. Ask the user to enable it in NetSendo → API keys.';
+
+    private const PERMISSION_HINT = 'If NetSendo is connected through the AI connector (sign-in), this permission was not granted: ask the user to disconnect the connector and connect it again, ticking the permission on the NetSendo consent screen. If an API key is used, the key needs that permission.';
+
     public function __construct(private object $definition)
     {
     }
@@ -80,13 +84,16 @@ class BridgeTool extends Tool
                 ? $item['text']
                 : json_encode($item, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 
-            // The tools were written for API keys; a connected app is fixed on
-            // the consent screen instead.
-            $text = str_replace(
-                'The API key is missing a permission. Ask the user to enable it in NetSendo → API keys.',
-                'This connection was not granted that permission. Ask the user to disconnect the connector and connect it again, ticking the permission on the NetSendo consent screen.',
-                $text,
-            );
+            // The tools and the API were written for API keys: a missing permission
+            // is reported as a problem with "the API key". For a connected app the
+            // way out is the consent screen, so say that.
+            if ($result['isError']) {
+                $text = str_replace(self::API_KEY_HINT, '', $text);
+
+                if (preg_match('/does not have .*permission/i', $text)) {
+                    $text = rtrim($text)."\n".self::PERMISSION_HINT;
+                }
+            }
 
             $responses[] = $result['isError'] ? Response::error($text) : Response::text($text);
         }

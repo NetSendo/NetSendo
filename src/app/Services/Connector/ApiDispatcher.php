@@ -7,6 +7,7 @@ use App\Models\ApiKey;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Facade;
+use Symfony\Component\HttpFoundation\Request as SymfonyRequest;
 
 /**
  * Runs an API v1 request for a connected app without leaving the process.
@@ -62,7 +63,12 @@ class ApiDispatcher
             'CONTENT_TYPE' => $hasBody ? 'application/json' : null,
         ], fn ($value) => $value !== null);
 
-        $request = Request::create($uri, $method, [], [], [], $server, $hasBody ? json_encode($data) : null);
+        // Built the way the framework captures a real request (createFromBase):
+        // for a JSON body the decoded JSON becomes the request's input bag, which
+        // is where ApiKeyAuth puts the key and where the controllers look for it.
+        $request = Request::createFromBase(
+            SymfonyRequest::create($uri, $method, [], [], [], $server, $hasBody ? json_encode($data) : null)
+        );
         $request->attributes->set(ApiKeyAuth::CONNECTOR_ATTRIBUTE, $identity);
 
         try {

@@ -9894,6 +9894,9 @@
         }
     },
     "connector": {
+        "marketplace_title": "Szybszy sposób: Konektor AI",
+        "marketplace_text": "Claude, Hermes, ChatGPT i inne aplikacje mogą połączyć się z tym NetSendo przez adres i logowanie, bez klucza API i bez instalowania czegokolwiek na komputerze.",
+        "marketplace_link": "Otwórz Konektor AI",
         "title": "Konektor AI",
         "subtitle": "Podłącz Claude, Hermes i inne aplikacje AI do tego NetSendo przez adres i logowanie",
         "status_on": "Aktywny",

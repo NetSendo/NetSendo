@@ -100,8 +100,14 @@ class ConnectorNodeEngineTest extends TestCase
         $this->assertStringContainsString('Error 403', $this->toolText($response));
         $this->assertStringContainsString('lists:write', $this->toolText($response));
         $this->assertStringContainsString('connect it again', $this->toolText($response));
-        $this->assertStringNotContainsString('API keys', $this->toolText($response));
+        $this->assertStringNotContainsString('enable it in NetSendo', $this->toolText($response));
         $this->assertDatabaseMissing('tags', ['name' => 'not-allowed']);
+
+        // A controller that checks the permission the older way, on a JSON request.
+        $sms = $this->callTool($token, 'send_sms', ['phone' => '+48500100200', 'content' => 'Hello'])
+            ->assertJsonPath('result.isError', true);
+        $this->assertStringContainsString('sms:write', $this->toolText($sms));
+        $this->assertStringContainsString('connect it again', $this->toolText($sms));
     }
 
     public function test_arguments_that_do_not_match_the_tool_schema_come_back_as_a_readable_error(): void

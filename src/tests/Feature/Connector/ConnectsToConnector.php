@@ -156,7 +156,7 @@ trait ConnectsToConnector
     }
 
     /**
-     * A tool engine that needs no Node.js: two tools that make the same API
+     * A tool engine that needs no Node.js: three tools that make the same API
      * requests as their namesakes in the MCP client package.
      */
     protected function fakeToolEngine(): void
@@ -183,6 +183,12 @@ trait ConnectsToConnector
                         'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string']], 'required' => ['name']],
                         'annotations' => ['title' => 'Create tag', 'readOnlyHint' => false, 'destructiveHint' => false],
                     ],
+                    [
+                        'name' => 'send_sms',
+                        'description' => 'Send one SMS',
+                        'inputSchema' => ['type' => 'object', 'properties' => ['phone' => ['type' => 'string'], 'message' => ['type' => 'string']]],
+                        'annotations' => ['title' => 'Send sms', 'readOnlyHint' => false, 'destructiveHint' => false],
+                    ],
                 ]));
             }
 
@@ -191,6 +197,7 @@ trait ConnectsToConnector
                 $response = match ($name) {
                     'list_tags' => $api('get', '/tags', ['per_page' => 100], null),
                     'create_tag' => $api('post', '/tags', null, $arguments),
+                    'send_sms' => $api('post', '/sms/send', null, $arguments),
                 };
 
                 return [

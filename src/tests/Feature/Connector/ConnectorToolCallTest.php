@@ -46,7 +46,7 @@ class ConnectorToolCallTest extends TestCase
 
         $this->mcp($token, 'tools/list')
             ->assertOk()
-            ->assertJsonCount(2, 'result.tools')
+            ->assertJsonCount(3, 'result.tools')
             ->assertJsonPath('result.tools.0.name', 'list_tags')
             ->assertJsonPath('result.tools.0.annotations.readOnlyHint', true)
             ->assertJsonPath('result.tools.1.inputSchema.required', ['name']);
@@ -76,7 +76,7 @@ class ConnectorToolCallTest extends TestCase
             ->postJson('/mcp', ['jsonrpc' => '2.0', 'method' => 'notifications/initialized'])
             ->assertStatus(202);
 
-        $legacy('tools/list')->assertOk()->assertJsonCount(2, 'result.tools');
+        $legacy('tools/list')->assertOk()->assertJsonCount(3, 'result.tools');
     }
 
     public function test_a_read_tool_and_a_write_tool_work_within_the_granted_permissions(): void
@@ -107,6 +107,23 @@ class ConnectorToolCallTest extends TestCase
 
         // Reading still works with what was granted.
         $this->callTool($token, 'list_tags')->assertJsonPath('result.isError', false);
+    }
+
+    public function test_every_style_of_permission_check_in_the_api_sees_the_connected_app(): void
+    {
+        // The SMS, funnel, A/B test and webhook controllers read the key with
+        // \$request->get('api_key'), the newer ones with input(): both must find
+        // the connection, also on a request with a JSON body.
+        $token = $this->connect($this->user, ['tags:read', 'sms:read'])['access_token'];
+
+        $refused = $this->callTool($token, 'send_sms', ['phone' => '+48500100200', 'message' => 'Hello'])
+            ->assertOk()
+            ->assertJsonPath('result.isError', true);
+        $this->assertStringStartsWith('403 ', $this->toolText($refused));
+
+        \Illuminate\Support\Facades\Queue::fake();
+        $allowed = $this->connect($this->user, ['sms:write'])['access_token'];
+        $this->assertStringStartsNotWith('403 ', $this->toolText($this->callTool($allowed, 'send_sms', ['phone' => '+48500100200', 'message' => 'Hello'])));
     }
 
     public function test_a_team_members_app_does_not_reach_the_owners_or_another_accounts_data(): void
@@ -171,7 +188,7 @@ class ConnectorToolCallTest extends TestCase
         Tag::create(['user_id' => $this->user->id, 'name' => 'vip']);
         $readOnly = ApiKey::generate($this->user->id, 'Reader', ['tags:read'])['key'];
 
-        $this->mcp($readOnly, 'tools/list')->assertOk()->assertJsonCount(2, 'result.tools');
+        $this->mcp($readOnly, 'tools/list')->assertOk()->assertJsonCount(3, 'result.tools');
         $this->assertStringContainsString('vip', $this->toolText($this->callTool($readOnly, 'list_tags')));
         $this->callTool($readOnly, 'create_tag', ['name' => 'x'])->assertJsonPath('result.isError', true);
 

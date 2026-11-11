@@ -9894,6 +9894,9 @@
         }
     },
     "connector": {
+        "marketplace_title": "A quicker way: the AI connector",
+        "marketplace_text": "Claude, Hermes, ChatGPT and other apps can connect to this NetSendo by address and sign-in, with no API key and nothing to install on your computer.",
+        "marketplace_link": "Open the AI connector",
         "title": "AI connector",
         "subtitle": "Connect Claude, Hermes and other AI apps to this NetSendo by address and sign-in",
         "status_on": "Active",

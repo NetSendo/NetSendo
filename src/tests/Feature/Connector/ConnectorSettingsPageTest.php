@@ -41,7 +41,7 @@ class ConnectorSettingsPageTest extends TestCase
                 ->component('Settings/Connector/Index')
                 ->where('enabled', true)
                 ->where('connectorUrl', 'http://localhost/mcp')
-                ->where('toolCount', 2)
+                ->where('toolCount', 3)
                 ->has('connections', 1)
                 ->where('connections.0.name', 'Test Host')
                 ->where('connections.0.scopes', ['lists:read', 'tags:read'])
@@ -129,11 +129,11 @@ class ConnectorSettingsPageTest extends TestCase
         $this->assertDatabaseCount('connector_clients', 1);
     }
 
-    public function test_every_text_of_the_two_pages_exists_in_all_four_languages(): void
+    public function test_every_text_of_the_connector_pages_exists_in_all_four_languages(): void
     {
         $keys = [];
-        foreach (['js/Pages/Settings/Connector/Index.vue', 'js/Pages/Connector/Authorize.vue'] as $file) {
-            preg_match_all('/\bt\(\s*["\']((?:connector|navigation|api_keys|common)\.[A-Za-z0-9_.]+)["\']/', File::get(resource_path($file)), $matches);
+        foreach (['js/Pages/Settings/Connector/Index.vue', 'js/Pages/Connector/Authorize.vue', 'js/Pages/Marketplace/MCP.vue'] as $file) {
+            preg_match_all('/\bt\(\s*["\']((?:connector|navigation|api_keys)\.[A-Za-z0-9_.]+)["\']/', File::get(resource_path($file)), $matches);
             preg_match_all('/keypath="([a-z_.0-9]+)"/', File::get(resource_path($file)), $paths);
             $keys = [...$keys, ...$matches[1], ...$paths[1]];
         }
