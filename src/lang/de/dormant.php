@@ -11,6 +11,7 @@ return [
     'unsubscribe' => [
         'title' => 'Abmelden',
         'body' => 'Bestätige, dass du keine Nachrichten von dieser Liste mehr erhalten möchtest.',
+        'body_all' => 'Bestätige, dass du keine Nachrichten von diesem Absender mehr erhalten möchtest. Du wirst von allen seinen Listen abgemeldet.',
         'button' => 'Abmelden',
         'invalid_title' => 'Dieser Link ist ungültig',
         'invalid' => 'Verwende den Abmeldelink aus der Nachricht genau so, wie du ihn erhalten hast.',

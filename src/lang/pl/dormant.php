@@ -11,6 +11,7 @@ return [
     'unsubscribe' => [
         'title' => 'Wypisanie z listy',
         'body' => 'Potwierdź, że nie chcesz już dostawać wiadomości z tej listy.',
+        'body_all' => 'Potwierdź, że nie chcesz już dostawać żadnych wiadomości od tego nadawcy. Wypiszemy Cię ze wszystkich jego list.',
         'button' => 'Wypisz mnie',
         'invalid_title' => 'Ten link jest nieprawidłowy',
         'invalid' => 'Użyj linku wypisu z wiadomości dokładnie w takiej postaci, w jakiej go otrzymałeś.',
