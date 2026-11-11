@@ -34,6 +34,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - One row says what it used to take seven columns to say: subject with the ID, type and attachments under it; the lists and recipients (queues show sent, planned, queued, failed and missed); the status; and one date, the one that matters for the state (sent, sending or created).
   - The seven unlabelled icons at the end of a row became a "Statistics" link and a menu with named actions (edit, duplicate, send again, queue statistics, switch the queue on or off, delete).
   - Sortable columns show their direction; the page size moved to the foot of the list, next to "1–30 of 43".
+- **The SMS campaign list follows the e-mail list**: the same tabs with counts, one row per campaign with the text people will receive under its name, a menu of named actions, and a page size the reader chooses (it was fixed at 10).
+- **Buttons, text fields and dialogs share one look.** The primary button is the indigo of the rest of the panel (it was dark grey in capitals), text fields have a visible border again (the colour classes alone drew none since Tailwind 4), dialogs have the panel's rounded card.
 - **The sign-in screens are rebuilt**: sign in, first administrator, forgotten and new password, password confirmation, e-mail verification, two-factor code and team invitation.
   - Two panes: the brand on a dark ground, and the form in the visitor's theme, light or dark. On a phone the brand pane is a strip with the logo.
   - Behind the brand pane messages leave one bright point ("your own server") in arcs and land on recipients, who light up. It is drawn on a canvas by the page itself (no library, nothing loaded from another host), stands still for visitors who ask for reduced motion and pauses in a background tab.
@@ -50,7 +52,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ### Security
 
-- **The sort direction of the message list went into SQL as the request wrote it** (`?sort=effective_date&direction=…` was pasted into `ORDER BY`). A signed-in user, a team member included, could run their own SQL through it. The direction is now one of two literals, `asc` or `desc`.
+- **The sort direction of the e-mail and the SMS message list went into SQL as the request wrote it** (`?sort=effective_date&direction=…` was pasted into `ORDER BY`). A signed-in user, a team member included, could run their own SQL through it. The direction is now one of two literals, `asc` or `desc`.
 
 ### API
 
