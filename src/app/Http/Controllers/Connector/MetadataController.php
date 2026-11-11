@@ -49,6 +49,8 @@ class MetadataController extends Controller
     /** @param  array<string, mixed>  $document */
     private function document(array $document): JsonResponse
     {
-        return response()->json($document, 200, ['Cache-Control' => 'public, max-age=300'], JSON_UNESCAPED_SLASHES);
+        // The addresses in these documents follow the host of the request, so a
+        // shared cache must not hand one host's document to another.
+        return response()->json($document, 200, ['Cache-Control' => 'no-store'], JSON_UNESCAPED_SLASHES);
     }
 }

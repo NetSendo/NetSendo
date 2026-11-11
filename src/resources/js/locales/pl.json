@@ -9934,6 +9934,8 @@
             "verified": "Tożsamość potwierdzona",
             "unverified": "Niezweryfikowana",
             "verified_text": "Tożsamość tej aplikacji jest opublikowana pod adresem {host}.",
+            "mismatch": "Sprawdź adres powrotu",
+            "mismatch_text": "Ta aplikacja publikuje swoją tożsamość pod adresem {publisher}, ale po decyzji trafisz do {redirect}, czyli na inną stronę. W niektórych serwisach publikować może każdy, więc nazwa powyżej nie jest potwierdzona. Kontynuuj tylko wtedy, gdy sam zacząłeś to połączenie.",
             "unverified_text": "Ta aplikacja zarejestrowała się sama, więc NetSendo nie może potwierdzić jej nazwy. Kontynuuj tylko wtedy, gdy przed chwilą sam zacząłeś to połączenie.",
             "returns_to": "Po decyzji wrócisz do {host}.",
             "returns_local": "Po decyzji wrócisz do aplikacji działającej na tym komputerze.",

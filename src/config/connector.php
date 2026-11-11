@@ -50,6 +50,17 @@ return [
         // Client ID Metadata Documents: the client_id is an https URL of a
         // JSON document that NetSendo downloads (Claude's "published identity").
         'metadata_documents' => (bool) env('MCP_CONNECTOR_METADATA_DOCUMENTS', true),
+
+        // Registration needs no sign-in, so what it may store is bounded: this
+        // many self-registered clients may exist without a connected app. When
+        // the limit is reached the oldest unused ones make room; if all of them
+        // are fresh (a flood), registration answers "try again later".
+        'max_unconnected_clients' => (int) env('MCP_CONNECTOR_MAX_UNCONNECTED_CLIENTS', 500),
+
+        // A self-registered client that was connected once is remembered this
+        // many days after its last use, so a host that kept its client_id can
+        // reconnect. One that was never connected is removed after a day.
+        'keep_used_clients_days' => 90,
     ],
 
     // Redirect URIs must be https, or http on a loopback address (desktop and
@@ -65,5 +76,17 @@ return [
     'excluded_scopes' => ['brain:read', 'brain:write'],
 
     // Requests per minute for one connected app.
-    'rate_limit' => (int) env('MCP_CONNECTOR_RATE_LIMIT', 300),
+    'rate_limit' => (int) env('MCP_CONNECTOR_RATE_LIMIT', 120),
+
+    /*
+    | A tool call starts a Node.js process and holds a PHP worker until it ends.
+    | So that one app cannot occupy the installation, only this many tool calls
+    | run at the same time; a call over the limit is answered at once with
+    | "busy, try again". The stock PHP-FPM pool has 5 workers: 3 leaves room
+    | for the panel.
+    */
+    'concurrency' => [
+        'per_connection' => (int) env('MCP_CONNECTOR_CONCURRENT_CALLS_PER_APP', 2),
+        'total' => (int) env('MCP_CONNECTOR_CONCURRENT_CALLS', 3),
+    ],
 ];

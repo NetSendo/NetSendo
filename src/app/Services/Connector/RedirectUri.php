@@ -14,9 +14,12 @@ class RedirectUri
 {
     private const LOOPBACK_HOSTS = ['localhost', '127.0.0.1', '[::1]'];
 
+    /** The longest redirect URI of the known MCP hosts has 53 characters. */
+    public const MAX_LENGTH = 255;
+
     public static function isAllowed(mixed $uri): bool
     {
-        if (! is_string($uri) || $uri === '' || strlen($uri) > 2000 || preg_match('/[\x00-\x20\x7f]/', $uri)) {
+        if (! is_string($uri) || $uri === '' || strlen($uri) > self::MAX_LENGTH || preg_match('/[\x00-\x20\x7f]/', $uri)) {
             return false;
         }
 
@@ -81,6 +84,33 @@ class RedirectUri
         $parts = parse_url($uri);
 
         return strtolower($parts['host'] ?? '').($parts['path'] ?? '').(isset($parts['query']) ? '?'.$parts['query'] : '');
+    }
+
+    /**
+     * Does the redirect URI lead back to the publisher of a client metadata
+     * document? Yes for the same host, for a host below or above it
+     * (app.example.com and example.com), and for a loopback address (an app on
+     * the user's own machine). A document on a shared host (a file hosting or
+     * pages service) with a redirect somewhere else does not pass: anyone can
+     * publish there.
+     */
+    public static function belongsToHost(string $redirectUri, string $publisherHost): bool
+    {
+        if (self::isLoopback($redirectUri)) {
+            return true;
+        }
+
+        $parts = parse_url($redirectUri);
+        $host = strtolower($parts['host'] ?? '');
+        $publisherHost = strtolower($publisherHost);
+
+        if (strtolower($parts['scheme'] ?? '') !== 'https' || $host === '' || $publisherHost === '') {
+            return false;
+        }
+
+        return $host === $publisherHost
+            || str_ends_with($host, '.'.$publisherHost)
+            || str_ends_with($publisherHost, '.'.$host);
     }
 
     /** The host shown to the user on the consent screen ("…will return you to X"). */

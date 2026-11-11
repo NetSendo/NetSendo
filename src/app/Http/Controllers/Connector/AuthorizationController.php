@@ -40,17 +40,21 @@ class AuthorizationController extends Controller
                 throw new OAuthException('invalid_request', 'The redirect_uri is not registered for this application.');
             }
         } catch (OAuthException $e) {
-            return $this->framed(
-                Inertia::render('Connector/Authorize', ['error' => $e->error, 'errorDescription' => $e->getMessage()])
-                    ->toResponse($request)
-                    ->setStatusCode(400)
-            );
+            return $this->errorPage($request, $e);
         }
 
         $state = $request->query('state');
         $state = is_string($state) ? $state : null;
 
-        // From here on, errors go back to the application.
+        // The redirect URI is registered, but for a self-registered client that
+        // proves nothing: anyone can register any address, and a link to this
+        // endpoint with a broken request would then bounce the visitor from
+        // this installation to that address. Errors therefore go back to the
+        // application only when its identity is published and the redirect URI
+        // belongs to that publisher; otherwise they are shown here.
+        $publisher = $client->verifiedHost();
+        $trustedRedirect = $publisher !== null && RedirectUri::belongsToHost($redirectUri, $publisher);
+
         try {
             if ($request->query('response_type') !== 'code') {
                 throw new OAuthException('unsupported_response_type', 'Only response_type=code is supported.');
@@ -77,6 +81,10 @@ class AuthorizationController extends Controller
                 throw new OAuthException('invalid_scope', 'None of the requested scopes exist.');
             }
         } catch (OAuthException $e) {
+            if (! $trustedRedirect) {
+                return $this->errorPage($request, $e);
+            }
+
             return redirect()->away($this->redirectUrl($redirectUri, [
                 'error' => $e->error,
                 'error_description' => $e->getMessage(),
@@ -110,9 +118,14 @@ class AuthorizationController extends Controller
                 'requestId' => $requestId,
                 'client' => [
                     'name' => $client->name,
-                    // Proven by the metadata document's address; a self-registered
-                    // client can call itself anything.
-                    'verified_host' => $client->verifiedHost(),
+                    // Proven by the metadata document's address, as long as the app
+                    // also returns there; a self-registered client can call itself
+                    // anything.
+                    'verified_host' => $trustedRedirect ? $publisher : null,
+                    // Published somewhere, but returning somewhere else (a document on
+                    // a shared host): shown as a warning, not as a confirmation.
+                    'publisher_host' => $publisher,
+                    'publisher_mismatch' => $publisher !== null && ! $trustedRedirect,
                     'redirect_host' => RedirectUri::displayHost($redirectUri),
                     'is_local' => RedirectUri::isLoopback($redirectUri),
                 ],
@@ -189,6 +202,16 @@ class AuthorizationController extends Controller
         $parameters = array_filter($parameters, fn ($value) => $value !== null) + ['iss' => ConnectorUrls::issuer()];
 
         return $redirectUri.(str_contains($redirectUri, '?') ? '&' : '?').http_build_query($parameters);
+    }
+
+    /** A request that cannot be answered to the application: said here, with no redirect. */
+    private function errorPage(Request $request, OAuthException $e): Response
+    {
+        return $this->framed(
+            Inertia::render('Connector/Authorize', ['error' => $e->error, 'errorDescription' => $e->getMessage()])
+                ->toResponse($request)
+                ->setStatusCode(400)
+        );
     }
 
     /** The consent screen must not be shown inside another site's frame. */

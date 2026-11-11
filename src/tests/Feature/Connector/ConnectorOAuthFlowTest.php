@@ -228,35 +228,66 @@ class ConnectorOAuthFlowTest extends TestCase
 
     public function test_pkce_s256_is_required(): void
     {
-        $clientId = $this->registerClient();
+        $url = $this->publishedClient();
 
         $withoutChallenge = $this->redirectParameters(
-            $this->actingAs($this->user)->get($this->authorizeUrl($clientId, '', ['code_challenge' => null]))
+            $this->actingAs($this->user)->get($this->authorizeUrl($url, '', ['code_challenge' => null]))
         );
         $this->assertSame('invalid_request', $withoutChallenge['error']);
         $this->assertSame('state-123', $withoutChallenge['state']);
         $this->assertSame('http://localhost', $withoutChallenge['iss']);
 
         $plain = $this->redirectParameters(
-            $this->actingAs($this->user)->get($this->authorizeUrl($clientId, $this->pkce()['challenge'], ['code_challenge_method' => 'plain']))
+            $this->actingAs($this->user)->get($this->authorizeUrl($url, $this->pkce()['challenge'], ['code_challenge_method' => 'plain']))
         );
         $this->assertSame('invalid_request', $plain['error']);
     }
 
     public function test_a_request_for_another_resource_or_only_unknown_scopes_is_refused(): void
     {
-        $clientId = $this->registerClient();
+        $url = $this->publishedClient();
         $challenge = $this->pkce()['challenge'];
 
         $target = $this->redirectParameters(
-            $this->actingAs($this->user)->get($this->authorizeUrl($clientId, $challenge, ['resource' => 'https://other.example/mcp']))
+            $this->actingAs($this->user)->get($this->authorizeUrl($url, $challenge, ['resource' => 'https://other.example/mcp']))
         );
         $this->assertSame('invalid_target', $target['error']);
 
         $scope = $this->redirectParameters(
-            $this->actingAs($this->user)->get($this->authorizeUrl($clientId, $challenge, ['scope' => 'admin everything']))
+            $this->actingAs($this->user)->get($this->authorizeUrl($url, $challenge, ['scope' => 'admin everything']))
         );
         $this->assertSame('invalid_scope', $scope['error']);
+    }
+
+    public function test_a_broken_request_of_a_self_registered_client_is_never_redirected(): void
+    {
+        // Anyone can register any redirect address. A link to this endpoint with a
+        // broken request must not bounce the visitor from NetSendo to that address.
+        $this->redirectUri = 'https://phishing.example/landing';
+        $clientId = $this->registerClient();
+        $challenge = $this->pkce()['challenge'];
+
+        foreach ([
+            ['response_type' => 'token'],
+            ['code_challenge' => null],
+            ['code_challenge_method' => 'plain'],
+            ['resource' => 'https://other.example/mcp'],
+            ['scope' => 'admin everything'],
+        ] as $broken) {
+            $response = $this->actingAs($this->user)->get($this->authorizeUrl($clientId, $challenge, $broken));
+
+            $response->assertStatus(400)
+                ->assertHeaderMissing('Location')
+                ->assertInertia(fn (AssertableInertia $page) => $page->component('Connector/Authorize')->has('error')->missing('requestId'));
+        }
+
+        // Once the user has seen the consent screen, the answer goes to the application.
+        $page = $this->actingAs($this->user)->get($this->authorizeUrl($clientId, $challenge))->assertOk();
+        $denied = $this->redirectParameters($this->actingAs($this->user)->post('/oauth/authorize', [
+            'request_id' => $page->viewData('page')['props']['requestId'],
+            'decision' => 'deny',
+        ]));
+        $this->assertStringStartsWith('https://phishing.example/landing?error=access_denied', $denied['_url']);
     }
 
     // ------------------------------------------------------------------
@@ -531,6 +562,7 @@ class ConnectorOAuthFlowTest extends TestCase
         $this->fakeMetadataDocument(['client_id' => 'https://someone-else.example/client', 'redirect_uris' => [$this->redirectUri]]);
         $this->actingAs($this->user)->get($this->authorizeUrl($url, $challenge))->assertStatus(400);
 
+        \Illuminate\Support\Facades\Cache::flush();
         $this->fakeMetadataDocument(['client_id' => $url, 'redirect_uris' => ['javascript:alert(1)']]);
         $this->actingAs($this->user)->get($this->authorizeUrl($url, $challenge))->assertStatus(400);
 
@@ -564,6 +596,16 @@ class ConnectorOAuthFlowTest extends TestCase
             $this->assertFalse(ClientMetadataFetcher::isPublicAddress($address), $address);
         }
         $this->assertTrue(ClientMetadataFetcher::isPublicAddress('160.79.104.10'));
+    }
+
+    /** A client with a published identity that returns to its own host, like Claude. */
+    private function publishedClient(): string
+    {
+        $url = 'https://claude.example/oauth/client-metadata';
+        $this->redirectUri = 'https://claude.example/api/mcp/auth_callback';
+        $this->fakeMetadataDocument(['client_id' => $url, 'client_name' => 'Claude', 'redirect_uris' => [$this->redirectUri]]);
+
+        return $url;
     }
 
     /** @param  array<string, mixed>  $document */

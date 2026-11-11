@@ -4,7 +4,9 @@ namespace App\Mcp;
 
 use App\Http\Middleware\AuthenticateConnector;
 use App\Models\ApiKey;
+use App\Models\ConnectorConnection;
 use App\Services\Connector\ApiDispatcher;
+use App\Services\Connector\ToolCallSlots;
 use App\Services\Connector\ToolEngine;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -21,6 +23,8 @@ use stdClass;
 class BridgeTool extends Tool
 {
     private const API_KEY_HINT = 'The API key is missing a permission. Ask the user to enable it in NetSendo → API keys.';
+
+    private const BUSY = 'NetSendo is busy: other tool calls of this connection are still running. Nothing was started or changed. Wait a few seconds and call the tool again, and run NetSendo tools one or two at a time.';
 
     private const PERMISSION_HINT = 'If NetSendo is connected through the AI connector (sign-in), this permission was not granted: ask the user to disconnect the connector and connect it again, ticking the permission on the NetSendo consent screen. If an API key is used, the key needs that permission.';
 
@@ -59,12 +63,23 @@ class BridgeTool extends Tool
         ];
     }
 
-    public function handle(Request $request, ToolEngine $engine, ApiDispatcher $api): Response|ResponseFactory
+    public function handle(Request $request, ToolEngine $engine, ApiDispatcher $api, ToolCallSlots $slots): Response|ResponseFactory
     {
         $identity = request()->attributes->get(AuthenticateConnector::IDENTITY_ATTRIBUTE);
 
         if (! $identity instanceof ApiKey) {
             return Response::error('This tool needs a signed-in connector session.');
+        }
+
+        $connection = request()->attributes->get(AuthenticateConnector::CONNECTION_ATTRIBUTE);
+        $owner = $connection instanceof ConnectorConnection ? 'connection.'.$connection->id : 'key.'.$identity->id;
+
+        // Only a few tool calls run at once (ToolCallSlots). The model is told
+        // to try again; nothing has been started.
+        $held = $slots->acquire($owner);
+
+        if ($held === null) {
+            return Response::error(self::BUSY);
         }
 
         try {
@@ -75,6 +90,8 @@ class BridgeTool extends Tool
             );
         } catch (RuntimeException $e) {
             return Response::error($e->getMessage());
+        } finally {
+            $slots->release($held);
         }
 
         $responses = [];

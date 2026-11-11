@@ -92,13 +92,28 @@ const decide = (decision) => {
                 <Panel :title="t('connector.authorize.app_title')">
                     <template #actions>
                         <StatusPill :tone="client.verified_host ? 'success' : 'warning'">
-                            {{ client.verified_host ? t("connector.authorize.verified") : t("connector.authorize.unverified") }}
+                            {{
+                                client.verified_host
+                                    ? t("connector.authorize.verified")
+                                    : client.publisher_mismatch
+                                      ? t("connector.authorize.mismatch")
+                                      : t("connector.authorize.unverified")
+                            }}
                         </StatusPill>
                     </template>
 
                     <p class="break-words text-base font-semibold">{{ client.name }}</p>
                     <p v-if="client.verified_host" class="mt-1 text-sm text-slate-600 dark:text-slate-400">
                         {{ t("connector.authorize.verified_text", { host: client.verified_host }) }}
+                    </p>
+                    <!-- A published identity that returns to another site proves nothing -->
+                    <p v-else-if="client.publisher_mismatch" class="mt-1 break-words text-sm text-slate-600 dark:text-slate-400">
+                        {{
+                            t("connector.authorize.mismatch_text", {
+                                publisher: client.publisher_host,
+                                redirect: client.redirect_host,
+                            })
+                        }}
                     </p>
                     <p v-else class="mt-1 text-sm text-slate-600 dark:text-slate-400">
                         {{ t("connector.authorize.unverified_text") }}

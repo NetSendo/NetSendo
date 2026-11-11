@@ -96,7 +96,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $identity = $request->attributes->get(\App\Http\Middleware\AuthenticateConnector::IDENTITY_ATTRIBUTE);
             $identifier = $connection ? 'connection:'.$connection->id : ($identity?->id ? 'key:'.$identity->id : $request->ip());
 
-            return Limit::perMinute((int) config('connector.rate_limit', 300))->by($identifier);
+            return Limit::perMinute((int) config('connector.rate_limit', 120))->by($identifier);
         });
 
         // Configure Pixel rate limiting (protect against event flooding)

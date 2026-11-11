@@ -55,7 +55,8 @@ Route::middleware(ConnectorEnabled::class)->group(function () {
         ->name('connector.oauth.revoke');
 
     // --- Consent screen (the signed-in panel user) ---------------------------
-    Route::middleware(['web', 'auth', '2fa'])->group(function () {
+    // Throttled per user: showing it may download a client metadata document.
+    Route::middleware(['web', 'auth', '2fa', 'throttle:60,1'])->group(function () {
         Route::get('/oauth/authorize', [AuthorizationController::class, 'show'])->name('connector.oauth.authorize');
         Route::post('/oauth/authorize', [AuthorizationController::class, 'decide'])->name('connector.oauth.decide');
     });

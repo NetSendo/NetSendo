@@ -7,8 +7,12 @@ use App\Models\ConnectorClient;
 use App\Models\ConnectorConnection;
 use App\Models\ConnectorToken;
 use App\Models\User;
+use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Encryption\Encrypter;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Throwable;
 
 /**
  * Issues and checks the connector's OAuth tokens.
@@ -132,6 +136,32 @@ class TokenService
      */
     public function refresh(ConnectorClient $client, string $refreshToken): array
     {
+        // Two requests with the same refresh token at the same moment (two
+        // processes of one host) are handled one after the other, so that the
+        // second one finds what the first one issued.
+        $lock = null;
+
+        try {
+            $lock = Cache::lock('connector.refresh.'.hash('sha256', $refreshToken), 20);
+            $lock->block(8);
+        } catch (LockTimeoutException) {
+            $lock = null;
+        } catch (Throwable $e) {
+            // A cache store without locks: go on unserialised.
+            report($e);
+            $lock = null;
+        }
+
+        try {
+            return $this->exchangeRefreshToken($client, $refreshToken);
+        } finally {
+            $lock?->release();
+        }
+    }
+
+    /** @return array<string, mixed> */
+    private function exchangeRefreshToken(ConnectorClient $client, string $refreshToken): array
+    {
         $token = ConnectorToken::with('connection')
             ->where('refresh_token_hash', hash('sha256', $refreshToken))
             ->first();
@@ -142,8 +172,17 @@ class TokenService
             throw new OAuthException('invalid_grant', 'The refresh token is not valid.');
         }
 
-        if ($token->revoked_at !== null || $connection->isRevoked() || $token->refresh_expires_at->isPast()) {
+        if ($connection->isRevoked() || $token->refresh_expires_at->isPast()) {
             throw new OAuthException('invalid_grant', 'The refresh token has expired or was revoked. Sign in again.');
+        }
+
+        // A token that was withdrawn while its connection lives on lost a race
+        // for the same refresh token (see below). Two parties hold tokens of
+        // this connection, so it ends for both.
+        if ($token->revoked_at !== null) {
+            $connection->revoke();
+
+            throw new OAuthException('invalid_grant', 'The refresh token was replaced. Sign in again.');
         }
 
         if ($token->rotated_at !== null) {
@@ -156,15 +195,85 @@ class TokenService
 
                 throw new OAuthException('invalid_grant', 'The refresh token was already used. Sign in again.');
             }
+
+            // The same refresh token again, moments after it was exchanged: a host
+            // that never received the answer, or two processes of one host that
+            // refreshed at the same moment. They get the pair the first exchange
+            // produced, so that one token chain exists and not two.
+            $first = $this->recallRefreshResponse($refreshToken);
+
+            if ($first !== null) {
+                return $first;
+            }
         }
 
-        return DB::transaction(function () use ($token, $connection) {
+        return DB::transaction(function () use ($token, $connection, $client, $refreshToken) {
             if ($token->rotated_at === null) {
                 $token->forceFill(['rotated_at' => now()])->save();
+            } else {
+                // The first answer can no longer be repeated (the cache lost it):
+                // what it produced is withdrawn before a new pair is issued.
+                $connection->tokens()
+                    ->where('id', '>', $token->id)
+                    ->whereNull('revoked_at')
+                    ->update(['revoked_at' => now()]);
             }
 
-            return $this->issue($connection);
+            // Kept current so that an unused client can be told from one in use (connector:prune).
+            $client->forceFill(['last_used_at' => now()])->save();
+
+            $response = $this->issue($connection);
+            $this->rememberRefreshResponse($refreshToken, $response);
+
+            return $response;
         });
+    }
+
+    /**
+     * Keep the answer to a refresh for the grace period, so that a repeated
+     * request can be given the same pair. It is encrypted with a key made from
+     * the refresh token that was exchanged, which the server does not store:
+     * only a request that presents that token again can read it.
+     *
+     * @param  array<string, mixed>  $response
+     */
+    private function rememberRefreshResponse(string $refreshToken, array $response): void
+    {
+        $grace = (int) config('connector.refresh_reuse_grace', 60);
+
+        if ($grace <= 0) {
+            return;
+        }
+
+        try {
+            Cache::put(
+                'connector.refresh_response.'.hash('sha256', $refreshToken),
+                $this->refreshResponseCipher($refreshToken)->encryptString(json_encode($response)),
+                $grace,
+            );
+        } catch (Throwable $e) {
+            report($e);
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    private function recallRefreshResponse(string $refreshToken): ?array
+    {
+        try {
+            $stored = Cache::get('connector.refresh_response.'.hash('sha256', $refreshToken));
+            $response = is_string($stored)
+                ? json_decode($this->refreshResponseCipher($refreshToken)->decryptString($stored), true)
+                : null;
+        } catch (Throwable) {
+            return null;
+        }
+
+        return is_array($response) && isset($response['access_token'], $response['refresh_token']) ? $response : null;
+    }
+
+    private function refreshResponseCipher(string $refreshToken): Encrypter
+    {
+        return new Encrypter(hash('sha256', 'connector-refresh-response|'.$refreshToken, true), 'aes-256-gcm');
     }
 
     /**
