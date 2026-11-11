@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
 import { Head, Link, useForm } from "@inertiajs/vue3";
 import { ref, computed, watch, onMounted } from "vue";
 import axios from "axios";
@@ -52,12 +53,10 @@ const smsTabs = computed(() => [
     {
         id: "content",
         label: t("sms.tabs.content"),
-        emoji: "✏️",
     },
     {
         id: "settings",
         label: t("sms.tabs.settings"),
-        emoji: "⚙️",
     },
 ]);
 
@@ -345,40 +344,28 @@ const submit = (targetStatus = null) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1
-                        class="text-2xl font-bold text-slate-900 dark:text-white"
-                    >
-                        {{
-                            isEditing
-                                ? $t("sms.edit_title")
-                                : $t("sms.create_title")
-                        }}
-                    </h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                        {{
-                            isEditing
-                                ? $t("sms.edit_subtitle")
-                                : $t("sms.create_subtitle")
-                        }}
-                    </p>
-                </div>
+            <PageHeader
+                :title="isEditing ? $t('sms.edit_title') : $t('sms.create_title')"
+                :subtitle="isEditing ? $t('sms.edit_subtitle') : $t('sms.create_subtitle')"
+            >
                 <Link
                     :href="route('sms.index')"
-                    class="text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                    class="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700/60"
                 >
-                    &larr; {{ $t("sms.back_to_list") }}
+                    <svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M15 19l-7-7 7-7" />
+                    </svg>
+                    {{ $t("sms.back_to_list") }}
                 </Link>
-            </div>
+            </PageHeader>
         </template>
 
-        <div class="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div class="mx-auto grid max-w-screen-2xl grid-cols-1 gap-5 lg:grid-cols-3">
             <!-- Left Column: Form -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- Main Settings Card -->
                 <div
-                    class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-900"
+                    class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700/60 dark:bg-slate-900"
                 >
                     <form @submit.prevent="submit('draft')" class="space-y-6">
                         <!-- Internal Name -->
@@ -433,7 +420,7 @@ const submit = (targetStatus = null) => {
                                     id="content"
                                     v-model="form.content"
                                     rows="5"
-                                    class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white sm:text-sm"
+                                    class="border bg-white px-3 py-2 mt-1 block w-full rounded-lg border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white sm:text-sm focus:outline-none focus:ring-1"
                                     :placeholder="
                                         $t('sms.fields.content_placeholder')
                                     "
@@ -510,7 +497,7 @@ const submit = (targetStatus = null) => {
                                                     "
                                                 >
                                                     <hr
-                                                        class="my-2 border-slate-200 dark:border-slate-700"
+                                                        class="border bg-white px-3 py-2 my-2 border-slate-200 dark:border-slate-700 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white focus:outline-none focus:ring-1"
                                                     />
                                                     <p
                                                         class="mb-1 text-xs font-medium text-slate-500 dark:text-slate-400"
@@ -545,7 +532,7 @@ const submit = (targetStatus = null) => {
                                     <button
                                         type="button"
                                         @click="showSmsAiPanel = true"
-                                        class="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 px-3 py-2 text-sm font-medium text-white hover:from-emerald-600 hover:to-teal-700"
+                                        class="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-500"
                                     >
                                         <svg
                                             class="h-4 w-4"
@@ -660,7 +647,7 @@ const submit = (targetStatus = null) => {
                                     <!-- List Type Filter -->
                                     <select
                                         v-model="listTypeFilter"
-                                        class="block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                        class="border bg-white px-3 py-2 block w-full rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1"
                                     >
                                         <option value="">
                                             {{
@@ -687,14 +674,14 @@ const submit = (targetStatus = null) => {
                                         :placeholder="
                                             $t('common.search') + '...'
                                         "
-                                        class="block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                        class="border bg-white px-3 py-2 block w-full rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1"
                                     />
                                 </div>
 
                                 <select
                                     id="list_id"
                                     v-model="form.list_id"
-                                    class="block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                    class="border bg-white px-3 py-2 block w-full rounded-lg border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1"
                                     size="6"
                                 >
                                     <option value="" disabled>
@@ -739,7 +726,7 @@ const submit = (targetStatus = null) => {
                                 <select
                                     id="sms_provider_id"
                                     v-model="form.sms_provider_id"
-                                    class="mt-1 block w-full rounded-lg border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                                    class="border bg-white px-3 py-2 mt-1 block w-full rounded-lg border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1"
                                 >
                                     <option :value="null">
                                         {{ $t("sms.fields.provider_auto") }}
@@ -929,7 +916,7 @@ const submit = (targetStatus = null) => {
             <div class="space-y-6">
                 <!-- Actions -->
                 <div
-                    class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-900"
+                    class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700/60 dark:bg-slate-900"
                 >
                     <h3 class="font-medium text-slate-900 dark:text-white">
                         {{ $t("sms.table.actions") }}
@@ -981,7 +968,7 @@ const submit = (targetStatus = null) => {
 
                 <!-- Phone Preview -->
                 <div
-                    class="rounded-2xl bg-white p-6 shadow-sm dark:bg-slate-900"
+                    class="rounded-2xl border border-slate-200 bg-white p-6 dark:border-slate-700/60 dark:bg-slate-900"
                 >
                     <h3 class="font-medium text-slate-900 dark:text-white mb-4">
                         Preview

@@ -106,14 +106,19 @@ docker compose --profile nmi up -d
 
 Navigate to **Settings → Mail Infrastructure** in NetSendo UI.
 
+**4. Send through it:**
+
+Verify your domain in **Deliverability**, then add a mailbox with the **NetSendo MTA** provider in **Settings → Mailboxes**. The server needs outbound port 25, which many cloud providers block.
+
 ### NMI Volumes
 
-| Volume      | Purpose             |
-| ----------- | ------------------- |
-| `nmi_queue` | Email queue storage |
-| `nmi_logs`  | MTA log files       |
-| `nmi_dkim`  | DKIM private keys   |
-| `nmi_tls`   | TLS certificates    |
+| Volume      | Purpose                           |
+| ----------- | --------------------------------- |
+| `nmi_auth`  | MTA logins of the sending domains |
+| `nmi_queue` | Email queue storage               |
+| `nmi_logs`  | MTA log files                     |
+| `nmi_dkim`  | DKIM private keys                 |
+| `nmi_tls`   | TLS certificates                  |
 
 > 📖 Full documentation: [docs/NMI.md](docs/NMI.md)
 

@@ -312,7 +312,19 @@
         "view_all": "Ver todo",
         "undo": "Deshacer",
         "redo": "Rehacer",
-        "date": "Fecha"
+        "date": "Fecha",
+        "pagination": {
+            "range": "{from}–{to} de {total}",
+            "per_page": "Por página",
+            "label": "Páginas"
+        },
+        "clear_filters": "Borrar filtros",
+        "adding": "Añadiendo...",
+        "creating": "Creando...",
+        "checking": "Comprobando...",
+        "generating": "Generando...",
+        "starting": "Iniciando...",
+        "testing": "Probando…"
     },
     "ab_tests": {
         "enable_testing": "Habilitar pruebas A/B",
@@ -1271,9 +1283,26 @@
             "profit": "Beneficios",
             "statistics": "Estadísticas",
             "settings": "Configuración",
-            "brain": "NetSendo Brain"
+            "brain": "NetSendo Brain",
+            "contacts": "Contactos",
+            "sales": "Ventas",
+            "analytics": "Analítica",
+            "library": "Biblioteca"
         },
-        "telemetry": "Telemetría"
+        "telemetry": "Telemetría",
+        "main": "Navegación principal",
+        "items": {
+            "email": "Correo",
+            "sms": "SMS",
+            "segmentation": "Segmentación",
+            "google": "Integraciones de Google"
+        },
+        "settings_sections": {
+            "account": "Cuenta",
+            "sending": "Envío",
+            "integrations": "Integraciones",
+            "system": "Sistema"
+        }
     },
     "dashboard": {
         "welcome_back": "¡Bienvenido de nuevo, {name}! 👋",
@@ -1290,7 +1319,21 @@
             "open_chat": "Abrir Chat IA",
             "settings": "Configuración",
             "unavailable": "Brain IA no disponible",
-            "configure": "Configurar"
+            "configure": "Configurar",
+            "untitled_plan": "Plan sin título",
+            "approved": "Aprobado.",
+            "rejected": "Rechazado.",
+            "decision_failed": "No se pudo guardar la decisión. Inténtalo de nuevo.",
+            "waiting": "Esperan tu decisión: {count}",
+            "nothing_waiting": "Nada espera tu decisión.",
+            "goal_proposal": "Propuesta de objetivo",
+            "plan_steps": "Plan · pasos: {count}",
+            "approve": "Aprobar",
+            "reject": "Rechazar",
+            "more": "Ver el resto ({count})",
+            "ask_label": "Pregunta a Brain",
+            "ask_placeholder": "p. ej. ¿Qué lista crece más rápido?",
+            "ask_send": "Enviar pregunta"
         },
         "brain_activity": {
             "bar_title": "Brain está trabajando...",
@@ -1323,7 +1366,13 @@
             "subscribers": "Suscriptores",
             "opens": "Aperturas",
             "empty_description": "Los datos de actividad aparecerán después del primer envío.",
-            "empty_title": "Sin datos"
+            "empty_title": "Sin datos",
+            "heading": "Actividad de envío",
+            "clicks": "Clics",
+            "new_subscribers": "Nuevos suscriptores",
+            "series": "Series del gráfico",
+            "empty_period": "No se envió nada en el periodo seleccionado.",
+            "chart_label": "Gráfico de la actividad diaria en el periodo seleccionado"
         },
         "quick_actions": {
             "title": "Acciones rápidas",
@@ -1351,7 +1400,15 @@
             },
             "create_first": "Crear mensaje",
             "empty_description": "Crea tu primer mensaje para verlo aquí.",
-            "empty_title": "Sin campañas"
+            "empty_title": "Sin campañas",
+            "columns": {
+                "campaign": "Campaña",
+                "sent": "Enviados",
+                "opens": "Aperturas",
+                "clicks": "Clics"
+            },
+            "no_subject": "(sin asunto)",
+            "no_list": "Sin lista"
         },
         "cron": {
             "status_title": "⏰ Estado de CRON",
@@ -1372,6 +1429,71 @@
         "clock": {
             "timezone_label": "Zona horaria",
             "title": "Hora actual"
+        },
+        "greeting": {
+            "morning": "Buenos días, {name}",
+            "afternoon": "Buenas tardes, {name}",
+            "evening": "Buenas noches, {name}"
+        },
+        "period": {
+            "label": "Periodo",
+            "days": "{count} días"
+        },
+        "overview": {
+            "title": "Resumen",
+            "compared": "Comparado con los {count} días anteriores"
+        },
+        "kpi": {
+            "title": "Cifras clave",
+            "subscribers": "Suscriptores activos",
+            "sent": "Correos enviados",
+            "open_rate": "Tasa de apertura",
+            "click_rate": "Tasa de clics",
+            "points": "pp",
+            "up": "sube",
+            "down": "baja",
+            "new_subscribers": "nuevos: {count} · antes {previous}",
+            "previously": "antes {value}"
+        },
+        "attention": {
+            "title": "Requiere atención",
+            "count": "Requiere atención: {count}",
+            "license": "La licencia de NetSendo está inactiva.",
+            "cron_instructions": "Ver instrucciones",
+            "cron_stale": "CRON no se ejecuta: última ejecución {when}. Los mensajes programados no salen.",
+            "cron_failed": "Ejecuciones de CRON fallidas en las últimas 24 horas: {count}.",
+            "check": "Revisar",
+            "no_mailbox": "No tienes ningún buzón de envío, así que los correos no pueden salir.",
+            "add_mailbox": "Añadir buzón",
+            "no_ai": "Sin integración de IA: Brain y los asistentes de contenido están desactivados.",
+            "connect_ai": "Conectar IA",
+            "audit_critical": "Auditoría de campañas: problemas críticos ({count}).",
+            "see": "Ver"
+        },
+        "scheduled": {
+            "title": "Programados",
+            "empty": "No hay envíos programados.",
+            "plan": "Programar un mensaje",
+            "recipients": "destinatarios: {count}"
+        },
+        "health": {
+            "title": "Salud de las campañas",
+            "score_label": "Puntuación {score} de 100",
+            "last_audit": "última auditoría {when}",
+            "open": "Abrir la auditoría"
+        },
+        "system": {
+            "cron_never": "CRON aún no se ha ejecutado",
+            "cron_unknown": "CRON: sin datos",
+            "cron_last_run": "CRON: última ejecución {when}",
+            "queue": "En cola: {count}",
+            "mailboxes": "Buzones: {count}",
+            "cron_settings": "Ajustes de CRON"
+        },
+        "create": {
+            "button": "Crear",
+            "email": "Nuevo mensaje de correo",
+            "sms": "Nuevo mensaje SMS"
         }
     },
     "mailing_lists": {
@@ -1944,7 +2066,8 @@
             "status": "Estado",
             "created_at": "Creado el",
             "actions": "Acciones",
-            "stats": "Estadísticas"
+            "stats": "Estadísticas",
+            "message": "Mensaje"
         },
         "empty_title": "No hay mensajes que coincidan con los criterios.",
         "delete_confirm_title": "¿Está seguro de que desea eliminar este mensaje?",
@@ -1980,7 +2103,9 @@
             "content": "Contenido",
             "settings": "Configuración",
             "triggers": "Disparadores",
-            "ab_testing": "Pruebas A/B"
+            "ab_testing": "Pruebas A/B",
+            "audience": "Destinatarios",
+            "delivery": "Envío"
         },
         "template": {
             "title": "Plantilla",
@@ -2435,7 +2560,38 @@
         "resend_note_title": "Nota",
         "resend_success_title": "¡Envío programado!",
         "resending": "Enviando...",
-        "scheduled_for": "Programado para"
+        "scheduled_for": "Programado para",
+        "views": {
+            "label": "Tipo de mensaje",
+            "all": "Todos",
+            "draft": "Borradores",
+            "scheduled": "Programados",
+            "sent": "Enviados",
+            "autoresponder": "Colas"
+        },
+        "filters": {
+            "more": "Filtros",
+            "clear": "Borrar filtros",
+            "group": "Grupo de listas",
+            "tag": "Etiqueta de lista",
+            "campaign": "Campaña"
+        },
+        "empty_first": "Aún no tienes ningún mensaje.",
+        "no_subject": "(sin asunto)",
+        "no_list": "Sin lista",
+        "lists_count": "Listas: {count}",
+        "ab_test_running": "en curso",
+        "actions_for": "Acciones del mensaje: {subject}",
+        "resend_failed": "No se pudo volver a enviar el mensaje.",
+        "date_sent": "Enviado",
+        "date_scheduled": "Envío",
+        "date_created": "Creado",
+        "sections": {
+            "send_to": "Enviar a",
+            "exclude": "No enviar a",
+            "when": "Cuándo",
+            "sender_tracking": "Remitente y seguimiento"
+        }
     },
     "subscribers": {
         "title": "Suscriptores",
@@ -2875,7 +3031,11 @@
                 "ip_address": "Dirección IP",
                 "created_at": "Añadido el"
             }
-        }
+        },
+        "views": {
+            "all": "Todos"
+        },
+        "actions_for": "Acciones del suscriptor: {email}"
     },
     "groups": {
         "title": "Grupos de listas de correo",
@@ -2954,11 +3114,21 @@
                 "ecommerce": "E-commerce",
                 "transactional": "Transaccional",
                 "notification": "Notificación"
-            }
+            },
+            "hide": "Ocultar",
+            "show": "Mostrar",
+            "subtitle_plain": "Diseños listos. El que elijas llega a tus plantillas como una copia para editar."
         },
         "confirm_delete": "¿Está seguro de que desea eliminar esta plantilla?",
         "duplicate": "Duplicar plantilla",
-        "updated_at": "Actualizado"
+        "updated_at": "Actualizado",
+        "search_placeholder": "Buscar plantilla",
+        "categories_label": "Categoría",
+        "actions_for": "Acciones de la plantilla: {name}",
+        "empty_filtered": "Ninguna plantilla coincide con los filtros",
+        "delete_title": "¿Eliminar la plantilla?",
+        "delete_description": "Los mensajes que ya se crearon con ella quedan como están.",
+        "deleted": "Plantilla eliminada"
     },
     "setup": {
         "title": "Instalación de NetSendo",
@@ -3018,7 +3188,8 @@
             "tokens_small_help": "Para títulos, textos cortos (predeterminado: {default})",
             "tokens_large_label": "Tokens (tareas grandes)",
             "tokens_large_help": "Para contenido de correo electrónico, plantillas (predeterminado: {default})",
-            "optional": "opcional"
+            "optional": "opcional",
+            "key_from": "Obtén una clave en:"
         },
         "delete": {
             "title": "Eliminar integración",
@@ -3030,6 +3201,20 @@
             "fast_and_cheap": "Rápido y barato",
             "reasoning": "Razonamiento",
             "fast": "Rápido"
+        },
+        "table": {
+            "provider": "Proveedor",
+            "status": "Estado",
+            "active": "Activada"
+        },
+        "switch_label": "Activada: {name}",
+        "actions_for": "Acciones de la integración: {name}",
+        "testing": "Probando…",
+        "notifications": {
+            "saved": "Integración guardada",
+            "deleted": "Integración eliminada",
+            "enabled": "Integración activada",
+            "disabled": "Integración desactivada"
         }
     },
     "welcome": {
@@ -3114,6 +3299,28 @@
             "processing": "Procesando...",
             "success": "Se ha generado una nueva contraseña y se ha enviado a tu dirección de correo.",
             "title": "Restablecer contraseña"
+        },
+        "brand": {
+            "headline": "Marketing por correo y SMS en tu propio servidor.",
+            "points": {
+                "channels": "Correo y SMS desde un solo panel",
+                "automation": "Automatizaciones, embudos y CRM",
+                "ownership": "Tus datos se quedan en tu servidor"
+            }
+        },
+        "first_run": {
+            "eyebrow": "Primera ejecución",
+            "title": "Bienvenido a NetSendo",
+            "email_hint": "Iniciarás sesión con esta dirección."
+        },
+        "show_password": "Mostrar contraseña",
+        "hide_password": "Ocultar contraseña",
+        "back_to_login": "Volver al inicio de sesión",
+        "invitation": {
+            "title": "Únete al equipo",
+            "intro": "{name} te invita a NetSendo. Define una contraseña para crear tu cuenta.",
+            "set_password": "Define una contraseña",
+            "submit": "Crear cuenta y unirse"
         }
     },
     "Ta nazwa pola jest zarezerwowana przez system.": "Este nombre de campo está reservado por el sistema.",
@@ -3606,7 +3813,9 @@
             "modal_title": "Añadir integración de Google",
             "name_placeholder": "Nombre (ej. Aplicación de Marketing)"
         },
-        "confirm_delete": "¿Está seguro de que desea eliminar esta integración?"
+        "confirm_delete": "¿Está seguro de que desea eliminar esta integración?",
+        "actions_for": "Acciones de la conexión: {name}",
+        "delete_title": "¿Eliminar la conexión con Google?"
     },
     "calendar": {
         "title": "Integración de Google Calendar",
@@ -3827,7 +4036,21 @@
         "deactivated": "El formulario ha sido desactivado",
         "deleted": "El formulario ha sido eliminado",
         "duplicated": "El formulario ha sido duplicado",
-        "saved_success": "El formulario ha sido guardado"
+        "saved_success": "El formulario ha sido guardado",
+        "subtitle": "Los formularios con los que la gente se apunta a tus listas",
+        "views": {
+            "label": "Estado de los formularios",
+            "all": "Todos",
+            "active": "Activos",
+            "draft": "Borradores",
+            "disabled": "Desactivados"
+        },
+        "no_list": "Sin lista",
+        "no_submissions": "Aún sin altas",
+        "actions_for": "Acciones del formulario: {name}",
+        "empty_filtered": "Ningún formulario coincide con los filtros",
+        "delete_title": "¿Eliminar el formulario?",
+        "delete_description": "El formulario dejará de aceptar altas en las páginas donde está incrustado. Esto no se puede deshacer."
     },
     "funnels": {
         "title": "Embudos de venta",
@@ -4032,7 +4255,30 @@
         "notifications": {
             "saved": "Embudo guardado.",
             "created": "Embudo creado."
-        }
+        },
+        "subtitle": "Secuencias de pasos por las que llevas a los suscriptores",
+        "views": {
+            "label": "Estado de los embudos",
+            "all": "Todos",
+            "active": "Activos",
+            "paused": "Pausados",
+            "draft": "Borradores"
+        },
+        "triggers": {
+            "list_signup": "Alta en la lista",
+            "tag_added": "Etiqueta añadida",
+            "form_submit": "Formulario enviado",
+            "manual": "Manual"
+        },
+        "trigger_filter": "Disparador",
+        "actions_for": "Acciones del embudo: {name}",
+        "empty_filtered": "Ningún embudo coincide con los filtros",
+        "delete_title": "¿Eliminar el embudo?",
+        "completed_share": "{percent}% de los participantes",
+        "activated": "El embudo está en marcha",
+        "paused": "Embudo pausado",
+        "deleted": "Embudo eliminado",
+        "delete_description": "Los participantes dejarán de recibir los pasos siguientes. Esto no se puede deshacer."
     },
     "campaign_architect": {
         "title": "Arquitecto de Campañas",
@@ -4142,7 +4388,7 @@
         "confirm_duplicate": "¿Desea duplicar esta automatización?",
         "confirm_delete": "¿Está seguro de que desea eliminar esta automatización?",
         "restore_defaults": "Restaurar predeterminados",
-        "confirm_restore": "Esto restaurará 6 automatizaciones predeterminadas de AutoTag Pro. Las automatizaciones predeterminadas existentes se restablecerán a la configuración de fábrica.",
+        "confirm_restore": "Añade las automatizaciones predeterminadas que faltan en la cuenta y las activa de inmediato. Las existentes no se modifican.",
         "restore": "Restaurar",
         "default": "Predeterminada",
         "builder": {
@@ -4230,7 +4476,71 @@
             },
             "empty": "No hay ejecuciones",
             "empty_hint": "Esta automatización aún no se ha ejecutado."
-        }
+        },
+        "subtitle": "Reglas que reaccionan solas a los eventos",
+        "views": {
+            "label": "Estado de las automatizaciones",
+            "all": "Todas",
+            "active": "Activadas",
+            "inactive": "Desactivadas"
+        },
+        "search_placeholder": "Buscar automatizaciones",
+        "all_triggers": "Todos los disparadores",
+        "name": "Automatización",
+        "enabled": "Activada",
+        "last_run": "Última vez: {date}",
+        "never_run": "Aún no se ha ejecutado",
+        "switch_label": "Activada: {name}",
+        "actions_for": "Acciones de la automatización: {name}",
+        "empty_filtered": "Ninguna automatización coincide con los filtros",
+        "delete_title": "¿Eliminar la automatización?",
+        "delete_description": "Dejará de reaccionar a los eventos. Su historial de ejecuciones también desaparece.",
+        "restore_title": "¿Restaurar las automatizaciones predeterminadas?",
+        "activated": "Automatización activada",
+        "deactivated": "Automatización desactivada",
+        "deleted": "Automatización eliminada",
+        "triggers": {
+            "subscriber_signup": "Alta en la lista",
+            "subscriber_activated": "Suscriptor activado",
+            "list_join": "Se unió a una lista",
+            "email_opened": "Correo abierto",
+            "email_clicked": "Clic en un enlace",
+            "subscriber_unsubscribed": "Baja de la lista",
+            "email_bounced": "Correo rebotado",
+            "form_submitted": "Formulario enviado",
+            "tag_added": "Etiqueta añadida",
+            "tag_removed": "Etiqueta eliminada",
+            "field_updated": "Campo modificado",
+            "page_visited": "Página visitada",
+            "specific_link_clicked": "Clic en un enlace concreto",
+            "date_reached": "Fecha alcanzada",
+            "read_time_threshold": "Umbral de tiempo de lectura",
+            "subscriber_birthday": "Cumpleaños del suscriptor",
+            "subscription_anniversary": "Aniversario del alta",
+            "subscriber_inactive": "Sin actividad",
+            "purchase": "Compra (webhook)",
+            "pixel_page_visited": "Pixel: página visitada",
+            "pixel_product_viewed": "Pixel: producto visto",
+            "pixel_add_to_cart": "Pixel: añadido al carrito",
+            "pixel_checkout_started": "Pixel: pago iniciado",
+            "pixel_cart_abandoned": "Pixel: carrito abandonado",
+            "pixel_return_visit": "Pixel: visita de regreso",
+            "crm_deal_stage_changed": "CRM: etapa del trato cambiada",
+            "crm_deal_won": "CRM: trato ganado",
+            "crm_deal_lost": "CRM: trato perdido",
+            "crm_deal_created": "CRM: trato creado",
+            "crm_deal_idle": "CRM: trato sin actividad",
+            "crm_task_completed": "CRM: tarea completada",
+            "crm_task_overdue": "CRM: tarea vencida",
+            "crm_contact_created": "CRM: contacto creado",
+            "crm_contact_status_changed": "CRM: estado del contacto cambiado",
+            "crm_score_threshold": "CRM: umbral de puntuación",
+            "crm_activity_logged": "CRM: actividad registrada",
+            "crm_contact_replied": "CRM: el contacto respondió"
+        },
+        "trigger_filter": "Disparador",
+        "more_actions": "Más acciones",
+        "steps": "Acciones"
     },
     "segmentation": {
         "title": "Segmentación Conductual",
@@ -4311,7 +4621,8 @@
         "result_failed_create": "La copia de seguridad falló.",
         "result_failed_restore": "La restauración falló.",
         "safety_backup_note": "Copia de seguridad de emergencia de la base de datos anterior: {name}",
-        "delete_confirm_title": "¿Eliminar esta copia de seguridad?"
+        "delete_confirm_title": "¿Eliminar esta copia de seguridad?",
+        "actions_for": "Acciones de la copia: {name}"
     },
     "api_keys": {
         "title": "Claves API",
@@ -4345,7 +4656,9 @@
             "funnels_read": "Embudos (lectura)",
             "funnels_write": "Embudos (escritura)",
             "brain_read": "NetSendo Brain (lectura)",
-            "brain_write": "NetSendo Brain (escritura)"
+            "brain_write": "NetSendo Brain (escritura)",
+            "lists_write": "Listas (escritura)",
+            "notifications_write": "Notificaciones (envío)"
         },
         "status": {
             "expired": "expirado",
@@ -4388,7 +4701,19 @@
         "mcp_key_hint": "Usa esta clave para integraciones con Claude, Cursor o VS Code",
         "mcp_plain_key_hint": "Pega tu clave API para poder probar la conexión MCP",
         "mcp_plain_key_label": "Clave API para cifrar",
-        "mcp_plain_key_placeholder": "ns_live_..."
+        "mcp_plain_key_placeholder": "ns_live_...",
+        "full_access": "Acceso completo",
+        "more_permissions": "y {count} más",
+        "actions_for": "Acciones de la clave: {name}",
+        "select_all": "Seleccionar todo",
+        "select_none": "Quitar todo",
+        "notifications": {
+            "updated": "Clave guardada",
+            "deleted": "Clave eliminada"
+        },
+        "errors": {
+            "session_expired": "La sesión ha caducado. La página se recargará enseguida."
+        }
     },
     "inserts": {
         "title": "Fragmentos y Firmas",
@@ -4695,7 +5020,8 @@
             "plugin_version": "Plugin",
             "stale_connection": "Plugin inactivo",
             "stale_plugin_hint": "El plugin no se ha comunicado desde hace más de 7 días. Compruebe que el plugin esté correctamente instalado y configurado.",
-            "update_to": "Actualizar a"
+            "update_to": "Actualizar a",
+            "actions_for": "Acciones de la tienda: {name}"
         }
     },
     "mailboxes": {
@@ -4727,7 +5053,9 @@
             "created": "Cuenta creada con éxito.",
             "updated": "Cuenta actualizada con éxito.",
             "deleted": "Cuenta eliminada con éxito.",
-            "set_default": "Cuenta establecida como predeterminada."
+            "set_default": "Cuenta establecida como predeterminada.",
+            "activated": "Buzón activado",
+            "deactivated": "Buzón desactivado"
         },
         "delete": {
             "title": "Eliminar cuenta",
@@ -4762,7 +5090,16 @@
             "select_integration_to_connect": "Seleccione una integración para conectar.",
             "integration_not_configured_warning": "La integración de Google no está configurada.",
             "go_to_integrations": "Vaya a la configuración de integraciones",
-            "broadcast_disabled": "No disponible para Gmail"
+            "broadcast_disabled": "No disponible para Gmail",
+            "tabs": {
+                "label": "Secciones de los ajustes del buzón",
+                "sending": "Envío",
+                "bounces": "Rebotes",
+                "replies": "Respuestas",
+                "headers": "Cabeceras"
+            },
+            "after_save_hint": "Los rebotes y la lectura de respuestas se configuran una vez guardado el buzón.",
+            "save_errors": "No se pudo guardar el buzón:"
         },
         "info": {
             "title": "Información de proveedores",
@@ -4959,6 +5296,62 @@
         "tracking": {
             "label": "Seguir clics y aperturas",
             "help": "Reescribe los enlaces a través de NetSendo y añade el píxel de apertura. Desactivado: los enlaces quedan como están, sin píxel, y el seguimiento de SendGrid se desactiva por mensaje. Un mensaje puede cambiarlo."
+        },
+        "table": {
+            "mailbox": "Buzón",
+            "status": "Estado",
+            "reputation": "Reputación del dominio",
+            "used_for": "Envía",
+            "active": "Activado"
+        },
+        "types_short": {
+            "broadcast": "envíos únicos",
+            "autoresponder": "colas",
+            "system": "del sistema"
+        },
+        "types_all": "Todos los mensajes",
+        "no_limit": "sin límite",
+        "switch_label": "Activado: {name}",
+        "actions_for": "Acciones del buzón: {name}",
+        "testing": "Probando…",
+        "nmi": {
+            "info": "El correo sale por el servidor de correo propio de NetSendo (MTA). Elige el dominio verificado desde el que envías; NetSendo crea por sí mismo el acceso al MTA.",
+            "domain": "Dominio de envío",
+            "domain_placeholder": "-- Elige un dominio verificado --",
+            "no_domains": "Aún no hay ningún dominio verificado. Añade tu dominio en Entregabilidad y verifícalo primero.",
+            "manage_domains": "Abrir Entregabilidad",
+            "from_hint": "La dirección del remitente debe estar en este dominio.",
+            "ip": "IP dedicada",
+            "ip_none": "Ninguna (la dirección propia del MTA)",
+            "ip_taken": "asignada a otro dominio",
+            "ip_help": "Una IP dedicada firma con la clave DKIM de un dominio. Una IP libre se asigna a este dominio al guardar.",
+            "manage_ips": "Gestionar grupos de IP",
+            "mta_checking": "Comprobando NetSendo MTA…",
+            "mta_online": "NetSendo MTA está en línea ({address}).",
+            "mta_offline": "NetSendo MTA no responde ({address}). Inicia su contenedor (docker compose --profile nmi up -d) y comprueba de nuevo.",
+            "mta_recheck": "Comprobar de nuevo",
+            "mta_required": "Se pueden añadir nuevos buzones de NetSendo MTA cuando el MTA responde.",
+            "sends_as": "NetSendo MTA · {domain}",
+            "no_domain": "NetSendo MTA · sin dominio",
+            "ip_bound": "El MTA envía desde esta dirección.",
+            "ip_not_bound": "El MTA no tiene esta dirección, así que el correo saldrá desde la dirección propia del MTA. Para enviar desde IP dedicadas, ejecuta el MTA en la red del servidor (docker-compose.nmi-host.yml, consulta docs/NMI.md).",
+            "dkim": {
+                "title": "Firma DKIM",
+                "loading": "Comprobando la clave DKIM…",
+                "created_on_save": "Al guardar se crea una clave DKIM para este dominio. Su registro DNS aparecerá aquí.",
+                "no_key": "Este dominio aún no tiene clave DKIM.",
+                "generate": "Generar clave",
+                "status_verified": "Verificado",
+                "status_pending": "Sin verificar",
+                "verified": "El correo de este dominio se firma con esta clave.",
+                "pending": "Publica este registro TXT en el DNS del dominio y después verifícalo. Hasta entonces el correo de este buzón sale sin firma DKIM.",
+                "pending_ip_key": "Publica este registro TXT en el DNS del dominio y después verifícalo. Hasta entonces el correo se firma con la clave de la IP dedicada.",
+                "record_name": "Nombre (TXT)",
+                "record_value": "Valor",
+                "verify": "Verificar registro",
+                "verify_again": "Comprobar de nuevo",
+                "copy": "Copiar"
+            }
         }
     },
     "tracked_links": {
@@ -5841,7 +6234,8 @@
         "marketplace_go_to_settings": "Ir a configuración de Tpay",
         "marketplace_manage_products": "Gestionar productos",
         "marketplace_help_description": "Consulte la documentación de Tpay para obtener instrucciones de configuración detalladas.",
-        "marketplace_webhook_info": "Use esta URL como punto final de webhook en la configuración del panel Tpay."
+        "marketplace_webhook_info": "Use esta URL como punto final de webhook en la configuración del panel Tpay.",
+        "settings_saved": "Ajustes de Tpay guardados."
     },
     "pixel": {
         "settings_title": "NetSendo Píxel",
@@ -6702,7 +7096,9 @@
             "created": "El proveedor SMS se ha creado.",
             "deleted": "El proveedor SMS se ha eliminado.",
             "set_default": "El proveedor se ha establecido como predeterminado.",
-            "updated": "El proveedor SMS se ha actualizado."
+            "updated": "El proveedor SMS se ha actualizado.",
+            "activated": "Proveedor activado",
+            "deactivated": "Proveedor desactivado"
         },
         "sent_today": "Enviados hoy",
         "set_as_default": "Establecer como predeterminado",
@@ -6712,7 +7108,17 @@
             "inactive": "Inactivo",
             "not_tested": "Sin probar"
         },
-        "test_connection": "Probar conexión"
+        "test_connection": "Probar conexión",
+        "table": {
+            "provider": "Conexión",
+            "status": "Estado",
+            "active": "Activado"
+        },
+        "no_limit": "sin límite",
+        "switch_label": "Activado: {name}",
+        "actions_for": "Acciones del proveedor: {name}",
+        "testing": "Probando…",
+        "last_tested": "Prueba: {date}"
     },
     "external_pages": {
         "index": {
@@ -8328,12 +8734,17 @@
             "ip_address": "Dirección IP",
             "ip_address_placeholder": "p. ej. 192.168.1.100",
             "submit": "Añadir IP",
-            "title": "Añadir dirección IP"
+            "title": "Añadir dirección IP",
+            "manual_hint": "Para una dirección que has pedido tú. Debe estar ya configurada en el servidor, con el DNS inverso apuntando al nombre de host. Consulta Configurar proveedores → Otra empresa."
         },
         "delete_ip": {
             "confirm": "¿Seguro que desea eliminar esta dirección IP?",
             "title": "Eliminar dirección IP",
-            "warning": "Esta operación no se puede deshacer."
+            "warning": "Esta operación no se puede deshacer.",
+            "button": "Borrar dirección",
+            "release_note": "La dirección se pidió mediante la API del proveedor: primero se devuelve allí para que deje de cobrarse.",
+            "keep_at_provider": "Quitar solo de NetSendo",
+            "deleting": "Borrando…"
         },
         "invalid_ip_address": "Formato de dirección IP no válido.",
         "ip_added": "¡La dirección IP se ha añadido correctamente!",
@@ -8360,7 +8771,41 @@
             "not_configured": "No configurado",
             "not_connected": "No conectado",
             "settings_title": "Configuración de proveedores de IP",
-            "vultr": "Vultr"
+            "vultr": "Vultr",
+            "connect": "Conectar",
+            "connected_as": "Conectado como {name}",
+            "unavailable": "No apto para correo",
+            "guide_title": "Cómo conectar",
+            "intro": "Una IP dedicada procede de la empresa que aloja tu servidor: una dirección solo puede usarla un servidor de esa misma empresa. NetSendo puede pedirla por ti mediante la API de la empresa, o añades una dirección que hayas pedido tú.",
+            "api_key_label": "Clave API",
+            "other_title": "Otra empresa (Hetzner, OVH, tu propio centro de datos…)",
+            "guide": {
+                "vultr": {
+                    "s1": "Tu servidor de NetSendo debe ser una instancia de Vultr: una dirección de Vultr solo se puede asociar a un servidor de Vultr.",
+                    "s2": "En el panel de Vultr abre Account → API, activa la API y copia tu clave. Si el acceso está limitado a ciertas direcciones, añade la de este servidor.",
+                    "s3": "Pega la clave aquí y pulsa Conectar. NetSendo pregunta a Vultr de quién es la clave y solo la guarda cuando Vultr la acepta.",
+                    "s4": "Vultr bloquea el puerto 25 saliente en las cuentas nuevas. Abre allí un ticket de soporte (qué envías, SPF y DKIM, volumen previsto) y espera a que retiren el bloqueo.",
+                    "s5": "Una dirección cuesta unos 3 USD al mes; Vultr la cobra hasta que la borres en NetSendo."
+                },
+                "linode": {
+                    "s1": "Tu servidor de NetSendo debe ser un Linode (Akamai Cloud).",
+                    "s2": "Pide primero al soporte de Akamai direcciones IPv4 adicionales: abre un ticket con una justificación técnica (una dirección dedicada para enviar correo). Sin su aprobación, el pedido se rechaza.",
+                    "s3": "En Cloud Manager abre tu perfil → API Tokens y crea un Personal Access Token con el permiso Linodes: Read/Write.",
+                    "s4": "Pega el token aquí y pulsa Conectar.",
+                    "s5": "En las cuentas más recientes los puertos salientes 25, 465 y 587 están restringidos. La lista de servidores marca esos servidores; un ticket de soporte retira la restricción.",
+                    "s6": "Akamai cobra cada dirección adicional por horas hasta que la borres en NetSendo."
+                },
+                "digitalocean": {
+                    "s1": "Las Reserved IP de DigitalOcean no pueden enviar correo: los puertos SMTP 25, 465 y 587 están bloqueados en ellas, no admiten DNS inverso y un Droplet solo puede tener una. Usa otra empresa para direcciones de envío dedicadas."
+                },
+                "other": {
+                    "s1": "Pide una dirección IPv4 adicional para tu servidor de NetSendo en el panel de tu empresa de alojamiento.",
+                    "s2": "Configura la dirección en el servidor como indique esa empresa.",
+                    "s3": "Elige un nombre de host (por ejemplo mail2.tudominio.com), crea su registro A apuntando a la dirección y configura en el panel de la empresa el DNS inverso (PTR) de la dirección con ese nombre.",
+                    "s4": "Añádela en NetSendo con Añadir IP: la dirección y su nombre de host.",
+                    "s5": "En la página de la dirección comprueba su DNS inverso. En el formulario del buzón, el selector de IP indica si el MTA envía desde ella."
+                }
+            }
         },
         "provision": {
             "cancel": "Cancelar",
@@ -8371,7 +8816,51 @@
             "select_provider": "Seleccione un proveedor",
             "select_region": "Seleccione una región",
             "submit": "Aprovisionar IP",
-            "title": "Aprovisionar IP desde la nube"
+            "title": "Aprovisionar IP desde la nube",
+            "server": "Servidor",
+            "select_server": "Elige el servidor donde se ejecuta NetSendo",
+            "loading_servers": "Cargando tus servidores…",
+            "no_servers": "No se ha encontrado ningún servidor en esta cuenta.",
+            "smtp_restricted": "SMTP saliente restringido",
+            "hostname": "Nombre de host de la dirección",
+            "hostname_placeholder": "p. ej. mail2.tudominio.com",
+            "hostname_help": "La dirección responderá a este nombre: será su DNS inverso (PTR) y el nombre con el que se presenta el MTA.",
+            "cost_note": "La dirección se pide de inmediato y el proveedor la cobra hasta que la borres aquí.",
+            "connect_first": "Conecta primero un proveedor: Configurar proveedores.",
+            "done_title": "Se ha pedido la dirección {ip}",
+            "ptr_set": "El DNS inverso se ha configurado como {hostname}.",
+            "ptr_not_set": "Aún no se ha podido configurar el DNS inverso: {reason}",
+            "next_title": "Lo que queda por hacer",
+            "open_ip": "Abrir la dirección",
+            "done": "Listo",
+            "next": {
+                "a_record": "Crea un registro A en DNS: {hostname} → {ip}.",
+                "vultr_os": "Configura la dirección en el servidor: añade {ip}/32 a la interfaz de red (el panel de Vultr genera el archivo netplan en Settings → IPv4 de la instancia), aplícalo y reinicia el servidor.",
+                "linode_ptr": "Cuando el registro A resuelva, pulsa Configurar DNS inverso en la página de la dirección: antes Akamai lo rechaza.",
+                "linode_os": "Reinicia el Linode: Network Helper configura la dirección al arrancar. Con Network Helper desactivado, añade {ip}/24 a la interfaz a mano.",
+                "host_network": "Ejecuta el MTA en la red del servidor (docker-compose.nmi-host.yml) para que tenga la dirección.",
+                "finish": "En la página de la dirección comprueba el DNS inverso e inicia el calentamiento; después elige la dirección en un buzón de NetSendo MTA. El formulario del buzón indica si el MTA envía desde ella."
+            }
+        },
+        "setup": {
+            "title": "Configuración de la dirección",
+            "source": "Origen",
+            "source_manual": "Añadida a mano",
+            "source_provider": "Pedida a {provider}",
+            "region": "Región",
+            "bind_address": "Dirección local",
+            "ptr_title": "DNS inverso (PTR)",
+            "ptr_help": "Los servidores receptores desconfían del correo de una dirección que no nombra un host que a su vez apunte a la dirección. El MTA se presenta con ese mismo nombre.",
+            "ptr_expected": "Debe nombrar",
+            "ptr_found": "Nombra ahora",
+            "ptr_none": "nada",
+            "ptr_ok": "Correcto",
+            "ptr_wrong": "No es correcto",
+            "ptr_unchecked": "Sin comprobar",
+            "check_ptr": "Comprobar",
+            "set_ptr": "Configurar DNS inverso",
+            "ptr_manual": "Configúralo en el panel de la empresa de la que procede la dirección y después pulsa Comprobar.",
+            "checking": "Comprobando…"
         }
     },
     "high_confidence_data": "Datos de alta confianza",
@@ -9166,7 +9655,8 @@
         "title": "Base de nombres",
         "updated": "El nombre ha sido actualizado",
         "vocative_help": "Forma vocativa del nombre usada en la personalización [[!fname]]",
-        "vocative_placeholder": "p. ej. Anno, Janie..."
+        "vocative_placeholder": "p. ej. Anno, Janie...",
+        "actions_for": "Acciones del nombre: {name}"
     },
     "users": {
         "add_first_user": "Añadir primer usuario",
@@ -9207,7 +9697,22 @@
         },
         "team_members": "Miembros del equipo",
         "team_members_subtitle": "Usuarios con acceso a su cuenta de NetSendo",
-        "title": "Gestión de Usuarios"
+        "title": "Gestión de Usuarios",
+        "no_lists": "Aún no tienes ninguna lista que compartir.",
+        "permission_level_for": "Nivel de acceso a la lista {name}",
+        "permissions_short": "Permisos",
+        "actions_for": "Acciones del usuario: {name}",
+        "list_with_edit": "{name} (edición)",
+        "more_lists": "y {count} más",
+        "delete_title": "¿Quitar al usuario del equipo?",
+        "cancel_invitation_title": "¿Cancelar la invitación?",
+        "cancel_invitation": "Cancelar invitación",
+        "notifications": {
+            "added": "Usuario añadido al equipo",
+            "permissions_saved": "Permisos guardados",
+            "removed": "Usuario quitado del equipo",
+            "invitation_cancelled": "Invitación cancelada"
+        }
     },
     "telemetry": {
         "title": "Telemetría",
@@ -9231,5 +9736,160 @@
         "notice_enable": "Activar",
         "notice_details": "Ver qué se envía",
         "notice_dismiss": "No, gracias"
+    },
+    "lists_browser": {
+        "visibility": "Visibilidad",
+        "visibility_all": "Cualquier visibilidad",
+        "view": "Vista",
+        "actions_for": "Acciones de la lista: {name}"
+    },
+    "zoom_settings": {
+        "title": "Ajustes de Zoom",
+        "subtitle": "Reuniones de vídeo de Zoom creadas desde NetSendo",
+        "marketplace": "Marketplace",
+        "breadcrumb_settings": "Ajustes",
+        "connected": "Conectado",
+        "not_connected": "No conectado",
+        "connected_account": "Cuenta conectada",
+        "connected_at": "Conectada {date}",
+        "disconnect": "Desconectar",
+        "disconnect_title": "¿Desconectar la cuenta de Zoom?",
+        "disconnect_message": "NetSendo dejará de crear reuniones en esta cuenta. Puedes volver a conectarla cuando quieras.",
+        "permissions": "Permisos concedidos",
+        "permissions_note": "Los permisos se concedieron durante la autorización. Para cambiarlos, desconecta la cuenta y vuelve a conectarla.",
+        "credentials": "Credenciales de la app OAuth",
+        "credentials_help": "Introduce las credenciales de tu app OAuth de {link}.",
+        "client_id": "Client ID",
+        "client_secret": "Client Secret",
+        "client_id_placeholder": "Client ID de tu app de Zoom",
+        "client_secret_placeholder": "Client Secret de tu app de Zoom",
+        "keep_secret": "Déjalo vacío para conservar el secreto actual.",
+        "redirect_uri": "Redirect URI",
+        "redirect_help": "Añade esta dirección en tu app OAuth de Zoom como Redirect URL.",
+        "save": "Guardar credenciales",
+        "saved": "Credenciales guardadas",
+        "connect_title": "Conecta tu cuenta de Zoom",
+        "connect_desc": "Permite que NetSendo cree reuniones en tu nombre.",
+        "connect_button": "Conectar cuenta de Zoom",
+        "config_required": "Primero las credenciales",
+        "config_required_text": "Guarda arriba las credenciales de tu app OAuth de Zoom; después se podrá conectar la cuenta."
+    },
+    "calendly_settings": {
+        "title": "Calendly",
+        "subtitle": "Las reservas de Calendly llegan al CRM y a tus listas",
+        "marketplace": "Marketplace",
+        "breadcrumb_settings": "Ajustes",
+        "connected": "Conectado",
+        "not_connected": "Sin conectar",
+        "account_fallback": "Cuenta de Calendly",
+        "connect_button": "Conectar una cuenta de Calendly",
+        "connect_another": "Conectar otra cuenta",
+        "status": {
+            "active": "Conectada",
+            "inactive": "Inactiva",
+            "pending": "Pendiente de autorización"
+        },
+        "pending": {
+            "title": "La autorización no se completó",
+            "text": "Los datos de la aplicación están guardados, pero no se dio el consentimiento en Calendly. Conecta la cuenta de nuevo con los mismos datos o elimina esta entrada."
+        },
+        "actions": {
+            "configure": "Ajustes",
+            "sync": "Actualizar tipos de evento",
+            "syncing": "Actualizando…",
+            "test": "Comprobar el webhook",
+            "disconnect": "Desconectar",
+            "menu_for": "{name}: acciones"
+        },
+        "event_types": "Tipos de evento",
+        "no_event_types": "No hay tipos de evento. Actualízalos desde el menú cuando hayas creado uno en Calendly.",
+        "recent": {
+            "title": "Reservas recientes",
+            "empty": "Todavía no ha habido reservas.",
+            "invitee": "Invitado",
+            "event": "Evento",
+            "date": "Fecha"
+        },
+        "booking_status": {
+            "scheduled": "Programada",
+            "canceled": "Cancelada",
+            "no_show": "No se presentó",
+            "completed": "Realizada"
+        },
+        "empty": {
+            "title": "No hay ninguna cuenta de Calendly conectada",
+            "description": "Una vez conectada, cada reserva crea un contacto en el CRM, añade al invitado a las listas que elijas y puede iniciar automatizaciones."
+        },
+        "webhook": {
+            "title": "Dirección del webhook",
+            "hint": "Se configura en Calendly automáticamente al conectar una cuenta. No hace falta pegarla en ningún sitio."
+        },
+        "connect": {
+            "title": "Conectar una cuenta de Calendly",
+            "intro": "Para conectar necesitas tu propia aplicación OAuth en Calendly:",
+            "step_open": "Entra en {link}.",
+            "step_create": "Crea una nueva aplicación OAuth.",
+            "step_redirect": "Como Redirect URI, pega la dirección que aparece abajo.",
+            "step_copy": "Copia el Client ID y el Client Secret en los campos de abajo.",
+            "redirect_uri": "Redirect URI",
+            "client_id": "Client ID",
+            "client_secret": "Client Secret",
+            "submit": "Continuar a Calendly",
+            "connecting": "Conectando…"
+        },
+        "disconnect": {
+            "title": "¿Desconectar la cuenta de Calendly?",
+            "message": "Las nuevas reservas dejarán de llegar a NetSendo. Los contactos y las tareas creados hasta ahora se conservan."
+        },
+        "toast": {
+            "connected": "Cuenta de Calendly conectada",
+            "disconnected": "Cuenta de Calendly desconectada",
+            "saved": "Ajustes guardados",
+            "synced": "Tipos de evento actualizados",
+            "webhook_ok": "El webhook funciona"
+        },
+        "selected": "Seleccionados: {count}",
+        "settings": {
+            "title": "Qué hace una reserva"
+        },
+        "tabs": {
+            "label": "Parte de los ajustes",
+            "crm": "CRM",
+            "lists": "Listas y etiquetas",
+            "event_types": "Tipos de evento",
+            "automation": "Automatizaciones"
+        },
+        "crm": {
+            "enabled": "Crear un contacto en el CRM con cada reserva",
+            "create_tasks": "Crear una tarea en el CRM para cada reunión",
+            "default_status": "Estado de un contacto nuevo",
+            "default_owner": "Responsable del contacto",
+            "no_owner": "Sin responsable"
+        },
+        "lists": {
+            "enabled": "Añadir a los invitados a listas",
+            "default_lists": "Listas",
+            "default_tags": "Etiquetas",
+            "search_lists": "Buscar listas",
+            "search_tags": "Buscar etiquetas",
+            "no_lists": "No hay listas",
+            "no_tags": "No hay etiquetas"
+        },
+        "per_type": {
+            "intro": "Los tipos de evento elegidos pueden tener sus propias listas y etiquetas. Los demás usan los ajustes de la pestaña «Listas y etiquetas».",
+            "lists_off": "Añadir a listas está desactivado. Actívalo en la pestaña «Listas y etiquetas» para definir excepciones por tipo de evento.",
+            "none": "Esta cuenta aún no tiene tipos de evento. Actualízalos desde el menú de la cuenta.",
+            "custom": "Listas y etiquetas propias",
+            "default": "Ajustes predeterminados",
+            "switch_label": "Listas y etiquetas propias para «{name}»",
+            "lists": "Listas para este tipo",
+            "tags": "Etiquetas para este tipo"
+        },
+        "automation": {
+            "intro": "Eventos de Calendly que inician automatizaciones.",
+            "booking": "Nueva reserva",
+            "cancellation": "Reunión cancelada",
+            "no_show": "El invitado no se presentó"
+        }
     }
 }

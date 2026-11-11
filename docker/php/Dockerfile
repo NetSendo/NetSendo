@@ -78,6 +78,13 @@ RUN mkdir -p /var/www/storage/app/backup-temp \
     && chown dev:www-data /var/www/storage/app/backup-temp \
     && chmod 775 /var/www/storage/app/backup-temp
 
+# NMI: the logins of the NetSendo MTA are written here, on a volume shared with the
+# nmi-mta container (docker-compose.yml: nmi-auth). The directory must exist in the image
+# so that the new volume takes over its ownership.
+RUN mkdir -p /var/www/storage/app/nmi-mta \
+    && chown dev:www-data /var/www/storage/app/nmi-mta \
+    && chmod 755 /var/www/storage/app/nmi-mta
+
 USER dev
 
 ENTRYPOINT ["docker-entrypoint.sh"]

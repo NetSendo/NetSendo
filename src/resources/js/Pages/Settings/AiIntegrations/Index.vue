@@ -1,8 +1,16 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import Modal from "@/Components/Modal.vue";
-import DangerButton from "@/Components/DangerButton.vue";
-import SecondaryButton from "@/Components/SecondaryButton.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
+import ActionMenu from "@/Components/Ui/ActionMenu.vue";
+import ActionMenuItem from "@/Components/Ui/ActionMenuItem.vue";
+import FormDialog from "@/Components/Ui/FormDialog.vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
+import Panel from "@/Components/Ui/Panel.vue";
+import StatusPill from "@/Components/Ui/StatusPill.vue";
+import Switch from "@/Components/Ui/Switch.vue";
+import Toast from "@/Components/Ui/Toast.vue";
+import { errorClass, fieldClass, hintClass, labelClass } from "@/Components/Ui/fieldClass";
+import { useToast } from "@/Composables/useToast";
 import GoldBadge from "@/Components/License/GoldBadge.vue";
 import GoldNotice from "@/Components/License/GoldNotice.vue";
 import { useLicense } from "@/Composables/useLicense";
@@ -51,14 +59,9 @@ const showApiKey = ref(false);
 const showDeleteModal = ref(false);
 const deletingIntegration = ref(null);
 
-// Toast notification
-const toast = ref(null);
-const showToast = (message, success = true) => {
-    toast.value = { message, success };
-    setTimeout(() => {
-        toast.value = null;
-    }, 4000);
-};
+// One message at a time: in the corner of the page, or in the footer of the open dialog
+// (a dialog covers the corner). The server's own message is shown only for a failure.
+const { toast, showToast, dismiss } = useToast({ flash: "error" });
 
 // Model search
 const modelSearch = ref("");
@@ -101,46 +104,30 @@ const isConfigured = (providerKey) => {
     return integration.has_api_key === true;
 };
 
-// Get status text
-const getStatusText = (providerKey) => {
+// Where a provider stands: not set up, missing its key, switched off, tested and fine,
+// failing, or set up and never tested
+const statusOf = (providerKey) => {
     const integration = getIntegration(providerKey);
-    if (!integration)
-        return page.props.auth.user
-            ? t("ai.status.not_configured")
-            : "Nie skonfigurowano";
-
-    if (!isConfigured(providerKey)) return t("ai.status.no_api_key");
-
-    if (!integration.is_active) return t("ai.status.inactive");
-
-    if (integration.last_test_status === "success")
-        return t("ai.status.active");
-    if (integration.last_test_status === "error")
-        return t("ai.status.connection_error");
-
-    return t("ai.status.configured");
+    if (!integration) return { tone: "neutral", label: t("ai.status.not_configured") };
+    if (!isConfigured(providerKey)) return { tone: "warning", label: t("ai.status.no_api_key") };
+    if (!integration.is_active) return { tone: "neutral", label: t("ai.status.inactive") };
+    if (integration.last_test_status === "success") return { tone: "success", label: t("ai.status.active") };
+    if (integration.last_test_status === "error") return { tone: "danger", label: t("ai.status.connection_error") };
+    return { tone: "info", label: t("ai.status.configured") };
 };
 
-// Get status color class
-const getStatusClass = (providerKey) => {
-    const integration = getIntegration(providerKey);
-    if (!integration || !isConfigured(providerKey)) {
-        return "bg-slate-500/20 text-slate-400";
-    }
-
-    if (!integration.is_active) {
-        return "bg-slate-500/20 text-slate-400";
-    }
-
-    if (integration.last_test_status === "success") {
-        return "bg-emerald-500/20 text-emerald-400";
-    }
-    if (integration.last_test_status === "error") {
-        return "bg-rose-500/20 text-rose-400";
-    }
-
-    return "bg-amber-500/20 text-amber-400";
+// Where each service hands out its API keys
+const KEY_PAGES = {
+    openai: "https://platform.openai.com/api-keys",
+    anthropic: "https://console.anthropic.com/settings/keys",
+    grok: "https://console.x.ai/",
+    openrouter: "https://openrouter.ai/keys",
+    gemini: "https://aistudio.google.com/apikey",
 };
+const hostOf = (url) => url.replace(/^https?:\/\//, "").replace(/\/$/, "");
+
+// Every validation message of the last save, each once
+const formErrorMessages = computed(() => [...new Set(Object.values(form.errors).filter(Boolean))]);
 
 // Open modal for creating/editing
 const openModal = (providerKey) => {
@@ -181,6 +168,8 @@ const openModal = (providerKey) => {
     showApiKey.value = false;
     testResult.value = null;
     modelSearch.value = "";
+    form.clearErrors();
+    dismiss();
     showModal.value = true;
 };
 
@@ -189,6 +178,7 @@ const closeModal = () => {
     showModal.value = false;
     editingIntegration.value = null;
     form.reset();
+    form.clearErrors();
     testResult.value = null;
     modelSearch.value = "";
 };
@@ -203,13 +193,19 @@ const submitForm = () => {
             ),
             {
                 preserveScroll: true,
-                onSuccess: () => closeModal(),
+                onSuccess: () => {
+                    closeModal();
+                    showToast(t("ai.notifications.saved"));
+                },
             },
         );
     } else {
         form.post(route("settings.ai-integrations.store"), {
             preserveScroll: true,
-            onSuccess: () => closeModal(),
+            onSuccess: () => {
+                closeModal();
+                showToast(t("ai.notifications.saved"));
+            },
         });
     }
 };
@@ -225,14 +221,13 @@ const testConnection = async (integration) => {
     testResult.value = null;
 
     try {
-        console.log("Testing connection for integration:", integration.id);
         const csrfToken = document.querySelector(
             'meta[name="csrf-token"]',
         )?.content;
 
         if (!csrfToken) {
             console.error("CSRF token not found");
-            showToast(t("common.notifications.error"), false);
+            showToast(t("common.notifications.error_occurred"), false);
             return;
         }
 
@@ -248,9 +243,7 @@ const testConnection = async (integration) => {
             },
         );
 
-        console.log("Test response status:", response.status);
         const data = await response.json();
-        console.log("Test response data:", data);
 
         testResult.value = data;
         showToast(data.message, data.success);
@@ -260,7 +253,7 @@ const testConnection = async (integration) => {
     } catch (error) {
         console.error("Test connection error:", error);
         showToast(
-            t("common.notifications.error") + ": " + error.message,
+            t("common.error") + ": " + error.message,
             false,
         );
     } finally {
@@ -317,13 +310,18 @@ const deleteIntegration = () => {
         route("settings.ai-integrations.destroy", deletingIntegration.value.id),
         {
             preserveScroll: true,
-            onSuccess: () => closeDeleteModal(),
+            onSuccess: () => showToast(t("ai.notifications.deleted")),
+            onFinish: () => closeDeleteModal(),
         },
     );
 };
 
-// Toggle active status
+// The switch in the row
+const toggling = ref(null);
+
 const toggleActive = (integration) => {
+    if (toggling.value) return;
+    toggling.value = integration.id;
     router.put(
         route("settings.ai-integrations.update", integration.id),
         {
@@ -331,6 +329,10 @@ const toggleActive = (integration) => {
         },
         {
             preserveScroll: true,
+            onSuccess: () =>
+                showToast(t(integration.is_active ? "ai.notifications.disabled" : "ai.notifications.enabled")),
+            onError: (errors) => showToast(Object.values(errors).flat().join(" "), false),
+            onFinish: () => (toggling.value = null),
         },
     );
 };
@@ -392,827 +394,384 @@ const currentProviderModels = computed(() => {
     <Head :title="$t('ai.title')" />
 
     <AuthenticatedLayout>
-        <!-- Toast Notification -->
-        <Teleport to="body">
-            <Transition
-                enter-active-class="transition ease-out duration-300"
-                enter-from-class="opacity-0 translate-y-2"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-active-class="transition ease-in duration-200"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 translate-y-2"
-            >
-                <div
-                    v-if="toast"
-                    class="fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-xl px-5 py-4 shadow-lg"
-                    :class="
-                        toast.success
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-rose-600 text-white'
-                    "
-                >
-                    <svg
-                        v-if="toast.success"
-                        class="h-5 w-5 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    <svg
-                        v-else
-                        class="h-5 w-5 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    <span class="font-medium">{{ toast.message }}</span>
-                    <button
-                        @click="toast = null"
-                        class="ml-2 opacity-80 hover:opacity-100"
-                    >
-                        <svg
-                            class="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"
-                            />
-                        </svg>
-                    </button>
-                </div>
-            </Transition>
-        </Teleport>
-
         <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200"
-            >
-                {{ $t("ai.title") }}
-            </h2>
+            <PageHeader :title="$t('ai.title')" :subtitle="$t('ai.subtitle')" />
         </template>
 
-        <div class="space-y-6">
-            <!-- Header -->
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-600 dark:text-gray-400">
-                        {{ $t("ai.subtitle") }}
-                    </p>
-                </div>
-            </div>
-
+        <div class="mx-auto flex max-w-screen-2xl flex-col gap-4">
             <GoldNotice
                 v-if="anyProviderLocked"
                 feature="advanced_ai"
                 :message="$t('license.gating.ai_provider_locked')"
             />
 
-            <!-- Provider Cards Grid -->
-            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div
-                    v-for="(provider, key) in providers"
-                    :key="key"
-                    class="group relative overflow-hidden rounded-xl border bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
-                    :class="
-                        isConfigured(key) && getIntegration(key)?.is_active
-                            ? 'border-emerald-200 dark:border-emerald-800'
-                            : 'border-slate-200'
-                    "
-                >
-                    <!-- Provider Icon & Name -->
-                    <div class="flex items-start justify-between">
-                        <div class="flex items-center gap-3">
-                            <div
-                                class="flex h-12 w-12 items-center justify-center rounded-xl"
-                                :style="{
-                                    backgroundColor: provider.color + '20',
-                                }"
+            <!-- Every service the panel can talk to, set up or not -->
+            <Panel flush>
+                <div class="relative -mt-3 overflow-x-auto">
+                    <table class="w-full text-sm sm:min-w-[820px]">
+                        <thead>
+                            <tr
+                                class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
                             >
-                                <div
-                                    class="h-6 w-6"
-                                    :style="{ color: provider.color }"
-                                    v-html="providerIcons[key]"
-                                ></div>
-                            </div>
-                            <div>
-                                <h3
-                                    class="flex flex-wrap items-center gap-x-2 gap-y-1 font-semibold text-gray-900 dark:text-white"
-                                >
-                                    {{ provider.name }}
-                                    <GoldBadge
-                                        v-if="provider.required_feature"
-                                        :locked="providerLocked(key)"
+                                <th scope="col" class="px-5 py-2.5 font-medium">{{ $t("ai.table.provider") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
+                                    {{ $t("ai.table.status") }}
+                                </th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
+                                    {{ $t("ai.modal.default_model_label") }}
+                                </th>
+                                <th scope="col" class="px-3 py-2.5 font-medium">{{ $t("ai.table.active") }}</th>
+                                <th scope="col" class="py-2.5 pl-3 pr-5 text-right font-medium">
+                                    <span class="sr-only">{{ $t("common.actions") }}</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="(provider, key) in providers"
+                                :key="key"
+                                class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-700/40 dark:hover:bg-slate-700/20"
+                            >
+                                <td class="max-w-0 px-5 py-3 max-sm:w-full sm:w-[40%]">
+                                    <div class="flex items-center gap-3">
+                                        <span
+                                            aria-hidden="true"
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 max-sm:hidden dark:border-slate-700/60"
+                                        >
+                                            <span
+                                                class="h-4 w-4 text-slate-900 dark:text-white"
+                                                v-html="providerIcons[key]"
+                                            ></span>
+                                        </span>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    class="min-w-0 truncate text-left font-medium text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300"
+                                                    @click="openModal(key)"
+                                                >
+                                                    {{ provider.name }}
+                                                </button>
+                                                <GoldBadge
+                                                    v-if="provider.required_feature"
+                                                    :locked="providerLocked(key)"
+                                                    class="shrink-0 max-sm:hidden"
+                                                />
+                                            </div>
+                                            <p
+                                                class="truncate text-xs text-slate-600 dark:text-slate-400"
+                                                :title="provider.description"
+                                            >
+                                                {{ provider.description }}
+                                            </p>
+                                            <!-- On a phone the status has no column of its own and the badge
+                                                 would squeeze the name: both sit under it -->
+                                            <div class="mt-1.5 flex flex-wrap items-center gap-1.5 sm:hidden">
+                                                <StatusPill :tone="statusOf(key).tone">
+                                                    {{ statusOf(key).label }}
+                                                </StatusPill>
+                                                <GoldBadge v-if="provider.required_feature" :locked="providerLocked(key)" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td class="max-w-0 px-3 py-3 max-sm:hidden" style="width: 22%">
+                                    <StatusPill :tone="statusOf(key).tone">
+                                        {{ statusOf(key).label }}
+                                    </StatusPill>
+                                    <p
+                                        v-if="getIntegration(key)?.last_test_status === 'error' && getIntegration(key).last_test_message"
+                                        class="mt-1 truncate text-xs text-rose-700 dark:text-rose-300"
+                                        :title="getIntegration(key).last_test_message"
+                                    >
+                                        {{ getIntegration(key).last_test_message }}
+                                    </p>
+                                </td>
+
+                                <td class="max-w-0 px-3 py-3 max-sm:hidden" style="width: 20%">
+                                    <p
+                                        v-if="getIntegration(key)?.default_model"
+                                        class="truncate font-mono text-xs text-slate-900 dark:text-slate-100"
+                                        :title="getIntegration(key).default_model"
+                                    >
+                                        {{ getIntegration(key).default_model }}
+                                    </p>
+                                    <span v-else class="text-slate-600 dark:text-slate-400">—</span>
+                                </td>
+
+                                <td class="px-3 py-3">
+                                    <Switch
+                                        v-if="isConfigured(key)"
+                                        :model-value="!!getIntegration(key).is_active"
+                                        :label="$t('ai.switch_label', { name: provider.name })"
+                                        :disabled="toggling === getIntegration(key).id"
+                                        @update:model-value="toggleActive(getIntegration(key))"
                                     />
-                                </h3>
-                                <p
-                                    class="text-xs text-gray-500 dark:text-gray-400"
-                                >
-                                    {{ provider.description }}
-                                </p>
-                            </div>
-                        </div>
+                                </td>
 
-                        <!-- Active toggle (only if configured) -->
-                        <button
-                            v-if="isConfigured(key)"
-                            @click="toggleActive(getIntegration(key))"
-                            class="relative h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            :class="
-                                getIntegration(key)?.is_active
-                                    ? 'bg-emerald-500'
-                                    : 'bg-gray-300 dark:bg-slate-600'
-                            "
-                            :title="
-                                getIntegration(key)?.is_active
-                                    ? $t('ai.actions.disable')
-                                    : $t('ai.actions.enable')
-                            "
-                        >
-                            <span
-                                class="absolute left-0.5 top-0.5 h-5 w-5 transform rounded-full bg-white shadow transition-transform"
-                                :class="
-                                    getIntegration(key)?.is_active
-                                        ? 'translate-x-5'
-                                        : 'translate-x-0'
-                                "
-                            ></span>
-                        </button>
-                    </div>
-
-                    <!-- Status Badge -->
-                    <div class="mt-4">
-                        <span
-                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
-                            :class="getStatusClass(key)"
-                        >
-                            <span
-                                class="h-1.5 w-1.5 rounded-full"
-                                :class="{
-                                    'bg-emerald-500':
-                                        isConfigured(key) &&
-                                        getIntegration(key)?.is_active &&
-                                        getIntegration(key)
-                                            ?.last_test_status === 'success',
-                                    'bg-rose-500':
-                                        getIntegration(key)
-                                            ?.last_test_status === 'error',
-                                    'bg-amber-500':
-                                        isConfigured(key) &&
-                                        getIntegration(key)?.is_active &&
-                                        !getIntegration(key)?.last_test_status,
-                                    'bg-slate-400':
-                                        !isConfigured(key) ||
-                                        !getIntegration(key)?.is_active,
-                                }"
-                            ></span>
-                            {{ getStatusText(key) }}
-                        </span>
-                    </div>
-
-                    <!-- Default Model (if configured) -->
-                    <div v-if="getIntegration(key)?.default_model" class="mt-3">
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            Model:
-                            <span
-                                class="font-medium text-gray-700 dark:text-gray-300"
-                                >{{ getIntegration(key).default_model }}</span
-                            >
-                        </p>
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="mt-4 flex items-center gap-2">
-                        <button
-                            @click="openModal(key)"
-                            class="flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
-                            :class="
-                                isConfigured(key)
-                                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600'
-                                    : 'bg-indigo-600 text-white hover:bg-indigo-700'
-                            "
-                        >
-                            {{
-                                isConfigured(key)
-                                    ? $t("ai.actions.edit")
-                                    : $t("ai.actions.configure")
-                            }}
-                        </button>
-
-                        <template v-if="isConfigured(key)">
-                            <button
-                                @click="testConnection(getIntegration(key))"
-                                :disabled="
-                                    testingIntegration ===
-                                    getIntegration(key)?.id
-                                "
-                                class="rounded-lg bg-gray-100 p-2 text-gray-600 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-slate-700 dark:text-gray-400 dark:hover:bg-slate-600"
-                                :title="$t('ai.actions.test_connection')"
-                            >
-                                <svg
-                                    v-if="
-                                        testingIntegration ===
-                                        getIntegration(key)?.id
-                                    "
-                                    class="h-5 w-5 animate-spin"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <circle
-                                        class="opacity-25"
-                                        cx="12"
-                                        cy="12"
-                                        r="10"
-                                        stroke="currentColor"
-                                        stroke-width="4"
-                                    ></circle>
-                                    <path
-                                        class="opacity-75"
-                                        fill="currentColor"
-                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                    ></path>
-                                </svg>
-                                <svg
-                                    v-else
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
-                            </button>
-
-                            <button
-                                @click="confirmDelete(getIntegration(key))"
-                                class="rounded-lg bg-gray-100 p-2 text-rose-600 transition-colors hover:bg-rose-50 dark:bg-slate-700 dark:hover:bg-rose-900/20"
-                                :title="$t('ai.actions.delete')"
-                            >
-                                <svg
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                    />
-                                </svg>
-                            </button>
-                        </template>
-                    </div>
-
-                    <!-- Last Test Message (if error) -->
-                    <div
-                        v-if="getIntegration(key)?.last_test_status === 'error'"
-                        class="mt-3"
-                    >
-                        <p class="text-xs text-rose-600 dark:text-rose-400">
-                            {{ getIntegration(key).last_test_message }}
-                        </p>
-                    </div>
+                                <td class="py-3 pl-3 pr-5">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <button
+                                            type="button"
+                                            class="inline-flex min-h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium transition-colors"
+                                            :class="
+                                                isConfigured(key)
+                                                    ? 'text-slate-700 hover:bg-slate-100 hover:text-slate-900 max-sm:hidden dark:text-slate-200 dark:hover:bg-slate-700/60 dark:hover:text-white'
+                                                    : 'border border-slate-300 text-slate-800 hover:bg-slate-50 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-700/60'
+                                            "
+                                            @click="openModal(key)"
+                                        >
+                                            {{ isConfigured(key) ? $t("ai.actions.edit") : $t("ai.actions.configure") }}
+                                        </button>
+                                        <ActionMenu
+                                            v-if="isConfigured(key)"
+                                            :label="$t('ai.actions_for', { name: provider.name })"
+                                        >
+                                            <!-- On a phone the button beside the menu has no room: it is the first entry here -->
+                                            <ActionMenuItem class="sm:hidden" @click="openModal(key)">
+                                                {{ $t("ai.actions.edit") }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem
+                                                :disabled="testingIntegration === getIntegration(key).id"
+                                                @click="testConnection(getIntegration(key))"
+                                            >
+                                                {{
+                                                    testingIntegration === getIntegration(key).id
+                                                        ? $t("ai.testing")
+                                                        : $t("ai.actions.test_connection")
+                                                }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem danger @click="confirmDelete(getIntegration(key))">
+                                                {{ $t("ai.actions.delete") }}
+                                            </ActionMenuItem>
+                                        </ActionMenu>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-            </div>
+            </Panel>
 
-            <!-- Info Box -->
-            <div
-                class="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
-            >
-                <div class="flex gap-3">
-                    <svg
-                        class="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    <div class="text-sm text-blue-800 dark:text-blue-200">
-                        <p class="font-medium">{{ $t("ai.info.title") }}</p>
-                        <ul
-                            class="mt-2 list-inside list-disc space-y-1 text-blue-700 dark:text-blue-300"
-                        >
-                            <li>
-                                <strong>OpenAI:</strong>
-                                <a
-                                    href="https://platform.openai.com/api-keys"
-                                    target="_blank"
-                                    class="underline hover:no-underline"
-                                    >platform.openai.com/api-keys</a
-                                >
-                            </li>
-                            <li>
-                                <strong>Anthropic:</strong>
-                                <a
-                                    href="https://console.anthropic.com/settings/keys"
-                                    target="_blank"
-                                    class="underline hover:no-underline"
-                                    >console.anthropic.com/settings/keys</a
-                                >
-                            </li>
-                            <li>
-                                <strong>Grok:</strong>
-                                <a
-                                    href="https://console.x.ai/"
-                                    target="_blank"
-                                    class="underline hover:no-underline"
-                                    >console.x.ai</a
-                                >
-                            </li>
-                            <li>
-                                <strong>OpenRouter:</strong>
-                                <a
-                                    href="https://openrouter.ai/keys"
-                                    target="_blank"
-                                    class="underline hover:no-underline"
-                                    >openrouter.ai/keys</a
-                                >
-                            </li>
-                            <li>
-                                <strong>Gemini:</strong>
-                                <a
-                                    href="https://aistudio.google.com/apikey"
-                                    target="_blank"
-                                    class="underline hover:no-underline"
-                                    >aistudio.google.com/apikey</a
-                                >
-                            </li>
-                            <li>
-                                <strong>Ollama:</strong>
+            <!-- Where the keys come from -->
+            <Panel :title="$t('ai.info.title')">
+                <dl class="grid grid-cols-1 gap-x-8 gap-y-4 text-sm sm:grid-cols-2 xl:grid-cols-3">
+                    <div v-for="(provider, key) in providers" :key="key" class="flex min-w-0 flex-col gap-1">
+                        <dt class="font-medium text-slate-900 dark:text-white">{{ provider.name }}</dt>
+                        <dd class="min-w-0 text-slate-600 dark:text-slate-400">
+                            <a
+                                v-if="KEY_PAGES[key]"
+                                :href="KEY_PAGES[key]"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="break-all font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                            >
+                                {{ hostOf(KEY_PAGES[key]) }}
+                            </a>
+                            <template v-else-if="key === 'ollama'">
                                 {{ $t("ai.info.ollama", { url: "ollama.ai" }) }}
-                            </li>
-                        </ul>
+                            </template>
+                            <template v-else>—</template>
+                        </dd>
                     </div>
-                </div>
-            </div>
+                </dl>
+            </Panel>
         </div>
 
-        <!-- Configuration Modal -->
-        <Teleport to="body">
-            <div
-                v-if="showModal"
-                class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
-                @click.self="closeModal"
-            >
-                <div
-                    class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800"
-                >
-                    <!-- Modal Header -->
-                    <div class="mb-6 flex items-center justify-between">
-                        <h3
-                            class="text-lg font-semibold text-gray-900 dark:text-white"
+        <FormDialog
+            :show="showModal"
+            :title="
+                (modalMode === 'edit' ? $t('ai.actions.edit') : $t('ai.actions.configure')) +
+                ' ' +
+                (providers[form.provider]?.name || '')
+            "
+            :processing="form.processing"
+            :errors="formErrorMessages"
+            :toast="toast"
+            @close="closeModal"
+            @submit="submitForm"
+        >
+            <div class="space-y-4">
+                <div>
+                    <label for="ai-name" :class="labelClass">{{ $t("ai.modal.name_label") }}</label>
+                    <input
+                        id="ai-name"
+                        v-model="form.name"
+                        type="text"
+                        class="mt-1"
+                        :class="[fieldClass, { '!border-rose-500': form.errors.name }]"
+                    />
+                    <p v-if="form.errors.name" :class="errorClass">{{ form.errors.name }}</p>
+                </div>
+
+                <!-- API key: required, optional (a local server may have none) or not used at all -->
+                <div v-if="providers[form.provider]?.requires_api_key || providers[form.provider]?.supports_optional_api_key">
+                    <label for="ai-key" :class="labelClass">
+                        {{ $t("ai.modal.api_key_label") }}
+                        <span
+                            v-if="providers[form.provider]?.supports_optional_api_key && !providers[form.provider]?.requires_api_key"
+                            class="font-normal text-slate-600 dark:text-slate-400"
                         >
-                            {{
-                                modalMode === "edit"
-                                    ? $t("ai.actions.edit")
-                                    : $t("ai.actions.configure")
-                            }}
-                            {{ providers[form.provider]?.name }}
-                        </h3>
+                            ({{ $t("ai.modal.optional") }})
+                        </span>
+                        <span v-if="modalMode === 'edit'" class="font-normal text-slate-600 dark:text-slate-400">
+                            {{ $t("ai.modal.api_key_help") }}
+                        </span>
+                    </label>
+                    <div class="relative mt-1">
+                        <input
+                            id="ai-key"
+                            v-model="form.api_key"
+                            :type="showApiKey ? 'text' : 'password'"
+                            :placeholder="modalMode === 'edit' ? '••••••••••••••••' : 'sk-...'"
+                            autocomplete="off"
+                            class="pr-11 font-mono"
+                            :class="[fieldClass, { '!border-rose-500': form.errors.api_key }]"
+                        />
                         <button
-                            @click="closeModal"
-                            class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-700"
+                            type="button"
+                            :aria-label="showApiKey ? $t('common.hide') : $t('common.show')"
+                            :aria-pressed="showApiKey"
+                            class="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700/60 dark:hover:text-white"
+                            @click="showApiKey = !showApiKey"
                         >
                             <svg
-                                class="h-5 w-5"
+                                aria-hidden="true"
+                                class="h-4 w-4"
                                 fill="none"
                                 stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
                                 viewBox="0 0 24 24"
                             >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
+                                <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+                                <circle cx="12" cy="12" r="3" />
+                                <path v-if="showApiKey" d="M4 4l16 16" />
                             </svg>
                         </button>
                     </div>
-
-                    <!-- Form -->
-                    <form @submit.prevent="submitForm" class="space-y-4">
-                        <!-- Name -->
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
-                                {{ $t("ai.modal.name_label") }}
-                            </label>
-                            <input
-                                v-model="form.name"
-                                type="text"
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                                :class="{ 'border-rose-500': form.errors.name }"
-                            />
-                            <p
-                                v-if="form.errors.name"
-                                class="mt-1 text-sm text-rose-600"
-                            >
-                                {{ form.errors.name }}
-                            </p>
-                        </div>
-
-                        <!-- API Key -->
-                        <div
-                            v-if="
-                                providers[form.provider]?.requires_api_key ||
-                                providers[form.provider]
-                                    ?.supports_optional_api_key
-                            "
+                    <p v-if="form.errors.api_key" :class="errorClass">{{ form.errors.api_key }}</p>
+                    <p v-if="providers[form.provider]?.optional_api_key_hint" :class="hintClass">
+                        {{ providers[form.provider].optional_api_key_hint }}
+                    </p>
+                    <p v-if="KEY_PAGES[form.provider]" :class="hintClass">
+                        {{ $t("ai.modal.key_from") }}
+                        <a
+                            :href="KEY_PAGES[form.provider]"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                         >
-                            <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
-                                {{ $t("ai.modal.api_key_label") }}
-                                <span
-                                    v-if="
-                                        providers[form.provider]
-                                            ?.supports_optional_api_key &&
-                                        !providers[form.provider]
-                                            ?.requires_api_key
-                                    "
-                                    class="font-normal text-gray-500"
-                                    >({{ $t("ai.modal.optional") }})</span
-                                >
-                                <span
-                                    v-if="modalMode === 'edit'"
-                                    class="font-normal text-gray-500"
-                                    >{{ $t("ai.modal.api_key_help") }}</span
-                                >
-                            </label>
-                            <p
-                                v-if="
-                                    providers[form.provider]
-                                        ?.optional_api_key_hint
-                                "
-                                class="text-xs text-gray-500 mb-1"
-                            >
-                                {{
-                                    providers[form.provider]
-                                        .optional_api_key_hint
-                                }}
-                            </p>
-                            <div class="relative mt-1">
-                                <input
-                                    v-model="form.api_key"
-                                    :type="showApiKey ? 'text' : 'password'"
-                                    :placeholder="
-                                        modalMode === 'edit'
-                                            ? '••••••••••••••••'
-                                            : 'sk-...'
-                                    "
-                                    class="block w-full rounded-lg border-gray-300 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                                    :class="{
-                                        'border-rose-500': form.errors.api_key,
-                                    }"
-                                />
-                                <button
-                                    type="button"
-                                    @click="showApiKey = !showApiKey"
-                                    class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
-                                >
-                                    <svg
-                                        v-if="showApiKey"
-                                        class="h-5 w-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                                        />
-                                    </svg>
-                                    <svg
-                                        v-else
-                                        class="h-5 w-5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                                        />
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                                        />
-                                    </svg>
-                                </button>
-                            </div>
-                            <p
-                                v-if="form.errors.api_key"
-                                class="mt-1 text-sm text-rose-600"
-                            >
-                                {{ form.errors.api_key }}
-                            </p>
-                        </div>
-
-                        <!-- Base URL (for Ollama or custom endpoints) -->
-                        <div v-if="providers[form.provider]?.supports_base_url">
-                            <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
-                                {{ $t("ai.modal.base_url_label") }}
-                                <span class="font-normal text-gray-500">{{
-                                    $t("ai.modal.base_url_help")
-                                }}</span>
-                            </label>
-                            <input
-                                v-model="form.base_url"
-                                type="url"
-                                :placeholder="
-                                    providers[form.provider]?.default_base_url
-                                "
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                            />
-                            <p class="mt-1 text-xs text-gray-500">
-                                {{
-                                    $t("ai.modal.base_url_default", {
-                                        url: providers[form.provider]
-                                            ?.default_base_url,
-                                    })
-                                }}
-                            </p>
-                        </div>
-
-                        <!-- Default Model with Search -->
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                            >
-                                {{ $t("ai.modal.default_model_label") }}
-                            </label>
-
-                            <!-- Search input -->
-                            <div class="relative mt-1">
-                                <svg
-                                    class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                    />
-                                </svg>
-                                <input
-                                    v-model="modelSearch"
-                                    type="text"
-                                    :placeholder="
-                                        $t('ai.modal.model_search_placeholder')
-                                    "
-                                    class="block w-full rounded-lg border-gray-300 pl-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                                />
-                            </div>
-
-                            <!-- Model select -->
-                            <select
-                                v-model="form.default_model"
-                                class="mt-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                                size="6"
-                            >
-                                <option value="">
-                                    {{
-                                        $t("ai.modal.select_model_placeholder")
-                                    }}
-                                </option>
-                                <option
-                                    v-for="model in currentProviderModels"
-                                    :key="model.model_id"
-                                    :value="model.model_id"
-                                >
-                                    {{ model.display_name }}
-                                </option>
-                            </select>
-
-                            <p
-                                v-if="form.default_model"
-                                class="mt-1 text-xs text-gray-500"
-                            >
-                                {{
-                                    $t("ai.modal.selected_model", {
-                                        model: form.default_model,
-                                    })
-                                }}
-                            </p>
-                        </div>
-
-                        <!-- Max Tokens Settings -->
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    {{ $t("ai.modal.tokens_small_label") }}
-                                </label>
-                                <input
-                                    v-model.number="form.max_tokens_small"
-                                    type="number"
-                                    min="100"
-                                    max="100000"
-                                    step="100"
-                                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                                />
-                                <p class="mt-1 text-xs text-gray-500">
-                                    {{
-                                        $t("ai.modal.tokens_small_help", {
-                                            default: 2000,
-                                        })
-                                    }}
-                                </p>
-                            </div>
-                            <div>
-                                <label
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                                >
-                                    {{ $t("ai.modal.tokens_large_label") }}
-                                </label>
-                                <input
-                                    v-model.number="form.max_tokens_large"
-                                    type="number"
-                                    min="1000"
-                                    max="200000"
-                                    step="1000"
-                                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                                />
-                                <p class="mt-1 text-xs text-gray-500">
-                                    {{
-                                        $t("ai.modal.tokens_large_help", {
-                                            default: 50000,
-                                        })
-                                    }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Test Result -->
-                        <div
-                            v-if="testResult"
-                            class="rounded-lg p-4"
-                            :class="
-                                testResult.success
-                                    ? 'bg-emerald-50 dark:bg-emerald-900/20'
-                                    : 'bg-rose-50 dark:bg-rose-900/20'
-                            "
-                        >
-                            <div class="flex items-center gap-2">
-                                <svg
-                                    v-if="testResult.success"
-                                    class="h-5 w-5 text-emerald-600 dark:text-emerald-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
-                                <svg
-                                    v-else
-                                    class="h-5 w-5 text-rose-600 dark:text-rose-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
-                                <span
-                                    :class="
-                                        testResult.success
-                                            ? 'text-emerald-800 dark:text-emerald-200'
-                                            : 'text-rose-800 dark:text-rose-200'
-                                    "
-                                >
-                                    {{ testResult.message }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Form Actions -->
-                        <div class="flex items-center justify-end gap-3 pt-4">
-                            <button
-                                type="button"
-                                @click="closeModal"
-                                class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-700"
-                            >
-                                {{ $t("common.cancel") }}
-                            </button>
-                            <button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
-                            >
-                                {{
-                                    form.processing
-                                        ? $t("ai.modal.saving")
-                                        : $t("ai.modal.save")
-                                }}
-                            </button>
-                        </div>
-                    </form>
+                            {{ hostOf(KEY_PAGES[form.provider]) }}
+                        </a>
+                    </p>
                 </div>
-            </div>
-        </Teleport>
 
-        <!-- Delete Confirmation Modal -->
-        <Modal :show="showDeleteModal" @close="closeDeleteModal" max-width="md">
-            <div class="p-6">
-                <div class="flex items-center gap-4">
-                    <div
-                        class="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/30"
+                <!-- Server address: a local Ollama, or an endpoint of one's own -->
+                <div v-if="providers[form.provider]?.supports_base_url">
+                    <label for="ai-url" :class="labelClass">
+                        {{ $t("ai.modal.base_url_label") }}
+                        <span class="font-normal text-slate-600 dark:text-slate-400">
+                            {{ $t("ai.modal.base_url_help") }}
+                        </span>
+                    </label>
+                    <input
+                        id="ai-url"
+                        v-model="form.base_url"
+                        type="url"
+                        :placeholder="providers[form.provider]?.default_base_url"
+                        class="mt-1"
+                        :class="[fieldClass, { '!border-rose-500': form.errors.base_url }]"
+                    />
+                    <p v-if="form.errors.base_url" :class="errorClass">{{ form.errors.base_url }}</p>
+                    <p v-else :class="hintClass">
+                        {{ $t("ai.modal.base_url_default", { url: providers[form.provider]?.default_base_url }) }}
+                    </p>
+                </div>
+
+                <!-- Default model: a list to pick from, narrowed by the search above it -->
+                <div>
+                    <label for="ai-model" :class="labelClass">{{ $t("ai.modal.default_model_label") }}</label>
+                    <input
+                        v-model="modelSearch"
+                        type="search"
+                        :placeholder="$t('ai.modal.model_search_placeholder')"
+                        :aria-label="$t('ai.modal.model_search_placeholder')"
+                        class="mt-1"
+                        :class="fieldClass"
+                    />
+                    <select
+                        id="ai-model"
+                        v-model="form.default_model"
+                        size="6"
+                        class="mt-2 !px-1 !py-1"
+                        :class="fieldClass"
                     >
-                        <svg
-                            class="h-6 w-6 text-rose-600 dark:text-rose-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
+                        <option value="" class="rounded-lg px-2 py-1">
+                            {{ $t("ai.modal.select_model_placeholder") }}
+                        </option>
+                        <option
+                            v-for="model in currentProviderModels"
+                            :key="model.model_id"
+                            :value="model.model_id"
+                            class="rounded-lg px-2 py-1"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                            />
-                        </svg>
+                            {{ model.display_name }}
+                        </option>
+                    </select>
+                    <p v-if="form.errors.default_model" :class="errorClass">{{ form.errors.default_model }}</p>
+                    <p v-else-if="form.default_model" :class="hintClass">
+                        {{ $t("ai.modal.selected_model", { model: form.default_model }) }}
+                    </p>
+                </div>
+
+                <!-- How long an answer may be, for short and for long jobs -->
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="ai-tokens-small" :class="labelClass">{{ $t("ai.modal.tokens_small_label") }}</label>
+                        <input
+                            id="ai-tokens-small"
+                            v-model.number="form.max_tokens_small"
+                            type="number"
+                            min="100"
+                            max="100000"
+                            step="100"
+                            class="mt-1"
+                            :class="[fieldClass, { '!border-rose-500': form.errors.max_tokens_small }]"
+                        />
+                        <p :class="hintClass">{{ $t("ai.modal.tokens_small_help", { default: 2000 }) }}</p>
                     </div>
                     <div>
-                        <h3
-                            class="text-lg font-semibold text-gray-900 dark:text-white"
-                        >
-                            {{ $t("ai.delete.title") }}
-                        </h3>
-                        <p
-                            class="mt-1 text-sm text-gray-600 dark:text-gray-400"
-                        >
-                            {{
-                                $t("ai.delete.confirm", {
-                                    name: deletingIntegration?.name,
-                                })
-                            }}
-                            {{ $t("ai.delete.irreversible") }}
-                        </p>
+                        <label for="ai-tokens-large" :class="labelClass">{{ $t("ai.modal.tokens_large_label") }}</label>
+                        <input
+                            id="ai-tokens-large"
+                            v-model.number="form.max_tokens_large"
+                            type="number"
+                            min="1000"
+                            max="200000"
+                            step="1000"
+                            class="mt-1"
+                            :class="[fieldClass, { '!border-rose-500': form.errors.max_tokens_large }]"
+                        />
+                        <p :class="hintClass">{{ $t("ai.modal.tokens_large_help", { default: 50000 }) }}</p>
                     </div>
                 </div>
-
-                <div class="mt-6 flex justify-end gap-3">
-                    <SecondaryButton @click="closeDeleteModal">
-                        {{ $t("common.cancel") }}
-                    </SecondaryButton>
-                    <DangerButton @click="deleteIntegration">
-                        {{ $t("ai.actions.delete") }}
-                    </DangerButton>
-                </div>
             </div>
-        </Modal>
+        </FormDialog>
+
+        <ConfirmModal
+            :show="showDeleteModal"
+            type="danger"
+            :title="$t('ai.delete.title')"
+            :message="$t('ai.delete.confirm', { name: deletingIntegration?.name }) + ' ' + $t('ai.delete.irreversible')"
+            :confirm-text="$t('ai.actions.delete')"
+            @close="closeDeleteModal"
+            @confirm="deleteIntegration"
+        />
+
+        <!-- In the corner of the page; an open dialog shows the same message in its footer -->
+        <Toast :toast="showModal ? null : toast" @close="dismiss" />
     </AuthenticatedLayout>
 </template>

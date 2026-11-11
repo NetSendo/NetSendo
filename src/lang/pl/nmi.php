@@ -17,4 +17,27 @@ return [
     'provider_saved' => 'Ustawienia dostawcy zapisane pomyślnie!',
     'warming_started' => 'Ogrzewanie IP zostało rozpoczęte!',
     'blacklist_checked' => 'Sprawdzono czarne listy.',
+
+    // IP providers (addresses ordered through a hosting company's API) and reverse DNS
+    'ip_release_failed' => 'Dostawca nie przyjął adresu z powrotem, więc nadal byłby naliczany: :reason',
+    'providers' => [
+        'errors' => [
+            'unreachable' => 'Nie udało się połączyć z :provider. Spróbuj ponownie za chwilę.',
+            'unauthorized' => ':provider nie przyjął klucza API: :reason',
+            'refused' => ':provider odrzucił żądanie: :reason',
+            'server_not_found' => 'Tego serwera nie ma już na Twoim koncie :provider.',
+            'digitalocean_unusable' => 'DigitalOcean nie nadaje się na dedykowane adresy IP do poczty: blokuje SMTP na adresach Reserved IP i nie daje dla nich rekordu PTR.',
+        ],
+    ],
+    'ptr' => [
+        'verified' => 'Rekord PTR jest poprawny: adres wskazuje na swój host, a host z powrotem na adres.',
+        'not_verified' => 'Rekord PTR nie jest jeszcze poprawny.',
+        'set' => 'Rekord PTR został ustawiony u dostawcy.',
+        'not_supported' => 'Rekordu PTR tego adresu nie da się ustawić z NetSendo. Ustaw go w panelu firmy, od której pochodzi adres.',
+        'no_hostname' => 'Adres nie ma nazwy hosta, na którą miałby wskazywać.',
+    ],
+    'provision' => [
+        'hostname' => 'nazwa hosta',
+        'server' => 'serwer',
+    ],
 ];

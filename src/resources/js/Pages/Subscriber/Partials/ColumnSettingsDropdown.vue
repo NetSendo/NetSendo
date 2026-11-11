@@ -83,7 +83,9 @@ onUnmounted(() => {
     <div class="relative" ref="dropdownRef">
         <button 
             @click="open = !open"
-            class="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
+            type="button"
+            class="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-300 text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700/60 dark:hover:text-white"
+            :aria-label="t('subscribers.column_settings')"
             :title="t('subscribers.column_settings')"
         >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -102,7 +104,7 @@ onUnmounted(() => {
         >
             <div 
                 v-if="open"
-                class="absolute right-0 mt-2 w-64 origin-top-right rounded-xl bg-white dark:bg-slate-800 shadow-lg ring-1 ring-black ring-opacity-5 dark:ring-slate-700 z-50"
+                class="absolute right-0 z-50 mt-2 w-64 origin-top-right rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800"
             >
                 <div class="p-3">
                     <p

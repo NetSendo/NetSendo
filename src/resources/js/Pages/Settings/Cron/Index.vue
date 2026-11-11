@@ -1,12 +1,24 @@
 <script setup>
 import { ref, computed, reactive, onMounted } from 'vue';
-import { Head, useForm, router, usePage } from '@inertiajs/vue3';
+import { Head, useForm, router } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import ResponsiveTabs from '@/Components/ResponsiveTabs.vue';
+import PrimaryButton from '@/Components/PrimaryButton.vue';
+import SecondaryButton from '@/Components/SecondaryButton.vue';
+import PageHeader from '@/Components/Ui/PageHeader.vue';
+import Panel from '@/Components/Ui/Panel.vue';
+import SegmentedControl from '@/Components/Ui/SegmentedControl.vue';
+import StatTiles from '@/Components/Ui/StatTiles.vue';
+import StatusPill from '@/Components/Ui/StatusPill.vue';
+import Toast from '@/Components/Ui/Toast.vue';
+import { fieldClass, hintClass, labelClass } from '@/Components/Ui/fieldClass';
+import { useToast } from '@/Composables/useToast';
 import { useI18n } from 'vue-i18n';
 
-const { t } = useI18n();
-const page = usePage();
+const { t, locale } = useI18n();
+// The outcome of an action is worded here; the server's own message is shown only for a failure
+const { toast, showToast, dismiss } = useToast({ flash: 'error' });
+
+const number = (value) => new Intl.NumberFormat(locale.value).format(value ?? 0);
 
 const props = defineProps({
     settings: Object,
@@ -42,7 +54,10 @@ function getDefaultSchedule() {
 }
 
 // Pomocnicze funkcje do formatowania czasu
-function minutesToTime(minutes) {
+// A time field has no "24:00": the end of the day is shown as 23:59 and kept as 1440
+// until the field is changed
+function minutesToTime(value) {
+    const minutes = Math.min(value, 1439);
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
@@ -54,7 +69,7 @@ function timeToMinutes(time) {
 }
 
 function formatDuration(seconds) {
-    if (!seconds) return '-';
+    if (!seconds) return '—';
     if (seconds < 60) return `${seconds}s`;
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -62,36 +77,35 @@ function formatDuration(seconds) {
 }
 
 function formatDateTime(dateString) {
-    if (!dateString) return '-';
-    const { locale } = useI18n();
+    if (!dateString) return '—';
     return new Date(dateString).toLocaleString(locale.value);
 }
 
 const activeTab = ref('settings');
 
-// Tab configuration for ResponsiveTabs component
-const cronTabs = computed(() => [
-    {
-        id: 'settings',
-        label: t('cron.tabs.settings'),
-        emoji: '⚙️',
-    },
-    {
-        id: 'stats',
-        label: t('cron.tabs.stats'),
-        emoji: '📊',
-    },
-    {
-        id: 'logs',
-        label: t('cron.tabs.logs'),
-        emoji: '📋',
-    },
-    {
-        id: 'instructions',
-        label: t('cron.tabs.instructions'),
-        emoji: '📖',
-    },
+const cronTabs = computed(() =>
+    ['settings', 'stats', 'logs', 'instructions'].map((value) => ({ value, label: t(`cron.tabs.${value}`) })),
+);
+
+// Whether mail is going out right now: no CRON at all, inside the sending hours, or outside
+const dispatchStatus = computed(() => {
+    if (!props.isCronConfigured) return { tone: 'danger', label: t('cron.status.not_configured') };
+    if (props.isDispatchAllowed) return { tone: 'success', label: t('cron.status.active') };
+    return { tone: 'warning', label: t('cron.status.paused') };
+});
+
+const statTiles = computed(() => [
+    { key: 'runs', label: t('cron.stats.total_runs'), value: number(props.stats?.total_runs) },
+    { key: 'ok', label: t('cron.stats.successful'), value: number(props.stats?.successful) },
+    { key: 'failed', label: t('cron.stats.failed'), value: number(props.stats?.failed) },
+    { key: 'sent', label: t('cron.stats.emails_sent'), value: number(props.stats?.emails_sent) },
 ]);
+
+const DAY_PRESETS = [
+    { key: 'preset_24h', start: 0, end: 1440 },
+    { key: 'preset_business', start: 480, end: 1020 },
+    { key: 'preset_office', start: 540, end: 1080 },
+];
 
 // Webhook settings
 const webhookSettings = ref({
@@ -101,7 +115,6 @@ const webhookSettings = ref({
 });
 const webhookLoading = ref(false);
 const tokenVisible = ref(false);
-const copySuccess = ref(false);
 
 async function fetchWebhookSettings() {
     try {
@@ -144,8 +157,6 @@ async function generateToken() {
 async function copyToClipboard(text) {
     try {
         await navigator.clipboard.writeText(text);
-        copySuccess.value = true;
-        setTimeout(() => copySuccess.value = false, 2000);
     } catch (e) {
         // Fallback for older browsers
         const textarea = document.createElement('textarea');
@@ -154,9 +165,8 @@ async function copyToClipboard(text) {
         textarea.select();
         document.execCommand('copy');
         document.body.removeChild(textarea);
-        copySuccess.value = true;
-        setTimeout(() => copySuccess.value = false, 2000);
     }
+    showToast(t('common.copied'));
 }
 
 // Check for tab query parameter on mount
@@ -174,6 +184,7 @@ onMounted(() => {
 function submit() {
     form.post(route('settings.cron.store'), {
         preserveScroll: true,
+        onSuccess: () => showToast(t('cron.settings_saved')),
     });
 }
 
@@ -181,408 +192,291 @@ function refreshStats() {
     router.reload({ only: ['stats', 'recentLogs', 'listsAllowedNow', 'isDispatchAllowed'] });
 }
 
-const statusColors = {
-    running: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-    success: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-    failed: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
-};
+const LOG_TONES = { running: 'info', success: 'success', failed: 'danger' };
+
+// Commands to copy: a quiet block that scrolls sideways instead of wrapping
+const codeBlockClass =
+    'mt-3 overflow-x-auto rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs leading-relaxed text-slate-800 dark:border-slate-700/60 dark:bg-slate-900/60 dark:text-slate-200';
+const codeInlineClass =
+    'rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-900 dark:bg-slate-700/60 dark:text-slate-100';
 </script>
 
 <template>
-    <Head :title="t('cron.title', 'Ustawienia CRON')" />
+    <Head :title="t('cron.title')" />
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100">
-                    ⏰ {{ t('cron.title', 'Ustawienia CRON') }}
-                </h2>
-                <div class="flex items-center gap-3">
-                    <!-- Status indicator -->
-                    <span :class="[
-                        'px-3 py-1 rounded-full text-sm font-medium',
-                        !isCronConfigured
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-                            : isDispatchAllowed
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                    ]">
-                        {{ !isCronConfigured ? '🔴 ' + t('cron.status.not_configured') : (isDispatchAllowed ? '🟢 ' + t('cron.status.active') : '🟡 ' + t('cron.status.paused')) }}
-                    </span>
-                    <button @click="refreshStats" class="btn btn-outline btn-sm">
-                        🔄 {{ t('cron.actions.refresh') }}
-                    </button>
-                </div>
-            </div>
+            <PageHeader :title="t('cron.title')">
+                <StatusPill :tone="dispatchStatus.tone">{{ dispatchStatus.label }}</StatusPill>
+                <SecondaryButton type="button" @click="refreshStats">{{ t('cron.actions.refresh') }}</SecondaryButton>
+            </PageHeader>
         </template>
 
-        <div class="py-6">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <!-- Responsive Tabs -->
-                <div class="mb-6">
-                    <ResponsiveTabs
-                        v-model="activeTab"
-                        :tabs="cronTabs"
-                    />
-                </div>
+        <div class="mx-auto flex max-w-screen-2xl flex-col gap-4">
+            <SegmentedControl v-model="activeTab" :options="cronTabs" :label="t('cron.title')" class="self-start" />
 
-                <!-- Settings Tab -->
-                <div v-if="activeTab === 'settings'" class="space-y-6">
-                    <form @submit.prevent="submit">
-                        <!-- Podstawowe ustawienia -->
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                                📧 {{ t('cron.settings.title') }}
-                            </h3>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        {{ t('cron.settings.volume_per_minute') }}
-                                    </label>
-                                    <input
-                                        type="number"
-                                        v-model="form.volume_per_minute"
-                                        min="1"
-                                        max="10000"
-                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                                    />
-                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ t('cron.settings.volume_help') }}
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                        {{ t('cron.settings.maintenance_hour') }}
-                                    </label>
-                                    <select
-                                        v-model="form.daily_maintenance_hour"
-                                        class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                                    >
-                                        <option v-for="h in 24" :key="h-1" :value="h-1">
-                                            {{ (h-1).toString().padStart(2, '0') }}:00
-                                        </option>
-                                    </select>
-                                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                                        {{ t('cron.settings.maintenance_help') }}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Harmonogram tygodniowy -->
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                                📅 {{ t('cron.schedule.title') }}
-                            </h3>
-                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                                {{ t('cron.schedule.description') }}
+            <!-- Settings: how fast mail goes out, and during which hours of which days -->
+            <form v-if="activeTab === 'settings'" class="flex flex-col gap-4" @submit.prevent="submit">
+                <Panel :title="t('cron.settings.title')">
+                    <div class="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
+                        <div>
+                            <label for="cron-volume" :class="labelClass">{{ t('cron.settings.volume_per_minute') }}</label>
+                            <input
+                                id="cron-volume"
+                                v-model="form.volume_per_minute"
+                                type="number"
+                                min="1"
+                                max="10000"
+                                class="mt-1"
+                                :class="[fieldClass, { '!border-rose-500': form.errors.volume_per_minute }]"
+                            />
+                            <p v-if="form.errors.volume_per_minute" class="mt-1 text-sm text-rose-700 dark:text-rose-300">
+                                {{ form.errors.volume_per_minute }}
                             </p>
-
-                            <div class="space-y-4">
-                                <div
-                                    v-for="day in days"
-                                    :key="day.key"
-                                    class="flex flex-wrap items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg"
-                                >
-                                    <div class="w-32">
-                                        <label class="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                v-model="form.schedule[day.key].enabled"
-                                                class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                                            />
-                                            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                {{ day.label }}
-                                            </span>
-                                        </label>
-                                    </div>
-
-                                    <div
-                                        v-if="form.schedule[day.key].enabled"
-                                        class="flex items-center gap-4 flex-1"
-                                    >
-                                        <div class="flex items-center gap-2">
-                                            <label class="text-sm text-gray-500 dark:text-gray-400">{{ t('cron.schedule.from') }}:</label>
-                                            <input
-                                                type="time"
-                                                :value="minutesToTime(form.schedule[day.key].start)"
-                                                @input="form.schedule[day.key].start = timeToMinutes($event.target.value)"
-                                                class="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-white"
-                                            />
-                                        </div>
-                                        <div class="flex items-center gap-2">
-                                            <label class="text-sm text-gray-500 dark:text-gray-400">{{ t('cron.schedule.to') }}:</label>
-                                            <input
-                                                type="time"
-                                                :value="minutesToTime(form.schedule[day.key].end)"
-                                                @input="form.schedule[day.key].end = timeToMinutes($event.target.value)"
-                                                class="px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-white"
-                                            />
-                                        </div>
-
-                                        <div class="flex gap-1">
-                                            <button
-                                                type="button"
-                                                @click="form.schedule[day.key] = { enabled: true, start: 0, end: 1440 }"
-                                                class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
-                                            >
-                                                {{ t('cron.schedule.preset_24h') }}
-                                            </button>
-                                            <button
-                                                type="button"
-                                                @click="form.schedule[day.key] = { enabled: true, start: 480, end: 1020 }"
-                                                class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
-                                            >
-                                                {{ t('cron.schedule.preset_business') }}
-                                            </button>
-                                            <button
-                                                type="button"
-                                                @click="form.schedule[day.key] = { enabled: true, start: 540, end: 1080 }"
-                                                class="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
-                                            >
-                                                {{ t('cron.schedule.preset_office') }}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        v-else
-                                        class="flex-1 text-sm text-gray-400 dark:text-gray-500 italic"
-                                    >
-                                        {{ t('cron.schedule.day_disabled') }}
-                                    </div>
-                                </div>
-                            </div>
+                            <p v-else :class="hintClass">{{ t('cron.settings.volume_help') }}</p>
                         </div>
-
-                        <!-- Submit -->
-                        <div class="flex justify-end">
-                            <button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                            >
-                                {{ form.processing ? t('cron.actions.saving') : '💾 ' + t('cron.actions.save') }}
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Stats Tab -->
-                <div v-if="activeTab === 'stats'" class="space-y-6">
-                    <!-- Statystyki 24h -->
-                    <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
-                            <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                                {{ stats.total_runs || 0 }}
-                            </div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ t('cron.stats.total_runs') }}</div>
-                        </div>
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
-                            <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                                {{ stats.successful || 0 }}
-                            </div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ t('cron.stats.successful') }}</div>
-                        </div>
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
-                            <div class="text-2xl font-bold text-red-600 dark:text-red-400">
-                                {{ stats.failed || 0 }}
-                            </div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ t('cron.stats.failed') }}</div>
-                        </div>
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
-                            <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                                {{ stats.emails_sent || 0 }}
-                            </div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ t('cron.stats.emails_sent') }}</div>
-                        </div>
-                        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-4 text-center">
-                            <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">
-                                {{ formatDuration(stats.avg_duration) }}
-                            </div>
-                            <div class="text-sm text-gray-500 dark:text-gray-400">{{ t('cron.stats.avg_duration') }}</div>
+                        <div>
+                            <label for="cron-maintenance" :class="labelClass">{{ t('cron.settings.maintenance_hour') }}</label>
+                            <select id="cron-maintenance" v-model="form.daily_maintenance_hour" class="mt-1" :class="fieldClass">
+                                <option v-for="h in 24" :key="h - 1" :value="h - 1">
+                                    {{ (h - 1).toString().padStart(2, '0') }}:00
+                                </option>
+                            </select>
+                            <p :class="hintClass">{{ t('cron.settings.maintenance_help') }}</p>
                         </div>
                     </div>
+                </Panel>
 
-                    <!-- Listy dozwolone teraz -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                            📋 {{ t('cron.lists.allowed_now') }}
-                        </h3>
+                <Panel flush :title="t('cron.schedule.title')">
+                    <p class="px-5 pb-4 text-sm text-slate-600 dark:text-slate-400">{{ t('cron.schedule.description') }}</p>
+                    <ul class="divide-y divide-slate-100 border-t border-slate-200 dark:divide-slate-700/40 dark:border-slate-700/60">
+                        <li
+                            v-for="day in days"
+                            :key="day.key"
+                            class="flex flex-wrap items-center gap-x-6 gap-y-3 px-5 py-3"
+                        >
+                            <label class="flex w-36 shrink-0 items-center gap-2.5">
+                                <input
+                                    v-model="form.schedule[day.key].enabled"
+                                    type="checkbox"
+                                    class="h-4 w-4 accent-indigo-600"
+                                />
+                                <span class="text-sm font-medium text-slate-900 dark:text-white">{{ day.label }}</span>
+                            </label>
 
-                        <div v-if="listsAllowedNow.length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                            <div
+                            <template v-if="form.schedule[day.key].enabled">
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                    <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                        {{ t('cron.schedule.from') }}
+                                        <input
+                                            type="time"
+                                            :value="minutesToTime(form.schedule[day.key].start)"
+                                            class="!w-auto !py-1"
+                                            :class="fieldClass"
+                                            @input="form.schedule[day.key].start = timeToMinutes($event.target.value)"
+                                        />
+                                    </label>
+                                    <label class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                        {{ t('cron.schedule.to') }}
+                                        <input
+                                            type="time"
+                                            :value="minutesToTime(form.schedule[day.key].end)"
+                                            class="!w-auto !py-1"
+                                            :class="fieldClass"
+                                            @input="form.schedule[day.key].end = timeToMinutes($event.target.value)"
+                                        />
+                                    </label>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 sm:ml-auto">
+                                    <button
+                                        v-for="preset in DAY_PRESETS"
+                                        :key="preset.key"
+                                        type="button"
+                                        class="min-h-8 text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                        @click="form.schedule[day.key] = { enabled: true, start: preset.start, end: preset.end }"
+                                    >
+                                        {{ t('cron.schedule.' + preset.key) }}
+                                    </button>
+                                </div>
+                            </template>
+                            <p v-else class="text-sm text-slate-600 dark:text-slate-400">
+                                {{ t('cron.schedule.day_disabled') }}
+                            </p>
+                        </li>
+                    </ul>
+                </Panel>
+
+                <div class="flex justify-end">
+                    <PrimaryButton type="submit" :disabled="form.processing">
+                        {{ form.processing ? t('cron.actions.saving') : t('cron.actions.save') }}
+                    </PrimaryButton>
+                </div>
+            </form>
+
+            <!-- The last 24 hours -->
+            <template v-if="activeTab === 'stats'">
+                <StatTiles :items="statTiles" :label="t('cron.tabs.stats')" />
+
+                <div class="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                    <Panel flush :title="t('cron.lists.allowed_now')">
+                        <ul
+                            v-if="listsAllowedNow.length > 0"
+                            class="divide-y divide-slate-100 border-t border-slate-200 dark:divide-slate-700/40 dark:border-slate-700/60"
+                        >
+                            <li
                                 v-for="list in listsAllowedNow"
                                 :key="list.id"
-                                class="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg"
+                                class="flex items-center justify-between gap-4 px-5 py-2.5 text-sm"
                             >
-                                <span class="font-medium text-gray-900 dark:text-white">{{ list.name }}</span>
-                                <span class="text-sm text-gray-500 dark:text-gray-400">
-                                    {{ list.volume_per_minute }}/min
+                                <span class="min-w-0 truncate text-slate-900 dark:text-white">{{ list.name }}</span>
+                                <span class="shrink-0 tabular-nums text-slate-600 dark:text-slate-400">
+                                    {{ number(list.volume_per_minute) }}/min
                                 </span>
-                            </div>
-                        </div>
-                        <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+                            </li>
+                        </ul>
+                        <p v-else class="border-t border-slate-200 px-5 py-6 text-sm text-slate-600 dark:border-slate-700/60 dark:text-slate-400">
                             {{ t('cron.lists.no_active') }}
-                        </div>
-                    </div>
-
-                    <!-- Informacje o konfiguracji -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                            ℹ️ {{ t('cron.stats.info_title') }}
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
-                                <span class="text-gray-500 dark:text-gray-400">{{ t('cron.stats.last_run') }}:</span>
-                                <span class="font-medium dark:text-white">{{ formatDateTime(settings.last_run) }}</span>
-                            </div>
-                            <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
-                                <span class="text-gray-500 dark:text-gray-400">{{ t('cron.stats.last_daily_run') }}:</span>
-                                <span class="font-medium dark:text-white">{{ formatDateTime(settings.last_daily_run) }}</span>
-                            </div>
-                            <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
-                                <span class="text-gray-500 dark:text-gray-400">{{ t('cron.stats.global_limit') }}:</span>
-                                <span class="font-medium dark:text-white">{{ settings.volume_per_minute }}/min</span>
-                            </div>
-                            <div class="flex justify-between p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
-                                <span class="text-gray-500 dark:text-gray-400">{{ t('cron.stats.maintenance_at') }}:</span>
-                                <span class="font-medium dark:text-white">{{ settings.daily_maintenance_hour }}:00</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Logs Tab -->
-                <div v-if="activeTab === 'logs'">
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-                        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
-                            <h3 class="text-lg font-medium text-gray-900 dark:text-white">
-                                📋 {{ t('cron.logs.title') }}
-                            </h3>
-                        </div>
-
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead class="bg-gray-50 dark:bg-gray-900">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            {{ t('cron.logs.job_name') }}
-                                        </th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            {{ t('cron.logs.status') }}
-                                        </th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            {{ t('cron.logs.started_at') }}
-                                        </th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            {{ t('cron.logs.duration') }}
-                                        </th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            {{ t('cron.logs.emails_sent') }}
-                                        </th>
-                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            {{ t('cron.logs.emails_failed') }}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
-                                    <tr v-for="log in recentLogs" :key="log.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                                        <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-white">
-                                            {{ log.job_name }}
-                                        </td>
-                                        <td class="px-4 py-3">
-                                            <span :class="['px-2 py-1 text-xs rounded-full', statusColors[log.status]]">
-                                                {{ t('cron.status.' + log.status, log.status) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                            {{ formatDateTime(log.started_at) }}
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                            {{ formatDuration(log.duration) }}
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-green-600 dark:text-green-400">
-                                            {{ log.emails_sent }}
-                                        </td>
-                                        <td class="px-4 py-3 text-sm text-red-600 dark:text-red-400">
-                                            {{ log.emails_failed }}
-                                        </td>
-                                    </tr>
-                                    <tr v-if="!recentLogs || recentLogs.length === 0">
-                                        <td colspan="6" class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                                            {{ t('cron.logs.no_logs') }}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Instructions Tab -->
-                <div v-if="activeTab === 'instructions'" class="space-y-6">
-                    <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-                        <div class="flex items-start gap-3">
-                            <svg class="h-5 w-5 text-blue-500 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <div>
-                                <p class="text-sm font-medium text-blue-800 dark:text-blue-200">{{ t('cron.instructions.importance_title') }}</p>
-                                <p class="text-sm text-blue-600 dark:text-blue-300 mt-1">
-                                    {{ t('cron.instructions.importance_text') }}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Docker (Development) -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            🐳 {{ t('cron.instructions.docker_title') }}
-                        </h3>
-                        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                            {{ t('cron.instructions.docker_text') }}
                         </p>
-                        <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
-                            <pre># {{ t('cron.instructions.docker_manual') }}
+                    </Panel>
+
+                    <Panel :title="t('cron.stats.info_title')">
+                        <dl class="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+                            <div>
+                                <dt class="text-slate-600 dark:text-slate-400">{{ t('cron.stats.last_run') }}</dt>
+                                <dd class="tabular-nums text-slate-900 dark:text-white">{{ formatDateTime(settings.last_run) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-slate-600 dark:text-slate-400">{{ t('cron.stats.last_daily_run') }}</dt>
+                                <dd class="tabular-nums text-slate-900 dark:text-white">{{ formatDateTime(settings.last_daily_run) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-slate-600 dark:text-slate-400">{{ t('cron.stats.global_limit') }}</dt>
+                                <dd class="tabular-nums text-slate-900 dark:text-white">{{ number(settings.volume_per_minute) }}/min</dd>
+                            </div>
+                            <div>
+                                <dt class="text-slate-600 dark:text-slate-400">{{ t('cron.stats.avg_duration') }}</dt>
+                                <dd class="tabular-nums text-slate-900 dark:text-white">{{ formatDuration(stats?.avg_duration) }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-slate-600 dark:text-slate-400">{{ t('cron.stats.maintenance_at') }}</dt>
+                                <dd class="tabular-nums text-slate-900 dark:text-white">
+                                    {{ String(settings.daily_maintenance_hour ?? 0).padStart(2, '0') }}:00
+                                </dd>
+                            </div>
+                        </dl>
+                    </Panel>
+                </div>
+            </template>
+
+            <!-- What ran, when, and how it ended -->
+            <Panel v-if="activeTab === 'logs'" flush :title="t('cron.logs.title')">
+                <p
+                    v-if="!recentLogs || recentLogs.length === 0"
+                    class="border-t border-slate-200 px-5 py-10 text-center text-sm text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
+                >
+                    {{ t('cron.logs.no_logs') }}
+                </p>
+                <div v-else class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                    <table class="w-full text-sm sm:min-w-[760px]">
+                        <thead>
+                            <tr
+                                class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
+                            >
+                                <th scope="col" class="px-5 py-2.5 font-medium">{{ t('cron.logs.job_name') }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">{{ t('cron.logs.status') }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">{{ t('cron.logs.started_at') }}</th>
+                                <th scope="col" class="px-3 py-2.5 text-right font-medium max-sm:hidden">{{ t('cron.logs.duration') }}</th>
+                                <th scope="col" class="px-3 py-2.5 text-right font-medium">{{ t('cron.logs.emails_sent') }}</th>
+                                <th scope="col" class="py-2.5 pl-3 pr-5 text-right font-medium max-sm:hidden">
+                                    {{ t('cron.logs.emails_failed') }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="log in recentLogs"
+                                :key="log.id"
+                                class="border-b border-slate-100 last:border-0 dark:border-slate-700/40"
+                            >
+                                <td class="max-w-0 px-5 py-2.5 max-sm:w-full sm:w-[30%]">
+                                    <p class="truncate font-mono text-xs text-slate-900 dark:text-white" :title="log.job_name">
+                                        {{ log.job_name }}
+                                    </p>
+                                    <!-- On a phone the status and the time have no columns of their own -->
+                                    <div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 sm:hidden">
+                                        <StatusPill :tone="LOG_TONES[log.status] || 'neutral'">
+                                            {{ t('cron.status.' + log.status, log.status) }}
+                                        </StatusPill>
+                                        <span class="text-xs tabular-nums text-slate-600 dark:text-slate-400">
+                                            {{ formatDateTime(log.started_at) }}
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-2.5 max-sm:hidden">
+                                    <StatusPill :tone="LOG_TONES[log.status] || 'neutral'">
+                                        {{ t('cron.status.' + log.status, log.status) }}
+                                    </StatusPill>
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-2.5 tabular-nums text-slate-600 max-sm:hidden dark:text-slate-400">
+                                    {{ formatDateTime(log.started_at) }}
+                                </td>
+                                <td class="whitespace-nowrap px-3 py-2.5 text-right tabular-nums text-slate-600 max-sm:hidden dark:text-slate-400">
+                                    {{ formatDuration(log.duration) }}
+                                </td>
+                                <td class="px-3 py-2.5 text-right tabular-nums text-slate-900 dark:text-slate-100">
+                                    {{ number(log.emails_sent) }}
+                                </td>
+                                <td
+                                    class="py-2.5 pl-3 pr-5 text-right tabular-nums max-sm:hidden"
+                                    :class="log.emails_failed ? 'font-medium text-rose-700 dark:text-rose-300' : 'text-slate-600 dark:text-slate-400'"
+                                >
+                                    {{ number(log.emails_failed) }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </Panel>
+
+            <!-- How to make the server run the scheduler every minute -->
+            <template v-if="activeTab === 'instructions'">
+                <div class="rounded-2xl border border-amber-200 bg-amber-50 px-5 py-4 dark:border-amber-500/30 dark:bg-amber-500/10">
+                    <p class="text-sm font-medium text-amber-900 dark:text-amber-200">
+                        {{ t('cron.instructions.importance_title') }}
+                    </p>
+                    <p class="mt-0.5 text-sm text-amber-900 dark:text-amber-200">
+                        {{ t('cron.instructions.importance_text') }}
+                    </p>
+                </div>
+
+                <Panel :title="t('cron.instructions.docker_title')">
+                    <p class="text-sm text-slate-600 dark:text-slate-400">{{ t('cron.instructions.docker_text') }}</p>
+                    <pre :class="codeBlockClass"># {{ t('cron.instructions.docker_manual') }}
 docker compose exec -u dev app php artisan schedule:run
 
 # {{ t('cron.instructions.docker_list') }}
 docker compose exec -u dev app php artisan schedule:list</pre>
-                        </div>
-                    </div>
+                </Panel>
 
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            🐧 {{ t('cron.instructions.linux_title') }}
-                        </h3>
-                        <i18n-t keypath="cron.instructions.linux_text" tag="p" class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                            <template #command>
-                                <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">crontab -e</code>
-                            </template>
-                        </i18n-t>
-                        <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
-                            <pre>* * * * * cd /ścieżka-do-projektu && php artisan schedule:run >> /dev/null 2>&1</pre>
-                        </div>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                            ⚠️ {{ t('cron.instructions.linux_warning', { path: '/ścieżka-do-projektu' }) }}
-                        </p>
-                    </div>
+                <Panel :title="t('cron.instructions.linux_title')">
+                    <i18n-t keypath="cron.instructions.linux_text" tag="p" class="text-sm text-slate-600 dark:text-slate-400">
+                        <template #command>
+                            <code :class="codeInlineClass">crontab -e</code>
+                        </template>
+                    </i18n-t>
+                    <pre :class="codeBlockClass">* * * * * cd /ścieżka-do-projektu && php artisan schedule:run >> /dev/null 2>&1</pre>
+                    <p class="mt-3 text-sm text-amber-800 dark:text-amber-300">
+                        {{ t('cron.instructions.linux_warning', { path: '/ścieżka-do-projektu' }) }}
+                    </p>
+                </Panel>
 
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            ⚙️ {{ t('cron.instructions.supervisor_title') }}
-                        </h3>
-                        <i18n-t keypath="cron.instructions.supervisor_text" tag="p" class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                            <template #file>
-                                <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">/etc/supervisor/conf.d/netsendo-scheduler.conf</code>
-                            </template>
-                        </i18n-t>
-                        <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
-                            <pre>[program:netsendo-scheduler]
+                <Panel :title="t('cron.instructions.supervisor_title')">
+                    <i18n-t keypath="cron.instructions.supervisor_text" tag="p" class="text-sm text-slate-600 dark:text-slate-400">
+                        <template #file>
+                            <code :class="codeInlineClass">/etc/supervisor/conf.d/netsendo-scheduler.conf</code>
+                        </template>
+                    </i18n-t>
+                    <pre :class="codeBlockClass">[program:netsendo-scheduler]
 process_name=%(program_name)s
 command=/bin/bash -c "while true; do php /ścieżka/artisan schedule:run; sleep 60; done"
 autostart=true
@@ -590,231 +484,155 @@ autorestart=true
 user=www-data
 redirect_stderr=true
 stdout_logfile=/var/log/netsendo-scheduler.log</pre>
-                        </div>
-                        <div class="bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto mt-3">
-                            <pre># {{ t('cron.instructions.supervisor_after') }}
+                    <pre :class="codeBlockClass"># {{ t('cron.instructions.supervisor_after') }}
 sudo supervisorctl reread
 sudo supervisorctl update
 sudo supervisorctl start netsendo-scheduler</pre>
+                </Panel>
+
+                <Panel :title="t('cron.instructions.cpanel_title')">
+                    <ol class="list-decimal space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-400">
+                        <li>{{ t('cron.instructions.cpanel_step1') }}</li>
+                        <li>{{ t('cron.instructions.cpanel_step2', { section: 'Cron Jobs' }) }}</li>
+                        <li>{{ t('cron.instructions.cpanel_step3') }}</li>
+                    </ol>
+                    <dl class="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+                        <div
+                            v-for="unit in ['minute', 'hour', 'day', 'month', 'weekday']"
+                            :key="unit"
+                            class="flex items-center gap-2"
+                        >
+                            <dt class="text-slate-600 dark:text-slate-400">{{ t('cron.instructions.cpanel_' + unit) }}</dt>
+                            <dd class="font-mono font-semibold text-slate-900 dark:text-white">*</dd>
+                        </div>
+                    </dl>
+                    <pre :class="codeBlockClass">cd /home/user/public_html && /usr/bin/php artisan schedule:run >> /dev/null 2>&1</pre>
+                </Panel>
+
+                <!-- No shell access: an outside scheduler calls a web address every minute -->
+                <Panel :title="t('cron.instructions.automation_title')">
+                    <img
+                        src="/images/integrations/n8n-make-zapier-dark.png"
+                        alt="n8n, Make, Zapier"
+                        class="mb-3 h-12 object-contain dark:hidden"
+                    />
+                    <img
+                        src="/images/integrations/n8n-make-zapier-light.png"
+                        alt="n8n, Make, Zapier"
+                        class="mb-3 hidden h-12 object-contain dark:block"
+                    />
+                    <i18n-t keypath="cron.instructions.automation_text" tag="p" class="text-sm text-slate-600 dark:text-slate-400">
+                        <template #bold>
+                            <strong class="font-semibold text-slate-900 dark:text-white">Webhook / API</strong>
+                        </template>
+                    </i18n-t>
+
+                    <div class="mt-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700/60">
+                        <p class="text-sm font-medium text-slate-900 dark:text-white">{{ t('cron.webhook.title') }}</p>
+
+                        <div v-if="!webhookSettings.has_token" class="mt-2 flex flex-wrap items-center gap-3">
+                            <p class="text-sm text-slate-600 dark:text-slate-400">{{ t('cron.webhook.no_token') }}</p>
+                            <PrimaryButton type="button" :disabled="webhookLoading" @click="generateToken">
+                                {{ webhookLoading ? t('cron.webhook.generating') : t('cron.webhook.generate') }}
+                            </PrimaryButton>
+                        </div>
+
+                        <div v-else class="mt-3 space-y-3">
+                            <div>
+                                <label for="cron-webhook-url" :class="labelClass">{{ t('cron.webhook.url_label') }}</label>
+                                <div class="mt-1 flex gap-2">
+                                    <input
+                                        id="cron-webhook-url"
+                                        readonly
+                                        :value="webhookSettings.webhook_url"
+                                        class="min-w-0 font-mono !text-xs"
+                                        :class="fieldClass"
+                                    />
+                                    <SecondaryButton type="button" class="shrink-0" @click="copyToClipboard(webhookSettings.webhook_url)">
+                                        {{ t('common.copy') }}
+                                    </SecondaryButton>
+                                </div>
+                            </div>
+                            <div v-if="webhookSettings.token">
+                                <label for="cron-webhook-token" :class="labelClass">{{ t('cron.webhook.token_label') }}</label>
+                                <div class="mt-1 flex gap-2">
+                                    <input
+                                        id="cron-webhook-token"
+                                        readonly
+                                        :type="tokenVisible ? 'text' : 'password'"
+                                        :value="webhookSettings.token"
+                                        class="min-w-0 font-mono !text-xs"
+                                        :class="fieldClass"
+                                    />
+                                    <SecondaryButton type="button" class="shrink-0" @click="tokenVisible = !tokenVisible">
+                                        {{ tokenVisible ? t('common.hide') : t('common.show') }}
+                                    </SecondaryButton>
+                                    <SecondaryButton type="button" class="shrink-0" @click="copyToClipboard(webhookSettings.token)">
+                                        {{ t('common.copy') }}
+                                    </SecondaryButton>
+                                </div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <SecondaryButton type="button" :disabled="webhookLoading" @click="generateToken">
+                                    {{ webhookLoading ? t('cron.webhook.generating') : t('cron.webhook.generate_new') }}
+                                </SecondaryButton>
+                                <span class="text-sm text-slate-600 dark:text-slate-400">{{ t('cron.webhook.token_warning') }}</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            🖥️ {{ t('cron.instructions.cpanel_title') }}
-                        </h3>
-                        <ol class="text-sm text-gray-600 dark:text-gray-400 space-y-2 list-decimal list-inside">
-                            <li>{{ t('cron.instructions.cpanel_step1') }}</li>
-                            <li>{{ t('cron.instructions.cpanel_step2', { section: 'Cron Jobs' }) }}</li>
-                            <li>{{ t('cron.instructions.cpanel_step3') }}</li>
-                        </ol>
-                        <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 mt-3">
-                            <div class="grid grid-cols-2 gap-2 text-sm mb-3">
-                                <span class="text-gray-500 dark:text-gray-400">{{ t('cron.instructions.cpanel_minute') }}:</span>
-                                <span class="font-mono">*</span>
-                                <span class="text-gray-500 dark:text-gray-400">{{ t('cron.instructions.cpanel_hour') }}:</span>
-                                <span class="font-mono">*</span>
-                                <span class="text-gray-500 dark:text-gray-400">{{ t('cron.instructions.cpanel_day') }}:</span>
-                                <span class="font-mono">*</span>
-                                <span class="text-gray-500 dark:text-gray-400">{{ t('cron.instructions.cpanel_month') }}:</span>
-                                <span class="font-mono">*</span>
-                                <span class="text-gray-500 dark:text-gray-400">{{ t('cron.instructions.cpanel_weekday') }}:</span>
-                                <span class="font-mono">*</span>
-                            </div>
-                            <div class="bg-gray-900 rounded p-2 font-mono text-xs text-green-400">
-                                cd /home/user/public_html && /usr/bin/php artisan schedule:run >> /dev/null 2>&1
-                            </div>
+                    <dl class="mt-4 space-y-3 text-sm">
+                        <div>
+                            <dt class="font-medium text-slate-900 dark:text-white">n8n</dt>
+                            <i18n-t keypath="cron.instructions.n8n_note" tag="dd" class="text-slate-600 dark:text-slate-400">
+                                <template #node><code :class="codeInlineClass">HTTP Request</code></template>
+                                <template #trigger><code :class="codeInlineClass">Cron</code></template>
+                            </i18n-t>
                         </div>
-                    </div>
-
-                    <!-- Automation Tools (n8n, Make, Zapier) -->
-                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-                        <div class="mb-4">
-                            <!-- Logo - dark mode uses light version, light mode uses dark version -->
-                            <img
-                                src="/images/integrations/n8n-make-zapier-dark.png"
-                                alt="n8n, Make, Zapier"
-                                class="h-16 object-contain dark:hidden"
-                            />
-                            <img
-                                src="/images/integrations/n8n-make-zapier-light.png"
-                                alt="n8n, Make, Zapier"
-                                class="h-16 object-contain hidden dark:block"
-                            />
+                        <div>
+                            <dt class="font-medium text-slate-900 dark:text-white">Make (Integromat)</dt>
+                            <i18n-t keypath="cron.instructions.make_note" tag="dd" class="text-slate-600 dark:text-slate-400">
+                                <template #module><code :class="codeInlineClass">HTTP &gt; Make a request</code></template>
+                            </i18n-t>
                         </div>
-                        <h3 class="text-lg font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                            🔗 {{ t('cron.instructions.automation_title') }}
-                        </h3>
-                        <i18n-t keypath="cron.instructions.automation_text" tag="p" class="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                            <template #bold>
-                                <strong>Webhook / API</strong>
-                            </template>
-                        </i18n-t>
-
-                        <!-- Webhook Configuration -->
-                        <div class="space-y-4">
-                            <div class="border-t border-gray-100 dark:border-gray-700 pt-4">
-                                <h4 class="text-sm font-medium text-gray-900 dark:text-white mb-3">
-                                    {{ t('cron.webhook.title') }}
-                                </h4>
-
-                                <!-- Token not generated -->
-                                <div v-if="!webhookSettings.has_token" class="text-center py-6 bg-gray-50 dark:bg-gray-700/50 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-600">
-                                    <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">
-                                        {{ t('cron.webhook.no_token') }}
-                                    </p>
-                                    <button
-                                        @click="generateToken"
-                                        :disabled="webhookLoading"
-                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 disabled:opacity-50 transition-colors font-medium"
-                                    >
-                                        {{ webhookLoading ? t('cron.webhook.generating') : t('cron.webhook.generate') }}
-                                    </button>
-                                </div>
-
-                            <!-- Token generated -->
-                            <div v-else class="space-y-4">
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">
-                                            {{ t('cron.webhook.url_label') }}
-                                        </label>
-                                        <div class="flex gap-2">
-                                            <input
-                                                readonly
-                                                :value="webhookSettings.webhook_url"
-                                                class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm font-mono dark:text-white"
-                                            />
-                                            <button @click="copyToClipboard(webhookSettings.webhook_url)" class="px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500">📋</button>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 uppercase tracking-wider">
-                                            {{ t('cron.webhook.token_label') }}
-                                        </label>
-                                        <div class="flex gap-2">
-                                            <input
-                                                readonly
-                                                :value="webhookSettings.token"
-                                                class="flex-1 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-3 py-2 text-sm font-mono dark:text-white"
-                                            />
-                                            <button @click="copyToClipboard(webhookSettings.token)" class="px-3 py-2 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500">📋</button>
-                                        </div>
-                                    </div>
-
-                                    <div class="flex items-center gap-4 pt-2">
-                                        <button
-                                            @click="generateToken"
-                                            :disabled="webhookLoading"
-                                            class="text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                                        >
-                                            {{ webhookLoading ? t('cron.webhook.generating') : t('cron.webhook.generate_new') }}
-                                        </button>
-                                        <span class="text-xs text-gray-400 italic">
-                                            {{ t('cron.webhook.token_warning') }}
-                                        </span>
-                                    </div>
-                                </div>
-                            </div>
+                        <div>
+                            <dt class="font-medium text-slate-900 dark:text-white">Zapier</dt>
+                            <i18n-t keypath="cron.instructions.zapier_note" tag="dd" class="text-slate-600 dark:text-slate-400">
+                                <template #trigger><code :class="codeInlineClass">Schedule</code></template>
+                                <template #action><code :class="codeInlineClass">Webhooks by Zapier</code></template>
+                            </i18n-t>
                         </div>
+                    </dl>
 
-                        <!-- Instructions -->
-                        <div class="space-y-3 text-sm">
-                            <div class="border-l-4 border-indigo-500 pl-3">
-                                <strong class="text-gray-900 dark:text-white">n8n:</strong>
-                                <i18n-t keypath="cron.instructions.n8n_note" tag="p" class="text-gray-600 dark:text-gray-400">
-                                    <template #node>
-                                        <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">HTTP Request</code>
-                                    </template>
-                                    <template #trigger>
-                                        <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">Cron</code>
-                                    </template>
-                                </i18n-t>
-                            </div>
-                            <div class="border-l-4 border-purple-500 pl-3">
-                                <strong class="text-gray-900 dark:text-white">Make (Integromat):</strong>
-                                <i18n-t keypath="cron.instructions.make_note" tag="p" class="text-gray-600 dark:text-gray-400">
-                                    <template #module>
-                                        <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">HTTP > Make a request</code>
-                                    </template>
-                                </i18n-t>
-                            </div>
-                            <div class="border-l-4 border-orange-500 pl-3">
-                                <strong class="text-gray-900 dark:text-white">Zapier:</strong>
-                                <i18n-t keypath="cron.instructions.zapier_note" tag="p" class="text-gray-600 dark:text-gray-400">
-                                    <template #trigger>
-                                        <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">Schedule</code>
-                                    </template>
-                                    <template #action>
-                                        <code class="bg-gray-100 dark:bg-gray-700 px-1 rounded">Webhooks by Zapier</code>
-                                    </template>
-                                </i18n-t>
-                            </div>
-                        </div>
-
-                        <!-- Example Request -->
-                        <div class="mt-4 bg-gray-900 rounded-lg p-4 font-mono text-sm text-green-400 overflow-x-auto">
-                            <pre># cURL example
+                    <pre :class="codeBlockClass"># cURL
 curl -X POST "{{ webhookSettings.webhook_url }}" \
      -H "X-Cron-Token: YOUR_TOKEN"
 
-# Or with query parameter
+# token in the address
 curl "{{ webhookSettings.webhook_url }}?token=YOUR_TOKEN"</pre>
-                        </div>
-                    </div>
+                </Panel>
 
-                    <div class="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-100 dark:border-indigo-800 rounded-lg p-6">
-                        <h3 class="text-lg font-medium text-indigo-900 dark:text-indigo-200 mb-4 flex items-center gap-2">
-                            🚀 {{ t('cron.instructions.forge_title') }}
-                        </h3>
-                        <div class="space-y-4 text-sm text-indigo-700 dark:text-indigo-300">
-                            <p>
-                                <strong>Laravel Forge:</strong> {{ t('cron.instructions.forge_text') }}
-                            </p>
-                            <p>
-                                <strong>Laravel Vapor:</strong> {{ t('cron.instructions.vapor_text') }}
-                            </p>
+                <Panel :title="t('cron.instructions.forge_title')">
+                    <dl class="space-y-2 text-sm">
+                        <div>
+                            <dt class="font-medium text-slate-900 dark:text-white">Laravel Forge</dt>
+                            <dd class="text-slate-600 dark:text-slate-400">{{ t('cron.instructions.forge_text') }}</dd>
                         </div>
-                    </div>
+                        <div>
+                            <dt class="font-medium text-slate-900 dark:text-white">Laravel Vapor</dt>
+                            <dd class="text-slate-600 dark:text-slate-400">{{ t('cron.instructions.vapor_text') }}</dd>
+                        </div>
+                    </dl>
+                </Panel>
 
-                    <!-- Verification -->
-                    <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-6">
-                        <h3 class="text-lg font-medium text-green-900 dark:text-green-200 mb-4 flex items-center gap-2">
-                            ✅ {{ t('cron.verification.title') }}
-                        </h3>
-                        <ul class="space-y-3 text-sm text-green-700 dark:text-green-300">
-                            <li class="flex items-start gap-2">
-                                <span class="text-green-500 font-bold">1.</span>
-                                <span>{{ t('cron.verification.step1') }}</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span class="text-green-500 font-bold">2.</span>
-                                <span>{{ t('cron.verification.step2') }}</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span class="text-green-500 font-bold">3.</span>
-                                <span>{{ t('cron.verification.step3') }}</span>
-                            </li>
-                            <li class="flex items-start gap-2">
-                                <span class="text-green-500 font-bold">4.</span>
-                                <span>{{ t('cron.verification.step4') }}</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+                <Panel :title="t('cron.verification.title')">
+                    <ol class="list-decimal space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-400">
+                        <li v-for="step in 4" :key="step">{{ t('cron.verification.step' + step) }}</li>
+                    </ol>
+                </Panel>
+            </template>
         </div>
+
+        <Toast :toast="toast" @close="dismiss" />
     </AuthenticatedLayout>
 </template>
-
-<style scoped>
-@reference "tailwindcss";
-.btn {
-    @apply px-3 py-1.5 rounded font-medium text-sm transition-colors;
-}
-.btn-outline {
-    @apply border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700;
-}
-.btn-sm {
-    @apply px-2 py-1 text-xs;
-}
-</style>

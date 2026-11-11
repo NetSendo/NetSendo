@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue';
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue';
 
 const props = defineProps({
     blocks: {
@@ -195,11 +195,29 @@ watch([() => props.blocks, () => props.settings], () => {
     }
 }, { deep: true });
 
+// The preview is a 620px wide page shrunk to the width of its card, whatever that is
+const PREVIEW_WIDTH = 620;
+const scale = ref(0.35);
+let resizeObserver = null;
+
+const fitToCard = () => {
+    const width = containerRef.value?.clientWidth;
+    if (width) scale.value = width / PREVIEW_WIDTH;
+};
+
 onMounted(() => {
     if (hasBlocks.value) {
         updatePreview();
     }
+
+    fitToCard();
+    if (typeof ResizeObserver !== 'undefined' && containerRef.value) {
+        resizeObserver = new ResizeObserver(fitToCard);
+        resizeObserver.observe(containerRef.value);
+    }
 });
+
+onBeforeUnmount(() => resizeObserver?.disconnect());
 </script>
 
 <template>
@@ -209,6 +227,9 @@ onMounted(() => {
             <iframe 
                 ref="iframeRef"
                 class="preview-iframe pointer-events-none"
+                :style="{ transform: `scale(${scale})` }"
+                tabindex="-1"
+                aria-hidden="true"
                 scrolling="no"
                 frameborder="0"
             ></iframe>
@@ -222,8 +243,8 @@ onMounted(() => {
         ></div>
         
         <!-- Empty state -->
-        <div v-else class="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900">
-            <div class="flex flex-col items-center text-slate-300 dark:text-slate-600">
+        <div v-else class="flex h-full w-full items-center justify-center bg-slate-100 dark:bg-slate-900/60">
+            <div class="flex flex-col items-center text-slate-400 dark:text-slate-500">
                 <svg class="h-10 w-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
                 </svg>
@@ -234,7 +255,7 @@ onMounted(() => {
 
 <style scoped>
 .template-preview-card {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    background: #f1f5f9;
 }
 
 .preview-wrapper {
@@ -243,23 +264,9 @@ onMounted(() => {
 
 .preview-iframe {
     width: 620px;
-    height: 800px;
-    transform: scale(0.35);
+    height: 1100px;
     transform-origin: top left;
     border: none;
     background: transparent;
-}
-
-/* Responsive scaling for different card sizes */
-@media (min-width: 1280px) {
-    .preview-iframe {
-        transform: scale(0.38);
-    }
-}
-
-@media (max-width: 768px) {
-    .preview-iframe {
-        transform: scale(0.32);
-    }
 }
 </style>

@@ -17,4 +17,27 @@ return [
     'provider_saved' => 'Provider settings saved successfully!',
     'warming_started' => 'IP warming started!',
     'blacklist_checked' => 'Blacklist check completed.',
+
+    // IP providers (addresses ordered through a hosting company's API) and reverse DNS
+    'ip_release_failed' => 'The provider did not take the address back, so it would still be billed: :reason',
+    'providers' => [
+        'errors' => [
+            'unreachable' => ':provider could not be reached. Try again in a moment.',
+            'unauthorized' => ':provider did not accept the API key: :reason',
+            'refused' => ':provider refused the request: :reason',
+            'server_not_found' => 'This server is not in your :provider account any more.',
+            'digitalocean_unusable' => 'DigitalOcean cannot provide dedicated IPs for mail: it blocks SMTP on Reserved IPs and gives them no reverse DNS.',
+        ],
+    ],
+    'ptr' => [
+        'verified' => 'Reverse DNS is correct: the address names its host and the host points back.',
+        'not_verified' => 'Reverse DNS is not correct yet.',
+        'set' => 'Reverse DNS was set at the provider.',
+        'not_supported' => 'Reverse DNS of this address cannot be set from NetSendo. Set it in the panel of the company the address comes from.',
+        'no_hostname' => 'The address has no host name to point back at.',
+    ],
+    'provision' => [
+        'hostname' => 'host name',
+        'server' => 'server',
+    ],
 ];

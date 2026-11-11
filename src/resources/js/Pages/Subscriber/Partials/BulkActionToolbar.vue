@@ -36,17 +36,17 @@ defineEmits([
 
 <template>
     <div
-        class="mb-4 flex flex-col justify-between gap-4 rounded-xl border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-900/30 md:flex-row md:items-center"
+        class="flex flex-col justify-between gap-3 border-t border-indigo-200 bg-indigo-50 px-5 py-3 dark:border-indigo-500/30 dark:bg-indigo-500/10 md:flex-row md:items-center"
     >
         <div
             class="flex flex-wrap items-center justify-center gap-3 md:justify-start"
         >
-            <span class="font-medium text-indigo-700 dark:text-indigo-300">
+            <span class="text-sm font-semibold text-indigo-900 dark:text-indigo-200">
                 {{ t("subscribers.bulk.selected", { count: selectedCount }) }}
             </span>
             <button
                 @click="$emit('clear-selection')"
-                class="text-xs text-indigo-600 hover:underline dark:text-indigo-400"
+                class="text-sm font-medium text-indigo-700 underline underline-offset-2 hover:no-underline dark:text-indigo-300"
             >
                 {{ t("common.clear_selection") }}
             </button>
@@ -54,7 +54,7 @@ defineEmits([
                 v-if="currentListId"
                 @click="$emit('select-all-in-list')"
                 :disabled="processing || isSelectingAllInList"
-                class="text-xs text-indigo-600 disabled:opacity-50 hover:underline dark:text-indigo-400"
+                class="text-sm font-medium text-indigo-700 underline underline-offset-2 disabled:opacity-50 hover:no-underline dark:text-indigo-300"
             >
                 <span v-if="isSelectingAllInList"
                     >{{ t("common.loading") }}...</span
@@ -71,7 +71,7 @@ defineEmits([
             <button
                 @click="$emit('move')"
                 :disabled="processing"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition-colors disabled:opacity-50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                class="inline-flex items-center gap-1.5 min-h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition-colors disabled:opacity-50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             >
                 <svg
                     class="h-4 w-4"
@@ -93,7 +93,7 @@ defineEmits([
             <button
                 @click="$emit('copy')"
                 :disabled="processing"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition-colors disabled:opacity-50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                class="inline-flex items-center gap-1.5 min-h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition-colors disabled:opacity-50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             >
                 <svg
                     class="h-4 w-4"
@@ -115,7 +115,7 @@ defineEmits([
             <button
                 @click="$emit('export')"
                 :disabled="processing"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition-colors disabled:opacity-50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                class="inline-flex items-center gap-1.5 min-h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 transition-colors disabled:opacity-50 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
             >
                 <svg
                     class="h-4 w-4"
@@ -140,7 +140,7 @@ defineEmits([
                     $event.target.value = '';
                 "
                 :disabled="processing"
-                class="rounded-lg border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 disabled:opacity-50 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                class="min-h-9 rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-700 disabled:opacity-50 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
             >
                 <option value="">
                     {{ t("subscribers.bulk.change_status") }}

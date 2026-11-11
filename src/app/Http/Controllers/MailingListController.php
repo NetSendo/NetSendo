@@ -78,7 +78,7 @@ class MailingListController extends Controller
 
         return Inertia::render('MailingList/Index', [
             'lists' => $query
-                ->paginate(12)
+                ->paginate(max(1, min((int) $request->input('per_page', 12), 100)))
                 ->through(fn ($list) => [
                     'id' => $list->id,
                     'name' => $list->name,
@@ -86,11 +86,12 @@ class MailingListController extends Controller
                     'group' => $list->group,
                     'tags' => $list->tags,
                     'created_at' => DateHelper::formatDateForUser($list->created_at),
-                    'subscribers_count' => $list->subscribers()->wherePivot('status', 'active')->count(),
+                    // Counted once for the whole page by withCount() above
+                    'subscribers_count' => $list->subscribers_count,
                     'is_public' => (bool)$list->is_public,
                     'permission' => auth()->user()->canEditList($list) ? 'edit' : 'view',
                 ])->withQueryString(),
-            'filters' => $request->only(['search', 'group_id', 'tag_id', 'visibility', 'sort_col', 'sort_dir']),
+            'filters' => (object) $request->only(['search', 'group_id', 'tag_id', 'visibility', 'sort_col', 'sort_dir', 'per_page']),
             'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)
                 ->with('parent')
                 ->orderBy('name')

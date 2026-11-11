@@ -30,6 +30,7 @@ class PlaceholderService
         'unsubscribe_link' => ['label' => 'Link wypisania', 'description' => 'Link do wypisania z listy'],
         'unsubscribe_url' => ['label' => 'URL wypisania', 'description' => 'URL do wypisania (alias)'],
         'unsubscribe_global' => ['label' => 'Link wypisania globalnego', 'description' => 'Link do wypisania ze wszystkich list (Master Opt-Out)'],
+        'unsubscribe_now' => ['label' => 'Link wypisania jednym kliknięciem', 'description' => 'Strona z jednym przyciskiem, który od razu wypisuje z listy wiadomości (albo ze wszystkich list), bez e-maila z potwierdzeniem i bez strony ustawień'],
         'manage' => ['label' => 'Link zarządzania preferencjami', 'description' => 'Link do strony zarządzania subskrypcjami'],
         'manage_url' => ['label' => 'URL zarządzania', 'description' => 'URL do zarządzania (alias)'],
         'webinar_register_link' => ['label' => 'Link rejestracji na webinar', 'description' => 'Link do strony rejestracji na webinar'],
@@ -214,6 +215,17 @@ class PlaceholderService
     }
 
     /**
+     * [[unsubscribe_now]]: a page with one button that unsubscribes at once —
+     * from the list when given, else from every list of the subscriber.
+     */
+    public function generateUnsubscribeNowLink(Subscriber $subscriber, ?\App\Models\ContactList $list = null): string
+    {
+        return $list
+            ? URL::signedRoute('subscriber.unsubscribe.now', ['subscriber' => $subscriber->id, 'list' => $list->id])
+            : URL::signedRoute('subscriber.unsubscribe.now.global', ['subscriber' => $subscriber->id]);
+    }
+
+    /**
      * Generate manage/preferences link for a subscriber.
      */
     public function generateManageLink(Subscriber $subscriber): string
@@ -224,8 +236,10 @@ class PlaceholderService
     /**
      * Replace placeholders in both content and subject
      * Convenience method for email sending
+     *
+     * @param array $links Overrides of the generated links (e.g. unsubscribe_now for another list)
      */
-    public function processEmailContent(string $content, string $subject, Subscriber $subscriber, ?\App\Models\ContactList $list = null): array
+    public function processEmailContent(string $content, string $subject, Subscriber $subscriber, ?\App\Models\ContactList $list = null, array $links = []): array
     {
         // Generate system links
         $unsubscribeLink = $this->generateUnsubscribeLink($subscriber, $list);
@@ -238,9 +252,12 @@ class PlaceholderService
             'unsubscribe_url' => $unsubscribeLink,
             'unsubscribe' => $unsubscribeLink,
             'unsubscribe_global' => $globalUnsubscribeLink,
+            'unsubscribe_now' => $this->generateUnsubscribeNowLink($subscriber, $list),
             'manage' => $manageLink,
             'manage_url' => $manageLink,
         ];
+
+        $additionalData = array_merge($additionalData, $links);
 
         return [
             'content' => $this->replacePlaceholders($content, $subscriber, $additionalData),
@@ -271,6 +288,7 @@ class PlaceholderService
             'unsubscribe_url' => $unsubscribeLink,
             'unsubscribe' => $unsubscribeLink,
             'unsubscribe_global' => $globalUnsubscribeLink,
+            'unsubscribe_now' => $this->generateUnsubscribeNowLink($subscriber, $list),
             'manage' => $manageLink,
             'manage_url' => $manageLink,
         ];

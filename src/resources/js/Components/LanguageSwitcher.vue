@@ -34,12 +34,16 @@ const currentLocaleData = computed(() => supportedLocales.value[currentLocale.va
 const switchLocale = (localeCode) => {
     if (localeCode === currentLocale.value) return;
 
+    // Switched before the request, so the page the answer brings is built in the new language
+    // from its first render
+    const previous = locale.value;
+    locale.value = localeCode;
+
     router.post(route('locale.update'), { locale: localeCode }, {
         preserveState: false,
         preserveScroll: true,
-        onSuccess: () => {
-            // Update vue-i18n locale after successful switch
-            locale.value = localeCode;
+        onError: () => {
+            locale.value = previous;
         },
     });
 };

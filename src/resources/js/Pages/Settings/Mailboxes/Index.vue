@@ -1,13 +1,31 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
-import DangerButton from "@/Components/DangerButton.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
+import PrimaryButton from "@/Components/PrimaryButton.vue";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
+import ActionMenu from "@/Components/Ui/ActionMenu.vue";
+import ActionMenuItem from "@/Components/Ui/ActionMenuItem.vue";
+import CreateLink from "@/Components/Ui/CreateLink.vue";
+import EmptyState from "@/Components/Ui/EmptyState.vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
+import Panel from "@/Components/Ui/Panel.vue";
+import SegmentedControl from "@/Components/Ui/SegmentedControl.vue";
+import StatusPill from "@/Components/Ui/StatusPill.vue";
+import Switch from "@/Components/Ui/Switch.vue";
+import Toast from "@/Components/Ui/Toast.vue";
+import GoldBadge from "@/Components/License/GoldBadge.vue";
+import GoldNotice from "@/Components/License/GoldNotice.vue";
+import { useLicense } from "@/Composables/useLicense";
+import { useToast } from "@/Composables/useToast";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { t } = useI18n();
+const { t, te, locale } = useI18n();
+const { can, requireGold } = useLicense();
+
+const number = (value) => new Intl.NumberFormat(locale.value).format(value ?? 0);
 
 const props = defineProps({
     mailboxes: {
@@ -33,6 +51,12 @@ const props = defineProps({
     google_integrations: {
         type: Array,
         default: () => [],
+    },
+    // NetSendo MTA (NMI): whether this installation runs it, the account's verified
+    // domains and its dedicated IPs
+    nmi: {
+        type: Object,
+        default: () => ({ enabled: false, domains: [], ips: [] }),
     },
 });
 
@@ -138,31 +162,7 @@ const closeReputationModal = () => {
     router.reload({ only: ["mailboxes"] });
 };
 
-const getReputationBadgeClass = (overall) => {
-    switch (overall) {
-        case "clean":
-            return "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300";
-        case "warning":
-            return "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300";
-        case "critical":
-            return "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300";
-        default:
-            return "bg-gray-100 text-gray-500 dark:bg-slate-700 dark:text-gray-400";
-    }
-};
-
-const getReputationDot = (overall) => {
-    switch (overall) {
-        case "clean":
-            return "✅";
-        case "warning":
-            return "⚠️";
-        case "critical":
-            return "🔴";
-        default:
-            return "⏳";
-    }
-};
+const REPUTATION_TONES = { clean: "success", warning: "warning", critical: "danger" };
 
 const getSeverityClass = (severity) => {
     switch (severity) {
@@ -173,20 +173,15 @@ const getSeverityClass = (severity) => {
         case "medium":
             return "text-amber-600 dark:text-amber-400";
         case "low":
-            return "text-gray-500 dark:text-gray-400";
+            return "text-slate-600 dark:text-slate-400";
         default:
-            return "text-gray-500";
+            return "text-slate-600 dark:text-slate-400";
     }
 };
 
-// Toast notification
-const toast = ref(null);
-const showToast = (message, success = true) => {
-    toast.value = { message, success };
-    setTimeout(() => {
-        toast.value = null;
-    }, 4000);
-};
+// One message at a time: in the corner of the page, or in the footer of the open dialog
+// (a dialog covers the corner). The server's own message is shown only for a failure.
+const { toast, showToast, dismiss } = useToast({ flash: "error" });
 
 // Form
 const form = useForm({
@@ -201,6 +196,9 @@ const form = useForm({
     daily_limit: null,
     time_restriction: 2,
     google_integration_id: null,
+    // NetSendo MTA: the verified domain to send as and, optionally, a dedicated IP
+    domain_configuration_id: null,
+    dedicated_ip_id: null,
     // Bounce IMAP monitoring
     bounce_enabled: false,
     bounce_imap_host: "",
@@ -227,11 +225,44 @@ const form = useForm({
     tracking_enabled: true,
 });
 
+// The dialog is one long form cut into sections. Bounces and replies are read from a saved
+// mailbox, so they appear once it exists; Gmail has no bounce mailbox of its own.
+const dialogTab = ref("sending");
+
+const dialogTabs = computed(() => {
+    const tabs = ["sending"];
+    if (modalMode.value === "edit" && form.provider !== "gmail") tabs.push("bounces");
+    if (modalMode.value === "edit") tabs.push("replies");
+    tabs.push("headers");
+
+    return tabs.map((value) => ({ value, label: t(`mailboxes.modal.tabs.${value}`) }));
+});
+
+watch(dialogTabs, (tabs) => {
+    if (!tabs.some((tab) => tab.value === dialogTab.value)) dialogTab.value = "sending";
+});
+
+const tabOfField = (field) => {
+    if (field.startsWith("bounce_")) return "bounces";
+    if (field.startsWith("reply_imap") || field === "reply_enabled") return "replies";
+    if (field.startsWith("custom_headers")) return "headers";
+    return "sending";
+};
+
+// A refused save opens the section that holds the first refused field
+const openTabOfFirstError = (errors) => {
+    const first = Object.keys(errors || {})[0];
+    if (!first) return;
+    const tab = tabOfField(first);
+    if (dialogTabs.value.some((option) => option.value === tab)) dialogTab.value = tab;
+};
+
 // Provider icons
 const providerIcons = {
     smtp: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M2 6l10 7 10-7"/></svg>`,
     sendgrid: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M1.344 0v8.009h8.009V0zm6.912 6.912H2.441V1.097h5.815zM10.49 0v8.009h8.009V0zm6.912 6.912h-5.815V1.097h5.815zM5.613 8.009v8.009h8.009V8.009zm6.912 6.912H6.71v-5.815h5.815zM14.759 8.009v8.009h8.009V8.009zm6.912 6.912h-5.815v-5.815h5.815zM1.344 16.018v8.009h8.009v-8.009zm6.912 6.912H2.441v-5.815h5.815zM10.49 16.018v8.009h8.009v-8.009zm6.912 6.912h-5.815v-5.815h5.815z"/></svg>`,
     gmail: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z"/></svg>`,
+    nmi: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h8l-1 8 10-12h-8l1-8z"/></svg>`,
 };
 
 // Provider colors
@@ -239,15 +270,219 @@ const providerColors = {
     smtp: "#6366F1",
     sendgrid: "#1A82E2",
     gmail: "#EA4335",
+    nmi: "#F59E0B",
 };
+
+// ---- NetSendo MTA (NMI) ----
+const NMI_FEATURE = "mail_infrastructure";
+const nmiLicensed = computed(() => can(NMI_FEATURE));
+
+// Whether the MTA container answers (settings.nmi.mta.status); null = not asked yet
+const mtaStatus = ref(null);
+const mtaChecking = ref(false);
+const mtaOnline = computed(() => mtaStatus.value?.online === true);
+const mtaAddress = computed(() =>
+    mtaStatus.value ? `${mtaStatus.value.host}:${mtaStatus.value.port}` : "",
+);
+
+const checkMta = async () => {
+    if (!props.nmi.enabled || mtaChecking.value) return;
+
+    mtaChecking.value = true;
+    try {
+        const response = await fetch(route("settings.nmi.mta.status"), {
+            headers: {
+                Accept: "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+        });
+        const payload = await response.json();
+        mtaStatus.value = payload.data ?? { online: false, host: "", port: "" };
+    } catch (error) {
+        mtaStatus.value = { online: false, host: "", port: "" };
+    } finally {
+        mtaChecking.value = false;
+    }
+};
+
+// The mailbox being edited already sends through the MTA: it stays editable whatever
+// the licence or the MTA say. Choosing NMI anew needs GOLD and an MTA that answers.
+const editingNmi = computed(() => editingMailbox.value?.provider === "nmi");
+const nmiSelectable = computed(
+    () => editingNmi.value || (nmiLicensed.value && mtaOnline.value),
+);
+// Domain and IP of an NMI mailbox can only be changed with GOLD
+const nmiLocked = computed(() => !nmiLicensed.value);
+
+const selectProvider = (key) => {
+    if (key === "nmi" && !editingNmi.value) {
+        if (!nmiLicensed.value) {
+            requireGold(NMI_FEATURE);
+            return;
+        }
+        if (!mtaOnline.value) {
+            return;
+        }
+    }
+    form.provider = key;
+};
+
+const emailDomain = (email) => {
+    const at = String(email ?? "").lastIndexOf("@");
+    return at === -1 ? "" : String(email).slice(at + 1).trim().toLowerCase();
+};
+
+const nmiDomain = computed(
+    () =>
+        props.nmi.domains.find(
+            (domain) => domain.id === form.domain_configuration_id,
+        ) || null,
+);
+
+// An IP signs with the DKIM key of one domain: IPs of other domains cannot be chosen
+const nmiIpOptions = computed(() =>
+    props.nmi.ips.map((ip) => ({
+        ...ip,
+        taken:
+            ip.domain_configuration_id !== null &&
+            ip.domain_configuration_id !== form.domain_configuration_id,
+    })),
+);
+
+// Preselect the domain of the sender address, or the only domain there is
+const preselectNmiDomain = () => {
+    if (form.domain_configuration_id) return;
+
+    const domains = props.nmi.domains;
+    const match = domains.find(
+        (domain) => domain.domain.toLowerCase() === emailDomain(form.from_email),
+    );
+    if (match) {
+        form.domain_configuration_id = match.id;
+    } else if (domains.length === 1) {
+        form.domain_configuration_id = domains[0].id;
+    }
+};
+
+watch(
+    () => form.domain_configuration_id,
+    () => {
+        const ip = nmiIpOptions.value.find(
+            (option) => option.id === form.dedicated_ip_id,
+        );
+        if (ip?.taken) {
+            form.dedicated_ip_id = null;
+        }
+    },
+);
+
+// One spelling per address, so IPv6 written differently compares equal
+const normaliseIp = (ip) => {
+    const value = String(ip ?? "").trim().toLowerCase();
+    if (!value.includes(":")) return value;
+    try {
+        return new URL(`http://[${value}]/`).hostname.slice(1, -1);
+    } catch (error) {
+        return value;
+    }
+};
+
+// Whether the MTA really sends from the chosen dedicated IP: it lists the addresses it
+// owns (settings.nmi.mta.status). null = no IP chosen, or the MTA does not say.
+const nmiIpBound = computed(() => {
+    const ip = props.nmi.ips.find((option) => option.id === form.dedicated_ip_id);
+    const addresses = mtaStatus.value?.bind_addresses;
+    if (!ip || !Array.isArray(addresses)) return null;
+
+    return addresses.map(normaliseIp).includes(normaliseIp(ip.ip_address));
+});
+
+// DKIM key of the chosen domain: its DNS record and whether it has been verified
+const nmiDkim = ref(null);
+const nmiDkimLoading = ref(false);
+const nmiDkimBusy = ref(null);
+let nmiDkimRequest = 0;
+
+const jsonHeaders = () => ({
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content,
+    "X-Requested-With": "XMLHttpRequest",
+});
+
+const loadNmiDkim = async () => {
+    const domainId = form.domain_configuration_id;
+    const request = ++nmiDkimRequest;
+    nmiDkim.value = null;
+
+    if (!showModal.value || form.provider !== "nmi" || !domainId) return;
+
+    nmiDkimLoading.value = true;
+    try {
+        const response = await fetch(
+            route("settings.nmi.domains.dkim.show", domainId),
+            { headers: jsonHeaders() },
+        );
+        const payload = await response.json();
+        // The domain may have been changed while the answer was on its way
+        if (request === nmiDkimRequest) {
+            nmiDkim.value = response.ok ? payload.data : null;
+        }
+    } catch (error) {
+        if (request === nmiDkimRequest) nmiDkim.value = null;
+    } finally {
+        if (request === nmiDkimRequest) nmiDkimLoading.value = false;
+    }
+};
+
+watch(
+    [() => form.domain_configuration_id, () => form.provider, showModal],
+    loadNmiDkim,
+);
+
+// The mail is signed with the key of the dedicated IP while the domain's is not verified
+const nmiDkimIpKey = computed(
+    () => !!nmiDkim.value?.ip_keys?.includes(form.dedicated_ip_id),
+);
+
+const nmiDkimAction = async (action) => {
+    if (!nmiDkim.value || nmiDkimBusy.value) return;
+
+    const domainId = form.domain_configuration_id;
+    nmiDkimBusy.value = action;
+    try {
+        const response = await fetch(
+            route(`settings.nmi.domains.dkim.${action}`, domainId),
+            { method: "POST", headers: jsonHeaders(), body: "{}" },
+        );
+        const payload = await response.json();
+
+        if (response.status === 402) {
+            requireGold(NMI_FEATURE);
+            return;
+        }
+        if (payload.data && domainId === form.domain_configuration_id) {
+            nmiDkim.value = payload.data;
+        }
+        if (payload.message) {
+            showToast(
+                payload.message,
+                response.ok && (action !== "verify" || payload.data?.verified),
+            );
+        }
+    } catch (error) {
+        showToast(t("common.error") + ": " + error.message, false);
+    } finally {
+        nmiDkimBusy.value = null;
+    }
+};
+
 
 // Current provider fields
 const currentProviderFields = computed(() => {
     return props.providerFields[form.provider] || [];
 });
 
-// Watch provider changes to update allowed_types
-// Watch provider changes to update allowed_types
 // Watch provider changes to update allowed_types
 watch(
     () => form.provider,
@@ -279,6 +514,10 @@ watch(
         // Reset credentials when provider changes
         form.credentials = {};
         showPassword.value = {};
+
+        if (newProvider === "nmi") {
+            preselectNmiDomain();
+        }
     },
 );
 
@@ -304,6 +543,8 @@ const openModal = (mailbox = null) => {
         form.daily_limit = mailbox.daily_limit;
         form.time_restriction = mailbox.time_restriction;
         form.google_integration_id = mailbox.google_integration_id || null;
+        form.domain_configuration_id = mailbox.domain_configuration_id || null;
+        form.dedicated_ip_id = mailbox.dedicated_ip_id || null;
         // Populate bounce IMAP fields
         form.bounce_enabled = mailbox.bounce_enabled || false;
         form.bounce_imap_host = mailbox.bounce_imap_host || "";
@@ -349,7 +590,12 @@ const openModal = (mailbox = null) => {
     showBouncePassword.value = false;
     showReplyPassword.value = false;
     showWebhookToken.value = false;
+    dialogTab.value = "sending";
+    form.clearErrors();
+    dismiss();
     showModal.value = true;
+    // NMI is offered only while the MTA answers: ask every time the form opens
+    checkMta();
 };
 
 // Preselect the webhook tab of the service the mailbox sends through
@@ -389,7 +635,7 @@ const copyToClipboard = async (text) => {
         await navigator.clipboard.writeText(text);
         showToast(t("common.copied"));
     } catch (error) {
-        showToast(t("common.notifications.error"), false);
+        showToast(t("common.notifications.error_occurred"), false);
     }
 };
 
@@ -430,17 +676,23 @@ const generateWebhookToken = async () => {
         showToast(data.message);
         router.reload({ only: ["mailboxes"] });
     } catch (error) {
-        showToast(t("common.notifications.error") + ": " + error.message, false);
+        showToast(t("common.error") + ": " + error.message, false);
     } finally {
         generatingWebhookToken.value = false;
     }
 };
+
+// Every validation message of the last save, each once
+const formErrorMessages = computed(() => [
+    ...new Set(Object.values(form.errors).filter(Boolean)),
+]);
 
 // Close modal
 const closeModal = () => {
     showModal.value = false;
     editingMailbox.value = null;
     form.reset();
+    form.clearErrors();
     testResult.value = null;
     bounceTestResult.value = null;
     replyTestResult.value = null;
@@ -471,7 +723,7 @@ const testBounceConnection = async () => {
         showToast(data.message, data.success);
     } catch (error) {
         bounceTestResult.value = { success: false, message: error.message };
-        showToast(t("common.notifications.error") + ": " + error.message, false);
+        showToast(t("common.error") + ": " + error.message, false);
     } finally {
         testingBounce.value = false;
     }
@@ -502,7 +754,7 @@ const testReplyConnection = async () => {
         showToast(data.message, data.success);
     } catch (error) {
         replyTestResult.value = { success: false, message: error.message };
-        showToast(t("common.notifications.error") + ": " + error.message, false);
+        showToast(t("common.error") + ": " + error.message, false);
     } finally {
         testingReply.value = false;
     }
@@ -520,6 +772,23 @@ const submitForm = () => {
         form.credentials = {}; // Ensure no garbage credentials are sent
     }
 
+    // The NetSendo MTA logs in with the login of the chosen domain; every other
+    // provider has no domain or dedicated IP
+    if (form.provider === "nmi") {
+        form.credentials = {};
+    } else {
+        form.domain_configuration_id = null;
+        form.dedicated_ip_id = null;
+    }
+
+    // A header row added and left empty is not a header: skip it instead of
+    // failing the whole save on "header name is required"
+    form.custom_headers = form.custom_headers.filter(
+        (header) =>
+            String(header.key ?? "").trim() !== "" ||
+            String(header.value ?? "").trim() !== "",
+    );
+
     if (modalMode.value === "edit") {
         form.put(route("settings.mailboxes.update", editingMailbox.value.id), {
             preserveScroll: true,
@@ -527,9 +796,7 @@ const submitForm = () => {
                 closeModal();
                 showToast(t("mailboxes.notifications.updated"));
             },
-            onError: () => {
-                showToast(t("common.notifications.error"), false);
-            },
+            onError: (errors) => openTabOfFirstError(errors),
         });
     } else {
         form.post(route("settings.mailboxes.store"), {
@@ -554,9 +821,7 @@ const submitForm = () => {
 
                 closeModal();
             },
-            onError: () => {
-                showToast(t("common.notifications.error"), false);
-            },
+            onError: (errors) => openTabOfFirstError(errors),
         });
     }
 };
@@ -589,7 +854,7 @@ const testConnection = async (mailbox) => {
         router.reload({ only: ["mailboxes"] });
     } catch (error) {
         showToast(
-            t("common.notifications.error") + ": " + error.message,
+            t("common.error") + ": " + error.message,
             false,
         );
     } finally {
@@ -631,16 +896,19 @@ const deleteMailbox = () => {
         route("settings.mailboxes.destroy", deletingMailbox.value.id),
         {
             preserveScroll: true,
-            onSuccess: () => {
-                closeDeleteModal();
-                showToast(t("mailboxes.notifications.deleted"));
-            },
+            onSuccess: () => showToast(t("mailboxes.notifications.deleted")),
+            onFinish: () => closeDeleteModal(),
         },
     );
 };
 
-// Toggle active status
+// The switch in the row. The update takes the whole mailbox, so everything the row knows goes
+// back with it: what is left out would be reset.
+const toggling = ref(null);
+
 const toggleActive = (mailbox) => {
+    if (toggling.value) return;
+    toggling.value = mailbox.id;
     router.put(
         route("settings.mailboxes.update", mailbox.id),
         {
@@ -654,51 +922,50 @@ const toggleActive = (mailbox) => {
             reply_to: mailbox.reply_to,
             time_restriction: mailbox.time_restriction,
             google_integration_id: mailbox.google_integration_id,
+            custom_headers: mailbox.custom_headers || [],
+            tracking_enabled: mailbox.tracking_enabled ?? true,
         },
         {
             preserveScroll: true,
+            onSuccess: () =>
+                showToast(
+                    t(
+                        mailbox.is_active
+                            ? "mailboxes.notifications.deactivated"
+                            : "mailboxes.notifications.activated",
+                    ),
+                ),
+            onError: (errors) => showToast(Object.values(errors).flat().join(" "), false),
+            onFinish: () => (toggling.value = null),
         },
     );
 };
 
-// Get status class
-const getStatusClass = (mailbox) => {
-    if (!mailbox.is_active) {
-        return "bg-slate-500/20 text-slate-400";
-    }
-    // GMAIL Special Case: Active but not connected
+// Where the mailbox stands: switched off, waiting for Google, tested and fine, failing, or
+// never tested
+const statusOf = (mailbox) => {
+    if (!mailbox.is_active) return { tone: "neutral", label: t("mailboxes.status.inactive") };
     if (mailbox.provider === "gmail" && !mailbox.gmail_connected) {
-        return "bg-amber-500/20 text-amber-500";
+        return { tone: "warning", label: t("mailboxes.status.pending_auth") };
     }
-
-    if (mailbox.last_test_success === true) {
-        return "bg-emerald-500/20 text-emerald-400";
-    }
-    if (mailbox.last_test_success === false) {
-        return "bg-rose-500/20 text-rose-400";
-    }
-
-    // Default active but not tested
-    return "bg-blue-500/20 text-blue-400";
+    if (mailbox.last_test_success === true) return { tone: "success", label: t("mailboxes.status.active") };
+    if (mailbox.last_test_success === false) return { tone: "danger", label: t("mailboxes.status.error") };
+    return { tone: "info", label: t("mailboxes.status.not_tested") };
 };
 
-// Get status text
-const getStatusText = (mailbox) => {
-    if (!mailbox.is_active) {
-        return t("mailboxes.status.inactive");
+// What the mailbox may send, in a few words
+const usedFor = (mailbox) => {
+    const types = mailbox.allowed_types || [];
+    if (["broadcast", "autoresponder", "system"].every((type) => types.includes(type))) {
+        return t("mailboxes.types_all");
     }
-    // GMAIL Special Case: Active but not connected
-    if (mailbox.provider === "gmail" && !mailbox.gmail_connected) {
-        return t("mailboxes.status.pending_auth") || "Pending Auth"; // Fallback if translation missing
-    }
-
-    if (mailbox.last_test_success === true) {
-        return t("mailboxes.status.active");
-    }
-    if (mailbox.last_test_success === false) {
-        return t("mailboxes.status.error");
-    }
-    return t("mailboxes.status.not_tested");
+    return types
+        .map((type) =>
+            te(`mailboxes.types_short.${type}`)
+                ? t(`mailboxes.types_short.${type}`)
+                : props.messageTypes[type] || type,
+        )
+        .join(", ");
 };
 
 // Disconnect Gmail
@@ -722,10 +989,10 @@ const disconnectGmail = () => {
                     // We should also clear any specific fields if they were set?
                     // But mainly we rely on editingMailbox.gmail_connected in the template.
                 }
-                showToast(t("mailboxes.notifications.disconnected"));
+                showToast(t("mailboxes.oauth.disconnected"));
             },
             onError: () => {
-                showToast(t("common.notifications.error"), false);
+                showToast(t("common.notifications.error_occurred"), false);
             },
         },
     );
@@ -764,586 +1031,694 @@ const isBroadcastDisabled = computed(() => {
     <Head :title="$t('mailboxes.title')" />
 
     <AuthenticatedLayout>
-        <!-- Toast Notification -->
-        <Teleport to="body">
-            <Transition
-                enter-active-class="transition ease-out duration-300"
-                enter-from-class="opacity-0 translate-y-2"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-active-class="transition ease-in duration-200"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 translate-y-2"
-            >
-                <div
-                    v-if="toast"
-                    class="fixed bottom-6 right-6 z-[200] flex items-center gap-3 rounded-xl px-5 py-4 shadow-lg"
-                    :class="
-                        toast.success
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-rose-600 text-white'
-                    "
-                >
-                    <svg
-                        v-if="toast.success"
-                        class="h-5 w-5 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    <svg
-                        v-else
-                        class="h-5 w-5 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    <span class="font-medium">{{ toast.message }}</span>
-                    <button
-                        @click="toast = null"
-                        class="ml-2 opacity-80 hover:opacity-100"
-                    >
-                        <svg
-                            class="h-4 w-4"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M6 18L18 6M6 6l12 12"
-                            />
-                        </svg>
-                    </button>
-                </div>
-            </Transition>
-        </Teleport>
-
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2
-                    class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200"
-                >
-                    {{ $t("mailboxes.title") }}
-                </h2>
-                <button
-                    @click="openModal()"
-                    class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-                >
-                    <svg
-                        class="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 4v16m8-8H4"
-                        />
-                    </svg>
-                    {{ $t("mailboxes.add_new") }}
-                </button>
-            </div>
+            <PageHeader :title="$t('mailboxes.title')" :subtitle="$t('mailboxes.subtitle')">
+                <CreateLink @click="openModal()">{{ $t("mailboxes.add_new") }}</CreateLink>
+            </PageHeader>
         </template>
 
-        <div class="space-y-6">
-            <!-- Header Info -->
-            <div>
-                <p class="text-sm text-gray-600 dark:text-gray-400">
-                    {{ $t("mailboxes.subtitle") }}
-                </p>
-            </div>
-
-            <!-- Empty State -->
-            <div
-                v-if="mailboxes.length === 0"
-                class="rounded-xl border-2 border-dashed border-gray-300 p-12 text-center dark:border-slate-700"
-            >
-                <svg
-                    class="mx-auto h-12 w-12 text-gray-400"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+        <div class="mx-auto flex max-w-screen-2xl flex-col gap-4">
+            <Panel flush>
+                <EmptyState
+                    v-if="mailboxes.length === 0"
+                    class="!border-t-0"
+                    :title="$t('mailboxes.empty.title')"
+                    :description="$t('mailboxes.empty.description')"
                 >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-                    />
-                </svg>
-                <h3
-                    class="mt-4 text-lg font-medium text-gray-900 dark:text-white"
-                >
-                    {{ $t("mailboxes.empty.title") }}
-                </h3>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    {{ $t("mailboxes.empty.description") }}
-                </p>
-                <button
-                    @click="openModal()"
-                    class="mt-6 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700"
-                >
-                    <svg
-                        class="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M12 4v16m8-8H4"
-                        />
-                    </svg>
-                    {{ $t("mailboxes.add_first") }}
-                </button>
-            </div>
+                    <CreateLink @click="openModal()">{{ $t("mailboxes.add_first") }}</CreateLink>
+                </EmptyState>
 
-            <!-- Mailbox Cards Grid -->
-            <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <div
-                    v-for="mailbox in mailboxes"
-                    :key="mailbox.id"
-                    class="group relative overflow-hidden rounded-xl border bg-white p-6 shadow-sm transition-all hover:shadow-md dark:border-slate-700 dark:bg-slate-800"
-                    :class="
-                        mailbox.is_default
-                            ? 'border-indigo-300 dark:border-indigo-700'
-                            : 'border-slate-200'
-                    "
-                >
-                    <!-- Provider Icon & Name -->
-                    <div class="flex items-start gap-3">
-                        <div
-                            class="flex h-12 w-12 items-center justify-center rounded-xl"
-                            :style="{
-                                backgroundColor:
-                                    providerColors[mailbox.provider] + '20',
-                            }"
-                        >
-                            <div
-                                class="h-6 w-6"
-                                :style="{
-                                    color: providerColors[mailbox.provider],
-                                }"
-                                v-html="providerIcons[mailbox.provider]"
-                            ></div>
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h3
-                                class="font-semibold text-gray-900 dark:text-white truncate"
+                <div v-else class="relative -mt-3 overflow-x-auto">
+                    <table class="w-full text-sm sm:min-w-[940px]">
+                        <thead>
+                            <tr
+                                class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
                             >
-                                {{ mailbox.name }}
-                            </h3>
-                            <p
-                                class="text-sm text-gray-500 dark:text-gray-400 truncate"
+                                <th scope="col" class="px-5 py-2.5 font-medium">{{ $t("mailboxes.table.mailbox") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
+                                    {{ $t("mailboxes.table.status") }}
+                                </th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
+                                    {{ $t("mailboxes.table.reputation") }}
+                                </th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">
+                                    {{ $t("mailboxes.table.used_for") }}
+                                </th>
+                                <th scope="col" class="px-3 py-2.5 text-right font-medium max-sm:hidden">
+                                    {{ $t("mailboxes.sent_today") }}
+                                </th>
+                                <th scope="col" class="px-3 py-2.5 font-medium">{{ $t("mailboxes.table.active") }}</th>
+                                <th scope="col" class="py-2.5 pl-3 pr-5 text-right font-medium">
+                                    <span class="sr-only">{{ $t("common.actions") }}</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="mailbox in mailboxes"
+                                :key="mailbox.id"
+                                class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-700/40 dark:hover:bg-slate-700/20"
                             >
-                                {{ mailbox.from_email }}
-                            </p>
-                        </div>
+                                <!-- Which mailbox: its name, the address mail leaves from, the service behind it -->
+                                <td class="max-w-0 px-5 py-3 max-sm:w-full sm:w-[32%]">
+                                    <div class="flex items-center gap-3">
+                                        <span
+                                            aria-hidden="true"
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 max-sm:hidden dark:border-slate-700/60"
+                                        >
+                                            <span
+                                                class="h-4 w-4"
+                                                :style="{ color: providerColors[mailbox.provider] }"
+                                                v-html="providerIcons[mailbox.provider] || providerIcons.smtp"
+                                            ></span>
+                                        </span>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    class="min-w-0 truncate text-left font-medium text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300"
+                                                    :title="mailbox.name"
+                                                    @click="openModal(mailbox)"
+                                                >
+                                                    {{ mailbox.name }}
+                                                </button>
+                                                <StatusPill
+                                                    v-if="mailbox.is_default"
+                                                    tone="info"
+                                                    class="shrink-0 max-sm:hidden"
+                                                >
+                                                    {{ $t("mailboxes.default") }}
+                                                </StatusPill>
+                                            </div>
+                                            <p
+                                                class="truncate text-xs text-slate-600 dark:text-slate-400"
+                                                :title="mailbox.from_email"
+                                            >
+                                                {{ mailbox.from_email }}
+                                                <span aria-hidden="true">·</span>
+                                                {{ providers[mailbox.provider]?.label || mailbox.provider }}
+                                            </p>
+                                            <!-- NetSendo MTA: the domain (and dedicated IP) it sends through -->
+                                            <p
+                                                v-if="mailbox.provider === 'nmi'"
+                                                class="truncate text-xs"
+                                                :class="
+                                                    mailbox.nmi_domain
+                                                        ? 'text-slate-600 dark:text-slate-400'
+                                                        : 'text-rose-700 dark:text-rose-300'
+                                                "
+                                            >
+                                                {{
+                                                    mailbox.nmi_domain
+                                                        ? $t("mailboxes.nmi.sends_as", { domain: mailbox.nmi_domain })
+                                                        : $t("mailboxes.nmi.no_domain")
+                                                }}{{ mailbox.nmi_ip ? " · " + mailbox.nmi_ip : "" }}
+                                            </p>
+                                            <!-- On a phone the status has no column of its own and the badge
+                                                 would squeeze the name: both sit under it -->
+                                            <div class="mt-1.5 flex flex-wrap items-center gap-1.5 sm:hidden">
+                                                <StatusPill :tone="statusOf(mailbox).tone">
+                                                    {{ statusOf(mailbox).label }}
+                                                </StatusPill>
+                                                <StatusPill v-if="mailbox.is_default" tone="info">
+                                                    {{ $t("mailboxes.default") }}
+                                                </StatusPill>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
 
-                        <!-- Active toggle -->
-                        <button
-                            @click="toggleActive(mailbox)"
-                            class="relative h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            :class="
-                                mailbox.is_active
-                                    ? 'bg-emerald-500'
-                                    : 'bg-gray-300 dark:bg-slate-600'
-                            "
-                        >
-                            <span
-                                class="absolute left-0.5 top-0.5 h-5 w-5 transform rounded-full bg-white shadow transition-transform"
-                                :class="
-                                    mailbox.is_active
-                                        ? 'translate-x-5'
-                                        : 'translate-x-0'
-                                "
-                            ></span>
-                        </button>
-                    </div>
+                                <td class="max-w-0 px-3 py-3 max-sm:hidden" style="width: 18%">
+                                    <StatusPill :tone="statusOf(mailbox).tone">
+                                        {{ statusOf(mailbox).label }}
+                                    </StatusPill>
+                                    <!-- A failed test says why; the whole answer of the server is one click away -->
+                                    <button
+                                        v-if="mailbox.last_test_success === false && mailbox.last_test_message"
+                                        type="button"
+                                        class="mt-1 block max-w-full truncate text-left text-xs text-rose-700 underline decoration-dotted underline-offset-2 hover:text-rose-600 dark:text-rose-300 dark:hover:text-rose-200"
+                                        :title="$t('mailboxes.click_for_details')"
+                                        @click="showErrorDetails(mailbox)"
+                                    >
+                                        {{ mailbox.last_test_message }}
+                                    </button>
+                                </td>
 
-                    <!-- Status & Default Badge -->
-                    <div class="mt-4 flex flex-wrap gap-2">
-                        <!-- Default Badge -->
-                        <span
-                            v-if="mailbox.is_default"
-                            class="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300"
-                        >
-                            {{ $t("mailboxes.default") }}
-                        </span>
-                        <span
-                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
-                            :class="getStatusClass(mailbox)"
-                        >
-                            <span
-                                class="h-1.5 w-1.5 rounded-full"
-                                :class="{
-                                    'bg-emerald-500':
-                                        mailbox.is_active &&
-                                        mailbox.last_test_success === true,
-                                    'bg-rose-500':
-                                        mailbox.last_test_success === false,
-                                    'bg-amber-500':
-                                        mailbox.is_active &&
-                                        mailbox.last_test_success === null,
-                                    'bg-slate-400': !mailbox.is_active,
-                                }"
-                            ></span>
-                            {{ getStatusText(mailbox) }}
-                        </span>
-                        <!-- Reputation Badge -->
-                        <span
-                            v-if="
-                                mailbox.reputation_overall &&
-                                mailbox.reputation_overall !== 'unchecked'
-                            "
-                            class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium cursor-pointer"
-                            :class="
-                                getReputationBadgeClass(
-                                    mailbox.reputation_overall,
-                                )
-                            "
-                            @click="openReputationDetails(mailbox)"
-                            :title="$t('mailboxes.reputation.title')"
-                        >
-                            {{ getReputationDot(mailbox.reputation_overall) }}
-                            {{
-                                $t(
-                                    "mailboxes.reputation." +
-                                        mailbox.reputation_overall,
-                                )
-                            }}
-                        </span>
-                    </div>
+                                <td class="px-3 py-3 max-sm:hidden">
+                                    <button
+                                        v-if="mailbox.reputation_overall && mailbox.reputation_overall !== 'unchecked'"
+                                        type="button"
+                                        class="rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                                        :title="$t('mailboxes.reputation.title')"
+                                        @click="openReputationDetails(mailbox)"
+                                    >
+                                        <StatusPill :tone="REPUTATION_TONES[mailbox.reputation_overall] || 'neutral'">
+                                            {{ $t("mailboxes.reputation." + mailbox.reputation_overall) }}
+                                        </StatusPill>
+                                    </button>
+                                    <span v-else class="text-slate-600 dark:text-slate-400">
+                                        {{ $t("mailboxes.reputation.unchecked") }}
+                                    </span>
+                                </td>
 
-                    <!-- Allowed Types -->
-                    <div class="mt-3 flex flex-wrap gap-1">
-                        <span
-                            v-for="type in mailbox.allowed_types"
-                            :key="type"
-                            class="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-slate-700 dark:text-gray-400"
-                        >
-                            {{ messageTypes[type] || type }}
-                        </span>
-                    </div>
+                                <td class="whitespace-nowrap px-3 py-3 text-slate-900 max-sm:hidden dark:text-slate-100">
+                                    {{ usedFor(mailbox) || "—" }}
+                                </td>
 
-                    <!-- Daily Limit -->
-                    <div v-if="mailbox.daily_limit" class="mt-3">
-                        <p class="text-xs text-gray-500 dark:text-gray-400">
-                            {{ $t("mailboxes.sent_today") }}:
-                            <span class="font-medium"
-                                >{{ mailbox.sent_today || 0 }} /
-                                {{ mailbox.daily_limit }}</span
-                            >
-                        </p>
-                    </div>
+                                <td class="whitespace-nowrap px-3 py-3 text-right tabular-nums max-sm:hidden">
+                                    <span class="text-slate-900 dark:text-slate-100">
+                                        {{ number(mailbox.sent_today) }}
+                                    </span>
+                                    <span class="text-slate-600 dark:text-slate-400">
+                                        /
+                                        {{ mailbox.daily_limit ? number(mailbox.daily_limit) : $t("mailboxes.no_limit") }}
+                                    </span>
+                                </td>
 
-                    <!-- Actions -->
-                    <div class="mt-4 flex items-center gap-2">
-                        <button
-                            @click="openModal(mailbox)"
-                            class="flex-1 rounded-lg bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600"
-                        >
-                            {{ $t("common.edit") }}
-                        </button>
+                                <td class="px-3 py-3">
+                                    <Switch
+                                        :model-value="mailbox.is_active"
+                                        :label="$t('mailboxes.switch_label', { name: mailbox.name })"
+                                        :disabled="toggling === mailbox.id"
+                                        @update:model-value="toggleActive(mailbox)"
+                                    />
+                                </td>
 
-                        <button
-                            @click="testConnection(mailbox)"
-                            :disabled="testingMailbox === mailbox.id"
-                            class="rounded-lg bg-gray-100 p-2 text-gray-600 transition-colors hover:bg-gray-200 disabled:opacity-50 dark:bg-slate-700 dark:text-gray-400 dark:hover:bg-slate-600"
-                            :title="$t('mailboxes.test_connection')"
-                        >
-                            <svg
-                                v-if="testingMailbox === mailbox.id"
-                                class="h-5 w-5 animate-spin"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
-                                <circle
-                                    class="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    stroke-width="4"
-                                ></circle>
-                                <path
-                                    class="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
-                            </svg>
-                            <svg
-                                v-else
-                                class="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                            </svg>
-                        </button>
-
-                        <!-- Check Reputation -->
-                        <button
-                            @click="checkReputation(mailbox)"
-                            :disabled="checkingReputation === mailbox.id"
-                            class="rounded-lg bg-gray-100 p-2 text-gray-600 transition-colors hover:bg-violet-50 hover:text-violet-600 disabled:opacity-50 dark:bg-slate-700 dark:text-gray-400 dark:hover:bg-violet-900/20 dark:hover:text-violet-400"
-                            :title="$t('mailboxes.reputation.check_now')"
-                        >
-                            <svg
-                                v-if="checkingReputation === mailbox.id"
-                                class="h-5 w-5 animate-spin"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
-                                <circle
-                                    class="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    stroke-width="4"
-                                ></circle>
-                                <path
-                                    class="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                ></path>
-                            </svg>
-                            <svg
-                                v-else
-                                class="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                                />
-                            </svg>
-                        </button>
-
-                        <button
-                            v-if="!mailbox.is_default"
-                            @click="setDefault(mailbox)"
-                            class="rounded-lg bg-gray-100 p-2 text-gray-600 transition-colors hover:bg-indigo-50 hover:text-indigo-600 dark:bg-slate-700 dark:text-gray-400 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400"
-                            :title="$t('mailboxes.set_as_default')"
-                        >
-                            <svg
-                                class="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
-                                />
-                            </svg>
-                        </button>
-
-                        <button
-                            @click="confirmDelete(mailbox)"
-                            class="rounded-lg bg-gray-100 p-2 text-rose-600 transition-colors hover:bg-rose-50 dark:bg-slate-700 dark:hover:bg-rose-900/20"
-                            :title="$t('common.delete')"
-                        >
-                            <svg
-                                class="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                />
-                            </svg>
-                        </button>
-                    </div>
-
-                    <!-- Last Test Message (if error) -->
-                    <div
-                        v-if="
-                            mailbox.last_test_success === false &&
-                            mailbox.last_test_message
-                        "
-                        class="mt-3"
-                    >
-                        <button
-                            @click="showErrorDetails(mailbox)"
-                            class="w-full text-left group"
-                        >
-                            <p
-                                class="text-xs text-rose-600 dark:text-rose-400 truncate group-hover:underline"
-                                :title="$t('mailboxes.click_for_details')"
-                            >
-                                {{ mailbox.last_test_message }}
-                            </p>
-                        </button>
-                    </div>
+                                <td class="py-3 pl-3 pr-5">
+                                    <div class="flex items-center justify-end gap-1">
+                                        <button
+                                            type="button"
+                                            class="inline-flex min-h-9 items-center whitespace-nowrap rounded-lg px-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 hover:text-slate-900 max-sm:hidden dark:text-slate-200 dark:hover:bg-slate-700/60 dark:hover:text-white"
+                                            @click="openModal(mailbox)"
+                                        >
+                                            {{ $t("common.edit") }}
+                                        </button>
+                                        <ActionMenu :label="$t('mailboxes.actions_for', { name: mailbox.name })">
+                                            <!-- On a phone the button beside the menu has no room: it is the first entry here -->
+                                            <ActionMenuItem class="sm:hidden" @click="openModal(mailbox)">
+                                                {{ $t("common.edit") }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem
+                                                :disabled="testingMailbox === mailbox.id"
+                                                @click="testConnection(mailbox)"
+                                            >
+                                                {{
+                                                    testingMailbox === mailbox.id
+                                                        ? $t("mailboxes.testing")
+                                                        : $t("mailboxes.test_connection")
+                                                }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem
+                                                :disabled="checkingReputation === mailbox.id"
+                                                @click="checkReputation(mailbox)"
+                                            >
+                                                {{
+                                                    checkingReputation === mailbox.id
+                                                        ? $t("mailboxes.reputation.checking")
+                                                        : $t("mailboxes.reputation.check_now")
+                                                }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem v-if="!mailbox.is_default" @click="setDefault(mailbox)">
+                                                {{ $t("mailboxes.set_as_default") }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem danger @click="confirmDelete(mailbox)">
+                                                {{ $t("common.delete") }}
+                                            </ActionMenuItem>
+                                        </ActionMenu>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-            </div>
+            </Panel>
 
-            <!-- Info Box -->
-            <div
-                class="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20"
-            >
-                <div class="flex gap-3">
-                    <svg
-                        class="h-5 w-5 flex-shrink-0 text-blue-600 dark:text-blue-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                        />
-                    </svg>
-                    <div class="text-sm text-blue-800 dark:text-blue-200">
-                        <p class="font-medium">
-                            {{ $t("mailboxes.info.title") }}
-                        </p>
-                        <ul
-                            class="mt-2 list-inside list-disc space-y-1 text-blue-700 dark:text-blue-300"
-                        >
-                            <li>
-                                <strong>SMTP:</strong>
-                                {{ $t("mailboxes.info.smtp") }}
-                            </li>
-                            <li>
-                                <strong>SendGrid:</strong>
-                                {{ $t("mailboxes.info.sendgrid") }}
-                            </li>
-                            <li>
-                                <strong>Gmail:</strong>
-                                {{ $t("mailboxes.info.gmail") }}
-                            </li>
-                        </ul>
+            <!-- Which service is which -->
+            <Panel :title="$t('mailboxes.info.title')">
+                <dl class="grid grid-cols-1 gap-x-8 gap-y-4 text-sm md:grid-cols-3">
+                    <div v-for="provider in ['smtp', 'sendgrid', 'gmail']" :key="provider" class="flex flex-col gap-1">
+                        <dt class="font-medium text-slate-900 dark:text-white">
+                            {{ providers[provider]?.label || provider }}
+                        </dt>
+                        <dd class="text-slate-600 dark:text-slate-400">
+                            {{ $t("mailboxes.info." + provider) }}
+                        </dd>
                     </div>
-                </div>
-            </div>
+                </dl>
+            </Panel>
         </div>
 
-        <!-- Configuration Modal -->
-        <Teleport to="body">
-            <div
-                v-if="showModal"
-                class="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/50 p-4 backdrop-blur-sm"
-                @click.self="closeModal"
-            >
-                <div
-                    class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800 max-h-[90vh] overflow-y-auto"
+        <!-- Configuration dialog: one form in sections, the actions always in reach -->
+        <Modal :show="showModal" max-width="2xl" @close="closeModal">
+            <form class="flex max-h-[calc(100vh-3rem)] flex-col" @submit.prevent="submitForm">
+                <header
+                    class="flex items-center justify-between gap-4 border-b border-slate-200 px-6 py-4 dark:border-slate-700/60"
                 >
-                    <!-- Modal Header -->
-                    <div class="mb-6 flex items-center justify-between">
-                        <h3
-                            class="text-lg font-semibold text-gray-900 dark:text-white"
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                        {{
+                            modalMode === "edit"
+                                ? $t("mailboxes.modal.edit_title")
+                                : $t("mailboxes.modal.add_title")
+                        }}
+                    </h2>
+                    <button
+                        type="button"
+                        :aria-label="$t('common.close')"
+                        class="-mr-2 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-700/60 dark:hover:text-white"
+                        @click="closeModal"
+                    >
+                        <svg
+                            aria-hidden="true"
+                            class="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            viewBox="0 0 24 24"
                         >
-                            {{
-                                modalMode === "edit"
-                                    ? $t("mailboxes.modal.edit_title")
-                                    : $t("mailboxes.modal.add_title")
-                            }}
-                        </h3>
-                        <button
-                            @click="closeModal"
-                            class="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-slate-700"
-                        >
-                            <svg
-                                class="h-5 w-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M6 18L18 6M6 6l12 12"
-                                />
-                            </svg>
-                        </button>
-                    </div>
+                            <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
+                        </svg>
+                    </button>
+                </header>
 
-                    <!-- Form -->
-                    <form @submit.prevent="submitForm" class="space-y-4">
+                <div class="border-b border-slate-200 px-6 py-3 dark:border-slate-700/60">
+                    <SegmentedControl
+                        v-model="dialogTab"
+                        :options="dialogTabs"
+                        :label="$t('mailboxes.modal.tabs.label')"
+                    />
+                </div>
+
+                <div class="min-h-0 flex-1 overflow-y-auto px-6 py-5 sm:min-h-[22rem]">
+                    <!-- Sending: who the mail is from and how it leaves -->
+                    <div v-show="dialogTab === 'sending'" class="space-y-4">
                         <!-- Provider Selection -->
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300"
                             >
                                 {{ $t("mailboxes.modal.provider") }}
                             </label>
-                            <div class="mt-2 grid grid-cols-3 gap-2">
+                            <div
+                                class="mt-2 grid gap-2"
+                                :class="Object.keys(providers).length > 3 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'"
+                            >
                                 <button
                                     v-for="(provider, key) in providers"
                                     :key="key"
                                     type="button"
-                                    @click="form.provider = key"
-                                    class="flex flex-col items-center gap-2 rounded-lg border-2 p-3 transition-all"
-                                    :class="
+                                    :aria-pressed="form.provider === key"
+                                    :aria-disabled="key === 'nmi' && !nmiSelectable"
+                                    @click="selectProvider(key)"
+                                    class="relative flex flex-col items-center gap-2 rounded-xl border p-3 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+                                    :class="[
                                         form.provider === key
-                                            ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-900/20'
-                                            : 'border-gray-200 hover:border-gray-300 dark:border-slate-600 dark:hover:border-slate-500'
-                                    "
+                                            ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500 dark:bg-indigo-500/10'
+                                            : 'border-slate-300 hover:border-slate-400 dark:border-slate-600 dark:hover:border-slate-500',
+                                        key === 'nmi' && nmiLicensed && !nmiSelectable ? 'cursor-not-allowed opacity-50' : '',
+                                    ]"
                                 >
+                                    <GoldBadge
+                                        v-if="key === 'nmi' && !nmiLicensed"
+                                        locked
+                                        class="absolute -right-1 -top-2"
+                                    />
                                     <div
                                         class="h-6 w-6"
                                         :style="{ color: providerColors[key] }"
                                         v-html="providerIcons[key]"
                                     ></div>
                                     <span
-                                        class="text-xs font-medium text-gray-700 dark:text-gray-300"
+                                        class="text-xs font-medium text-slate-700 dark:text-slate-300"
                                     >
                                         {{ provider.label }}
                                     </span>
                                 </button>
+                            </div>
+
+                            <!-- NetSendo MTA: whether its container answers. A new NMI
+                                 mailbox can only be added while it does. -->
+                            <p
+                                v-if="
+                                    nmi.enabled &&
+                                    (nmiLicensed || editingNmi) &&
+                                    (form.provider === 'nmi' || !mtaOnline)
+                                "
+                                class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs"
+                                :class="
+                                    mtaChecking || mtaStatus === null
+                                        ? 'text-slate-500 dark:text-slate-400'
+                                        : mtaOnline
+                                          ? 'text-emerald-600 dark:text-emerald-400'
+                                          : 'text-amber-700 dark:text-amber-300'
+                                "
+                                data-test="nmi-mta-status"
+                            >
+                                <span v-if="mtaChecking || mtaStatus === null">
+                                    {{ $t("mailboxes.nmi.mta_checking") }}
+                                </span>
+                                <span v-else-if="mtaOnline">
+                                    {{
+                                        $t("mailboxes.nmi.mta_online", {
+                                            address: mtaAddress,
+                                        })
+                                    }}
+                                </span>
+                                <template v-else>
+                                    <span>
+                                        {{
+                                            $t("mailboxes.nmi.mta_offline", {
+                                                address: mtaAddress,
+                                            })
+                                        }}
+                                        <template v-if="!editingNmi">
+                                            {{ $t("mailboxes.nmi.mta_required") }}
+                                        </template>
+                                    </span>
+                                    <button
+                                        type="button"
+                                        class="font-medium underline"
+                                        @click="checkMta"
+                                    >
+                                        {{ $t("mailboxes.nmi.mta_recheck") }}
+                                    </button>
+                                </template>
+                            </p>
+                        </div>
+
+                        <!-- NetSendo MTA: the verified domain to send as and a dedicated IP -->
+                        <div
+                            v-if="form.provider === 'nmi'"
+                            class="space-y-4 rounded-xl border border-slate-200 p-4 dark:border-slate-700/60"
+                            data-test="nmi-section"
+                        >
+                            <p class="text-sm text-slate-700 dark:text-slate-300">
+                                {{ $t("mailboxes.nmi.info") }}
+                            </p>
+
+                            <GoldNotice
+                                v-if="nmiLocked"
+                                :feature="NMI_FEATURE"
+                                :message="$t('license.gating.nmi_locked')"
+                            />
+
+                            <!-- Sending domain -->
+                            <div>
+                                <label
+                                    for="nmi-domain"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ $t("mailboxes.nmi.domain") }}
+                                </label>
+                                <select
+                                    id="nmi-domain"
+                                    v-model="form.domain_configuration_id"
+                                    :disabled="nmiLocked"
+                                    class="mt-1 block w-full disabled:opacity-60 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white"
+                                    :class="{
+                                        '!border-rose-500':
+                                            form.errors.domain_configuration_id,
+                                    }"
+                                >
+                                    <option :value="null">
+                                        {{
+                                            $t(
+                                                "mailboxes.nmi.domain_placeholder",
+                                            )
+                                        }}
+                                    </option>
+                                    <option
+                                        v-for="domain in nmi.domains"
+                                        :key="domain.id"
+                                        :value="domain.id"
+                                    >
+                                        {{ domain.domain }}
+                                    </option>
+                                </select>
+                                <p
+                                    v-if="form.errors.domain_configuration_id"
+                                    class="mt-1 text-sm text-rose-600"
+                                >
+                                    {{ form.errors.domain_configuration_id }}
+                                </p>
+                                <p
+                                    v-if="nmi.domains.length === 0"
+                                    class="mt-1 text-sm text-amber-700 dark:text-amber-300"
+                                >
+                                    {{ $t("mailboxes.nmi.no_domains") }}
+                                    <Link
+                                        :href="route('deliverability.index')"
+                                        class="font-medium underline"
+                                    >
+                                        {{ $t("mailboxes.nmi.manage_domains") }}
+                                    </Link>
+                                </p>
+                            </div>
+
+                            <!-- Dedicated IP -->
+                            <div>
+                                <label
+                                    for="nmi-ip"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                                >
+                                    {{ $t("mailboxes.nmi.ip") }}
+                                    <span class="font-normal text-slate-500">
+                                        ({{ $t("mailboxes.modal.optional") }})
+                                    </span>
+                                </label>
+                                <select
+                                    id="nmi-ip"
+                                    v-model="form.dedicated_ip_id"
+                                    :disabled="nmiLocked"
+                                    class="mt-1 block w-full disabled:opacity-60 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white"
+                                    :class="{
+                                        '!border-rose-500':
+                                            form.errors.dedicated_ip_id,
+                                    }"
+                                >
+                                    <option :value="null">
+                                        {{ $t("mailboxes.nmi.ip_none") }}
+                                    </option>
+                                    <option
+                                        v-for="ip in nmiIpOptions"
+                                        :key="ip.id"
+                                        :value="ip.id"
+                                        :disabled="ip.taken"
+                                    >
+                                        {{ ip.ip_address
+                                        }}{{
+                                            ip.hostname
+                                                ? " · " + ip.hostname
+                                                : ""
+                                        }}{{
+                                            ip.taken
+                                                ? " (" +
+                                                  $t("mailboxes.nmi.ip_taken") +
+                                                  ")"
+                                                : ""
+                                        }}
+                                    </option>
+                                </select>
+                                <p
+                                    v-if="form.errors.dedicated_ip_id"
+                                    class="mt-1 text-sm text-rose-600"
+                                >
+                                    {{ form.errors.dedicated_ip_id }}
+                                </p>
+                                <p
+                                    class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{ $t("mailboxes.nmi.ip_help") }}
+                                    <Link
+                                        :href="route('settings.nmi.dashboard')"
+                                        class="font-medium underline"
+                                    >
+                                        {{ $t("mailboxes.nmi.manage_ips") }}
+                                    </Link>
+                                </p>
+                                <!-- Whether mail really leaves from the chosen address -->
+                                <p
+                                    v-if="nmiIpBound !== null"
+                                    class="mt-1 text-xs"
+                                    :class="
+                                        nmiIpBound
+                                            ? 'text-emerald-600 dark:text-emerald-400'
+                                            : 'text-amber-700 dark:text-amber-300'
+                                    "
+                                    data-test="nmi-ip-bound"
+                                >
+                                    {{
+                                        nmiIpBound
+                                            ? $t("mailboxes.nmi.ip_bound")
+                                            : $t("mailboxes.nmi.ip_not_bound")
+                                    }}
+                                </p>
+                            </div>
+
+                            <!-- DKIM key of the domain: the record to publish, verified or not -->
+                            <div
+                                v-if="form.domain_configuration_id"
+                                class="rounded-xl border border-slate-200 p-3 dark:border-slate-700/60"
+                                data-test="nmi-dkim"
+                            >
+                                <div class="flex items-center justify-between gap-2">
+                                    <span
+                                        class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{ $t("mailboxes.nmi.dkim.title") }}
+                                    </span>
+                                    <span
+                                        v-if="nmiDkim?.has_key"
+                                        class="rounded-full px-2 py-0.5 text-xs font-medium"
+                                        :class="
+                                            nmiDkim.verified
+                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                                : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
+                                        "
+                                    >
+                                        {{
+                                            nmiDkim.verified
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.status_verified",
+                                                  )
+                                                : $t(
+                                                      "mailboxes.nmi.dkim.status_pending",
+                                                  )
+                                        }}
+                                    </span>
+                                </div>
+
+                                <p
+                                    v-if="nmiDkimLoading"
+                                    class="mt-2 text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{ $t("mailboxes.nmi.dkim.loading") }}
+                                </p>
+
+                                <!-- No key yet -->
+                                <div
+                                    v-else-if="!nmiDkim?.has_key"
+                                    class="mt-2 flex flex-wrap items-center justify-between gap-2"
+                                >
+                                    <p
+                                        class="text-xs text-slate-500 dark:text-slate-400"
+                                    >
+                                        {{
+                                            modalMode === "create"
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.created_on_save",
+                                                  )
+                                                : $t("mailboxes.nmi.dkim.no_key")
+                                        }}
+                                    </p>
+                                    <button
+                                        v-if="
+                                            nmiDkim &&
+                                            modalMode === 'edit' &&
+                                            !nmiLocked
+                                        "
+                                        type="button"
+                                        class="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+                                        :disabled="nmiDkimBusy !== null"
+                                        @click="nmiDkimAction('generate')"
+                                    >
+                                        {{ $t("mailboxes.nmi.dkim.generate") }}
+                                    </button>
+                                </div>
+
+                                <!-- The record to publish -->
+                                <div v-else class="mt-2 space-y-2">
+                                    <p
+                                        class="text-xs"
+                                        :class="
+                                            nmiDkim.verified
+                                                ? 'text-emerald-600 dark:text-emerald-400'
+                                                : 'text-amber-700 dark:text-amber-300'
+                                        "
+                                    >
+                                        {{
+                                            nmiDkim.verified
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.verified",
+                                                  )
+                                                : nmiDkimIpKey
+                                                  ? $t(
+                                                        "mailboxes.nmi.dkim.pending_ip_key",
+                                                    )
+                                                  : $t(
+                                                        "mailboxes.nmi.dkim.pending",
+                                                    )
+                                        }}
+                                    </p>
+                                    <div
+                                        v-for="field in [
+                                            {
+                                                label: $t(
+                                                    'mailboxes.nmi.dkim.record_name',
+                                                ),
+                                                value: nmiDkim.dns_name,
+                                            },
+                                            {
+                                                label: $t(
+                                                    'mailboxes.nmi.dkim.record_value',
+                                                ),
+                                                value: nmiDkim.dns_value,
+                                            },
+                                        ]"
+                                        :key="field.label"
+                                    >
+                                        <div
+                                            class="flex items-center justify-between"
+                                        >
+                                            <span
+                                                class="text-xs font-medium text-slate-600 dark:text-slate-400"
+                                            >
+                                                {{ field.label }}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                class="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                                                @click="
+                                                    copyToClipboard(field.value)
+                                                "
+                                            >
+                                                {{
+                                                    $t(
+                                                        "mailboxes.nmi.dkim.copy",
+                                                    )
+                                                }}
+                                            </button>
+                                        </div>
+                                        <code
+                                            class="mt-0.5 block max-h-24 overflow-auto break-all rounded bg-slate-100 px-2 py-1 text-xs text-slate-800 dark:bg-slate-900 dark:text-slate-200"
+                                            >{{ field.value }}</code
+                                        >
+                                    </div>
+                                    <button
+                                        type="button"
+                                        class="rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-500 dark:text-slate-200 dark:hover:bg-slate-700"
+                                        :disabled="nmiDkimBusy !== null"
+                                        @click="nmiDkimAction('verify')"
+                                    >
+                                        {{
+                                            nmiDkim.verified
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.verify_again",
+                                                  )
+                                                : $t("mailboxes.nmi.dkim.verify")
+                                        }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         <!-- Gmail OAuth Info -->
                         <div
                             v-if="form.provider === 'gmail'"
-                            class="rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20"
+                            class="rounded-lg border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-800 dark:bg-indigo-900/20"
                         >
                             <div class="flex gap-2">
                                 <svg
-                                    class="h-5 w-5 flex-shrink-0 text-blue-600"
+                                    class="h-5 w-5 flex-shrink-0 text-indigo-600"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
@@ -1356,7 +1731,7 @@ const isBroadcastDisabled = computed(() => {
                                     />
                                 </svg>
                                 <p
-                                    class="text-sm text-blue-800 dark:text-blue-200"
+                                    class="text-sm text-indigo-800 dark:text-indigo-200"
                                 >
                                     {{ $t("mailboxes.modal.gmail_oauth_info") }}
                                 </p>
@@ -1366,7 +1741,7 @@ const isBroadcastDisabled = computed(() => {
                         <!-- Name -->
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300"
                             >
                                 {{ $t("mailboxes.modal.name") }}
                             </label>
@@ -1376,8 +1751,8 @@ const isBroadcastDisabled = computed(() => {
                                 :placeholder="
                                     $t('mailboxes.modal.name_placeholder')
                                 "
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                                :class="{ 'border-rose-500': form.errors.name }"
+                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
+                                :class="{ '!border-rose-500': form.errors.name }"
                             />
                             <p
                                 v-if="form.errors.name"
@@ -1390,7 +1765,7 @@ const isBroadcastDisabled = computed(() => {
                         <!-- From Email -->
                         <div v-if="form.provider !== 'gmail'">
                             <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300"
                             >
                                 {{ $t("mailboxes.modal.from_email") }}
                             </label>
@@ -1400,9 +1775,9 @@ const isBroadcastDisabled = computed(() => {
                                 :placeholder="
                                     $t('mailboxes.modal.from_email_placeholder')
                                 "
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                 :class="{
-                                    'border-rose-500': form.errors.from_email,
+                                    '!border-rose-500': form.errors.from_email,
                                 }"
                             />
                             <p
@@ -1411,10 +1786,17 @@ const isBroadcastDisabled = computed(() => {
                             >
                                 {{ form.errors.from_email }}
                             </p>
+                            <p
+                                v-else-if="form.provider === 'nmi' && nmiDomain"
+                                class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                            >
+                                {{ $t("mailboxes.nmi.from_hint") }}
+                                ({{ nmiDomain.domain }})
+                            </p>
                         </div>
                         <div
                             v-else
-                            class="text-sm text-gray-500 dark:text-gray-400"
+                            class="text-sm text-slate-500 dark:text-slate-400"
                         >
                             <p class="mb-2">
                                 {{ $t("mailboxes.modal.gmail_auto_email") }}
@@ -1423,7 +1805,7 @@ const isBroadcastDisabled = computed(() => {
 
                         <div v-if="form.provider !== 'gmail'">
                             <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300"
                             >
                                 {{ $t("mailboxes.modal.reply_to") }}
                             </label>
@@ -1433,9 +1815,9 @@ const isBroadcastDisabled = computed(() => {
                                 :placeholder="
                                     $t('mailboxes.modal.reply_to_placeholder')
                                 "
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                 :class="{
-                                    'border-rose-500': form.errors.reply_to,
+                                    '!border-rose-500': form.errors.reply_to,
                                 }"
                             />
                             <p
@@ -1449,7 +1831,7 @@ const isBroadcastDisabled = computed(() => {
                         <!-- From Name -->
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300"
                             >
                                 {{ $t("mailboxes.modal.from_name") }}
                             </label>
@@ -1459,9 +1841,9 @@ const isBroadcastDisabled = computed(() => {
                                 :placeholder="
                                     $t('mailboxes.modal.from_name_placeholder')
                                 "
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                 :class="{
-                                    'border-rose-500': form.errors.from_name,
+                                    '!border-rose-500': form.errors.from_name,
                                 }"
                             />
                             <p
@@ -1504,7 +1886,7 @@ const isBroadcastDisabled = computed(() => {
                                 <!-- Select Integration (Always Visible) -->
                                 <div>
                                     <label
-                                        class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                        class="block text-sm font-medium text-slate-700 dark:text-slate-300"
                                     >
                                         {{
                                             $t(
@@ -1514,7 +1896,7 @@ const isBroadcastDisabled = computed(() => {
                                     </label>
                                     <select
                                         v-model="form.google_integration_id"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                        class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                     >
                                         <option :value="null" disabled>
                                             {{
@@ -1569,7 +1951,7 @@ const isBroadcastDisabled = computed(() => {
 
                                     <div
                                         v-else-if="!form.google_integration_id"
-                                        class="rounded-lg bg-blue-50 p-4 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200"
+                                        class="rounded-lg bg-indigo-50 p-4 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-200"
                                     >
                                         <p class="text-sm">
                                             {{
@@ -1586,7 +1968,7 @@ const isBroadcastDisabled = computed(() => {
                                         :class="
                                             editingMailbox.gmail_connected
                                                 ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20'
-                                                : 'border-gray-200 bg-gray-50 dark:border-slate-700 dark:bg-slate-800'
+                                                : 'border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800'
                                         "
                                     >
                                         <div
@@ -1598,7 +1980,7 @@ const isBroadcastDisabled = computed(() => {
                                                     :class="
                                                         editingMailbox.gmail_connected
                                                             ? 'text-emerald-800 dark:text-emerald-200'
-                                                            : 'text-gray-900 dark:text-white'
+                                                            : 'text-slate-900 dark:text-white'
                                                     "
                                                 >
                                                     {{
@@ -1648,7 +2030,7 @@ const isBroadcastDisabled = computed(() => {
                                                             editingMailbox.id,
                                                         )
                                                     "
-                                                    class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 dark:bg-slate-700 dark:text-white dark:ring-slate-600 dark:hover:bg-slate-600"
+                                                    class="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 dark:bg-slate-700 dark:text-white dark:ring-slate-600 dark:hover:bg-slate-600"
                                                 >
                                                     <svg
                                                         class="h-5 w-5"
@@ -1684,7 +2066,7 @@ const isBroadcastDisabled = computed(() => {
                                 </div>
                                 <div
                                     v-else
-                                    class="rounded-lg bg-blue-50 p-4 text-blue-800 dark:bg-blue-900/20 dark:text-blue-200"
+                                    class="rounded-lg bg-indigo-50 p-4 text-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-200"
                                 >
                                     <p class="text-sm">
                                         {{ $t("mailboxes.oauth.save_first") }}
@@ -1700,7 +2082,7 @@ const isBroadcastDisabled = computed(() => {
                             :key="field.name"
                         >
                             <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300"
                             >
                                 {{ field.label }}
                                 <span
@@ -1708,7 +2090,7 @@ const isBroadcastDisabled = computed(() => {
                                         modalMode === 'edit' &&
                                         field.type === 'password'
                                     "
-                                    class="font-normal text-gray-500"
+                                    class="font-normal text-slate-500"
                                 >
                                     ({{ $t("mailboxes.modal.leave_empty") }})
                                 </span>
@@ -1718,7 +2100,7 @@ const isBroadcastDisabled = computed(() => {
                             <select
                                 v-if="field.type === 'select'"
                                 v-model="form.credentials[field.name]"
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                             >
                                 <option
                                     v-for="(label, value) in field.options"
@@ -1746,11 +2128,11 @@ const isBroadcastDisabled = computed(() => {
                                             ? $t('mailboxes.modal.leave_empty')
                                             : field.placeholder || ''
                                     "
-                                    class="block w-full rounded-lg border-gray-300 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                    class="block w-full pr-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                 />
                                 <p
                                     v-if="modalMode === 'edit'"
-                                    class="mt-1 text-xs text-gray-500"
+                                    class="mt-1 text-xs text-slate-500"
                                 >
                                     {{ $t("mailboxes.modal.leave_empty") }}
                                 </p>
@@ -1760,7 +2142,7 @@ const isBroadcastDisabled = computed(() => {
                                         showPassword[field.name] =
                                             !showPassword[field.name]
                                     "
-                                    class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                                    class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600"
                                 >
                                     <svg
                                         v-if="showPassword[field.name]"
@@ -1805,13 +2187,13 @@ const isBroadcastDisabled = computed(() => {
                                 v-model="form.credentials[field.name]"
                                 :type="field.type"
                                 :placeholder="field.placeholder || ''"
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                             />
 
                             <!-- Minimum Interval (Time Restriction) -->
                             <div v-if="field.name === 'port'" class="mt-4 mb-4">
                                 <label
-                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                    class="block text-sm font-medium text-slate-700 dark:text-slate-300"
                                 >
                                     {{ $t("mailboxes.modal.min_interval") }}
                                 </label>
@@ -1820,20 +2202,20 @@ const isBroadcastDisabled = computed(() => {
                                         v-model.number="form.time_restriction"
                                         type="number"
                                         min="0"
-                                        class="block w-full rounded-lg border-gray-300 pr-16 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                        class="block w-full pr-16 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                     />
                                     <div
                                         class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3"
                                     >
                                         <span
-                                            class="text-gray-500 sm:text-sm"
+                                            class="text-slate-500 sm:text-sm"
                                             >{{
                                                 $t("mailboxes.modal.seconds")
                                             }}</span
                                         >
                                     </div>
                                 </div>
-                                <p class="mt-1 text-xs text-gray-500">
+                                <p class="mt-1 text-xs text-slate-500">
                                     {{
                                         $t("mailboxes.modal.min_interval_desc")
                                     }}
@@ -1844,7 +2226,7 @@ const isBroadcastDisabled = computed(() => {
                         <!-- Allowed Message Types -->
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
                             >
                                 {{ $t("mailboxes.modal.allowed_types") }}
                             </label>
@@ -1856,7 +2238,7 @@ const isBroadcastDisabled = computed(() => {
                                     :class="{
                                         'border-indigo-300 bg-indigo-50 dark:border-indigo-700 dark:bg-indigo-900/20':
                                             form.allowed_types.includes(type),
-                                        'border-gray-200 dark:border-slate-600 hover:border-gray-300':
+                                        'border-slate-200 dark:border-slate-600 hover:border-slate-300':
                                             !form.allowed_types.includes(type),
                                         'opacity-50 cursor-not-allowed':
                                             type === 'broadcast' &&
@@ -1871,11 +2253,11 @@ const isBroadcastDisabled = computed(() => {
                                             type === 'broadcast' &&
                                             isBroadcastDisabled
                                         "
-                                        class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                        class="h-4 w-4 accent-indigo-600"
                                     />
                                     <div>
                                         <span
-                                            class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                                            class="text-sm font-medium text-slate-700 dark:text-slate-300"
                                             >{{ label }}</span
                                         >
                                         <p
@@ -1883,7 +2265,7 @@ const isBroadcastDisabled = computed(() => {
                                                 type === 'broadcast' &&
                                                 isBroadcastDisabled
                                             "
-                                            class="text-xs text-gray-500"
+                                            class="text-xs text-slate-500"
                                         >
                                             {{
                                                 $t(
@@ -1899,10 +2281,10 @@ const isBroadcastDisabled = computed(() => {
                         <!-- Daily Limit -->
                         <div>
                             <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                class="block text-sm font-medium text-slate-700 dark:text-slate-300"
                             >
                                 {{ $t("mailboxes.modal.daily_limit") }}
-                                <span class="font-normal text-gray-500"
+                                <span class="font-normal text-slate-500"
                                     >({{
                                         $t("mailboxes.modal.optional")
                                     }})</span
@@ -1913,29 +2295,51 @@ const isBroadcastDisabled = computed(() => {
                                 type="number"
                                 min="1"
                                 :placeholder="$t('mailboxes.modal.no_limit')"
-                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                             />
                         </div>
 
+                        <!-- Click and open tracking -->
+                        <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+                            <label class="flex items-start gap-3 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    v-model="form.tracking_enabled"
+                                    class="mt-0.5 h-4 w-4 accent-indigo-600"
+                                />
+                                <div>
+                                    <span class="text-sm font-medium text-slate-700 dark:text-slate-300">
+                                        {{ $t('mailboxes.tracking.label') }}
+                                    </span>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                        {{ $t('mailboxes.tracking.help') }}
+                                    </p>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Bounces: read from a mailbox over IMAP, or reported by the sending service -->
+                    <div v-show="dialogTab === 'bounces'" class="space-y-6">
                         <!-- Bounce IMAP Monitoring Section (Edit mode only, non-Gmail) -->
-                        <div v-if="modalMode === 'edit' && form.provider !== 'gmail'" class="border-t border-gray-200 dark:border-slate-700 pt-4">
+                        <div v-if="modalMode === 'edit' && form.provider !== 'gmail'">
                             <!-- Section Header -->
                             <div class="flex items-center justify-between mb-3">
                                 <div>
-                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <h4 class="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                         <svg class="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                         </svg>
                                         {{ $t('mailboxes.bounce.section_title') }}
                                     </h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $t('mailboxes.bounce.section_desc') }}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ $t('mailboxes.bounce.section_desc') }}</p>
                                 </div>
                                 <!-- Enable Toggle -->
                                 <button
                                     type="button"
                                     @click="form.bounce_enabled = !form.bounce_enabled"
                                     class="relative h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                    :class="form.bounce_enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-600'"
+                                    :class="form.bounce_enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'"
                                 >
                                     <span
                                         class="absolute left-0.5 top-0.5 h-5 w-5 transform rounded-full bg-white shadow transition-transform"
@@ -1957,22 +2361,22 @@ const isBroadcastDisabled = computed(() => {
                                     <!-- Host & Port Row -->
                                     <div class="grid grid-cols-3 gap-3">
                                         <div class="col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_host') }}</label>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.bounce.imap_host') }}</label>
                                             <input
                                                 v-model="form.bounce_imap_host"
                                                 type="text"
                                                 placeholder="imap.example.com"
-                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                             />
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_port') }}</label>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.bounce.imap_port') }}</label>
                                             <input
                                                 v-model.number="form.bounce_imap_port"
                                                 type="number"
                                                 min="1"
                                                 max="65535"
-                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                             />
                                         </div>
                                     </div>
@@ -1980,10 +2384,10 @@ const isBroadcastDisabled = computed(() => {
                                     <!-- Encryption & Folder Row -->
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_encryption') }}</label>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.bounce.imap_encryption') }}</label>
                                             <select
                                                 v-model="form.bounce_imap_encryption"
-                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                             >
                                                 <option value="ssl">SSL</option>
                                                 <option value="tls">TLS</option>
@@ -1991,42 +2395,42 @@ const isBroadcastDisabled = computed(() => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_folder') }}</label>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.bounce.imap_folder') }}</label>
                                             <input
                                                 v-model="form.bounce_imap_folder"
                                                 type="text"
                                                 placeholder="INBOX"
-                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                             />
                                         </div>
                                     </div>
 
                                     <!-- Username -->
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_username') }}</label>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.bounce.imap_username') }}</label>
                                         <input
                                             v-model="form.bounce_imap_username"
                                             type="email"
                                             placeholder="bounces@example.com"
-                                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                            class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                         />
-                                        <p v-if="editingMailbox" class="mt-1 text-xs text-gray-500">{{ $t('mailboxes.modal.leave_empty') }}</p>
+                                        <p v-if="editingMailbox" class="mt-1 text-xs text-slate-500">{{ $t('mailboxes.modal.leave_empty') }}</p>
                                     </div>
 
                                     <!-- Password -->
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce.imap_password') }}</label>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.bounce.imap_password') }}</label>
                                         <div class="relative mt-1">
                                             <input
                                                 v-model="form.bounce_imap_password"
                                                 :type="showBouncePassword ? 'text' : 'password'"
                                                 :placeholder="$t('mailboxes.modal.leave_empty')"
-                                                class="block w-full rounded-lg border-gray-300 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                                class="block w-full pr-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                             />
                                             <button
                                                 type="button"
                                                 @click="showBouncePassword = !showBouncePassword"
-                                                class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                                                class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600"
                                             >
                                                 <svg v-if="showBouncePassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -2037,24 +2441,24 @@ const isBroadcastDisabled = computed(() => {
                                                 </svg>
                                             </button>
                                         </div>
-                                        <p class="mt-1 text-xs text-gray-500">{{ $t('mailboxes.modal.leave_empty') }}</p>
+                                        <p class="mt-1 text-xs text-slate-500">{{ $t('mailboxes.modal.leave_empty') }}</p>
                                     </div>
 
                                     <!-- Last Scan Info -->
-                                    <div v-if="editingMailbox?.bounce_last_scanned_at" class="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
+                                    <div v-if="editingMailbox?.bounce_last_scanned_at" class="rounded-lg bg-slate-50 dark:bg-slate-700/50 p-3">
                                         <div class="flex items-center justify-between text-xs">
-                                            <span class="text-gray-500 dark:text-gray-400">
+                                            <span class="text-slate-500 dark:text-slate-400">
                                                 {{ $t('mailboxes.bounce.last_scanned') }}:
-                                                <span class="font-medium text-gray-700 dark:text-gray-300">
+                                                <span class="font-medium text-slate-700 dark:text-slate-300">
                                                     {{ new Date(editingMailbox.bounce_last_scanned_at).toLocaleString() }}
                                                 </span>
                                             </span>
-                                            <span v-if="editingMailbox.bounce_last_scan_count !== null" class="text-gray-500 dark:text-gray-400">
+                                            <span v-if="editingMailbox.bounce_last_scan_count !== null" class="text-slate-500 dark:text-slate-400">
                                                 {{ $t('mailboxes.bounce.last_scan_count') }}: <strong>{{ editingMailbox.bounce_last_scan_count }}</strong>
                                             </span>
                                         </div>
                                     </div>
-                                    <div v-else-if="editingMailbox?.bounce_enabled" class="text-xs text-gray-500 dark:text-gray-400 italic">
+                                    <div v-else-if="editingMailbox?.bounce_enabled" class="text-xs text-slate-500 dark:text-slate-400 italic">
                                         {{ $t('mailboxes.bounce.never_scanned') }}
                                     </div>
 
@@ -2064,7 +2468,7 @@ const isBroadcastDisabled = computed(() => {
                                             type="button"
                                             @click="testBounceConnection"
                                             :disabled="testingBounce || !form.bounce_imap_host"
-                                            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600"
+                                            class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
                                         >
                                             <svg v-if="testingBounce" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -2100,19 +2504,19 @@ const isBroadcastDisabled = computed(() => {
                         </div>
 
                         <!-- Bounce Webhooks Section (Edit mode only, non-Gmail) -->
-                        <div v-if="modalMode === 'edit' && form.provider !== 'gmail' && bounceWebhook" class="border-t border-gray-200 dark:border-slate-700 pt-4">
+                        <div v-if="modalMode === 'edit' && form.provider !== 'gmail' && bounceWebhook" class="border-t border-slate-200 dark:border-slate-700 pt-4">
                             <div class="mb-3">
-                                <h4 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                <h4 class="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                     <svg class="h-4 w-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                     </svg>
                                     {{ $t('mailboxes.bounce_webhooks.section_title') }}
                                 </h4>
-                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $t('mailboxes.bounce_webhooks.section_desc') }}</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ $t('mailboxes.bounce_webhooks.section_desc') }}</p>
                             </div>
 
                             <!-- Provider tabs -->
-                            <div class="flex flex-wrap gap-1 rounded-lg bg-gray-100 p-1 dark:bg-slate-700/50">
+                            <div class="flex flex-wrap gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-700/50">
                                 <button
                                     v-for="provider in webhookProviders"
                                     :key="provider"
@@ -2120,8 +2524,8 @@ const isBroadcastDisabled = computed(() => {
                                     @click="webhookProvider = provider"
                                     class="flex-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors"
                                     :class="webhookProvider === provider
-                                        ? 'bg-white text-gray-900 shadow dark:bg-slate-600 dark:text-white'
-                                        : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'"
+                                        ? 'bg-white text-slate-900 shadow dark:bg-slate-600 dark:text-white'
+                                        : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'"
                                 >
                                     {{ $t(`mailboxes.bounce_webhooks.providers.${provider}`) }}
                                 </button>
@@ -2130,19 +2534,19 @@ const isBroadcastDisabled = computed(() => {
                             <div class="mt-3 space-y-3">
                                 <!-- Webhook URL -->
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce_webhooks.url') }}</label>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.bounce_webhooks.url') }}</label>
                                     <div class="mt-1 flex gap-2">
                                         <input
                                             :value="bounceWebhook.urls[webhookProvider]"
                                             type="text"
                                             readonly
                                             @focus="$event.target.select()"
-                                            class="block w-full min-w-0 rounded-lg border-gray-300 bg-gray-50 font-mono text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
+                                            class="block w-full min-w-0 bg-slate-50 font-mono text-xs dark:bg-slate-700/50 rounded-xl border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:text-white dark:placeholder:text-slate-400"
                                         />
                                         <button
                                             type="button"
                                             @click="copyToClipboard(bounceWebhook.urls[webhookProvider])"
-                                            class="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600"
+                                            class="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
                                         >
                                             {{ $t('common.copy') }}
                                         </button>
@@ -2150,24 +2554,24 @@ const isBroadcastDisabled = computed(() => {
                                 </div>
 
                                 <!-- Where to paste it -->
-                                <p class="text-xs text-gray-600 dark:text-gray-400">{{ $t(`mailboxes.bounce_webhooks.help.${webhookProvider}`) }}</p>
+                                <p class="text-xs text-slate-600 dark:text-slate-400">{{ $t(`mailboxes.bounce_webhooks.help.${webhookProvider}`) }}</p>
 
                                 <!-- SendGrid verification key -->
                                 <div v-if="webhookProvider === 'sendgrid'">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce_webhooks.sendgrid_key') }}</label>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.bounce_webhooks.sendgrid_key') }}</label>
                                     <textarea
                                         v-model="form.bounce_webhook_sendgrid_key"
                                         rows="3"
                                         spellcheck="false"
                                         :placeholder="bounceWebhook.sendgrid_key_set ? $t('mailboxes.modal.leave_empty') : 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE...'"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 font-mono text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                        class="mt-1 block w-full font-mono text-xs rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                     ></textarea>
                                     <p v-if="form.errors.bounce_webhook_sendgrid_key" class="mt-1 text-xs text-rose-600 dark:text-rose-400">{{ form.errors.bounce_webhook_sendgrid_key }}</p>
                                     <div v-if="bounceWebhook.sendgrid_key_set" class="mt-1 flex items-center justify-between text-xs">
                                         <span :class="form.bounce_webhook_remove.includes('sendgrid') ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'">
                                             {{ form.bounce_webhook_remove.includes('sendgrid') ? $t('mailboxes.bounce_webhooks.will_be_removed') : $t('mailboxes.bounce_webhooks.key_saved') }}
                                         </span>
-                                        <button type="button" @click="toggleWebhookKeyRemoval('sendgrid')" class="font-medium text-gray-600 hover:underline dark:text-gray-300">
+                                        <button type="button" @click="toggleWebhookKeyRemoval('sendgrid')" class="font-medium text-slate-600 hover:underline dark:text-slate-300">
                                             {{ form.bounce_webhook_remove.includes('sendgrid') ? $t('mailboxes.bounce_webhooks.undo_remove') : $t('mailboxes.bounce_webhooks.remove_key') }}
                                         </button>
                                     </div>
@@ -2175,20 +2579,20 @@ const isBroadcastDisabled = computed(() => {
 
                                 <!-- Mailgun signing key -->
                                 <div v-if="webhookProvider === 'mailgun'">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce_webhooks.mailgun_key') }}</label>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.bounce_webhooks.mailgun_key') }}</label>
                                     <input
                                         v-model="form.bounce_webhook_mailgun_key"
                                         type="password"
                                         autocomplete="new-password"
                                         :placeholder="bounceWebhook.mailgun_key_set ? $t('mailboxes.modal.leave_empty') : ''"
-                                        class="mt-1 block w-full rounded-lg border-gray-300 font-mono text-xs shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                        class="mt-1 block w-full font-mono text-xs rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                     />
                                     <p v-if="form.errors.bounce_webhook_mailgun_key" class="mt-1 text-xs text-rose-600 dark:text-rose-400">{{ form.errors.bounce_webhook_mailgun_key }}</p>
                                     <div v-if="bounceWebhook.mailgun_key_set" class="mt-1 flex items-center justify-between text-xs">
                                         <span :class="form.bounce_webhook_remove.includes('mailgun') ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'">
                                             {{ form.bounce_webhook_remove.includes('mailgun') ? $t('mailboxes.bounce_webhooks.will_be_removed') : $t('mailboxes.bounce_webhooks.key_saved') }}
                                         </span>
-                                        <button type="button" @click="toggleWebhookKeyRemoval('mailgun')" class="font-medium text-gray-600 hover:underline dark:text-gray-300">
+                                        <button type="button" @click="toggleWebhookKeyRemoval('mailgun')" class="font-medium text-slate-600 hover:underline dark:text-slate-300">
                                             {{ form.bounce_webhook_remove.includes('mailgun') ? $t('mailboxes.bounce_webhooks.undo_remove') : $t('mailboxes.bounce_webhooks.remove_key') }}
                                         </button>
                                     </div>
@@ -2196,19 +2600,19 @@ const isBroadcastDisabled = computed(() => {
 
                                 <!-- Token (Postmark, generic) -->
                                 <div v-if="webhookProvider === 'postmark' || webhookProvider === 'generic'">
-                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.bounce_webhooks.token') }}</label>
+                                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.bounce_webhooks.token') }}</label>
                                     <div v-if="bounceWebhook.token" class="mt-1 flex gap-2">
                                         <div class="relative w-full min-w-0">
                                             <input
                                                 :value="bounceWebhook.token"
                                                 :type="showWebhookToken ? 'text' : 'password'"
                                                 readonly
-                                                class="block w-full rounded-lg border-gray-300 bg-gray-50 pr-10 font-mono text-xs shadow-sm dark:border-slate-600 dark:bg-slate-700/50 dark:text-white"
+                                                class="block w-full bg-slate-50 pr-10 font-mono text-xs dark:bg-slate-700/50 rounded-xl border border-slate-300 px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:text-white dark:placeholder:text-slate-400"
                                             />
                                             <button
                                                 type="button"
                                                 @click="showWebhookToken = !showWebhookToken"
-                                                class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                                                class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600"
                                             >
                                                 <svg v-if="showWebhookToken" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -2222,17 +2626,17 @@ const isBroadcastDisabled = computed(() => {
                                         <button
                                             type="button"
                                             @click="copyToClipboard(bounceWebhook.token)"
-                                            class="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600"
+                                            class="shrink-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
                                         >
                                             {{ $t('common.copy') }}
                                         </button>
                                     </div>
-                                    <p v-else class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $t('mailboxes.bounce_webhooks.token_missing') }}</p>
+                                    <p v-else class="mt-1 text-xs text-slate-500 dark:text-slate-400">{{ $t('mailboxes.bounce_webhooks.token_missing') }}</p>
                                     <button
                                         type="button"
                                         @click="generateWebhookToken"
                                         :disabled="generatingWebhookToken"
-                                        class="mt-2 inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600"
+                                        class="mt-2 inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
                                     >
                                         <svg v-if="generatingWebhookToken" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -2240,8 +2644,8 @@ const isBroadcastDisabled = computed(() => {
                                         </svg>
                                         {{ bounceWebhook.token ? $t('mailboxes.bounce_webhooks.regenerate_token') : $t('mailboxes.bounce_webhooks.generate_token') }}
                                     </button>
-                                    <p v-if="webhookProvider === 'postmark'" class="mt-2 text-xs text-gray-600 dark:text-gray-400">{{ $t('mailboxes.bounce_webhooks.postmark_auth') }}</p>
-                                    <p v-else class="mt-2 text-xs text-gray-600 dark:text-gray-400">{{ $t('mailboxes.bounce_webhooks.generic_auth') }}</p>
+                                    <p v-if="webhookProvider === 'postmark'" class="mt-2 text-xs text-slate-600 dark:text-slate-400">{{ $t('mailboxes.bounce_webhooks.postmark_auth') }}</p>
+                                    <p v-else class="mt-2 text-xs text-slate-600 dark:text-slate-400">{{ $t('mailboxes.bounce_webhooks.generic_auth') }}</p>
                                 </div>
 
                                 <!-- Status of the selected webhook -->
@@ -2255,26 +2659,29 @@ const isBroadcastDisabled = computed(() => {
                                 </div>
                             </div>
                         </div>
+                    </div>
 
+                    <!-- Replies -->
+                    <div v-show="dialogTab === 'replies'">
                         <!-- Reply Inbox Monitoring Section (only in edit mode) -->
-                        <div v-if="modalMode === 'edit'" class="border-t border-gray-200 dark:border-slate-700 pt-4">
+                        <div v-if="modalMode === 'edit'">
                             <!-- Section Header -->
                             <div class="flex items-center justify-between mb-3">
                                 <div>
-                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <h4 class="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                         <svg class="h-4 w-4 text-sky-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                                         </svg>
                                         {{ $t('mailboxes.replies.section_title') }}
                                     </h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $t('mailboxes.replies.section_desc') }}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ $t('mailboxes.replies.section_desc') }}</p>
                                 </div>
                                 <!-- Enable Toggle -->
                                 <button
                                     type="button"
                                     @click="form.reply_enabled = !form.reply_enabled"
                                     class="relative h-6 w-11 rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                    :class="form.reply_enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-600'"
+                                    :class="form.reply_enabled ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-slate-600'"
                                 >
                                     <span
                                         class="absolute left-0.5 top-0.5 h-5 w-5 transform rounded-full bg-white shadow transition-transform"
@@ -2328,23 +2735,23 @@ const isBroadcastDisabled = computed(() => {
                                     <!-- Host & Port Row -->
                                     <div class="grid grid-cols-3 gap-3">
                                         <div class="col-span-2">
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.replies.imap_host') }}</label>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.replies.imap_host') }}</label>
                                             <input
                                                 v-model="form.reply_imap_host"
                                                 type="text"
                                                 placeholder="imap.example.com"
-                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                             />
                                             <p v-if="form.errors.reply_imap_host" class="mt-1 text-xs text-rose-600">{{ form.errors.reply_imap_host }}</p>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.replies.imap_port') }}</label>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.replies.imap_port') }}</label>
                                             <input
                                                 v-model.number="form.reply_imap_port"
                                                 type="number"
                                                 min="1"
                                                 max="65535"
-                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                             />
                                         </div>
                                     </div>
@@ -2352,10 +2759,10 @@ const isBroadcastDisabled = computed(() => {
                                     <!-- Encryption & Folder Row -->
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.replies.imap_encryption') }}</label>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.replies.imap_encryption') }}</label>
                                             <select
                                                 v-model="form.reply_imap_encryption"
-                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                             >
                                                 <option value="ssl">SSL</option>
                                                 <option value="tls">TLS</option>
@@ -2363,42 +2770,42 @@ const isBroadcastDisabled = computed(() => {
                                             </select>
                                         </div>
                                         <div>
-                                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.replies.imap_folder') }}</label>
+                                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.replies.imap_folder') }}</label>
                                             <input
                                                 v-model="form.reply_imap_folder"
                                                 type="text"
                                                 placeholder="INBOX"
-                                                class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                                class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                             />
                                         </div>
                                     </div>
 
                                     <!-- Username -->
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.replies.imap_username') }}</label>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.replies.imap_username') }}</label>
                                         <input
                                             v-model="form.reply_imap_username"
                                             type="email"
                                             :placeholder="form.reply_to || form.from_email || 'replies@example.com'"
-                                            class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                            class="mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                         />
                                     </div>
 
                                     <!-- Password -->
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t('mailboxes.replies.imap_password') }}</label>
+                                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">{{ $t('mailboxes.replies.imap_password') }}</label>
                                         <div class="relative mt-1">
                                             <input
                                                 v-model="form.reply_imap_password"
                                                 :type="showReplyPassword ? 'text' : 'password'"
                                                 :placeholder="$t('mailboxes.modal.leave_empty')"
                                                 autocomplete="new-password"
-                                                class="block w-full rounded-lg border-gray-300 pr-10 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                                class="block w-full pr-10 rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                             />
                                             <button
                                                 type="button"
                                                 @click="showReplyPassword = !showReplyPassword"
-                                                class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600"
+                                                class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600"
                                             >
                                                 <svg v-if="showReplyPassword" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
@@ -2409,24 +2816,24 @@ const isBroadcastDisabled = computed(() => {
                                                 </svg>
                                             </button>
                                         </div>
-                                        <p class="mt-1 text-xs text-gray-500">{{ $t('mailboxes.modal.leave_empty') }}</p>
+                                        <p class="mt-1 text-xs text-slate-500">{{ $t('mailboxes.modal.leave_empty') }}</p>
                                     </div>
 
                                     <!-- Last Scan Info -->
-                                    <div v-if="editingMailbox?.reply_last_scanned_at" class="rounded-lg bg-gray-50 dark:bg-slate-700/50 p-3">
+                                    <div v-if="editingMailbox?.reply_last_scanned_at" class="rounded-lg bg-slate-50 dark:bg-slate-700/50 p-3">
                                         <div class="flex items-center justify-between text-xs">
-                                            <span class="text-gray-500 dark:text-gray-400">
+                                            <span class="text-slate-500 dark:text-slate-400">
                                                 {{ $t('mailboxes.replies.last_scanned') }}:
-                                                <span class="font-medium text-gray-700 dark:text-gray-300">
+                                                <span class="font-medium text-slate-700 dark:text-slate-300">
                                                     {{ new Date(editingMailbox.reply_last_scanned_at).toLocaleString() }}
                                                 </span>
                                             </span>
-                                            <span v-if="editingMailbox.reply_last_scan_count !== null" class="text-gray-500 dark:text-gray-400">
+                                            <span v-if="editingMailbox.reply_last_scan_count !== null" class="text-slate-500 dark:text-slate-400">
                                                 {{ $t('mailboxes.replies.last_scan_count') }}: <strong>{{ editingMailbox.reply_last_scan_count }}</strong>
                                             </span>
                                         </div>
                                     </div>
-                                    <div v-else-if="editingMailbox?.reply_enabled" class="text-xs text-gray-500 dark:text-gray-400 italic">
+                                    <div v-else-if="editingMailbox?.reply_enabled" class="text-xs text-slate-500 dark:text-slate-400 italic">
                                         {{ $t('mailboxes.replies.never_scanned') }}
                                     </div>
 
@@ -2436,7 +2843,7 @@ const isBroadcastDisabled = computed(() => {
                                             type="button"
                                             @click="testReplyConnection"
                                             :disabled="testingReply || !form.reply_imap_host"
-                                            class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600"
+                                            class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300 dark:hover:bg-slate-600"
                                         >
                                             <svg v-if="testingReply" class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
                                                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -2447,7 +2854,7 @@ const isBroadcastDisabled = computed(() => {
                                             </svg>
                                             {{ $t('mailboxes.replies.test_connection') }}
                                         </button>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $t('mailboxes.replies.test_hint') }}</span>
+                                        <span class="text-xs text-slate-500 dark:text-slate-400">{{ $t('mailboxes.replies.test_hint') }}</span>
                                     </div>
 
                                     <!-- Reply Test Result -->
@@ -2471,38 +2878,22 @@ const isBroadcastDisabled = computed(() => {
                                 </div>
                             </Transition>
                         </div>
+                    </div>
 
-                        <!-- Click and open tracking -->
-                        <div class="border-t border-gray-200 dark:border-slate-700 pt-4">
-                            <label class="flex items-start gap-3 cursor-pointer">
-                                <input
-                                    type="checkbox"
-                                    v-model="form.tracking_enabled"
-                                    class="mt-0.5 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                                />
-                                <div>
-                                    <span class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        {{ $t('mailboxes.tracking.label') }}
-                                    </span>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                        {{ $t('mailboxes.tracking.help') }}
-                                    </p>
-                                </div>
-                            </label>
-                        </div>
-
+                    <!-- Custom headers -->
+                    <div v-show="dialogTab === 'headers'">
                         <!-- Custom SMTP Headers Section -->
-                        <div class="border-t border-gray-200 dark:border-slate-700 pt-4">
+                        <div>
                             <!-- Section Header -->
                             <div class="flex items-center justify-between mb-3">
                                 <div>
-                                    <h4 class="text-sm font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <h4 class="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                                         <svg class="h-4 w-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                                         </svg>
                                         {{ $t('mailboxes.custom_headers.section_title') }}
                                     </h4>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ $t('mailboxes.custom_headers.section_desc') }}</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ $t('mailboxes.custom_headers.section_desc') }}</p>
                                 </div>
                             </div>
 
@@ -2518,7 +2909,7 @@ const isBroadcastDisabled = computed(() => {
                                             v-model="header.key"
                                             type="text"
                                             :placeholder="$t('mailboxes.custom_headers.key_placeholder')"
-                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                            class="block w-full text-sm rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                         />
                                     </div>
                                     <div class="flex-1">
@@ -2526,13 +2917,13 @@ const isBroadcastDisabled = computed(() => {
                                             v-model="header.value"
                                             type="text"
                                             :placeholder="$t('mailboxes.custom_headers.value_placeholder')"
-                                            class="block w-full rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                            class="block w-full text-sm rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                                         />
                                     </div>
                                     <button
                                         type="button"
                                         @click="form.custom_headers.splice(index, 1)"
-                                        class="mt-1 flex-shrink-0 rounded-lg p-1.5 text-gray-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+                                        class="mt-1 flex-shrink-0 rounded-lg p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
                                         :title="$t('mailboxes.custom_headers.remove')"
                                     >
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2546,7 +2937,7 @@ const isBroadcastDisabled = computed(() => {
                             <button
                                 type="button"
                                 @click="form.custom_headers.push({ key: '', value: '' })"
-                                class="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-600 transition-colors hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-600 dark:text-gray-400 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
+                                class="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-dashed border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-indigo-400 hover:text-indigo-600 dark:border-slate-600 dark:text-slate-400 dark:hover:border-indigo-500 dark:hover:text-indigo-400"
                             >
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -2554,267 +2945,179 @@ const isBroadcastDisabled = computed(() => {
                                 {{ $t('mailboxes.custom_headers.add') }}
                             </button>
                         </div>
+                    </div>
 
-                        <!-- Test Result -->
-                        <div
-                            v-if="testResult"
-                            class="rounded-lg p-4"
-                            :class="
-                                testResult.success
-                                    ? 'bg-emerald-50 dark:bg-emerald-900/20'
-                                    : 'bg-rose-50 dark:bg-rose-900/20'
-                            "
-                        >
-                            <div class="flex items-center gap-2">
-                                <svg
-                                    v-if="testResult.success"
-                                    class="h-5 w-5 text-emerald-600 dark:text-emerald-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
-                                <svg
-                                    v-else
-                                    class="h-5 w-5 text-rose-600 dark:text-rose-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    />
-                                </svg>
-                                <span
-                                    :class="
-                                        testResult.success
-                                            ? 'text-emerald-800 dark:text-emerald-200'
-                                            : 'text-rose-800 dark:text-rose-200'
-                                    "
-                                >
-                                    {{ testResult.message }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Form Actions -->
-                        <div class="flex items-center justify-end gap-3 pt-4">
-                            <button
-                                type="button"
-                                @click="closeModal"
-                                class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-slate-700"
+                    <!-- Test Result -->
+                    <div
+                        v-if="testResult"
+                        class="rounded-lg p-4"
+                        :class="
+                            testResult.success
+                                ? 'bg-emerald-50 dark:bg-emerald-900/20'
+                                : 'bg-rose-50 dark:bg-rose-900/20'
+                        "
+                    >
+                        <div class="flex items-center gap-2">
+                            <svg
+                                v-if="testResult.success"
+                                class="h-5 w-5 text-emerald-600 dark:text-emerald-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
                             >
-                                {{ $t("common.cancel") }}
-                            </button>
-                            <button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                            <svg
+                                v-else
+                                class="h-5 w-5 text-rose-600 dark:text-rose-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
                             >
-                                {{
-                                    form.processing
-                                        ? $t("common.saving")
-                                        : $t("common.save")
-                                }}
-                            </button>
+                                <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    stroke-width="2"
+                                    d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
+                            </svg>
+                            <span
+                                :class="
+                                    testResult.success
+                                        ? 'text-emerald-800 dark:text-emerald-200'
+                                        : 'text-rose-800 dark:text-rose-200'
+                                "
+                            >
+                                {{ testResult.message }}
+                            </span>
                         </div>
-                    </form>
-                </div>
-            </div>
-        </Teleport>
-
-        <!-- Delete Confirmation Modal -->
-        <Modal :show="showDeleteModal" @close="closeDeleteModal" max-width="md">
-            <div class="p-6">
-                <div class="flex items-center gap-4">
-                    <div
-                        class="flex h-12 w-12 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/30"
-                    >
-                        <svg
-                            class="h-6 w-6 text-rose-600 dark:text-rose-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                            />
-                        </svg>
-                    </div>
-                    <div>
-                        <h3
-                            class="text-lg font-semibold text-gray-900 dark:text-white"
-                        >
-                            {{ $t("mailboxes.delete.title") }}
-                        </h3>
-                        <p
-                            class="mt-1 text-sm text-gray-600 dark:text-gray-400"
-                        >
-                            {{
-                                $t("mailboxes.delete.confirm", {
-                                    name: deletingMailbox?.name,
-                                })
-                            }}
-                        </p>
                     </div>
                 </div>
 
-                <div class="mt-6 flex justify-end gap-3">
-                    <SecondaryButton @click="closeDeleteModal">
-                        {{ $t("common.cancel") }}
-                    </SecondaryButton>
-                    <DangerButton @click="deleteMailbox">
-                        {{ $t("common.delete") }}
-                    </DangerButton>
-                </div>
-            </div>
-        </Modal>
-
-        <!-- Error Details Modal -->
-        <Modal :show="showErrorModal" @close="closeErrorModal">
-            <div class="p-6">
-                <div class="flex items-start gap-4">
-                    <div
-                        class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-rose-100 dark:bg-rose-900/30"
-                    >
-                        <svg
-                            class="h-6 w-6 text-rose-600 dark:text-rose-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                            />
-                        </svg>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h3
-                            class="text-lg font-semibold text-gray-900 dark:text-white"
-                        >
-                            {{ $t("mailboxes.error_details.title") }}
-                        </h3>
-                        <p
-                            class="mt-1 text-sm text-gray-600 dark:text-gray-400"
-                        >
-                            {{ errorMailbox?.name }} ({{
-                                errorMailbox?.from_email
-                            }})
-                        </p>
-                    </div>
-                </div>
-
-                <div class="mt-4">
-                    <div
-                        class="rounded-lg border border-rose-200 bg-rose-50 p-4 dark:border-rose-800 dark:bg-rose-900/20"
-                    >
-                        <p
-                            class="text-sm text-rose-800 dark:text-rose-200 whitespace-pre-wrap break-words"
-                        >
-                            {{ errorMailbox?.last_test_message }}
-                        </p>
-                    </div>
-                </div>
-
-                <div class="mt-6 flex justify-end">
-                    <SecondaryButton @click="closeErrorModal">
-                        {{ $t("common.close") }}
-                    </SecondaryButton>
-                </div>
-            </div>
-        </Modal>
-
-        <!-- Reputation Details Modal -->
-        <Modal
-            :show="showReputationModal"
-            @close="closeReputationModal"
-            max-width="lg"
-        >
-            <div class="p-6">
-                <h3
-                    class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                <!-- Why the save failed: above the buttons, because the fields the messages belong
+                     to may be in another section or (credentials, custom headers) show none -->
+                <div
+                    v-if="formErrorMessages.length"
+                    role="alert"
+                    class="max-h-32 shrink-0 overflow-y-auto border-t border-rose-200 bg-rose-50 px-6 py-3 dark:border-rose-500/30 dark:bg-rose-500/10"
                 >
-                    {{ $t("mailboxes.reputation.modal_title") }}
-                </h3>
+                    <p class="text-sm font-medium text-rose-900 dark:text-rose-200">
+                        {{ $t("mailboxes.modal.save_errors") }}
+                    </p>
+                    <ul class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-rose-800 dark:text-rose-300">
+                        <li v-for="message in formErrorMessages" :key="message">{{ message }}</li>
+                    </ul>
+                </div>
 
-                <div v-if="reputationSummary" class="mt-4">
-                    <!-- Summary -->
-                    <div
-                        class="flex items-center gap-3 rounded-lg p-3"
-                        :class="{
-                            'bg-emerald-50 dark:bg-emerald-900/20':
-                                reputationSummary.overall === 'clean',
-                            'bg-amber-50 dark:bg-amber-900/20':
-                                reputationSummary.overall === 'warning',
-                            'bg-rose-50 dark:bg-rose-900/20':
-                                reputationSummary.overall === 'critical',
-                            'bg-gray-50 dark:bg-gray-800':
-                                reputationSummary.overall === 'unchecked',
-                        }"
+                <footer
+                    class="flex flex-wrap items-center justify-between gap-x-4 gap-y-3 border-t border-slate-200 px-6 py-4 dark:border-slate-700/60"
+                >
+                    <!-- What just happened (a test, a copied address), or what comes after the first save -->
+                    <p
+                        v-if="toast"
+                        :role="toast.success ? 'status' : 'alert'"
+                        class="flex min-w-0 flex-1 items-start gap-2 text-sm text-slate-900 max-sm:basis-full dark:text-white"
                     >
-                        <span class="text-2xl">{{
-                            getReputationDot(reputationSummary.overall)
-                        }}</span>
-                        <div>
-                            <p
-                                class="font-medium text-gray-900 dark:text-gray-100"
-                            >
-                                {{ $t("mailboxes.reputation.domain") }}:
-                                {{ reputationSummary.domain }}
-                            </p>
-                            <p class="text-sm text-gray-600 dark:text-gray-400">
-                                <template
-                                    v-if="reputationSummary.overall === 'clean'"
-                                >
+                        <span
+                            aria-hidden="true"
+                            class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                            :class="toast.success ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-rose-600 dark:bg-rose-400'"
+                        ></span>
+                        <span class="min-w-0">{{ toast.message }}</span>
+                    </p>
+                    <p
+                        v-else-if="modalMode === 'create'"
+                        class="min-w-0 flex-1 text-sm text-slate-600 max-sm:basis-full dark:text-slate-400"
+                    >
+                        {{ $t("mailboxes.modal.after_save_hint") }}
+                    </p>
+                    <span v-else class="flex-1"></span>
+
+                    <div class="flex shrink-0 items-center gap-3 max-sm:ml-auto">
+                        <SecondaryButton type="button" @click="closeModal">
+                            {{ $t("common.cancel") }}
+                        </SecondaryButton>
+                        <PrimaryButton type="submit" :disabled="form.processing">
+                            {{ form.processing ? $t("common.saving") : $t("common.save") }}
+                        </PrimaryButton>
+                    </div>
+                </footer>
+            </form>
+        </Modal>
+
+        <ConfirmModal
+            :show="showDeleteModal"
+            type="danger"
+            :title="$t('mailboxes.delete.title')"
+            :message="$t('mailboxes.delete.confirm', { name: deletingMailbox?.name })"
+            :confirm-text="$t('common.delete')"
+            @close="closeDeleteModal"
+            @confirm="deleteMailbox"
+        />
+
+        <!-- What the server answered to the failed test -->
+        <Modal :show="showErrorModal" max-width="lg" @close="closeErrorModal">
+            <div class="flex flex-col gap-4 p-6">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                        {{ $t("mailboxes.error_details.title") }}
+                    </h2>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">
+                        {{ errorMailbox?.name }} ({{ errorMailbox?.from_email }})
+                    </p>
+                </div>
+                <p
+                    class="max-h-72 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 font-mono text-xs text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200"
+                >
+                    {{ errorMailbox?.last_test_message }}
+                </p>
+                <div class="flex justify-end">
+                    <SecondaryButton @click="closeErrorModal">{{ $t("common.close") }}</SecondaryButton>
+                </div>
+            </div>
+        </Modal>
+
+        <!-- The sender's domain on the DNS blacklists -->
+        <Modal :show="showReputationModal" max-width="2xl" @close="closeReputationModal">
+            <div class="flex max-h-[calc(100vh-3rem)] flex-col">
+                <div class="flex flex-col gap-4 overflow-y-auto p-6">
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                        {{ $t("mailboxes.reputation.modal_title") }}
+                    </h2>
+
+                    <template v-if="reputationSummary">
+                        <div
+                            class="flex flex-col gap-1.5 rounded-xl border border-slate-200 px-4 py-3 dark:border-slate-700/60"
+                        >
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <p class="font-medium text-slate-900 dark:text-white">
+                                    {{ $t("mailboxes.reputation.domain") }}: {{ reputationSummary.domain }}
+                                </p>
+                                <StatusPill :tone="REPUTATION_TONES[reputationSummary.overall] || 'neutral'">
+                                    {{ $t("mailboxes.reputation." + (reputationSummary.overall || "unchecked")) }}
+                                </StatusPill>
+                            </div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400">
+                                <template v-if="reputationSummary.overall === 'clean'">
+                                    {{ $t("mailboxes.reputation.summary_clean") }}
+                                </template>
+                                <template v-else-if="reputationSummary.overall === 'critical'">
                                     {{
-                                        $t("mailboxes.reputation.summary_clean")
+                                        $t("mailboxes.reputation.summary_critical", {
+                                            count: reputationSummary.listed_count || "?",
+                                        })
                                     }}
                                 </template>
-                                <template
-                                    v-else-if="
-                                        reputationSummary.overall === 'critical'
-                                    "
-                                >
+                                <template v-else-if="reputationSummary.overall === 'warning'">
                                     {{
-                                        $t(
-                                            "mailboxes.reputation.summary_critical",
-                                            {
-                                                count:
-                                                    reputationSummary.listed_count ||
-                                                    "?",
-                                            },
-                                        )
-                                    }}
-                                </template>
-                                <template
-                                    v-else-if="
-                                        reputationSummary.overall === 'warning'
-                                    "
-                                >
-                                    {{
-                                        $t(
-                                            "mailboxes.reputation.summary_warning",
-                                            {
-                                                count:
-                                                    reputationSummary.listed_count ||
-                                                    "?",
-                                            },
-                                        )
+                                        $t("mailboxes.reputation.summary_warning", {
+                                            count: reputationSummary.listed_count || "?",
+                                        })
                                     }}
                                 </template>
                                 <template v-else>
@@ -2823,161 +3126,89 @@ const isBroadcastDisabled = computed(() => {
                             </p>
                             <p
                                 v-if="reputationSummary.last_checked"
-                                class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                class="text-xs tabular-nums text-slate-600 dark:text-slate-400"
                             >
                                 {{ $t("mailboxes.reputation.last_checked") }}:
-                                {{
-                                    new Date(
-                                        reputationSummary.last_checked,
-                                    ).toLocaleString()
-                                }}
+                                {{ new Date(reputationSummary.last_checked).toLocaleString(locale) }}
                             </p>
                         </div>
-                    </div>
 
-                    <!-- Details table -->
-                    <div v-if="reputationDetails" class="mt-4">
-                        <table class="w-full text-sm">
-                            <thead>
-                                <tr class="border-b dark:border-gray-700">
-                                    <th
-                                        class="py-2 text-left font-medium text-gray-600 dark:text-gray-400"
-                                    >
-                                        {{
-                                            $t(
-                                                "mailboxes.reputation.blacklist_name",
-                                            )
-                                        }}
-                                    </th>
-                                    <th
-                                        class="py-2 text-left font-medium text-gray-600 dark:text-gray-400"
-                                    >
-                                        {{
-                                            $t("mailboxes.reputation.severity")
-                                        }}
-                                    </th>
-                                    <th
-                                        class="py-2 text-left font-medium text-gray-600 dark:text-gray-400"
-                                    >
-                                        {{ $t("mailboxes.reputation.status") }}
-                                    </th>
-                                    <th class="py-2"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="detail in reputationDetails"
-                                    :key="detail.key"
-                                    class="border-b dark:border-gray-700/50"
-                                >
-                                    <td class="py-2.5">
-                                        <div
-                                            class="font-medium text-gray-800 dark:text-gray-200"
-                                        >
-                                            {{ detail.name }}
-                                        </div>
-                                        <div class="text-xs text-gray-400">
-                                            {{ detail.zone }}
-                                        </div>
-                                    </td>
-                                    <td class="py-2.5">
-                                        <span
-                                            :class="
-                                                getSeverityClass(
-                                                    detail.severity,
-                                                )
-                                            "
-                                            class="text-xs font-medium uppercase"
-                                        >
-                                            {{
-                                                $t(
-                                                    "mailboxes.reputation.severity_" +
-                                                        detail.severity,
-                                                )
-                                            }}
-                                        </span>
-                                    </td>
-                                    <td class="py-2.5">
-                                        <span
-                                            v-if="detail.listed"
-                                            class="inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
-                                        >
-                                            🔴
-                                            {{
-                                                $t(
-                                                    "mailboxes.reputation.listed",
-                                                )
-                                            }}
-                                        </span>
-                                        <span
-                                            v-else
-                                            class="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                                        >
-                                            ✅
-                                            {{
-                                                $t(
-                                                    "mailboxes.reputation.clean_label",
-                                                )
-                                            }}
-                                        </span>
-                                    </td>
-                                    <td class="py-2.5 text-right">
-                                        <a
-                                            v-if="detail.lookup_url"
-                                            :href="detail.lookup_url"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="text-xs text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
-                                        >
-                                            {{
-                                                $t(
-                                                    "mailboxes.reputation.lookup_url",
-                                                )
-                                            }}
-                                            →
-                                        </a>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Loading state -->
-                    <div
-                        v-else
-                        class="mt-4 flex items-center justify-center py-8"
-                    >
-                        <svg
-                            class="h-6 w-6 animate-spin text-indigo-500"
-                            fill="none"
-                            viewBox="0 0 24 24"
+                        <div
+                            v-if="reputationDetails"
+                            class="relative overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-700/60"
                         >
-                            <circle
-                                class="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                stroke-width="4"
-                            ></circle>
-                            <path
-                                class="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                        </svg>
-                        <span class="ml-2 text-sm text-gray-500">{{
-                            $t("mailboxes.reputation.checking")
-                        }}</span>
-                    </div>
+                            <table class="w-full min-w-[520px] text-sm">
+                                <thead>
+                                    <tr
+                                        class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
+                                    >
+                                        <th scope="col" class="px-4 py-2.5 font-medium">
+                                            {{ $t("mailboxes.reputation.blacklist_name") }}
+                                        </th>
+                                        <th scope="col" class="px-3 py-2.5 font-medium">
+                                            {{ $t("mailboxes.reputation.severity") }}
+                                        </th>
+                                        <th scope="col" class="px-3 py-2.5 font-medium">
+                                            {{ $t("mailboxes.reputation.status") }}
+                                        </th>
+                                        <th scope="col" class="px-4 py-2.5">
+                                            <span class="sr-only">{{ $t("common.actions") }}</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        v-for="detail in reputationDetails"
+                                        :key="detail.key"
+                                        class="border-b border-slate-100 last:border-0 dark:border-slate-700/40"
+                                    >
+                                        <td class="px-4 py-2.5">
+                                            <p class="font-medium text-slate-900 dark:text-white">{{ detail.name }}</p>
+                                            <p class="text-xs text-slate-600 dark:text-slate-400">{{ detail.zone }}</p>
+                                        </td>
+                                        <td class="px-3 py-2.5">
+                                            <span class="text-xs font-medium" :class="getSeverityClass(detail.severity)">
+                                                {{ $t("mailboxes.reputation.severity_" + detail.severity) }}
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-2.5">
+                                            <StatusPill :tone="detail.listed ? 'danger' : 'success'">
+                                                {{
+                                                    detail.listed
+                                                        ? $t("mailboxes.reputation.listed")
+                                                        : $t("mailboxes.reputation.clean_label")
+                                                }}
+                                            </StatusPill>
+                                        </td>
+                                        <td class="whitespace-nowrap px-4 py-2.5 text-right">
+                                            <a
+                                                v-if="detail.lookup_url"
+                                                :href="detail.lookup_url"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                            >
+                                                {{ $t("mailboxes.reputation.lookup_url") }}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <p v-else role="status" class="py-6 text-center text-sm text-slate-600 dark:text-slate-400">
+                            {{ $t("mailboxes.reputation.checking") }}
+                        </p>
+                    </template>
                 </div>
 
-                <div class="mt-6 flex justify-end">
-                    <SecondaryButton @click="closeReputationModal">
-                        {{ $t("common.close") }}
-                    </SecondaryButton>
+                <div class="flex justify-end border-t border-slate-200 px-6 py-4 dark:border-slate-700/60">
+                    <SecondaryButton @click="closeReputationModal">{{ $t("common.close") }}</SecondaryButton>
                 </div>
             </div>
         </Modal>
+
+        <!-- In the corner of the page; an open dialog shows the same message in its footer -->
+        <Toast :toast="showModal ? null : toast" @close="dismiss" />
     </AuthenticatedLayout>
 </template>

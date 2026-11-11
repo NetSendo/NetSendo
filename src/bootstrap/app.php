@@ -30,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(\App\Http\Middleware\DormantMode::class);
 
         $middleware->web(append: [
+            \App\Http\Middleware\RememberIntendedUrlForNavigationsOnly::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             // Capped: the message editor preloads ~27 chunks, and the full Link header
@@ -39,6 +40,13 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::using(8),
             \App\Http\Middleware\CheckInstallation::class,
         ]);
+
+        // Laravel sorts "auth" ahead of the middleware appended above. This one has to wrap it:
+        // it undoes what a refused background request remembered as the intended URL.
+        $middleware->prependToPriorityList(
+            before: \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            prepend: \App\Http\Middleware\RememberIntendedUrlForNavigationsOnly::class,
+        );
 
         // Register middleware aliases
         $middleware->alias([

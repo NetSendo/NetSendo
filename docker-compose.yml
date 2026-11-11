@@ -40,6 +40,8 @@ services:
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       # Persistent user data
       - netsendo-storage:/var/www/storage/app
+      # NMI: logins of the NetSendo MTA, written here and read by the nmi-mta container
+      - nmi-auth:/var/www/storage/app/nmi-mta
       - netsendo-logs:/var/www/storage/logs
       # Shared volume for nginx to serve static files
       - netsendo-public:/var/www/public
@@ -80,6 +82,7 @@ services:
       - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       - netsendo-storage:/var/www/storage/app
+      - nmi-auth:/var/www/storage/app/nmi-mta
       - netsendo-logs:/var/www/storage/logs
     environment:
       # Only the app migrates and seeds; this container waits for the schema
@@ -118,6 +121,7 @@ services:
       - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       - netsendo-storage:/var/www/storage/app
+      - nmi-auth:/var/www/storage/app/nmi-mta
       - netsendo-logs:/var/www/storage/logs
     environment:
       # Only the app migrates and seeds; this container waits for the schema
@@ -331,8 +335,16 @@ services:
     ports:
       - "127.0.0.1:${NMI_SMTP_PORT:-2525}:25"
       - "127.0.0.1:${NMI_SUBMISSION_PORT:-2587}:587"
+    # The app starts first, so the nmi-auth volume is created with the app's ownership
+    depends_on:
+      app:
+        condition: service_started
     volumes:
       - ./docker/haraka/config:/opt/haraka/config:ro
+      # NetSendo's own Haraka plugins (SMTP AUTH against the logins NetSendo issues)
+      - ./docker/haraka/plugins:/opt/haraka/plugins:ro
+      # Logins of the sending domains, written by the app (storage/app/nmi-mta/auth.json)
+      - nmi-auth:/opt/haraka/netsendo:ro
       - nmi-queue:/opt/haraka/queue
       - nmi-logs:/opt/haraka/logs
       # DKIM keys - managed by application
@@ -341,6 +353,12 @@ services:
       - nmi-tls:/opt/haraka/config/tls
     environment:
       - NODE_ENV=production
+      # HELO name of the MTA: a host name that resolves to the server's address and
+      # that the address's PTR record points to (default: the container's own name)
+      - NMI_HELO_HOST=${NMI_HELO_HOST:-}
+      # Dedicated IPs the provider translates to a private address on the server:
+      # "public=private,public=private" (see docker-compose.nmi-host.yml)
+      - NMI_BIND_MAP=${NMI_BIND_MAP:-}
     networks:
       - netsendo-network
     healthcheck:
@@ -377,6 +395,8 @@ volumes:
   netsendo-public:
     driver: local
   # NMI (NetSendo Mail Infrastructure) volumes
+  nmi-auth:
+    driver: local
   nmi-queue:
     driver: local
   nmi-logs:

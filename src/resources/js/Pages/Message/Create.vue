@@ -17,6 +17,7 @@ import ABTestingPanel from "@/Components/Message/ABTestingPanel.vue";
 import CrmContactSelector from "@/Components/CrmContactSelector.vue";
 import FieldFilterBuilder from "@/Components/FieldFilterBuilder.vue";
 import GoldBadge from "@/Components/License/GoldBadge.vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
 import { useLicense } from "@/Composables/useLicense";
 import { computed, ref, watch, nextTick } from "vue";
 import { debounce } from "lodash";
@@ -87,30 +88,30 @@ const props = defineProps({
 const isEditing = computed(() => !!props.message);
 
 // Active tab
-const activeTab = ref("content"); // content, settings, triggers, ab_testing
+const activeTab = ref("content"); // content, audience, delivery, triggers, ab_testing
 
 // Tab configuration for ResponsiveTabs component
 const messageTabs = computed(() => [
     {
         id: "content",
         label: t("messages.tabs.content"),
-        emoji: "✏️",
     },
     {
-        id: "settings",
-        label: t("messages.tabs.settings"),
-        emoji: "⚙️",
+        id: "audience",
+        label: t("messages.tabs.audience"),
+    },
+    {
+        id: "delivery",
+        label: t("messages.tabs.delivery"),
     },
     {
         id: "triggers",
         label: t("messages.tabs.triggers"),
-        emoji: "⚡",
         indicator: !!form.trigger_type,
     },
     {
         id: "ab_testing",
         label: t("messages.tabs.ab_testing"),
-        emoji: "📊",
         indicator: form.ab_test_config?.enabled,
     },
 ]);
@@ -747,17 +748,20 @@ const fieldToTabMap = {
     subject: "content",
     content: "content",
     preheader: "content",
-    type: "content",
-    contact_list_ids: "settings",
-    excluded_list_ids: "settings",
-    include_field_filters: "settings",
-    exclude_field_filters: "settings",
-    mailbox_id: "settings",
-    tag_ids: "settings",
-    day: "settings",
-    time_of_day: "settings",
-    send_at: "settings",
-    timezone: "settings",
+    type: "delivery",
+    contact_list_ids: "audience",
+    excluded_list_ids: "audience",
+    include_field_filters: "audience",
+    exclude_field_filters: "audience",
+    crm_contact_ids: "audience",
+    excluded_crm_contact_ids: "audience",
+    mailbox_id: "delivery",
+    tag_ids: "delivery",
+    day: "delivery",
+    time_of_day: "delivery",
+    send_at: "delivery",
+    timezone: "delivery",
+    tracking_enabled: "delivery",
     trigger_type: "triggers",
     trigger_config: "triggers",
     ab_test_config: "ab_testing",
@@ -786,7 +790,7 @@ const validateForm = () => {
             errors.push({
                 field: "contact_list_ids",
                 message: t("messages.validation.list_required"),
-                tab: "settings",
+                tab: "audience",
             });
         }
     } else if (form.type === "autoresponder") {
@@ -795,7 +799,7 @@ const validateForm = () => {
             errors.push({
                 field: "contact_list_ids",
                 message: t("messages.validation.list_required"),
-                tab: "settings",
+                tab: "audience",
             });
         }
     }
@@ -1395,35 +1399,23 @@ watch(
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1
-                        class="text-2xl font-bold text-slate-900 dark:text-white"
-                    >
-                        {{
-                            isEditing
-                                ? $t("messages.edit_title")
-                                : $t("messages.create_title")
-                        }}
-                    </h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                        {{
-                            isEditing
-                                ? $t("messages.edit_subtitle")
-                                : $t("messages.create_subtitle")
-                        }}
-                    </p>
-                </div>
+            <PageHeader
+                :title="isEditing ? $t('messages.edit_title') : $t('messages.create_title')"
+                :subtitle="isEditing ? $t('messages.edit_subtitle') : $t('messages.create_subtitle')"
+            >
                 <Link
                     :href="route('messages.index')"
-                    class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+                    class="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-slate-300 px-3.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700/60"
                 >
+                    <svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+                        <path d="M15 19l-7-7 7-7" />
+                    </svg>
                     {{ $t("messages.back_to_list") }}
                 </Link>
-            </div>
+            </PageHeader>
         </template>
 
-        <div class="rounded-2xl bg-white shadow-sm dark:bg-slate-900">
+        <div class="mx-auto max-w-screen-2xl rounded-2xl border border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900">
             <!-- Responsive Tabs -->
             <div class="px-4 pt-4">
                 <ResponsiveTabs v-model="activeTab" :tabs="messageTabs" />
@@ -1435,86 +1427,6 @@ watch(
                     <div class="grid gap-6 lg:grid-cols-3">
                         <!-- Left column: Main content -->
                         <div class="space-y-6 lg:col-span-2">
-                            <!-- Type Selection -->
-                            <div>
-                                <InputLabel
-                                    :value="$t('messages.fields.type')"
-                                    class="mb-2"
-                                />
-                                <div class="flex gap-4">
-                                    <label
-                                        class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-4 transition-all hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
-                                        :class="
-                                            form.type === 'broadcast'
-                                                ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500 dark:bg-indigo-900/20'
-                                                : ''
-                                        "
-                                    >
-                                        <input
-                                            type="radio"
-                                            v-model="form.type"
-                                            value="broadcast"
-                                            class="text-indigo-600 focus:ring-indigo-500"
-                                        />
-                                        <div>
-                                            <span
-                                                class="block text-sm font-medium text-slate-900 dark:text-white"
-                                                >{{
-                                                    $t(
-                                                        "messages.fields.type_broadcast",
-                                                    )
-                                                }}</span
-                                            >
-                                            <span
-                                                class="block text-xs text-slate-500"
-                                                >{{
-                                                    $t(
-                                                        "messages.fields.type_broadcast_desc",
-                                                    )
-                                                }}</span
-                                            >
-                                        </div>
-                                    </label>
-                                    <label
-                                        class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-4 transition-all hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
-                                        :class="
-                                            form.type === 'autoresponder'
-                                                ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500 dark:bg-indigo-900/20'
-                                                : ''
-                                        "
-                                    >
-                                        <input
-                                            type="radio"
-                                            v-model="form.type"
-                                            value="autoresponder"
-                                            class="text-indigo-600 focus:ring-indigo-500"
-                                        />
-                                        <div>
-                                            <span
-                                                class="block text-sm font-medium text-slate-900 dark:text-white"
-                                                >{{
-                                                    $t(
-                                                        "messages.fields.type_autoresponder",
-                                                    )
-                                                }}</span
-                                            >
-                                            <span
-                                                class="block text-xs text-slate-500"
-                                                >{{
-                                                    $t(
-                                                        "messages.fields.type_autoresponder_desc",
-                                                    )
-                                                }}</span
-                                            >
-                                        </div>
-                                    </label>
-                                </div>
-                                <InputError
-                                    class="mt-2"
-                                    :message="form.errors.type"
-                                />
-                            </div>
-
                             <!-- Subject with Emoji Picker and AI -->
                             <div>
                                 <InputLabel
@@ -1615,7 +1527,10 @@ watch(
                                         class="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
                                         title="Emoji"
                                     >
-                                        <span class="text-lg">😊</span>
+                                        <svg aria-hidden="true" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" viewBox="0 0 24 24">
+                                            <circle cx="12" cy="12" r="9" />
+                                            <path d="M8.5 14.5a4.5 4.5 0 007 0M9 9.5h.01M15 9.5h.01" />
+                                        </svg>
                                     </button>
                                     <!-- Emoji Dropdown for Subject -->
                                     <div
@@ -1769,7 +1684,7 @@ watch(
                                 </InputLabel>
                                 <textarea
                                     id="plain_text"
-                                    class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono"
+                                    class="border bg-white px-3 py-2 mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm font-mono focus:outline-none focus:ring-1"
                                     rows="6"
                                     v-model="form.plain_text"
                                     :placeholder="
@@ -1790,7 +1705,7 @@ watch(
                             <!-- PDF Attachments Section -->
                             <div class="mt-6">
                                 <InputLabel class="mb-2">
-                                    📎 {{ $t("messages.attachments.title") }}
+                                    {{ $t("messages.attachments.title") }}
                                     <span
                                         class="text-slate-400 font-normal ml-1"
                                         >({{ $t("common.optional") }})</span
@@ -2024,7 +1939,7 @@ watch(
                                 class="mt-6"
                             >
                                 <InputLabel class="mb-2">
-                                    🌐 {{ $t("messages.translations.title") }}
+                                    {{ $t("messages.translations.title") }}
                                     <span
                                         class="text-slate-400 font-normal ml-1"
                                         >({{ $t("common.optional") }})</span
@@ -2292,7 +2207,7 @@ watch(
                                                 </InputLabel>
                                                 <textarea
                                                     :id="'trans_content_' + idx"
-                                                    class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                    class="border bg-white px-3 py-2 mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-600 dark:bg-slate-800 dark:text-white focus:border-indigo-500 focus:ring-indigo-500 text-sm focus:outline-none focus:ring-1"
                                                     rows="8"
                                                     v-model="
                                                         form.translations[idx]
@@ -2468,7 +2383,7 @@ watch(
 
                                 <select
                                     v-model="form.webinar_id"
-                                    class="w-full rounded-lg border-slate-300 text-sm transition-colors focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                    class="border bg-white px-3 py-2 w-full rounded-lg border-slate-300 text-sm transition-colors focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-1"
                                 >
                                     <option :value="null">
                                         {{ $t("messages.webinar.none") }}
@@ -2492,7 +2407,7 @@ watch(
                                         <input
                                             type="checkbox"
                                             v-model="form.webinar_auto_register"
-                                            class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                            class="h-4 w-4 accent-indigo-600"
                                         />
                                         {{
                                             $t("messages.webinar.auto_register")
@@ -2528,7 +2443,7 @@ watch(
                                     class="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"
                                 >
                                     <svg
-                                        class="h-4 w-4 text-purple-500"
+                                        class="h-4 w-4 text-indigo-600 dark:text-indigo-400"
                                         fill="none"
                                         stroke="currentColor"
                                         viewBox="0 0 24 24"
@@ -2545,7 +2460,7 @@ watch(
                                 <button
                                     type="button"
                                     @click="showAiPanel = true"
-                                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 px-4 py-2.5 text-sm font-medium text-white transition-all hover:from-indigo-600 hover:to-purple-700"
+                                    class="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-indigo-500"
                                 >
                                     <svg
                                         class="h-5 w-5"
@@ -2662,7 +2577,7 @@ watch(
                                                     $t('common.search') ||
                                                     'Szukaj...'
                                                 "
-                                                class="block w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                                class="border bg-white px-3 py-2 block w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                                                 @keyup.enter="
                                                     fetchPreviewSubscribers
                                                 "
@@ -2691,7 +2606,7 @@ watch(
                                         <!-- Select dropdown -->
                                         <select
                                             v-model="previewSubscriber"
-                                            class="block w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                            class="border bg-white px-3 py-2 block w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                                         >
                                             <option :value="null">
                                                 {{
@@ -2883,7 +2798,7 @@ watch(
 
                                 <button
                                     type="button"
-                                    @click="activeTab = 'settings'"
+                                    @click="activeTab = 'delivery'"
                                     class="mt-3 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
                                 >
                                     {{
@@ -2896,501 +2811,10 @@ watch(
                             </div>
                         </div>
                     </div>
-
-                    <!-- Click and open tracking -->
-                    <div
-                        class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                    >
-                        <InputLabel
-                            for="tracking_enabled"
-                            :value="$t('messages.fields.tracking')"
-                            class="mb-2"
-                        />
-                        <select
-                            id="tracking_enabled"
-                            v-model="form.tracking_enabled"
-                            class="w-full rounded-lg border-slate-300 text-sm transition-colors focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                        >
-                            <option :value="null">
-                                {{ $t("messages.fields.tracking_mailbox") }}
-                            </option>
-                            <option :value="true">
-                                {{ $t("messages.fields.tracking_on") }}
-                            </option>
-                            <option :value="false">
-                                {{ $t("messages.fields.tracking_off") }}
-                            </option>
-                        </select>
-                        <p
-                            class="mt-1 text-xs text-slate-500 dark:text-slate-400"
-                        >
-                            {{ $t("messages.fields.tracking_help") }}
-                        </p>
-                    </div>
-
-                    <!-- Tracked Links Section -->
-                    <TrackedLinksSection
-                        v-model="form.tracked_links"
-                        :content="form.content"
-                        :lists="lists"
-                    />
                 </div>
 
-                <!-- TAB: Settings -->
-                <div v-show="activeTab === 'settings'" class="space-y-6">
-                    <div class="grid gap-6 lg:grid-cols-2">
-                        <!-- Audience -->
-                        <div
-                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                        >
-                            <InputLabel
-                                :value="$t('messages.fields.audience')"
-                                class="mb-3"
-                            />
-
-                            <!-- List selection with Groups and Tags -->
-                            <div>
-                                <!-- Filter Controls -->
-                                <div class="mb-3 grid grid-cols-2 gap-2">
-                                    <!-- List Type Filter -->
-                                    <select
-                                        v-model="listTypeFilter"
-                                        class="block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    >
-                                        <option value="">
-                                            {{
-                                                $t("subscribers.all_list_types")
-                                            }}
-                                        </option>
-                                        <option value="email">
-                                            {{
-                                                $t(
-                                                    "subscribers.list_type_email",
-                                                )
-                                            }}
-                                        </option>
-                                        <option value="sms">
-                                            {{
-                                                $t("subscribers.list_type_sms")
-                                            }}
-                                        </option>
-                                    </select>
-                                    <!-- Search -->
-                                    <input
-                                        v-model="listSearch"
-                                        type="text"
-                                        :placeholder="
-                                            $t('common.search') + '...'
-                                        "
-                                        class="block w-full rounded-lg border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                                    />
-                                </div>
-
-                                <!-- Selection controls -->
-                                <div
-                                    class="mb-3 flex flex-wrap items-center gap-2"
-                                >
-                                    <label
-                                        class="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300"
-                                    >
-                                        <input
-                                            type="checkbox"
-                                            :checked="areAllListsSelected"
-                                            @change="toggleSelectAll"
-                                            class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
-                                        />
-                                        {{ $t("messages.fields.select_all") }}
-                                    </label>
-                                    <span class="text-xs text-slate-400">
-                                        ({{ form.contact_list_ids.length }}/{{
-                                            lists.length
-                                        }})
-                                        <span
-                                            v-if="
-                                                listsFilteredByTypeAndSearch.length <
-                                                lists.length
-                                            "
-                                            class="text-amber-500"
-                                        >
-                                            — {{ $t("common.showing") }}
-                                            {{
-                                                listsFilteredByTypeAndSearch.length
-                                            }}
-                                        </span>
-                                    </span>
-                                </div>
-
-                                <!-- Tags quick select -->
-                                <div v-if="tags.length > 0" class="mb-3">
-                                    <div
-                                        class="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400"
-                                    >
-                                        {{
-                                            $t("messages.fields.select_by_tag")
-                                        }}
-                                    </div>
-                                    <div class="flex flex-wrap gap-1.5">
-                                        <button
-                                            v-for="tag in tags"
-                                            :key="tag.id"
-                                            type="button"
-                                            @click="toggleByTag(tag.id)"
-                                            :class="
-                                                isTagSelected(tag.id)
-                                                    ? 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-700'
-                                                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700'
-                                            "
-                                            class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
-                                        >
-                                            <svg
-                                                class="h-3 w-3"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                                                />
-                                            </svg>
-                                            {{ tag.name }}
-                                            <span class="text-slate-400"
-                                                >({{
-                                                    getTagListCount(tag.id)
-                                                }})</span
-                                            >
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <!-- Lists grouped by CRM groups -->
-                                <div
-                                    class="max-h-64 overflow-y-auto rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-900"
-                                >
-                                    <div
-                                        v-for="group in groupedLists"
-                                        :key="group.id ?? group.name"
-                                        class="border-b border-slate-200 last:border-b-0 dark:border-slate-700"
-                                    >
-                                        <!-- Group Header -->
-                                        <div
-                                            class="flex items-center gap-2 bg-slate-50 px-3 py-2 dark:bg-slate-800"
-                                            :class="{
-                                                'cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700':
-                                                    group.lists.length > 1,
-                                            }"
-                                            @click="
-                                                group.lists.length > 1 &&
-                                                toggleGroup(group)
-                                            "
-                                        >
-                                            <input
-                                                v-if="group.lists.length > 1"
-                                                type="checkbox"
-                                                :checked="
-                                                    isGroupSelected(group)
-                                                "
-                                                :indeterminate="
-                                                    isGroupPartiallySelected(
-                                                        group,
-                                                    )
-                                                "
-                                                @click.stop
-                                                @change="toggleGroup(group)"
-                                                class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
-                                            />
-                                            <svg
-                                                v-if="group.id"
-                                                class="h-4 w-4 text-slate-400"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                viewBox="0 0 24 24"
-                                            >
-                                                <path
-                                                    stroke-linecap="round"
-                                                    stroke-linejoin="round"
-                                                    stroke-width="2"
-                                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                                                />
-                                            </svg>
-                                            <span
-                                                class="text-sm font-medium text-slate-700 dark:text-slate-300"
-                                            >
-                                                {{ group.name }}
-                                            </span>
-                                            <span
-                                                class="ml-auto rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-600 dark:text-slate-300"
-                                            >
-                                                {{ group.lists.length }}
-                                            </span>
-                                        </div>
-                                        <!-- Group Lists -->
-                                        <div class="bg-white dark:bg-slate-900">
-                                            <label
-                                                v-for="list in group.lists"
-                                                :key="list.id"
-                                                class="flex cursor-pointer items-center gap-2 py-1.5 pl-6 pr-3 hover:bg-slate-50 dark:hover:bg-slate-800"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    :value="list.id"
-                                                    v-model="
-                                                        form.contact_list_ids
-                                                    "
-                                                    class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-800"
-                                                />
-                                                <span
-                                                    class="flex-1 text-sm text-slate-700 dark:text-slate-300"
-                                                >
-                                                    {{ list.name }}
-                                                    <span
-                                                        class="ml-1 text-xs text-slate-400 dark:text-slate-500"
-                                                    >
-                                                        ({{
-                                                            list.subscribers_count ??
-                                                            0
-                                                        }})
-                                                    </span>
-                                                </span>
-                                                <!-- Show list tags -->
-                                                <span
-                                                    v-if="
-                                                        list.tags &&
-                                                        list.tags.length > 0
-                                                    "
-                                                    class="flex gap-1"
-                                                >
-                                                    <span
-                                                        v-for="tag in list.tags.slice(
-                                                            0,
-                                                            2,
-                                                        )"
-                                                        :key="tag.id"
-                                                        class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500 dark:bg-slate-700 dark:text-slate-400"
-                                                    >
-                                                        {{ tag.name }}
-                                                    </span>
-                                                    <span
-                                                        v-if="
-                                                            list.tags.length > 2
-                                                        "
-                                                        class="text-[10px] text-slate-400"
-                                                    >
-                                                        +{{
-                                                            list.tags.length - 2
-                                                        }}
-                                                    </span>
-                                                </span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div
-                                        v-if="lists.length === 0"
-                                        class="p-3 text-sm text-slate-400 italic"
-                                    >
-                                        {{ $t("messages.fields.no_lists") }}
-                                    </div>
-                                </div>
-                                <p class="mt-1 text-xs text-slate-500">
-                                    {{ $t("messages.fields.broadcast_help") }}
-                                </p>
-                            </div>
-                            <InputError
-                                class="mt-2"
-                                :message="form.errors.contact_list_ids"
-                            />
-                        </div>
-
-                        <!-- Narrow the audience by custom fields -->
-                        <div
-                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                        >
-                            <div class="mb-3 flex items-center gap-2">
-                                <svg
-                                    class="h-4 w-4 text-indigo-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-                                    />
-                                </svg>
-                                <InputLabel
-                                    :value="$t('messages.field_filters.include_title')"
-                                />
-                                <span
-                                    v-if="form.include_field_filters.length > 0"
-                                    class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
-                                >
-                                    {{ form.include_field_filters.length }}
-                                </span>
-                            </div>
-
-                            <FieldFilterBuilder
-                                v-model="form.include_field_filters"
-                                v-model:match="form.include_field_filter_match"
-                                :list-ids="form.contact_list_ids"
-                                mode="include"
-                            />
-
-                            <InputError
-                                class="mt-2"
-                                :message="form.errors.include_field_filters"
-                            />
-                        </div>
-
-                        <!-- Excluded Lists -->
-                        <div
-                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                        >
-                            <div class="mb-3 flex items-center gap-2">
-                                <svg
-                                    class="h-4 w-4 text-red-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
-                                    />
-                                </svg>
-                                <InputLabel
-                                    :value="
-                                        $t('messages.fields.excluded_lists')
-                                    "
-                                />
-                            </div>
-                            <p
-                                class="mb-3 text-xs text-slate-500 dark:text-slate-400"
-                            >
-                                {{ $t("messages.fields.excluded_lists_help") }}
-                            </p>
-
-                            <!-- Exclusion list checkboxes -->
-                            <div
-                                class="max-h-48 overflow-y-auto rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-900"
-                            >
-                                <div
-                                    v-for="group in groupedLists"
-                                    :key="group.id ?? group.name"
-                                    class="border-b border-slate-200 last:border-b-0 dark:border-slate-700"
-                                >
-                                    <!-- Group Header -->
-                                    <div
-                                        class="flex items-center gap-2 bg-slate-50 px-3 py-2 dark:bg-slate-800"
-                                    >
-                                        <svg
-                                            v-if="group.id"
-                                            class="h-4 w-4 text-slate-400"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-                                            />
-                                        </svg>
-                                        <span
-                                            class="text-sm font-medium text-slate-700 dark:text-slate-300"
-                                        >
-                                            {{ group.name }}
-                                        </span>
-                                    </div>
-                                    <!-- Group Lists -->
-                                    <div class="bg-white dark:bg-slate-900">
-                                        <label
-                                            v-for="list in group.lists"
-                                            :key="'excl-' + list.id"
-                                            class="flex cursor-pointer items-center gap-2 py-1.5 pl-6 pr-3 hover:bg-red-50 dark:hover:bg-red-900/20"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                :value="list.id"
-                                                v-model="form.excluded_list_ids"
-                                                class="rounded border-slate-300 text-red-600 focus:ring-red-500 dark:border-slate-600 dark:bg-slate-800"
-                                            />
-                                            <span
-                                                class="flex-1 text-sm text-slate-700 dark:text-slate-300"
-                                            >
-                                                {{ list.name }}
-                                                <span
-                                                    class="ml-1 text-xs text-slate-400 dark:text-slate-500"
-                                                >
-                                                    ({{
-                                                        list.subscribers_count ??
-                                                        0
-                                                    }})
-                                                </span>
-                                            </span>
-                                        </label>
-                                    </div>
-                                </div>
-                                <div
-                                    v-if="lists.length === 0"
-                                    class="p-3 text-sm text-slate-400 italic"
-                                >
-                                    {{ $t("messages.fields.no_lists") }}
-                                </div>
-                            </div>
-
-                            <!-- Count of excluded lists -->
-                            <p
-                                v-if="form.excluded_list_ids.length > 0"
-                                class="mt-2 text-xs text-red-600 dark:text-red-400"
-                            >
-                                {{
-                                    $t("messages.fields.excluded_count", {
-                                        count: form.excluded_list_ids.length,
-                                    })
-                                }}
-                            </p>
-                            <InputError
-                                class="mt-2"
-                                :message="form.errors.excluded_list_ids"
-                            />
-
-                            <!-- Narrow the exclusion by custom fields -->
-                            <div
-                                class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700"
-                            >
-                                <div class="mb-2 flex items-center gap-2">
-                                    <InputLabel
-                                        :value="$t('messages.field_filters.exclude_title')"
-                                    />
-                                    <span
-                                        v-if="form.exclude_field_filters.length > 0"
-                                        class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-300"
-                                    >
-                                        {{ form.exclude_field_filters.length }}
-                                    </span>
-                                </div>
-
-                                <FieldFilterBuilder
-                                    v-model="form.exclude_field_filters"
-                                    v-model:match="form.exclude_field_filter_match"
-                                    :list-ids="excludeFilterListIds"
-                                    mode="exclude"
-                                />
-
-                                <InputError
-                                    class="mt-2"
-                                    :message="form.errors.exclude_field_filters"
-                                />
-                            </div>
-                        </div>
-
+                <!-- TAB: Audience — who gets the message (left), who does not (right) -->
+                <div v-show="activeTab === 'audience'" class="space-y-6">
                         <!-- Estimated reach of the current selection -->
                         <div
                             v-if="form.contact_list_ids.length > 0"
@@ -3438,478 +2862,1074 @@ watch(
                             </p>
                         </div>
 
-                        <!-- CRM Contacts Selection -->
-                        <div
-                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                        >
-                            <div class="mb-3 flex items-center gap-2">
-                                <svg
-                                    class="h-4 w-4 text-primary-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                    />
-                                </svg>
-                                <InputLabel
-                                    :value="$t('messages.fields.crm_contacts')"
-                                />
-                            </div>
-                            <CrmContactSelector
-                                v-model="form.crm_contact_ids"
-                                :preloaded-contacts="preloadedCrmContacts"
-                                :label="''"
-                                :help-text="
-                                    $t('messages.fields.crm_contacts_help')
-                                "
-                                :placeholder="
-                                    $t('messages.fields.search_crm_contacts')
-                                "
-                            />
-                            <InputError
-                                class="mt-2"
-                                :message="form.errors.crm_contact_ids"
-                            />
-                        </div>
-
-                        <!-- Excluded CRM Contacts -->
-                        <div
-                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                        >
-                            <div class="mb-3 flex items-center gap-2">
-                                <svg
-                                    class="h-4 w-4 text-red-500"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"
-                                    />
-                                </svg>
-                                <InputLabel
-                                    :value="
-                                        $t(
-                                            'messages.fields.excluded_crm_contacts',
-                                        )
-                                    "
-                                />
-                            </div>
-                            <CrmContactSelector
-                                v-model="form.excluded_crm_contact_ids"
-                                :preloaded-contacts="
-                                    preloadedExcludedCrmContacts
-                                "
-                                :label="''"
-                                :help-text="
-                                    $t(
-                                        'messages.fields.excluded_crm_contacts_help',
-                                    )
-                                "
-                                :placeholder="
-                                    $t('messages.fields.search_crm_contacts')
-                                "
-                            />
-                            <InputError
-                                class="mt-2"
-                                :message="form.errors.excluded_crm_contact_ids"
-                            />
-                        </div>
-
-                        <!-- Mailbox Selection -->
-                        <div
-                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                        >
-                            <InputLabel
-                                :value="$t('messages.mailbox.label')"
-                                class="mb-3"
-                            />
-
-                            <div
-                                v-if="
-                                    effectiveMailboxInfo.mailbox &&
-                                    !form.mailbox_id
-                                "
-                                class="mb-3 rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20"
-                            >
-                                <div
-                                    class="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300"
-                                >
-                                    <svg
-                                        class="h-4 w-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                        />
-                                    </svg>
-                                    {{ effectiveMailboxInfo.label }}
-                                </div>
-                            </div>
-
-                            <select
-                                v-model="form.mailbox_id"
-                                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-                            >
-                                <!-- Use Default (null = auto-resolve) -->
-                                <optgroup
-                                    :label="
-                                        $t('messages.mailbox.group_default')
-                                    "
-                                >
-                                    <option :value="null">
-                                        {{ $t("messages.mailbox.use_auto") }}
-                                        <template v-if="defaultMailbox">
-                                            ({{ defaultMailbox.name }})
-                                        </template>
-                                    </option>
-                                </optgroup>
-
-                                <!-- List's Default Mailbox (if different from global) -->
-                                <optgroup
-                                    v-if="listDefaultMailbox"
-                                    :label="
-                                        $t('messages.mailbox.group_list', {
-                                            name: listDefaultMailbox.listName,
-                                        })
-                                    "
-                                >
-                                    <option
-                                        :value="listDefaultMailbox.mailbox.id"
-                                    >
-                                        {{ listDefaultMailbox.mailbox.name }}
-                                        ({{
-                                            listDefaultMailbox.mailbox
-                                                .from_email
-                                        }})
-                                    </option>
-                                </optgroup>
-
-                                <!-- Other Mailboxes -->
-                                <optgroup
-                                    v-if="otherMailboxes.length > 0"
-                                    :label="$t('messages.mailbox.group_other')"
-                                >
-                                    <option
-                                        v-for="mailbox in otherMailboxes"
-                                        :key="mailbox.id"
-                                        :value="mailbox.id"
-                                    >
-                                        {{ mailbox.name }} ({{
-                                            mailbox.from_email
-                                        }})
-                                    </option>
-                                </optgroup>
-                            </select>
-                            <p class="mt-1 text-xs text-slate-500">
-                                {{ $t("messages.mailbox.help") }}
-                            </p>
-                            <InputError
-                                class="mt-2"
-                                :message="form.errors.mailbox_id"
-                            />
-                        </div>
-
-                        <!-- Campaign Tags -->
-                        <div
-                            v-if="tags.length > 0"
-                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                        >
-                            <InputLabel
-                                :value="$t('messages.fields.campaign_tags')"
-                                class="mb-3"
-                            />
-                            <p
-                                class="mb-3 text-xs text-slate-500 dark:text-slate-400"
-                            >
-                                {{ $t("messages.fields.campaign_tags_help") }}
-                            </p>
-                            <div class="flex flex-wrap gap-2">
-                                <label
-                                    v-for="tag in tags"
-                                    :key="'campaign-tag-' + tag.id"
-                                    class="inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors"
-                                    :class="
-                                        form.tag_ids.includes(tag.id)
-                                            ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-900/50 dark:text-indigo-300'
-                                            : 'border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-                                    "
-                                >
-                                    <input
-                                        type="checkbox"
-                                        :value="tag.id"
-                                        v-model="form.tag_ids"
-                                        class="sr-only"
-                                    />
-                                    <svg
-                                        class="h-3.5 w-3.5"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            stroke-linecap="round"
-                                            stroke-linejoin="round"
-                                            stroke-width="2"
-                                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                                        />
-                                    </svg>
-                                    {{ tag.name }}
-                                    <svg
-                                        v-if="form.tag_ids.includes(tag.id)"
-                                        class="h-3.5 w-3.5"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fill-rule="evenodd"
-                                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                                            clip-rule="evenodd"
-                                        />
-                                    </svg>
-                                </label>
-                            </div>
-                            <InputError
-                                class="mt-2"
-                                :message="form.errors.tag_ids"
-                            />
-                        </div>
-
-                        <!-- Autoresponder Settings -->
-                        <template v-if="form.type === 'autoresponder'">
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <div class="flex min-w-0 flex-col gap-6">
+                            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                                {{ $t("messages.sections.send_to") }}
+                            </h3>
+                            <!-- Audience -->
                             <div
                                 class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
                             >
                                 <InputLabel
-                                    for="day"
-                                    :value="$t('messages.fields.day')"
+                                    :value="$t('messages.fields.audience')"
                                     class="mb-3"
                                 />
-                                <TextInput
-                                    id="day"
-                                    type="number"
-                                    min="0"
-                                    class="block w-full"
-                                    v-model="form.day"
+
+                                <!-- List selection with Groups and Tags -->
+                                <div>
+                                    <!-- Filter Controls -->
+                                    <div class="mb-3 grid grid-cols-2 gap-2">
+                                        <!-- List Type Filter -->
+                                        <select
+                                            v-model="listTypeFilter"
+                                            class="border bg-white px-3 py-2 block w-full rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1"
+                                        >
+                                            <option value="">
+                                                {{
+                                                    $t("subscribers.all_list_types")
+                                                }}
+                                            </option>
+                                            <option value="email">
+                                                {{
+                                                    $t(
+                                                        "subscribers.list_type_email",
+                                                    )
+                                                }}
+                                            </option>
+                                            <option value="sms">
+                                                {{
+                                                    $t("subscribers.list_type_sms")
+                                                }}
+                                            </option>
+                                        </select>
+                                        <!-- Search -->
+                                        <input
+                                            v-model="listSearch"
+                                            type="text"
+                                            :placeholder="
+                                                $t('common.search') + '...'
+                                            "
+                                            class="border bg-white px-3 py-2 block w-full rounded-lg border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-none focus:ring-1"
+                                        />
+                                    </div>
+
+                                    <!-- Selection controls -->
+                                    <div
+                                        class="mb-3 flex flex-wrap items-center gap-2"
+                                    >
+                                        <label
+                                            class="flex items-center gap-2 text-sm font-medium text-slate-700 dark:text-slate-300"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                :checked="areAllListsSelected"
+                                                @change="toggleSelectAll"
+                                                class="h-4 w-4 accent-indigo-600"
+                                            />
+                                            {{ $t("messages.fields.select_all") }}
+                                        </label>
+                                        <span class="text-xs text-slate-400">
+                                            ({{ form.contact_list_ids.length }}/{{
+                                                lists.length
+                                            }})
+                                            <span
+                                                v-if="
+                                                    listsFilteredByTypeAndSearch.length <
+                                                    lists.length
+                                                "
+                                                class="text-amber-500"
+                                            >
+                                                — {{ $t("common.showing") }}
+                                                {{
+                                                    listsFilteredByTypeAndSearch.length
+                                                }}
+                                            </span>
+                                        </span>
+                                    </div>
+
+                                    <!-- Tags quick select -->
+                                    <div v-if="tags.length > 0" class="mb-3">
+                                        <div
+                                            class="mb-1.5 text-xs font-medium text-slate-500 dark:text-slate-400"
+                                        >
+                                            {{
+                                                $t("messages.fields.select_by_tag")
+                                            }}
+                                        </div>
+                                        <div class="flex flex-wrap gap-1.5">
+                                            <button
+                                                v-for="tag in tags"
+                                                :key="tag.id"
+                                                type="button"
+                                                @click="toggleByTag(tag.id)"
+                                                :class="
+                                                    isTagSelected(tag.id)
+                                                        ? 'bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-900/50 dark:text-indigo-300 dark:border-indigo-700'
+                                                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700'
+                                                "
+                                                class="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
+                                            >
+                                                <svg
+                                                    class="h-3 w-3"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                                    />
+                                                </svg>
+                                                {{ tag.name }}
+                                                <span class="text-slate-400"
+                                                    >({{
+                                                        getTagListCount(tag.id)
+                                                    }})</span
+                                                >
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Lists grouped by CRM groups -->
+                                    <div
+                                        class="max-h-64 overflow-y-auto rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-900"
+                                    >
+                                        <div
+                                            v-for="group in groupedLists"
+                                            :key="group.id ?? group.name"
+                                            class="border-b border-slate-200 last:border-b-0 dark:border-slate-700"
+                                        >
+                                            <!-- Group Header -->
+                                            <div
+                                                class="flex items-center gap-2 bg-slate-50 px-3 py-2 dark:bg-slate-800"
+                                                :class="{
+                                                    'cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700':
+                                                        group.lists.length > 1,
+                                                }"
+                                                @click="
+                                                    group.lists.length > 1 &&
+                                                    toggleGroup(group)
+                                                "
+                                            >
+                                                <input
+                                                    v-if="group.lists.length > 1"
+                                                    type="checkbox"
+                                                    :checked="
+                                                        isGroupSelected(group)
+                                                    "
+                                                    :indeterminate="
+                                                        isGroupPartiallySelected(
+                                                            group,
+                                                        )
+                                                    "
+                                                    @click.stop
+                                                    @change="toggleGroup(group)"
+                                                    class="h-4 w-4 accent-indigo-600"
+                                                />
+                                                <svg
+                                                    v-if="group.id"
+                                                    class="h-4 w-4 text-slate-400"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    viewBox="0 0 24 24"
+                                                >
+                                                    <path
+                                                        stroke-linecap="round"
+                                                        stroke-linejoin="round"
+                                                        stroke-width="2"
+                                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                                                    />
+                                                </svg>
+                                                <span
+                                                    class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                                                >
+                                                    {{ group.name }}
+                                                </span>
+                                                <span
+                                                    class="ml-auto rounded-full bg-slate-200 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-600 dark:text-slate-300"
+                                                >
+                                                    {{ group.lists.length }}
+                                                </span>
+                                            </div>
+                                            <!-- Group Lists -->
+                                            <div class="bg-white dark:bg-slate-900">
+                                                <label
+                                                    v-for="list in group.lists"
+                                                    :key="list.id"
+                                                    class="flex cursor-pointer items-center gap-2 py-1.5 pl-6 pr-3 hover:bg-slate-50 dark:hover:bg-slate-800"
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        :value="list.id"
+                                                        v-model="
+                                                            form.contact_list_ids
+                                                        "
+                                                        class="h-4 w-4 accent-indigo-600"
+                                                    />
+                                                    <span
+                                                        class="flex-1 text-sm text-slate-700 dark:text-slate-300"
+                                                    >
+                                                        {{ list.name }}
+                                                        <span
+                                                            class="ml-1 text-xs text-slate-400 dark:text-slate-500"
+                                                        >
+                                                            ({{
+                                                                list.subscribers_count ??
+                                                                0
+                                                            }})
+                                                        </span>
+                                                    </span>
+                                                    <!-- Show list tags -->
+                                                    <span
+                                                        v-if="
+                                                            list.tags &&
+                                                            list.tags.length > 0
+                                                        "
+                                                        class="flex gap-1"
+                                                    >
+                                                        <span
+                                                            v-for="tag in list.tags.slice(
+                                                                0,
+                                                                2,
+                                                            )"
+                                                            :key="tag.id"
+                                                            class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                                                        >
+                                                            {{ tag.name }}
+                                                        </span>
+                                                        <span
+                                                            v-if="
+                                                                list.tags.length > 2
+                                                            "
+                                                            class="text-[10px] text-slate-400"
+                                                        >
+                                                            +{{
+                                                                list.tags.length - 2
+                                                            }}
+                                                        </span>
+                                                    </span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div
+                                            v-if="lists.length === 0"
+                                            class="p-3 text-sm text-slate-400 italic"
+                                        >
+                                            {{ $t("messages.fields.no_lists") }}
+                                        </div>
+                                    </div>
+                                    <p class="mt-1 text-xs text-slate-500">
+                                        {{ $t("messages.fields.broadcast_help") }}
+                                    </p>
+                                </div>
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.contact_list_ids"
+                                />
+                            </div>
+
+                            <!-- Narrow the audience by custom fields -->
+                            <div
+                                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                            >
+                                <div class="mb-3 flex items-center gap-2">
+                                    <svg
+                                        class="h-4 w-4 text-indigo-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                                        />
+                                    </svg>
+                                    <InputLabel
+                                        :value="$t('messages.field_filters.include_title')"
+                                    />
+                                    <span
+                                        v-if="form.include_field_filters.length > 0"
+                                        class="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+                                    >
+                                        {{ form.include_field_filters.length }}
+                                    </span>
+                                </div>
+
+                                <FieldFilterBuilder
+                                    v-model="form.include_field_filters"
+                                    v-model:match="form.include_field_filter_match"
+                                    :list-ids="form.contact_list_ids"
+                                    mode="include"
+                                />
+
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.include_field_filters"
+                                />
+                            </div>
+
+                            <!-- CRM Contacts Selection -->
+                            <div
+                                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                            >
+                                <div class="mb-3 flex items-center gap-2">
+                                    <svg
+                                        class="h-4 w-4 text-primary-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                        />
+                                    </svg>
+                                    <InputLabel
+                                        :value="$t('messages.fields.crm_contacts')"
+                                    />
+                                </div>
+                                <CrmContactSelector
+                                    v-model="form.crm_contact_ids"
+                                    :preloaded-contacts="preloadedCrmContacts"
+                                    :label="''"
+                                    :help-text="
+                                        $t('messages.fields.crm_contacts_help')
+                                    "
                                     :placeholder="
-                                        $t('messages.fields.day_placeholder')
+                                        $t('messages.fields.search_crm_contacts')
                                     "
                                 />
-                                <p class="mt-1 text-xs text-slate-500">
-                                    {{ $t("messages.fields.day_help") }}
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.crm_contact_ids"
+                                />
+                            </div>
+                        </div>
+
+                        <div class="flex min-w-0 flex-col gap-6">
+                            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                                {{ $t("messages.sections.exclude") }}
+                            </h3>
+                            <!-- Excluded Lists -->
+                            <div
+                                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                            >
+                                <div class="mb-3 flex items-center gap-2">
+                                    <svg
+                                        class="h-4 w-4 text-red-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                                        />
+                                    </svg>
+                                    <InputLabel
+                                        :value="
+                                            $t('messages.fields.excluded_lists')
+                                        "
+                                    />
+                                </div>
+                                <p
+                                    class="mb-3 text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{ $t("messages.fields.excluded_lists_help") }}
+                                </p>
+
+                                <!-- Exclusion list checkboxes -->
+                                <div
+                                    class="max-h-48 overflow-y-auto rounded-md border border-slate-300 dark:border-slate-700 dark:bg-slate-900"
+                                >
+                                    <div
+                                        v-for="group in groupedLists"
+                                        :key="group.id ?? group.name"
+                                        class="border-b border-slate-200 last:border-b-0 dark:border-slate-700"
+                                    >
+                                        <!-- Group Header -->
+                                        <div
+                                            class="flex items-center gap-2 bg-slate-50 px-3 py-2 dark:bg-slate-800"
+                                        >
+                                            <svg
+                                                v-if="group.id"
+                                                class="h-4 w-4 text-slate-400"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    stroke-linecap="round"
+                                                    stroke-linejoin="round"
+                                                    stroke-width="2"
+                                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                                                />
+                                            </svg>
+                                            <span
+                                                class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                                            >
+                                                {{ group.name }}
+                                            </span>
+                                        </div>
+                                        <!-- Group Lists -->
+                                        <div class="bg-white dark:bg-slate-900">
+                                            <label
+                                                v-for="list in group.lists"
+                                                :key="'excl-' + list.id"
+                                                class="flex cursor-pointer items-center gap-2 py-1.5 pl-6 pr-3 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    :value="list.id"
+                                                    v-model="form.excluded_list_ids"
+                                                    class="h-4 w-4 accent-rose-600"
+                                                />
+                                                <span
+                                                    class="flex-1 text-sm text-slate-700 dark:text-slate-300"
+                                                >
+                                                    {{ list.name }}
+                                                    <span
+                                                        class="ml-1 text-xs text-slate-400 dark:text-slate-500"
+                                                    >
+                                                        ({{
+                                                            list.subscribers_count ??
+                                                            0
+                                                        }})
+                                                    </span>
+                                                </span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div
+                                        v-if="lists.length === 0"
+                                        class="p-3 text-sm text-slate-400 italic"
+                                    >
+                                        {{ $t("messages.fields.no_lists") }}
+                                    </div>
+                                </div>
+
+                                <!-- Count of excluded lists -->
+                                <p
+                                    v-if="form.excluded_list_ids.length > 0"
+                                    class="mt-2 text-xs text-red-600 dark:text-red-400"
+                                >
+                                    {{
+                                        $t("messages.fields.excluded_count", {
+                                            count: form.excluded_list_ids.length,
+                                        })
+                                    }}
                                 </p>
                                 <InputError
                                     class="mt-2"
-                                    :message="form.errors.day"
+                                    :message="form.errors.excluded_list_ids"
                                 />
-                            </div>
 
-                            <div
-                                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                            >
-                                <InputLabel
-                                    :value="$t('messages.fields.time')"
-                                    class="mb-3"
-                                />
-                                <div class="space-y-2">
-                                    <label class="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            v-model="autoresponderTimeMode"
-                                            value="signup"
-                                            class="text-indigo-600 focus:ring-indigo-500"
-                                        />
-                                        <span
-                                            class="text-sm text-slate-700 dark:text-slate-300"
-                                            >{{
-                                                $t(
-                                                    "messages.fields.time_signup",
-                                                )
-                                            }}</span
-                                        >
-                                    </label>
-                                    <label class="flex items-center gap-2">
-                                        <input
-                                            type="radio"
-                                            v-model="autoresponderTimeMode"
-                                            value="custom"
-                                            class="text-indigo-600 focus:ring-indigo-500"
-                                        />
-                                        <span
-                                            class="text-sm text-slate-700 dark:text-slate-300"
-                                            >{{
-                                                $t(
-                                                    "messages.fields.time_custom",
-                                                )
-                                            }}</span
-                                        >
-                                    </label>
-                                </div>
-
+                                <!-- Narrow the exclusion by custom fields -->
                                 <div
-                                    v-if="autoresponderTimeMode === 'custom'"
-                                    class="mt-3"
+                                    class="mt-4 border-t border-slate-200 pt-4 dark:border-slate-700"
                                 >
-                                    <input
-                                        type="time"
-                                        v-model="form.time_of_day"
-                                        class="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                    <div class="mb-2 flex items-center gap-2">
+                                        <InputLabel
+                                            :value="$t('messages.field_filters.exclude_title')"
+                                        />
+                                        <span
+                                            v-if="form.exclude_field_filters.length > 0"
+                                            class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/40 dark:text-red-300"
+                                        >
+                                            {{ form.exclude_field_filters.length }}
+                                        </span>
+                                    </div>
+
+                                    <FieldFilterBuilder
+                                        v-model="form.exclude_field_filters"
+                                        v-model:match="form.exclude_field_filter_match"
+                                        :list-ids="excludeFilterListIds"
+                                        mode="exclude"
                                     />
+
                                     <InputError
                                         class="mt-2"
-                                        :message="form.errors.time_of_day"
+                                        :message="form.errors.exclude_field_filters"
                                     />
                                 </div>
                             </div>
-                        </template>
 
-                        <!-- Broadcast Settings -->
-                        <template v-if="form.type === 'broadcast'">
+                            <!-- Excluded CRM Contacts -->
                             <div
                                 class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
                             >
-                                <InputLabel
-                                    :value="$t('messages.fields.scheduling')"
-                                    class="mb-3"
-                                />
-                                <div class="flex flex-wrap gap-4">
-                                    <label
-                                        class="flex cursor-pointer items-center gap-2"
+                                <div class="mb-3 flex items-center gap-2">
+                                    <svg
+                                        class="h-4 w-4 text-red-500"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
                                     >
-                                        <input
-                                            type="radio"
-                                            v-model="scheduleMode"
-                                            value="now"
-                                            class="text-indigo-600 focus:ring-indigo-500"
+                                        <path
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                            stroke-width="2"
+                                            d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6"
                                         />
-                                        <span
-                                            class="text-sm font-medium text-slate-700 dark:text-slate-300"
-                                            >{{
-                                                $t(
-                                                    "messages.fields.schedule_now",
-                                                )
-                                            }}</span
-                                        >
-                                    </label>
-                                    <label
-                                        class="flex cursor-pointer items-center gap-2"
-                                    >
-                                        <input
-                                            type="radio"
-                                            v-model="scheduleMode"
-                                            value="later"
-                                            class="text-indigo-600 focus:ring-indigo-500"
-                                        />
-                                        <span
-                                            class="text-sm font-medium text-slate-700 dark:text-slate-300"
-                                            >{{
-                                                $t(
-                                                    "messages.fields.schedule_later",
-                                                )
-                                            }}</span
-                                        >
-                                    </label>
-                                </div>
-
-                                <div
-                                    v-if="scheduleMode === 'later'"
-                                    class="mt-4"
-                                >
+                                    </svg>
                                     <InputLabel
-                                        for="send_at"
-                                        :value="$t('messages.fields.datetime')"
-                                    />
-                                    <input
-                                        type="datetime-local"
-                                        id="send_at"
-                                        v-model="form.send_at"
-                                        :min="minDateTime"
-                                        class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:[color-scheme:dark]"
-                                    />
-                                    <InputError
-                                        class="mt-2"
-                                        :message="form.errors.send_at"
+                                        :value="
+                                            $t(
+                                                'messages.fields.excluded_crm_contacts',
+                                            )
+                                        "
                                     />
                                 </div>
-                            </div>
-                        </template>
-
-                        <!-- Timezone -->
-                        <div
-                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
-                        >
-                            <InputLabel
-                                for="timezone"
-                                :value="$t('messages.fields.timezone')"
-                                class="mb-3"
-                            />
-                            <select
-                                id="timezone"
-                                v-model="form.timezone"
-                                class="block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-                            >
-                                <option :value="null">
-                                    {{ $t("messages.fields.timezone_default") }}
-                                </option>
-                                <option
-                                    v-for="tz in timezones"
-                                    :key="tz"
-                                    :value="tz"
-                                >
-                                    {{ tz }}
-                                </option>
-                            </select>
-                            <p class="mt-1 text-xs text-slate-500">
-                                {{ $t("messages.fields.timezone_help") }}
-                            </p>
-                            <InputError
-                                class="mt-2"
-                                :message="form.errors.timezone"
-                            />
-                        </div>
-
-                        <!-- Send in subscriber timezone checkbox -->
-                        <div
-                            class="mt-3 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50"
-                        >
-                            <input
-                                type="checkbox"
-                                id="send_in_subscriber_timezone"
-                                v-model="form.send_in_subscriber_timezone"
-                                class="mt-0.5 rounded border-slate-300 text-indigo-600 shadow-sm focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900"
-                            />
-                            <label
-                                for="send_in_subscriber_timezone"
-                                class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer"
-                            >
-                                {{
-                                    $t(
-                                        "messages.fields.send_in_subscriber_timezone",
-                                    )
-                                }}
-                                <p class="text-xs text-slate-500 mt-0.5">
-                                    {{
+                                <CrmContactSelector
+                                    v-model="form.excluded_crm_contact_ids"
+                                    :preloaded-contacts="
+                                        preloadedExcludedCrmContacts
+                                    "
+                                    :label="''"
+                                    :help-text="
                                         $t(
-                                            "messages.fields.send_in_subscriber_timezone_help",
+                                            'messages.fields.excluded_crm_contacts_help',
                                         )
-                                    }}
-                                </p>
-                            </label>
+                                    "
+                                    :placeholder="
+                                        $t('messages.fields.search_crm_contacts')
+                                    "
+                                />
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.excluded_crm_contact_ids"
+                                />
+                            </div>
                         </div>
                     </div>
+                </div>
+
+                <!-- TAB: Delivery — when it goes out (left), from which mailbox and how it is tracked (right) -->
+                <div v-show="activeTab === 'delivery'" class="space-y-6">
+                    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                        <div class="flex min-w-0 flex-col gap-6">
+                            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                                {{ $t("messages.sections.when") }}
+                            </h3>
+                            <!-- Type Selection -->
+                            <div>
+                                <InputLabel
+                                    :value="$t('messages.fields.type')"
+                                    class="mb-2"
+                                />
+                                <div class="flex gap-4">
+                                    <label
+                                        class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-4 transition-all hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                                        :class="
+                                            form.type === 'broadcast'
+                                                ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500 dark:bg-indigo-900/20'
+                                                : ''
+                                        "
+                                    >
+                                        <input
+                                            type="radio"
+                                            v-model="form.type"
+                                            value="broadcast"
+                                            class="h-4 w-4 accent-indigo-600"
+                                        />
+                                        <div>
+                                            <span
+                                                class="block text-sm font-medium text-slate-900 dark:text-white"
+                                                >{{
+                                                    $t(
+                                                        "messages.fields.type_broadcast",
+                                                    )
+                                                }}</span
+                                            >
+                                            <span
+                                                class="block text-xs text-slate-500"
+                                                >{{
+                                                    $t(
+                                                        "messages.fields.type_broadcast_desc",
+                                                    )
+                                                }}</span
+                                            >
+                                        </div>
+                                    </label>
+                                    <label
+                                        class="flex flex-1 cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-4 transition-all hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800"
+                                        :class="
+                                            form.type === 'autoresponder'
+                                                ? 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500 dark:bg-indigo-900/20'
+                                                : ''
+                                        "
+                                    >
+                                        <input
+                                            type="radio"
+                                            v-model="form.type"
+                                            value="autoresponder"
+                                            class="h-4 w-4 accent-indigo-600"
+                                        />
+                                        <div>
+                                            <span
+                                                class="block text-sm font-medium text-slate-900 dark:text-white"
+                                                >{{
+                                                    $t(
+                                                        "messages.fields.type_autoresponder",
+                                                    )
+                                                }}</span
+                                            >
+                                            <span
+                                                class="block text-xs text-slate-500"
+                                                >{{
+                                                    $t(
+                                                        "messages.fields.type_autoresponder_desc",
+                                                    )
+                                                }}</span
+                                            >
+                                        </div>
+                                    </label>
+                                </div>
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.type"
+                                />
+                            </div>
+
+                            <!-- Autoresponder Settings -->
+                            <template v-if="form.type === 'autoresponder'">
+                                <div
+                                    class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                                >
+                                    <InputLabel
+                                        for="day"
+                                        :value="$t('messages.fields.day')"
+                                        class="mb-3"
+                                    />
+                                    <TextInput
+                                        id="day"
+                                        type="number"
+                                        min="0"
+                                        class="block w-full"
+                                        v-model="form.day"
+                                        :placeholder="
+                                            $t('messages.fields.day_placeholder')
+                                        "
+                                    />
+                                    <p class="mt-1 text-xs text-slate-500">
+                                        {{ $t("messages.fields.day_help") }}
+                                    </p>
+                                    <InputError
+                                        class="mt-2"
+                                        :message="form.errors.day"
+                                    />
+                                </div>
+
+                                <div
+                                    class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                                >
+                                    <InputLabel
+                                        :value="$t('messages.fields.time')"
+                                        class="mb-3"
+                                    />
+                                    <div class="space-y-2">
+                                        <label class="flex items-center gap-2">
+                                            <input
+                                                type="radio"
+                                                v-model="autoresponderTimeMode"
+                                                value="signup"
+                                                class="h-4 w-4 accent-indigo-600"
+                                            />
+                                            <span
+                                                class="text-sm text-slate-700 dark:text-slate-300"
+                                                >{{
+                                                    $t(
+                                                        "messages.fields.time_signup",
+                                                    )
+                                                }}</span
+                                            >
+                                        </label>
+                                        <label class="flex items-center gap-2">
+                                            <input
+                                                type="radio"
+                                                v-model="autoresponderTimeMode"
+                                                value="custom"
+                                                class="h-4 w-4 accent-indigo-600"
+                                            />
+                                            <span
+                                                class="text-sm text-slate-700 dark:text-slate-300"
+                                                >{{
+                                                    $t(
+                                                        "messages.fields.time_custom",
+                                                    )
+                                                }}</span
+                                            >
+                                        </label>
+                                    </div>
+
+                                    <div
+                                        v-if="autoresponderTimeMode === 'custom'"
+                                        class="mt-3"
+                                    >
+                                        <input
+                                            type="time"
+                                            v-model="form.time_of_day"
+                                            class="border bg-white px-3 py-2 block w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
+                                        />
+                                        <InputError
+                                            class="mt-2"
+                                            :message="form.errors.time_of_day"
+                                        />
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Broadcast Settings -->
+                            <template v-if="form.type === 'broadcast'">
+                                <div
+                                    class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                                >
+                                    <InputLabel
+                                        :value="$t('messages.fields.scheduling')"
+                                        class="mb-3"
+                                    />
+                                    <div class="flex flex-wrap gap-4">
+                                        <label
+                                            class="flex cursor-pointer items-center gap-2"
+                                        >
+                                            <input
+                                                type="radio"
+                                                v-model="scheduleMode"
+                                                value="now"
+                                                class="h-4 w-4 accent-indigo-600"
+                                            />
+                                            <span
+                                                class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                                                >{{
+                                                    $t(
+                                                        "messages.fields.schedule_now",
+                                                    )
+                                                }}</span
+                                            >
+                                        </label>
+                                        <label
+                                            class="flex cursor-pointer items-center gap-2"
+                                        >
+                                            <input
+                                                type="radio"
+                                                v-model="scheduleMode"
+                                                value="later"
+                                                class="h-4 w-4 accent-indigo-600"
+                                            />
+                                            <span
+                                                class="text-sm font-medium text-slate-700 dark:text-slate-300"
+                                                >{{
+                                                    $t(
+                                                        "messages.fields.schedule_later",
+                                                    )
+                                                }}</span
+                                            >
+                                        </label>
+                                    </div>
+
+                                    <div
+                                        v-if="scheduleMode === 'later'"
+                                        class="mt-4"
+                                    >
+                                        <InputLabel
+                                            for="send_at"
+                                            :value="$t('messages.fields.datetime')"
+                                        />
+                                        <input
+                                            type="datetime-local"
+                                            id="send_at"
+                                            v-model="form.send_at"
+                                            :min="minDateTime"
+                                            class="border bg-white px-3 py-2 mt-1 block w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:[color-scheme:dark] focus:outline-none focus:ring-1"
+                                        />
+                                        <InputError
+                                            class="mt-2"
+                                            :message="form.errors.send_at"
+                                        />
+                                    </div>
+                                </div>
+                            </template>
+
+                            <!-- Timezone -->
+                            <div
+                                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                            >
+                                <InputLabel
+                                    for="timezone"
+                                    :value="$t('messages.fields.timezone')"
+                                    class="mb-3"
+                                />
+                                <select
+                                    id="timezone"
+                                    v-model="form.timezone"
+                                    class="border bg-white px-3 py-2 block w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
+                                >
+                                    <option :value="null">
+                                        {{ $t("messages.fields.timezone_default") }}
+                                    </option>
+                                    <option
+                                        v-for="tz in timezones"
+                                        :key="tz"
+                                        :value="tz"
+                                    >
+                                        {{ tz }}
+                                    </option>
+                                </select>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{ $t("messages.fields.timezone_help") }}
+                                </p>
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.timezone"
+                                />
+                            </div>
+
+                            <!-- Send in subscriber timezone checkbox -->
+                            <div
+                                class="mt-3 flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50"
+                            >
+                                <input
+                                    type="checkbox"
+                                    id="send_in_subscriber_timezone"
+                                    v-model="form.send_in_subscriber_timezone"
+                                    class="h-4 w-4 accent-indigo-600 mt-0.5"
+                                />
+                                <label
+                                    for="send_in_subscriber_timezone"
+                                    class="text-sm text-slate-700 dark:text-slate-300 cursor-pointer"
+                                >
+                                    {{
+                                        $t(
+                                            "messages.fields.send_in_subscriber_timezone",
+                                        )
+                                    }}
+                                    <p class="text-xs text-slate-500 mt-0.5">
+                                        {{
+                                            $t(
+                                                "messages.fields.send_in_subscriber_timezone_help",
+                                            )
+                                        }}
+                                    </p>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex min-w-0 flex-col gap-6">
+                            <h3 class="text-sm font-semibold text-slate-900 dark:text-white">
+                                {{ $t("messages.sections.sender_tracking") }}
+                            </h3>
+                            <!-- Mailbox Selection -->
+                            <div
+                                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                            >
+                                <InputLabel
+                                    :value="$t('messages.mailbox.label')"
+                                    class="mb-3"
+                                />
+
+                                <div
+                                    v-if="
+                                        effectiveMailboxInfo.mailbox &&
+                                        !form.mailbox_id
+                                    "
+                                    class="mb-3 rounded-lg bg-emerald-50 p-3 dark:bg-emerald-900/20"
+                                >
+                                    <div
+                                        class="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300"
+                                    >
+                                        <svg
+                                            class="h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                            />
+                                        </svg>
+                                        {{ effectiveMailboxInfo.label }}
+                                    </div>
+                                </div>
+
+                                <select
+                                    v-model="form.mailbox_id"
+                                    class="border bg-white px-3 py-2 block w-full rounded-md border-slate-300 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
+                                >
+                                    <!-- Use Default (null = auto-resolve) -->
+                                    <optgroup
+                                        :label="
+                                            $t('messages.mailbox.group_default')
+                                        "
+                                    >
+                                        <option :value="null">
+                                            {{ $t("messages.mailbox.use_auto") }}
+                                            <template v-if="defaultMailbox">
+                                                ({{ defaultMailbox.name }})
+                                            </template>
+                                        </option>
+                                    </optgroup>
+
+                                    <!-- List's Default Mailbox (if different from global) -->
+                                    <optgroup
+                                        v-if="listDefaultMailbox"
+                                        :label="
+                                            $t('messages.mailbox.group_list', {
+                                                name: listDefaultMailbox.listName,
+                                            })
+                                        "
+                                    >
+                                        <option
+                                            :value="listDefaultMailbox.mailbox.id"
+                                        >
+                                            {{ listDefaultMailbox.mailbox.name }}
+                                            ({{
+                                                listDefaultMailbox.mailbox
+                                                    .from_email
+                                            }})
+                                        </option>
+                                    </optgroup>
+
+                                    <!-- Other Mailboxes -->
+                                    <optgroup
+                                        v-if="otherMailboxes.length > 0"
+                                        :label="$t('messages.mailbox.group_other')"
+                                    >
+                                        <option
+                                            v-for="mailbox in otherMailboxes"
+                                            :key="mailbox.id"
+                                            :value="mailbox.id"
+                                        >
+                                            {{ mailbox.name }} ({{
+                                                mailbox.from_email
+                                            }})
+                                        </option>
+                                    </optgroup>
+                                </select>
+                                <p class="mt-1 text-xs text-slate-500">
+                                    {{ $t("messages.mailbox.help") }}
+                                </p>
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.mailbox_id"
+                                />
+                            </div>
+
+                            <!-- Campaign Tags -->
+                            <div
+                                v-if="tags.length > 0"
+                                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                            >
+                                <InputLabel
+                                    :value="$t('messages.fields.campaign_tags')"
+                                    class="mb-3"
+                                />
+                                <p
+                                    class="mb-3 text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{ $t("messages.fields.campaign_tags_help") }}
+                                </p>
+                                <div class="flex flex-wrap gap-2">
+                                    <label
+                                        v-for="tag in tags"
+                                        :key="'campaign-tag-' + tag.id"
+                                        class="inline-flex cursor-pointer items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors"
+                                        :class="
+                                            form.tag_ids.includes(tag.id)
+                                                ? 'border-indigo-500 bg-indigo-100 text-indigo-700 dark:border-indigo-400 dark:bg-indigo-900/50 dark:text-indigo-300'
+                                                : 'border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
+                                        "
+                                    >
+                                        <input
+                                            type="checkbox"
+                                            :value="tag.id"
+                                            v-model="form.tag_ids"
+                                            class="sr-only"
+                                        />
+                                        <svg
+                                            class="h-3.5 w-3.5"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                                            />
+                                        </svg>
+                                        {{ tag.name }}
+                                        <svg
+                                            v-if="form.tag_ids.includes(tag.id)"
+                                            class="h-3.5 w-3.5"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path
+                                                fill-rule="evenodd"
+                                                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                                clip-rule="evenodd"
+                                            />
+                                        </svg>
+                                    </label>
+                                </div>
+                                <InputError
+                                    class="mt-2"
+                                    :message="form.errors.tag_ids"
+                                />
+                            </div>
+
+                            <!-- Click and open tracking -->
+                            <div
+                                class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                            >
+                                <InputLabel
+                                    for="tracking_enabled"
+                                    :value="$t('messages.fields.tracking')"
+                                    class="mb-2"
+                                />
+                                <select
+                                    id="tracking_enabled"
+                                    v-model="form.tracking_enabled"
+                                    class="border bg-white px-3 py-2 w-full rounded-lg border-slate-300 text-sm transition-colors focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white focus:outline-none focus:ring-1"
+                                >
+                                    <option :value="null">
+                                        {{ $t("messages.fields.tracking_mailbox") }}
+                                    </option>
+                                    <option :value="true">
+                                        {{ $t("messages.fields.tracking_on") }}
+                                    </option>
+                                    <option :value="false">
+                                        {{ $t("messages.fields.tracking_off") }}
+                                    </option>
+                                </select>
+                                <p
+                                    class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{ $t("messages.fields.tracking_help") }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tracked Links Section -->
+                    <TrackedLinksSection
+                        v-model="form.tracked_links"
+                        :content="form.content"
+                        :lists="lists"
+                    />
                 </div>
 
                 <!-- TAB: Triggers -->
@@ -3963,7 +3983,6 @@ watch(
                                 class="cursor-pointer rounded-lg border p-4 transition-all"
                             >
                                 <div class="flex items-center gap-3">
-                                    <span class="text-2xl">🚫</span>
                                     <div>
                                         <p
                                             class="text-sm font-medium text-slate-900 dark:text-white"
@@ -4000,9 +4019,6 @@ watch(
                                 class="cursor-pointer rounded-lg border p-4 transition-all"
                             >
                                 <div class="flex items-center gap-3">
-                                    <span class="text-2xl">{{
-                                        trigger.icon
-                                    }}</span>
                                     <div>
                                         <p
                                             class="text-sm font-medium text-slate-900 dark:text-white"
@@ -4028,7 +4044,7 @@ watch(
                         <h4
                             class="mb-4 text-sm font-semibold text-slate-900 dark:text-white"
                         >
-                            ⚙️ {{ $t("messages.triggers.config_title") }}
+                            {{ $t("messages.triggers.config_title") }}
                         </h4>
 
                         <!-- Inactivity config -->
@@ -4046,7 +4062,7 @@ watch(
                                 />
                                 <select
                                     v-model="form.trigger_config.inactive_days"
-                                    class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                    class="border bg-white px-3 py-2 mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                                 >
                                     <option :value="7">
                                         7 {{ $t("common.days_unit") }}
@@ -4107,7 +4123,7 @@ watch(
                                 />
                                 <select
                                     v-model="form.trigger_config.tag_id"
-                                    class="mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                    class="border bg-white px-3 py-2 mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                                 >
                                     <option :value="null">
                                         {{
@@ -4160,7 +4176,7 @@ watch(
                                             "
                                             min="1"
                                             max="365"
-                                            class="w-20 rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 text-center"
+                                            class="border bg-white px-3 py-2 w-20 rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 text-center focus:outline-none focus:ring-1"
                                         />
                                         <span
                                             class="text-sm text-slate-600 dark:text-slate-400"
@@ -4224,7 +4240,7 @@ watch(
                                 <!-- Messages dropdown -->
                                 <select
                                     v-model="form.trigger_config.message_id"
-                                    class="mt-2 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                                    class="border bg-white px-3 py-2 mt-2 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 focus:outline-none focus:ring-1"
                                 >
                                     <option :value="null">
                                         {{
@@ -4268,7 +4284,6 @@ watch(
                             class="text-sm text-slate-500 dark:text-slate-400"
                         >
                             <p>
-                                ✅
                                 {{
                                     $t(
                                         "messages.triggers.config.no_config_needed",
@@ -4322,23 +4337,26 @@ watch(
                     />
                 </div>
 
-                <!-- Actions Footer -->
+                <!-- Actions: stuck to the bottom of the window, so saving and sending never
+                     need a scroll to the end of a form two screens long. On a phone the bar
+                     is two rows: the side actions as icons with "Save draft", then the main
+                     action across the full width -->
                 <div
-                    class="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-slate-100 pt-6 dark:border-slate-800"
+                    class="sticky bottom-0 z-10 -mx-6 -mb-6 mt-6 flex flex-wrap items-center justify-between gap-4 rounded-b-2xl border-t border-slate-200 bg-white px-6 py-4 max-sm:gap-2 max-sm:py-3 dark:border-slate-700/60 dark:bg-slate-900"
                 >
                     <Link
                         :href="route('messages.index')"
-                        class="text-sm text-slate-600 underline hover:text-slate-900 dark:text-slate-400 dark:hover:text-white"
+                        class="text-sm text-slate-600 underline hover:text-slate-900 max-sm:hidden dark:text-slate-400 dark:hover:text-white"
                     >
                         {{ $t("common.cancel") }}
                     </Link>
 
-                    <div class="flex flex-wrap items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3 max-sm:w-full max-sm:gap-2">
                         <!-- Test Button -->
                         <button
                             type="button"
                             @click="openTestModal"
-                            class="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+                            class="inline-flex items-center gap-2 rounded-lg border max-sm:min-h-10 max-sm:px-3 border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
                         >
                             <svg
                                 class="h-4 w-4"
@@ -4353,14 +4371,14 @@ watch(
                                     d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
                                 />
                             </svg>
-                            {{ $t("messages.actions.test") }}
+                            <span class="max-sm:sr-only">{{ $t("messages.actions.test") }}</span>
                         </button>
 
                         <!-- Check Deliverability Button -->
                         <button
                             type="button"
                             @click="checkDeliverability"
-                            class="inline-flex items-center gap-2 rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                            class="inline-flex items-center gap-2 rounded-lg border max-sm:min-h-10 max-sm:px-3 border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
                         >
                             <svg
                                 class="h-4 w-4"
@@ -4375,7 +4393,7 @@ watch(
                                     d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
                                 />
                             </svg>
-                            {{ $t("messages.deliverability.check_button") }}
+                            <span class="max-sm:sr-only">{{ $t("messages.deliverability.check_button") }}</span>
                             <GoldBadge
                                 v-if="!licenceAllows('deliverability_shield')"
                                 locked
@@ -4385,6 +4403,7 @@ watch(
                         <template v-if="form.type === 'broadcast'">
                             <!-- Save Draft -->
                             <SecondaryButton
+                                class="max-sm:flex-1"
                                 @click="submit('draft')"
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
@@ -4398,9 +4417,9 @@ watch(
                                 type="button"
                                 @click="
                                     scheduleMode = 'later';
-                                    activeTab = 'settings';
+                                    activeTab = 'delivery';
                                 "
-                                class="inline-flex items-center gap-2 rounded-lg border border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                                class="inline-flex items-center gap-2 rounded-lg border max-sm:min-h-10 max-sm:px-3 border-indigo-300 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
                             >
                                 <svg
                                     class="h-4 w-4"
@@ -4415,15 +4434,15 @@ watch(
                                         d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                                     />
                                 </svg>
-                                {{ $t("messages.actions.schedule") }}
+                                <span class="max-sm:sr-only">{{ $t("messages.actions.schedule") }}</span>
                             </button>
 
                             <!-- Prompt to select date when in schedule mode without date -->
                             <button
                                 type="button"
                                 v-if="scheduleMode === 'later' && !form.send_at"
-                                @click="activeTab = 'settings'"
-                                class="inline-flex items-center gap-2 rounded-lg border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 hover:border-amber-400 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50 cursor-pointer"
+                                @click="activeTab = 'delivery'"
+                                class="inline-flex items-center gap-2 rounded-lg border max-sm:min-h-10 max-sm:px-3 border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 transition-colors hover:bg-amber-100 hover:border-amber-400 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-300 dark:hover:bg-amber-900/50 cursor-pointer"
                             >
                                 <svg
                                     class="h-4 w-4"
@@ -4438,11 +4457,12 @@ watch(
                                         d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                                     />
                                 </svg>
-                                {{ $t("messages.actions.select_datetime") }}
+                                <span class="max-sm:sr-only">{{ $t("messages.actions.select_datetime") }}</span>
                             </button>
 
                             <!-- Send Now / Submit Scheduled -->
                             <PrimaryButton
+                                class="max-sm:w-full"
                                 v-if="scheduleMode === 'now'"
                                 @click="submit('scheduled')"
                                 :class="{ 'opacity-25': form.processing }"
@@ -4465,6 +4485,7 @@ watch(
                             </PrimaryButton>
 
                             <PrimaryButton
+                                class="max-sm:w-full"
                                 v-if="scheduleMode === 'later' && form.send_at"
                                 @click="submit('scheduled')"
                                 :class="{ 'opacity-25': form.processing }"
@@ -4489,6 +4510,7 @@ watch(
 
                         <template v-else>
                             <SecondaryButton
+                                class="max-sm:flex-1"
                                 @click="submit('draft')"
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
@@ -4496,6 +4518,7 @@ watch(
                                 {{ $t("messages.actions.save_draft") }}
                             </SecondaryButton>
                             <PrimaryButton
+                                class="max-sm:w-full"
                                 @click="submit('scheduled')"
                                 :class="{ 'opacity-25': form.processing }"
                                 :disabled="form.processing"
@@ -4782,7 +4805,7 @@ watch(
                         <p
                             class="text-sm text-emerald-700 dark:text-emerald-300"
                         >
-                            ✓ {{ deliverabilityResult.provider_info }}
+                            {{ deliverabilityResult.provider_info }}
                         </p>
                     </div>
 
@@ -4792,7 +4815,6 @@ watch(
                         class="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20"
                     >
                         <p class="text-sm text-amber-700 dark:text-amber-300">
-                            ⚠️
                             {{
                                 deliverabilityResult.provider_info ||
                                 $t("messages.deliverability.no_domain")
@@ -4876,23 +4898,6 @@ watch(
                                 }}
                             </p>
                             <div class="mt-2 flex items-center gap-2">
-                                <span
-                                    class="text-2xl"
-                                    v-if="
-                                        deliverabilityResult.predicted_folder ===
-                                        'inbox'
-                                    "
-                                    >📥</span
-                                >
-                                <span
-                                    class="text-2xl"
-                                    v-else-if="
-                                        deliverabilityResult.predicted_folder ===
-                                        'promotions'
-                                    "
-                                    >📢</span
-                                >
-                                <span class="text-2xl" v-else>🗑️</span>
                                 <span
                                     class="text-xl font-semibold text-slate-900 dark:text-white"
                                 >
@@ -4984,10 +4989,10 @@ watch(
                                 >
                                     {{
                                         issue.severity === "critical"
-                                            ? "🔴"
+                                            ? "●"
                                             : issue.severity === "warning"
-                                              ? "🟡"
-                                              : "🔵"
+                                              ? "●"
+                                              : "●"
                                     }}
                                 </span>
                                 <span
@@ -5010,7 +5015,6 @@ watch(
                         <p
                             class="mb-3 text-sm font-medium text-emerald-700 dark:text-emerald-300"
                         >
-                            💡
                             {{ $t("messages.deliverability.recommendations") }}
                         </p>
                         <ul class="space-y-2">
@@ -5059,13 +5063,15 @@ watch(
             leave-from-class="opacity-100"
             leave-to-class="opacity-0"
         >
+            <!-- Above the action bar, which is stuck to the bottom of the window -->
             <div
                 v-if="toast"
-                class="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl px-4 py-3 shadow-lg max-w-md"
+                role="status"
+                class="fixed bottom-24 right-6 z-50 flex max-w-md items-center gap-3 max-sm:bottom-32 max-sm:left-4 max-sm:right-4 rounded-xl border bg-white px-4 py-3 text-sm text-slate-900 shadow-lg dark:bg-slate-800 dark:text-white"
                 :class="[
                     toast.success
-                        ? 'bg-emerald-500 text-white'
-                        : 'bg-red-500 text-white',
+                        ? 'border-emerald-300 [&>svg]:text-emerald-700 dark:border-emerald-500/40 dark:[&>svg]:text-emerald-400'
+                        : 'border-rose-300 [&>svg]:text-rose-700 dark:border-rose-500/40 dark:[&>svg]:text-rose-400',
                 ]"
             >
                 <svg
@@ -5098,8 +5104,10 @@ watch(
                 </svg>
                 <span class="font-medium">{{ toast.message }}</span>
                 <button
+                    type="button"
+                    :aria-label="$t('common.close')"
                     @click="toast = null"
-                    class="ml-2 rounded-full p-1 hover:bg-white/20 flex-shrink-0"
+                    class="ml-2 flex-shrink-0 rounded-lg p-1 text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/60"
                 >
                     <svg
                         class="h-4 w-4"

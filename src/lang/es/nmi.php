@@ -17,4 +17,27 @@ return [
     'provider_saved' => '¡Configuración del proveedor guardada correctamente!',
     'warming_started' => '¡Calentamiento de IP iniciado!',
     'blacklist_checked' => 'Comprobación de listas negras completada.',
+
+    // IP providers (addresses ordered through a hosting company's API) and reverse DNS
+    'ip_release_failed' => 'El proveedor no ha recuperado la dirección, así que se seguiría cobrando: :reason',
+    'providers' => [
+        'errors' => [
+            'unreachable' => 'No se pudo conectar con :provider. Inténtalo de nuevo en un momento.',
+            'unauthorized' => ':provider no aceptó la clave API: :reason',
+            'refused' => ':provider rechazó la solicitud: :reason',
+            'server_not_found' => 'Este servidor ya no está en tu cuenta de :provider.',
+            'digitalocean_unusable' => 'DigitalOcean no puede ofrecer IP dedicadas para correo: bloquea SMTP en las Reserved IP y no les da DNS inverso.',
+        ],
+    ],
+    'ptr' => [
+        'verified' => 'El DNS inverso es correcto: la dirección nombra su host y el host apunta de vuelta.',
+        'not_verified' => 'El DNS inverso aún no es correcto.',
+        'set' => 'El DNS inverso se ha configurado en el proveedor.',
+        'not_supported' => 'El DNS inverso de esta dirección no se puede configurar desde NetSendo. Configúralo en el panel de la empresa de la que procede la dirección.',
+        'no_hostname' => 'La dirección no tiene un nombre de host al que apuntar.',
+    ],
+    'provision' => [
+        'hostname' => 'nombre de host',
+        'server' => 'servidor',
+    ],
 ];

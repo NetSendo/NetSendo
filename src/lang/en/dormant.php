@@ -11,6 +11,7 @@ return [
     'unsubscribe' => [
         'title' => 'Unsubscribe',
         'body' => 'Confirm that you no longer want to receive messages from this list.',
+        'body_all' => 'Confirm that you no longer want to receive any messages from this sender. You will be unsubscribed from all their lists.',
         'button' => 'Unsubscribe me',
         'invalid_title' => 'This link is not valid',
         'invalid' => 'Use the unsubscribe link from the message exactly as you received it.',

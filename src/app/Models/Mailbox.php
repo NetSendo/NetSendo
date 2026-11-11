@@ -30,6 +30,9 @@ class Mailbox extends Model
         'last_test_success',
         'last_test_message',
         'google_integration_id',
+        // NetSendo MTA (NMI): the verified domain the mailbox sends as, and its dedicated IP
+        'domain_configuration_id',
+        'dedicated_ip_id',
         // Bounce mailbox IMAP monitoring
         'bounce_enabled',
         'bounce_imap_host',
@@ -109,6 +112,14 @@ class Mailbox extends Model
     public const PROVIDER_NMI = 'nmi';
 
     /**
+     * Providers a mailbox can be created with or switched to in Settings → Mailboxes.
+     *
+     * NMI is accepted only where the NetSendo MTA is switched on (nmi.features.enabled)
+     * and needs a verified domain: see panelProviders() and MailboxController.
+     */
+    public const PANEL_PROVIDERS = [self::PROVIDER_SMTP, self::PROVIDER_SENDGRID, self::PROVIDER_GMAIL, self::PROVIDER_NMI];
+
+    /**
      * Message type constants
      */
     public const TYPE_BROADCAST = 'broadcast';
@@ -142,6 +153,34 @@ class Mailbox extends Model
                 'description' => 'Built-in mail infrastructure with dedicated IP',
             ],
         ];
+    }
+
+    /**
+     * Whether this installation runs the NetSendo MTA (NMI_ENABLED)
+     */
+    public static function nmiAvailable(): bool
+    {
+        return (bool) config('nmi.features.enabled', false);
+    }
+
+    /**
+     * Provider keys this installation can save: PANEL_PROVIDERS, without NMI where
+     * the NetSendo MTA is not switched on.
+     */
+    public static function panelProviders(): array
+    {
+        return array_values(array_filter(
+            self::PANEL_PROVIDERS,
+            fn (string $provider) => $provider !== self::PROVIDER_NMI || self::nmiAvailable()
+        ));
+    }
+
+    /**
+     * The providers offered in the mailbox form (see panelProviders())
+     */
+    public static function getPanelProviders(): array
+    {
+        return array_intersect_key(self::getProviders(), array_flip(self::panelProviders()));
     }
 
     /**
@@ -181,7 +220,12 @@ class Mailbox extends Model
      */
     public function domainConfiguration()
     {
-        return $this->belongsTo(DomainConfiguration::class);
+        return $this->belongsTo(DomainConfiguration::class, 'domain_configuration_id');
+    }
+
+    public function isNmi(): bool
+    {
+        return $this->provider === self::PROVIDER_NMI;
     }
 
     /**

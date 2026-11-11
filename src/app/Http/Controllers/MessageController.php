@@ -29,11 +29,17 @@ class MessageController extends Controller
      */
     public function index(Request $request)
     {
-        $query = auth()->user()->messages()->with(['contactLists', 'attachments', 'abTest']);
+        // E-mail only: SMS messages have their own list (SmsController) and their own editor
+        $query = auth()->user()->messages()->email()->with(['contactLists', 'attachments', 'abTest']);
 
         // Filter by Type
         if ($request->filled('type')) {
             $query->where('type', $request->input('type'));
+        }
+
+        // Filter by Status (the tabs of the list: drafts, scheduled, sent)
+        if (in_array($request->input('status'), ['draft', 'scheduled', 'sent'], true)) {
+            $query->where('status', $request->input('status'));
         }
 
         // Filter by Contact List
@@ -81,7 +87,8 @@ class MessageController extends Controller
         // Default: use scheduled_at/send_at for sent/scheduled messages, created_at for drafts
         // For autoresponders (queues), always use created_at
         $sortField = $request->input('sort', 'effective_date');
-        $sortDirection = $request->input('direction', 'desc');
+        // The direction goes into raw SQL below, so it is one of two literals, never the request's text
+        $sortDirection = strtolower((string) $request->input('direction', 'desc')) === 'asc' ? 'asc' : 'desc';
 
         // Allow sorting by valid fields
         if (in_array($sortField, ['id', 'subject', 'status', 'created_at', 'type', 'day'])) {
@@ -131,6 +138,7 @@ class MessageController extends Controller
                         ->values()
                         ->toArray(),
                     'lists_count' => $msg->contactLists->count(),
+                    'list_names' => $msg->contactLists->pluck('name')->values()->all(),
                     'list_name' => $msg->contactLists->count() > 0
                         ? ($msg->contactLists->count() > 1 ? $msg->contactLists->count() . ' list' : $msg->contactLists->first()->name)
                         : '-',
@@ -152,7 +160,9 @@ class MessageController extends Controller
                         'variants_count' => $msg->abTest->variants_count ?? $msg->abTest->variants()->count(),
                     ] : null,
                 ]),
-            'filters' => $request->only(['type', 'list_id', 'group_id', 'tag_id', 'campaign_plan_id', 'search', 'sort', 'direction', 'per_page']),
+            // An object even when empty: as an empty JSON list its "sort" would be Array.prototype.sort
+            'filters' => (object) $request->only(['type', 'status', 'list_id', 'group_id', 'tag_id', 'campaign_plan_id', 'search', 'sort', 'direction', 'per_page']),
+            'counts' => $this->indexCounts(),
             'lists' => auth()->user()->accessibleLists()->select('id', 'name')->orderBy('name')->get(),
             'groups' => auth()->user()->contactListGroups()
                 ->with('parent')
@@ -170,6 +180,27 @@ class MessageController extends Controller
                 ->orderBy('name')
                 ->get(),
         ]);
+    }
+
+    /**
+     * How many messages each tab of the list holds: all, and broadcasts by status / queues.
+     */
+    private function indexCounts(): array
+    {
+        $rows = auth()->user()->messages()->email()
+            ->selectRaw('type, status, COUNT(*) as total')
+            ->groupBy('type', 'status')
+            ->get();
+
+        $broadcasts = $rows->where('type', 'broadcast');
+
+        return [
+            'all' => (int) $rows->sum('total'),
+            'draft' => (int) $broadcasts->where('status', 'draft')->sum('total'),
+            'scheduled' => (int) $broadcasts->where('status', 'scheduled')->sum('total'),
+            'sent' => (int) $broadcasts->where('status', 'sent')->sum('total'),
+            'autoresponder' => (int) $rows->where('type', 'autoresponder')->sum('total'),
+        ];
     }
 
     /**

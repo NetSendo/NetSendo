@@ -12,8 +12,26 @@ import DeleteFromListModal from "./Partials/DeleteFromListModal.vue";
 import ColumnSettingsDropdown from "./Partials/ColumnSettingsDropdown.vue";
 import ExportModal from "./Partials/ExportModal.vue";
 import ConfirmModal from "@/Components/ConfirmModal.vue";
+import Panel from "@/Components/Ui/Panel.vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
+import SegmentedControl from "@/Components/Ui/SegmentedControl.vue";
+import StatusPill from "@/Components/Ui/StatusPill.vue";
+import ActionMenu from "@/Components/Ui/ActionMenu.vue";
+import ActionMenuItem from "@/Components/Ui/ActionMenuItem.vue";
+import Pagination from "@/Components/Ui/Pagination.vue";
+import SortMark from "@/Components/Ui/SortMark.vue";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+const number = (value) => new Intl.NumberFormat(locale.value).format(value ?? 0);
+
+// Status as a word and a tone: who can be written to, who cannot, and why
+const STATUS_TONES = {
+    active: "success",
+    inactive: "neutral",
+    bounced: "danger",
+    unsubscribed: "warning",
+};
 
 const props = defineProps({
     subscribers: Object,
@@ -691,10 +709,28 @@ const addToCrm = (subscriber) => {
     );
 };
 
-// Get sort icon class
-const getSortIcon = (column) => {
-    if (sortBy.value !== column) return "opacity-0 group-hover:opacity-50";
-    return sortOrder.value === "asc" ? "rotate-180" : "";
+const sortState = (column) => (sortBy.value === column ? sortOrder.value : null);
+const ariaSort = (column) =>
+    sortBy.value === column ? (sortOrder.value === "asc" ? "ascending" : "descending") : "none";
+
+// The tabs above the list: everyone, or one status
+const statusOptions = computed(() => [
+    { value: "", label: t("subscribers.views.all") },
+    ...["active", "inactive", "bounced", "unsubscribed"].map((status) => ({
+        value: status,
+        label: t(`subscribers.statuses.${status}`),
+    })),
+]);
+
+const hasFilters = computed(() => Boolean(search.value || listId.value || listType.value));
+
+// Clears everything that narrows the list, the status tab included
+const resetFilters = () => {
+    search.value = "";
+    listId.value = "";
+    listType.value = "";
+    statusFilter.value = "";
+    listSearch.value = "";
 };
 </script>
 
@@ -703,645 +739,414 @@ const getSortIcon = (column) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div
-                class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-                <div>
-                    <h1
-                        class="text-2xl font-bold text-slate-900 dark:text-white"
-                    >
-                        {{ $t("subscribers.title") }}
-                    </h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                        {{ $t("subscribers.subtitle") }}
-                    </p>
-                </div>
-            </div>
-            <div class="flex w-full items-center gap-2 sm:w-auto">
+            <PageHeader :title="$t('subscribers.title')" :subtitle="$t('subscribers.subtitle')">
                 <button
                     type="button"
+                    class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-300 px-3.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700/60"
                     @click="showExportModal = true"
-                    class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:flex-none"
                 >
-                    <svg
-                        class="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                        />
-                    </svg>
                     {{ $t("subscribers.export.export_button") }}
                 </button>
                 <Link
                     :href="route('subscribers.import')"
-                    class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 sm:flex-none"
+                    class="inline-flex min-h-10 items-center gap-2 rounded-xl border border-slate-300 px-3.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-700/60"
                 >
-                    <svg
-                        class="h-5 w-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                        />
-                    </svg>
                     {{ $t("subscribers.import.import_button") }}
                 </Link>
                 <Link
                     :href="route('subscribers.create')"
-                    class="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-lg transition-all hover:bg-indigo-500 hover:shadow-indigo-500/25 sm:flex-none"
+                    class="inline-flex min-h-10 items-center gap-2 rounded-xl bg-indigo-600 px-4 text-sm font-semibold text-white transition-colors hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
                 >
                     <svg
-                        class="h-5 w-5"
+                        aria-hidden="true"
+                        class="h-4 w-4"
+                        viewBox="0 0 24 24"
                         fill="none"
                         stroke="currentColor"
-                        viewBox="0 0 24 24"
+                        stroke-width="2.4"
+                        stroke-linecap="round"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"
-                        />
+                        <path d="M12 5v14M5 12h14" />
                     </svg>
                     {{ $t("subscribers.add_subscriber") }}
                 </Link>
-            </div>
+            </PageHeader>
         </template>
 
-        <!-- Statistics Display -->
-        <div class="mb-4 text-sm text-slate-600 dark:text-slate-400">
-            <template v-if="statistics.list_name">
-                {{
-                    t("subscribers.stats_list", {
-                        total: statistics.total_in_list,
-                        list: statistics.list_name,
-                        current: subscribers.data.length,
-                    })
-                }}
-            </template>
-            <template v-else>
-                {{
-                    t("subscribers.stats_total", {
-                        total: statistics.total_subscribers,
-                        lists: statistics.total_lists,
-                        current: subscribers.data.length,
-                    })
-                }}
-            </template>
-        </div>
+        <div class="mx-auto flex max-w-screen-2xl flex-col gap-4">
+            <div class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+                <SegmentedControl
+                    v-model="statusFilter"
+                    :options="statusOptions"
+                    :label="$t('subscribers.table.status')"
+                />
+                <!-- How many people this is about: the whole base, or the list being looked at -->
+                <p class="text-sm tabular-nums text-slate-600 dark:text-slate-400">
+                    <template v-if="statistics.list_name">
+                        {{
+                            t("subscribers.stats_list", {
+                                total: number(statistics.total_in_list),
+                                list: statistics.list_name,
+                                current: subscribers.data.length,
+                            })
+                        }}
+                    </template>
+                    <template v-else>
+                        {{
+                            t("subscribers.stats_total", {
+                                total: number(statistics.total_subscribers),
+                                lists: statistics.total_lists,
+                                current: subscribers.data.length,
+                            })
+                        }}
+                    </template>
+                </p>
+            </div>
 
-        <!-- Filters -->
-        <div
-            class="mb-6 grid gap-4 rounded-xl bg-white p-4 shadow-sm dark:bg-slate-900 sm:grid-cols-2 lg:grid-cols-6"
-        >
-            <div class="lg:col-span-2">
-                <div class="relative">
-                    <div
-                        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3"
-                    >
+            <Panel flush>
+                <!-- Filters -->
+                <div class="flex flex-wrap items-center gap-3 px-5 pb-4 pt-2">
+                    <label class="relative min-w-0 flex-1 basis-64">
+                        <span class="sr-only">{{ $t("subscribers.search_placeholder") }}</span>
                         <svg
-                            class="h-5 w-5 text-slate-400"
+                            aria-hidden="true"
+                            class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500 dark:text-slate-400"
                             fill="none"
                             stroke="currentColor"
+                            stroke-width="2"
                             viewBox="0 0 24 24"
                         >
-                            <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
+                            <circle cx="11" cy="11" r="7" />
+                            <path stroke-linecap="round" d="m21 21-4.3-4.3" />
                         </svg>
-                    </div>
-                    <input
-                        v-model="search"
-                        type="text"
-                        class="block w-full rounded-xl border-slate-200 bg-slate-50 pl-10 pr-4 placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500"
-                        :placeholder="$t('subscribers.search_placeholder')"
-                    />
-                </div>
-            </div>
-            <div>
-                <select
-                    v-model="listType"
-                    class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                >
-                    <option value="">
-                        {{ $t("subscribers.all_list_types") }}
-                    </option>
-                    <option value="email">
-                        {{ $t("subscribers.list_type_email") }}
-                    </option>
-                    <option value="sms">
-                        {{ $t("subscribers.list_type_sms") }}
-                    </option>
-                </select>
-            </div>
-            <div>
-                <select
-                    v-model="statusFilter"
-                    class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-2 text-slate-900 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                >
-                    <option value="">
-                        {{ $t("subscribers.all_statuses") }}
-                    </option>
-                    <option
-                        v-for="status in [
-                            'active',
-                            'inactive',
-                            'bounced',
-                            'unsubscribed',
-                        ]"
-                        :key="status"
-                        :value="status"
-                    >
-                        {{ $t(`subscribers.statuses.${status}`) }}
-                    </option>
-                </select>
-            </div>
-            <div ref="listDropdownRef" class="relative">
-                <button
-                    @click="listDropdownOpen = !listDropdownOpen"
-                    type="button"
-                    class="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-left text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                >
-                    <span class="truncate">
-                        <template v-if="selectedListName">
-                            {{ selectedListName }}
-                            <span class="ml-1 text-xs text-slate-400"
-                                >#{{ listId }}</span
-                            >
-                        </template>
-                        <template v-else>
-                            {{ $t("subscribers.all_lists") }}
-                        </template>
-                    </span>
-                    <svg
-                        class="ml-2 h-4 w-4 text-slate-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                    >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M19 9l-7 7-7-7"
-                        />
-                    </svg>
-                </button>
-                <div
-                    v-show="listDropdownOpen"
-                    class="absolute left-0 z-50 mt-1 w-72 rounded-xl border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800"
-                >
-                    <div class="p-2">
                         <input
-                            v-model="listSearch"
-                            type="text"
-                            class="w-full rounded-lg border-slate-200 bg-slate-50 px-3 py-1.5 text-sm placeholder-slate-400 focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:placeholder-slate-500"
-                            :placeholder="
-                                $t('subscribers.search_list_placeholder')
-                            "
-                            @click.stop
+                            v-model="search"
+                            type="search"
+                            :placeholder="$t('subscribers.search_placeholder')"
+                            class="min-h-10 w-full rounded-xl border border-slate-300 bg-white pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
                         />
-                    </div>
-                    <div class="max-h-60 overflow-y-auto">
+                    </label>
+
+                    <select
+                        v-model="listType"
+                        :aria-label="$t('subscribers.all_list_types')"
+                        class="min-h-10 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white"
+                    >
+                        <option value="">{{ $t("subscribers.all_list_types") }}</option>
+                        <option value="email">{{ $t("subscribers.list_type_email") }}</option>
+                        <option value="sms">{{ $t("subscribers.list_type_sms") }}</option>
+                    </select>
+
+                    <!-- List filter: a searchable list, there can be dozens -->
+                    <div ref="listDropdownRef" class="relative">
                         <button
-                            @click="clearListFilter"
-                            class="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
-                            :class="{
-                                'bg-indigo-50 dark:bg-indigo-900/30': !listId,
-                            }"
+                            type="button"
+                            aria-haspopup="listbox"
+                            :aria-expanded="listDropdownOpen"
+                            class="flex min-h-10 max-w-64 items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 transition-colors hover:border-slate-400 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:hover:border-slate-500"
+                            @click="listDropdownOpen = !listDropdownOpen"
                         >
-                            {{ $t("subscribers.all_lists") }}
-                        </button>
-                        <button
-                            v-for="list in filteredLists"
-                            :key="list.id"
-                            @click="selectList(list)"
-                            class="w-full px-3 py-2 text-left text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
-                            :class="{
-                                'bg-indigo-50 dark:bg-indigo-900/30':
-                                    listId == list.id,
-                            }"
-                        >
-                            <span class="font-medium">{{ list.name }}</span>
-                            <span
-                                class="ml-2 text-xs text-slate-400 dark:text-slate-500"
-                                >#{{ list.id }}</span
+                            <span class="truncate">{{
+                                selectedListName || $t("subscribers.all_lists")
+                            }}</span>
+                            <svg
+                                aria-hidden="true"
+                                class="h-4 w-4 shrink-0 text-slate-500 dark:text-slate-400"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                viewBox="0 0 24 24"
                             >
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
                         </button>
+
                         <div
-                            v-if="filteredLists.length === 0 && listSearch"
-                            class="px-3 py-2 text-sm text-slate-500 dark:text-slate-400"
+                            v-show="listDropdownOpen"
+                            class="absolute left-0 z-30 mt-1.5 w-72 max-w-[calc(100vw-2rem)] rounded-xl border border-slate-200 bg-white p-2 shadow-lg dark:border-slate-700 dark:bg-slate-800"
                         >
-                            {{ $t("common.no_results") }}
+                            <input
+                                v-model="listSearch"
+                                type="search"
+                                :placeholder="$t('subscribers.search_list_placeholder')"
+                                :aria-label="$t('subscribers.search_list_placeholder')"
+                                class="mb-1 min-h-9 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900 placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-900/40 dark:text-white dark:placeholder:text-slate-400"
+                                @click.stop
+                            />
+                            <div role="listbox" class="max-h-64 overflow-y-auto">
+                                <button
+                                    type="button"
+                                    role="option"
+                                    :aria-selected="!listId"
+                                    class="flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-700/60"
+                                    @click="clearListFilter"
+                                >
+                                    {{ $t("subscribers.all_lists") }}
+                                </button>
+                                <button
+                                    v-for="list in filteredLists"
+                                    :key="list.id"
+                                    type="button"
+                                    role="option"
+                                    :aria-selected="listId == list.id"
+                                    class="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm hover:bg-slate-100 dark:hover:bg-slate-700/60"
+                                    :class="
+                                        listId == list.id
+                                            ? 'font-semibold text-slate-900 dark:text-white'
+                                            : 'text-slate-700 dark:text-slate-200'
+                                    "
+                                    @click="selectList(list)"
+                                >
+                                    <span class="truncate">{{ list.name }}</span>
+                                    <span class="shrink-0 text-xs tabular-nums text-slate-500 dark:text-slate-400"
+                                        >#{{ list.id }}</span
+                                    >
+                                </button>
+                                <p
+                                    v-if="filteredLists.length === 0 && listSearch"
+                                    class="px-3 py-2 text-sm text-slate-600 dark:text-slate-400"
+                                >
+                                    {{ $t("common.no_results") }}
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            <div class="flex flex-wrap items-center gap-3 sm:flex-nowrap">
-                <!-- Per-page selector -->
-                <div class="flex items-center gap-2">
-                    <label class="text-sm text-slate-600 dark:text-slate-400"
-                        >{{ $t("subscribers.per_page") }}:</label
+
+                    <button
+                        v-if="hasFilters"
+                        type="button"
+                        class="min-h-10 px-1 text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        @click="resetFilters"
                     >
-                    <select
-                        :value="perPage"
-                        @change="updatePerPage($event.target.value)"
-                        class="rounded-lg border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2 text-sm text-slate-900 dark:text-white focus:border-indigo-500 focus:ring-indigo-500"
-                    >
-                        <option :value="10">10</option>
-                        <option :value="15">15</option>
-                        <option :value="25">25</option>
-                        <option :value="50">50</option>
-                        <option :value="100">100</option>
-                        <option :value="200">200</option>
-                    </select>
+                        {{ $t("common.clear_filters") }}
+                    </button>
+
+                    <div class="ml-auto">
+                        <ColumnSettingsDropdown
+                            :columns="visibleColumns"
+                            :ordered-columns="orderedColumns"
+                            @toggle="toggleColumn"
+                            @reorder="reorderColumns"
+                        />
+                    </div>
                 </div>
-                <ColumnSettingsDropdown
-                    :columns="visibleColumns"
-                    :ordered-columns="orderedColumns"
-                    @toggle="toggleColumn"
-                    @reorder="reorderColumns"
+
+                <!-- What can be done with the ticked rows -->
+                <BulkActionToolbar
+                    v-if="selectedIds.length > 0"
+                    :selected-count="selectedIds.length"
+                    :processing="processing"
+                    :current-list-id="listId"
+                    :is-selecting-all-in-list="isSelectingAllInList"
+                    @delete="bulkDelete"
+                    @move="showMoveModal = true"
+                    @copy="bulkCopy"
+                    @export="showExportModal = true"
+                    @delete-from-list="bulkDeleteFromList"
+                    @change-status="bulkChangeStatus"
+                    @clear-selection="clearSelection"
+                    @select-all-in-list="selectAllInList"
                 />
-            </div>
-        </div>
 
-        <!-- Bulk Action Toolbar -->
-        <BulkActionToolbar
-            v-if="selectedIds.length > 0"
-            :selected-count="selectedIds.length"
-            :processing="processing"
-            :current-list-id="listId"
-            :is-selecting-all-in-list="isSelectingAllInList"
-            @delete="bulkDelete"
-            @move="showMoveModal = true"
-            @copy="bulkCopy"
-            @export="showExportModal = true"
-            @delete-from-list="bulkDeleteFromList"
-            @change-status="bulkChangeStatus"
-            @clear-selection="clearSelection"
-            @select-all-in-list="selectAllInList"
-        />
-
-        <!-- Table -->
-        <div
-            class="overflow-hidden rounded-2xl bg-white shadow-sm dark:bg-slate-900"
-        >
-            <div class="overflow-x-auto">
-                <table
-                    class="w-full text-left text-sm text-slate-500 dark:text-slate-400"
+                <!-- Nothing to show -->
+                <div
+                    v-if="subscribers.data.length === 0"
+                    class="flex flex-col items-center gap-2 border-t border-slate-200 px-5 py-16 text-center dark:border-slate-700/60"
                 >
-                    <thead
-                        class="bg-slate-50 text-xs uppercase text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                    <p class="text-sm font-medium text-slate-900 dark:text-white">
+                        {{ $t("subscribers.empty_state") }}
+                    </p>
+                    <button
+                        v-if="hasFilters || statusFilter"
+                        type="button"
+                        class="text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        @click="resetFilters"
                     >
-                        <tr>
-                            <!-- Checkbox column -->
-                            <th scope="col" class="w-12 px-4 py-3">
-                                <input
-                                    type="checkbox"
-                                    :checked="isAllSelected"
-                                    :indeterminate="isSomeSelected"
-                                    @change="toggleSelectAll"
-                                    class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
-                                />
-                            </th>
-                            <template
-                                v-for="(column, columnIndex) in orderedColumns"
-                                :key="column?.key || `th-${columnIndex}`"
-                            >
-                                <th
-                                    v-if="column && isColumnVisible(column.key)"
-                                    scope="col"
-                                    class="px-6 py-3"
-                                >
-                                    <button
-                                        v-if="column.sortable"
-                                        @click="handleSort(column.sortKey)"
-                                        class="group flex items-center gap-1 hover:text-indigo-600 dark:hover:text-indigo-400"
-                                    >
-                                        {{ getColumnLabel(column) }}
-                                        <svg
-                                            class="h-4 w-4 transition-all"
-                                            :class="getSortIcon(column.sortKey)"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M19 9l-7 7-7-7"
-                                            />
-                                        </svg>
-                                    </button>
-                                    <span v-else>
-                                        {{ getColumnLabel(column) }}
-                                    </span>
+                        {{ $t("common.clear_filters") }}
+                    </button>
+                </div>
+
+                <div v-else class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                    <table class="w-full min-w-[760px] text-sm">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400">
+                                <th scope="col" class="w-10 py-2.5 pl-5 pr-2">
+                                    <input
+                                        type="checkbox"
+                                        :aria-label="$t('common.select_all')"
+                                        :checked="isAllSelected"
+                                        :indeterminate="isSomeSelected"
+                                        class="h-4 w-4 accent-indigo-600"
+                                        @change="toggleSelectAll"
+                                    />
                                 </th>
-                            </template>
-                            <!-- Actions -->
-                            <th scope="col" class="px-6 py-3 text-right">
-                                {{ $t("subscribers.table.actions") }}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody
-                        class="divide-y divide-slate-100 dark:divide-slate-800"
-                    >
-                        <tr
-                            v-for="subscriber in subscribers.data"
-                            :key="subscriber.id"
-                            class="hover:bg-slate-50 dark:hover:bg-slate-800/50"
-                            :class="{
-                                'bg-indigo-50/50 dark:bg-indigo-900/20':
-                                    selectedIds.includes(subscriber.id),
-                            }"
-                        >
-                            <!-- Checkbox -->
-                            <td class="w-12 px-4 py-4">
-                                <input
-                                    type="checkbox"
-                                    :checked="
-                                        selectedIds.includes(subscriber.id)
-                                    "
-                                    @change="toggleSelect(subscriber.id)"
-                                    class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700"
-                                />
-                            </td>
-                            <template
-                                v-for="(column, columnIndex) in orderedColumns"
-                                :key="
-                                    column?.key
-                                        ? `td-${column.key}-${subscriber.id}`
-                                        : `td-${columnIndex}-${subscriber.id}`
+                                <template
+                                    v-for="(column, columnIndex) in orderedColumns"
+                                    :key="column?.key || `th-${columnIndex}`"
+                                >
+                                    <th
+                                        v-if="column && isColumnVisible(column.key)"
+                                        scope="col"
+                                        class="px-3 py-2.5 font-medium"
+                                        :aria-sort="column.sortable ? ariaSort(column.sortKey) : undefined"
+                                    >
+                                        <button
+                                            v-if="column.sortable"
+                                            type="button"
+                                            class="inline-flex items-center gap-1 whitespace-nowrap hover:text-slate-900 dark:hover:text-white"
+                                            @click="handleSort(column.sortKey)"
+                                        >
+                                            {{ getColumnLabel(column) }}
+                                            <SortMark :state="sortState(column.sortKey)" />
+                                        </button>
+                                        <span v-else class="whitespace-nowrap">{{ getColumnLabel(column) }}</span>
+                                    </th>
+                                </template>
+                                <th scope="col" class="py-2.5 pl-3 pr-5 text-right font-medium">
+                                    <span class="sr-only">{{ $t("subscribers.table.actions") }}</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="subscriber in subscribers.data"
+                                :key="subscriber.id"
+                                class="border-b border-slate-100 transition-colors last:border-0 dark:border-slate-700/40"
+                                :class="
+                                    selectedIds.includes(subscriber.id)
+                                        ? 'bg-indigo-50 dark:bg-indigo-500/10'
+                                        : 'hover:bg-slate-50 dark:hover:bg-slate-700/20'
                                 "
                             >
-                                <td
-                                    v-if="column && isColumnVisible(column.key)"
-                                    :class="[
-                                        'px-6 py-4',
-                                        column.type === 'email'
-                                            ? 'font-medium text-slate-900 dark:text-white'
-                                            : '',
-                                    ]"
-                                >
-                                    <template v-if="column.type === 'email'">
-                                        <Link
-                                            :href="
-                                                route(
-                                                    'subscribers.show',
-                                                    subscriber.id,
-                                                )
-                                            "
-                                            class="text-indigo-600 hover:text-indigo-800 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
-                                            :title="$t('subscriber_card.title')"
-                                        >
-                                            {{ subscriber.email }}
-                                        </Link>
-                                    </template>
-                                    <template
-                                        v-else-if="column.type === 'name'"
-                                    >
-                                        {{ subscriber.first_name }}
-                                        {{ subscriber.last_name }}
-                                    </template>
-                                    <template
-                                        v-else-if="column.type === 'phone'"
-                                    >
-                                        {{ subscriber.phone || "-" }}
-                                    </template>
-                                    <template
-                                        v-else-if="column.type === 'status'"
-                                    >
-                                        <span
-                                            class="inline-flex rounded-full px-2 text-xs font-semibold leading-5"
-                                            :class="{
-                                                'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400':
-                                                    subscriber.status ===
-                                                    'active',
-                                                'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400':
-                                                    subscriber.status ===
-                                                    'unsubscribed',
-                                                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300':
-                                                    subscriber.status ===
-                                                    'inactive',
-                                                'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400':
-                                                    subscriber.status ===
-                                                    'bounced',
-                                            }"
-                                        >
-                                            {{
-                                                $t(
-                                                    `subscribers.statuses.${subscriber.status}`,
-                                                ) || subscriber.status
-                                            }}
-                                        </span>
-                                    </template>
-                                    <template
-                                        v-else-if="column.type === 'list'"
-                                    >
-                                        {{
-                                            subscriber.lists &&
-                                            subscriber.lists.length
-                                                ? subscriber.lists.join(", ")
-                                                : "-"
-                                        }}
-                                    </template>
-                                    <template
-                                        v-else-if="column.type === 'custom'"
-                                    >
-                                        {{
-                                            subscriber.custom_fields?.[
-                                                column.key
-                                            ] || "-"
-                                        }}
-                                    </template>
-                                    <template
-                                        v-else-if="column.type === 'created_at'"
-                                    >
-                                        {{ subscriber.created_at }}
-                                    </template>
-                                    <template
-                                        v-else-if="column.type === 'language'"
-                                    >
-                                        <span
-                                            v-if="subscriber.language"
-                                            class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 dark:bg-slate-700 dark:text-slate-300"
-                                        >
-                                            🌐
-                                            {{
-                                                subscriber.language?.toUpperCase()
-                                            }}
-                                        </span>
-                                        <span v-else class="text-slate-400"
-                                            >—</span
-                                        >
-                                    </template>
+                                <td class="w-10 py-3 pl-5 pr-2">
+                                    <input
+                                        type="checkbox"
+                                        :aria-label="subscriber.email"
+                                        :checked="selectedIds.includes(subscriber.id)"
+                                        class="h-4 w-4 accent-indigo-600"
+                                        @change="toggleSelect(subscriber.id)"
+                                    />
                                 </td>
-                            </template>
-                            <!-- Actions -->
-                            <td class="px-6 py-4 text-right">
-                                <div
-                                    class="flex items-center justify-end gap-2"
+                                <template
+                                    v-for="(column, columnIndex) in orderedColumns"
+                                    :key="
+                                        column?.key
+                                            ? `td-${column.key}-${subscriber.id}`
+                                            : `td-${columnIndex}-${subscriber.id}`
+                                    "
                                 >
-                                    <!-- View Card -->
-                                    <Link
-                                        :href="
-                                            route(
-                                                'subscribers.show',
-                                                subscriber.id,
-                                            )
-                                        "
-                                        class="text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400"
-                                        :title="$t('subscriber_card.title')"
+                                    <td
+                                        v-if="column && isColumnVisible(column.key)"
+                                        class="px-3 py-3"
+                                        :class="column.type === 'email' || column.type === 'list' ? 'max-w-64' : ''"
                                     >
-                                        <svg
-                                            class="h-5 w-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                                        <Link
+                                            v-if="column.type === 'email'"
+                                            :href="route('subscribers.show', subscriber.id)"
+                                            :title="subscriber.email"
+                                            class="block truncate font-medium text-slate-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300"
                                         >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
-                                            />
-                                        </svg>
-                                    </Link>
-                                    <!-- Edit -->
-                                    <Link
-                                        :href="
-                                            route(
-                                                'subscribers.edit',
-                                                subscriber.id,
-                                            )
-                                        "
-                                        class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400"
-                                        :title="$t('common.edit')"
-                                    >
-                                        <svg
-                                            class="h-5 w-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                                            {{ subscriber.email || subscriber.phone || "—" }}
+                                        </Link>
+                                        <span
+                                            v-else-if="column.type === 'name'"
+                                            class="text-slate-900 dark:text-slate-100"
                                         >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                                            />
-                                        </svg>
-                                    </Link>
-                                    <!-- Add to CRM -->
-                                    <button
-                                        @click="addToCrm(subscriber)"
-                                        :class="[
-                                            subscriber.has_crm_contact
-                                                ? 'text-green-500 dark:text-green-400 cursor-default'
-                                                : 'text-slate-400 hover:text-purple-600 dark:hover:text-purple-400',
-                                        ]"
-                                        :title="
-                                            subscriber.has_crm_contact
-                                                ? $t(
-                                                      'subscribers.crm_already_exists',
-                                                  )
-                                                : $t('subscribers.add_to_crm')
-                                        "
-                                    >
-                                        <svg
-                                            class="h-5 w-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                                            {{
+                                                [subscriber.first_name, subscriber.last_name]
+                                                    .filter(Boolean)
+                                                    .join(" ") || "—"
+                                            }}
+                                        </span>
+                                        <span
+                                            v-else-if="column.type === 'phone'"
+                                            class="whitespace-nowrap tabular-nums text-slate-900 dark:text-slate-100"
                                         >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                            />
-                                        </svg>
-                                    </button>
-                                    <button
-                                        @click="deleteSubscriber(subscriber)"
-                                        class="text-slate-400 hover:text-red-600 dark:hover:text-red-400"
-                                        :title="$t('common.delete')"
-                                    >
-                                        <svg
-                                            class="h-5 w-5"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            viewBox="0 0 24 24"
+                                            {{ subscriber.phone || "—" }}
+                                        </span>
+                                        <StatusPill
+                                            v-else-if="column.type === 'status'"
+                                            :tone="STATUS_TONES[subscriber.status] || 'neutral'"
                                         >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                                            />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr v-if="subscribers.data.length === 0">
-                            <td
-                                :colspan="visibleOrderedColumns.length + 2"
-                                class="px-6 py-8 text-center text-slate-500 dark:text-slate-400"
-                            >
-                                {{ $t("subscribers.empty_state") }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+                                            {{
+                                                $te(`subscribers.statuses.${subscriber.status}`)
+                                                    ? $t(`subscribers.statuses.${subscriber.status}`)
+                                                    : subscriber.status
+                                            }}
+                                        </StatusPill>
+                                        <span
+                                            v-else-if="column.type === 'list'"
+                                            class="block truncate text-slate-600 dark:text-slate-400"
+                                            :title="(subscriber.lists || []).join(', ')"
+                                        >
+                                            {{
+                                                subscriber.lists && subscriber.lists.length
+                                                    ? subscriber.lists.join(", ")
+                                                    : "—"
+                                            }}
+                                        </span>
+                                        <span
+                                            v-else-if="column.type === 'custom'"
+                                            class="text-slate-900 dark:text-slate-100"
+                                        >
+                                            {{ subscriber.custom_fields?.[column.key] || "—" }}
+                                        </span>
+                                        <span
+                                            v-else-if="column.type === 'created_at'"
+                                            class="whitespace-nowrap tabular-nums text-slate-600 dark:text-slate-400"
+                                        >
+                                            {{ subscriber.created_at }}
+                                        </span>
+                                        <span
+                                            v-else-if="column.type === 'language'"
+                                            class="text-slate-900 dark:text-slate-100"
+                                        >
+                                            {{ subscriber.language ? subscriber.language.toUpperCase() : "—" }}
+                                        </span>
+                                    </td>
+                                </template>
 
-            <!-- Pagination -->
-            <div
-                v-if="subscribers.links.length > 3"
-                class="flex items-center justify-between border-t border-slate-100 px-6 py-4 dark:border-slate-800"
-            >
-                <div class="text-sm text-slate-500 dark:text-slate-400">
-                    {{ $t("common.showing") }} {{ subscribers.from }} -
-                    {{ subscribers.to }} {{ $t("common.of") }}
-                    {{ subscribers.total }}
+                                <td class="py-3 pl-3 pr-5">
+                                    <div class="flex items-center justify-end">
+                                        <ActionMenu :label="$t('subscribers.actions_for', { email: subscriber.email || subscriber.phone })">
+                                            <ActionMenuItem :href="route('subscribers.show', subscriber.id)">
+                                                {{ $t("subscriber_card.title") }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem :href="route('subscribers.edit', subscriber.id)">
+                                                {{ $t("common.edit") }}
+                                            </ActionMenuItem>
+                                            <ActionMenuItem
+                                                :disabled="subscriber.has_crm_contact"
+                                                @click="addToCrm(subscriber)"
+                                            >
+                                                {{
+                                                    subscriber.has_crm_contact
+                                                        ? $t("subscribers.crm_already_exists")
+                                                        : $t("subscribers.add_to_crm")
+                                                }}
+                                            </ActionMenuItem>
+                                            <div class="my-1 border-t border-slate-100 dark:border-slate-700"></div>
+                                            <ActionMenuItem danger @click="deleteSubscriber(subscriber)">
+                                                {{ $t("common.delete") }}
+                                            </ActionMenuItem>
+                                        </ActionMenu>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                <div class="flex gap-1">
-                    <Link
-                        v-for="(link, i) in subscribers.links"
-                        :key="i"
-                        :href="link.url || '#'"
-                        class="rounded-lg px-3 py-1 text-sm"
-                        :class="{
-                            'bg-indigo-50 text-indigo-600 dark:bg-indigo-900/50 dark:text-indigo-400':
-                                link.active,
-                            'text-slate-500 hover:bg-slate-50 dark:text-slate-400 dark:hover:bg-slate-800':
-                                !link.active && link.url,
-                            'opacity-50 cursor-not-allowed': !link.url,
-                        }"
-                        v-html="link.label"
-                    />
-                </div>
-            </div>
+
+                <Pagination
+                    v-if="subscribers.total > 0"
+                    :paginator="subscribers"
+                    :per-page="perPage"
+                    :per-page-options="[10, 15, 25, 50, 100, 200]"
+                    @update:per-page="updatePerPage"
+                />
+            </Panel>
         </div>
 
-        <!-- Move Modal -->
         <MoveToListModal
             :show="showMoveModal"
             :selected-count="selectedIds.length"
@@ -1352,7 +1157,6 @@ const getSortIcon = (column) => {
             @move="bulkMove"
         />
 
-        <!-- Export Modal -->
         <ExportModal
             :show="showExportModal"
             :filters="filters"
@@ -1364,7 +1168,6 @@ const getSortIcon = (column) => {
             @close="showExportModal = false"
         />
 
-        <!-- Copy To List Modal -->
         <CopyToListModal
             :show="showCopyModal"
             :selected-count="selectedIds.length"
@@ -1374,16 +1177,11 @@ const getSortIcon = (column) => {
             @submit="submitCopy"
         />
 
-        <!-- Confirmation Modals -->
         <ConfirmModal
             :show="showDeleteConfirm"
             type="danger"
             :title="t('subscribers.bulk.delete_modal_title')"
-            :message="
-                t('subscribers.bulk.delete_modal_desc', {
-                    count: selectedIds.length,
-                })
-            "
+            :message="t('subscribers.bulk.delete_modal_desc', { count: selectedIds.length })"
             :confirm-text="t('subscribers.bulk.delete')"
             :processing="processing"
             @close="showDeleteConfirm = false"
@@ -1405,11 +1203,7 @@ const getSortIcon = (column) => {
             :show="showSelectAllConfirm"
             type="info"
             :title="t('subscribers.bulk.select_all_modal_title')"
-            :message="
-                t('subscribers.bulk.select_all_modal_desc', {
-                    count: pendingSelectAllCount,
-                })
-            "
+            :message="t('subscribers.bulk.select_all_modal_desc', { count: pendingSelectAllCount })"
             :confirm-text="t('subscribers.confirm_proceed')"
             @close="
                 showSelectAllConfirm = false;
@@ -1418,7 +1212,6 @@ const getSortIcon = (column) => {
             @confirm="showSelectAllConfirm = false"
         />
 
-        <!-- Delete Subscriber Modal -->
         <DeleteFromListModal
             :show="showDeleteSubscriberModal"
             :subscriber="subscriberToDelete"
@@ -1433,73 +1226,44 @@ const getSortIcon = (column) => {
             @delete-completely="handleDeleteCompletely"
         />
 
-        <!-- Toast Notification -->
-        <div v-if="toast" class="fixed bottom-4 right-4 z-50 max-w-sm w-full">
-            <div
-                :class="[
-                    'rounded-lg shadow-lg p-4 flex items-center gap-3',
-                    toast.success
-                        ? 'bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-800'
-                        : 'bg-amber-50 dark:bg-amber-900/50 border border-amber-200 dark:border-amber-800',
-                ]"
+        <!-- What the last action did -->
+        <Teleport to="body">
+            <Transition
+                enter-active-class="transform transition duration-300 ease-out"
+                enter-from-class="translate-y-2 opacity-0"
+                enter-to-class="translate-y-0 opacity-100"
+                leave-active-class="transition duration-100 ease-in"
+                leave-from-class="opacity-100"
+                leave-to-class="opacity-0"
             >
-                <svg
-                    v-if="toast.success"
-                    class="h-5 w-5 text-green-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M5 13l4 4L19 7"
-                    />
-                </svg>
-                <svg
-                    v-else
-                    class="h-5 w-5 text-amber-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        stroke-width="2"
-                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
-                </svg>
-                <span
-                    :class="[
-                        'text-sm font-medium',
+                <div
+                    v-if="toast"
+                    role="status"
+                    class="fixed bottom-6 right-6 z-50 flex max-w-sm items-start gap-3 rounded-xl border bg-white px-4 py-3 text-sm text-slate-900 shadow-lg dark:bg-slate-800 dark:text-white"
+                    :class="
                         toast.success
-                            ? 'text-green-800 dark:text-green-200'
-                            : 'text-amber-800 dark:text-amber-200',
-                    ]"
+                            ? 'border-emerald-200 dark:border-emerald-500/30'
+                            : 'border-rose-200 dark:border-rose-500/30'
+                    "
                 >
-                    {{ toast.message }}
-                </span>
-                <button
-                    @click="toast = null"
-                    class="ml-auto text-gray-400 hover:text-gray-600"
-                >
-                    <svg
-                        class="h-4 w-4"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                    <span
+                        aria-hidden="true"
+                        class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
+                        :class="toast.success ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-rose-600 dark:bg-rose-400'"
+                    ></span>
+                    <span class="min-w-0 flex-1">{{ toast.message }}</span>
+                    <button
+                        type="button"
+                        :aria-label="$t('common.close')"
+                        class="-mr-1 -mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700/60"
+                        @click="toast = null"
                     >
-                        <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                        />
-                    </svg>
-                </button>
-            </div>
-        </div>
+                        <svg aria-hidden="true" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" d="M6 6l12 12M18 6L6 18" />
+                        </svg>
+                    </button>
+                </div>
+            </Transition>
+        </Teleport>
     </AuthenticatedLayout>
 </template>

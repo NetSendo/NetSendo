@@ -41,7 +41,15 @@ class SubscriptionFormController extends Controller
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        $forms = $query->paginate(15)->withQueryString();
+        $perPage = max(1, min((int) $request->input('per_page', 30), 100));
+
+        $forms = $query->paginate($perPage)->withQueryString();
+
+        // How many forms each status tab holds, whatever the other filters say
+        $byStatus = SubscriptionForm::forUser(auth()->id())
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
 
         $lists = ContactList::where('user_id', auth()->id())
             ->where('type', 'email')
@@ -51,7 +59,14 @@ class SubscriptionFormController extends Controller
         return Inertia::render('Forms/Index', [
             'forms' => $forms,
             'lists' => $lists,
-            'filters' => $request->only(['list_id', 'status', 'search']),
+            // An object even when empty: an empty JSON list would bring Array's own properties
+            'filters' => (object) $request->only(['list_id', 'status', 'search', 'per_page']),
+            'counts' => [
+                'all' => (int) $byStatus->sum(),
+                'active' => (int) ($byStatus['active'] ?? 0),
+                'draft' => (int) ($byStatus['draft'] ?? 0),
+                'disabled' => (int) ($byStatus['disabled'] ?? 0),
+            ],
         ]);
     }
 

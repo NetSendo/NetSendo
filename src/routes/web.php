@@ -946,6 +946,9 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/ips/{ip}/dkim/verify', [\App\Http\Controllers\NmiController::class, 'verifyDkim'])->name('ips.dkim.verify');
         Route::post('/ips/{ip}/blacklist/check', [\App\Http\Controllers\NmiController::class, 'checkBlacklist'])->name('ips.blacklist.check')->middleware('licensed:mail_infrastructure');
         Route::delete('/ips/{ip}', [\App\Http\Controllers\NmiController::class, 'deleteIp'])->name('ips.destroy');
+        // Reverse DNS (PTR) of an address: look it up; set it at the provider it was ordered from
+        Route::post('/ips/{ip}/ptr/check', [\App\Http\Controllers\NmiController::class, 'checkPtr'])->name('ips.ptr.check');
+        Route::post('/ips/{ip}/ptr/set', [\App\Http\Controllers\NmiController::class, 'setPtr'])->name('ips.ptr.set')->middleware('licensed:mail_infrastructure');
 
         // Add IP to Pool
         Route::post('/pools/{pool}/ips', [\App\Http\Controllers\NmiController::class, 'addIpToPool'])->name('pools.ips.store')->middleware('licensed:mail_infrastructure');
@@ -953,10 +956,15 @@ Route::middleware(['auth', '2fa'])->group(function () {
         // MTA Status
         Route::get('/mta/status', [\App\Http\Controllers\NmiController::class, 'getMtaStatus'])->name('mta.status');
 
+        // DKIM key of a sending domain (signs the mail of its NMI mailboxes)
+        Route::get('/domains/{domain}/dkim', [\App\Http\Controllers\NmiController::class, 'getDomainDkim'])->name('domains.dkim.show');
+        Route::post('/domains/{domain}/dkim/generate', [\App\Http\Controllers\NmiController::class, 'generateDomainDkim'])->name('domains.dkim.generate')->middleware('licensed:mail_infrastructure');
+        Route::post('/domains/{domain}/dkim/verify', [\App\Http\Controllers\NmiController::class, 'verifyDomainDkim'])->name('domains.dkim.verify');
+
         // IP Providers
         Route::get('/providers', [\App\Http\Controllers\NmiController::class, 'getProviderSettings'])->name('providers.index');
         Route::post('/providers', [\App\Http\Controllers\NmiController::class, 'saveProviderSettings'])->name('providers.store')->middleware('licensed:mail_infrastructure');
-        Route::get('/providers/{provider}/regions', [\App\Http\Controllers\NmiController::class, 'getProviderRegions'])->name('providers.regions')->middleware('licensed:mail_infrastructure');
+        Route::get('/providers/{provider}/servers', [\App\Http\Controllers\NmiController::class, 'getProviderServers'])->name('providers.servers')->middleware('licensed:mail_infrastructure');
         Route::post('/pools/{pool}/provision', [\App\Http\Controllers\NmiController::class, 'provisionIp'])->name('pools.provision')->middleware('licensed:mail_infrastructure');
     });
 });
@@ -1012,6 +1020,9 @@ Route::prefix('t/pixel')->name('pixel.')->group(function () {
 
 // Unsubscribe Routes (signed URLs from emails)
 Route::get('/unsubscribe/{subscriber}/process-all', [\App\Http\Controllers\UnsubscribeController::class, 'globalUnsubscribeProcess'])->name('subscriber.unsubscribe.global.process');
+// [[unsubscribe_now]]: a page with one button that unsubscribes at once (list, or every list)
+Route::get('/unsubscribe/{subscriber}/now', [\App\Http\Controllers\UnsubscribeController::class, 'now'])->name('subscriber.unsubscribe.now.global');
+Route::get('/unsubscribe/{subscriber}/{list}/now', [\App\Http\Controllers\UnsubscribeController::class, 'now'])->name('subscriber.unsubscribe.now');
 Route::get('/unsubscribe/{subscriber}/{list}', [\App\Http\Controllers\UnsubscribeController::class, 'confirm'])->name('subscriber.unsubscribe.confirm');
 Route::get('/unsubscribe/{subscriber}/{list}/process', [\App\Http\Controllers\UnsubscribeController::class, 'process'])->name('subscriber.unsubscribe.process');
 Route::get('/unsubscribe/{subscriber}', [\App\Http\Controllers\UnsubscribeController::class, 'globalUnsubscribe'])->name('subscriber.unsubscribe.global');
@@ -1024,6 +1035,7 @@ Route::post('/unsubscribe/{subscriber}', [\App\Http\Controllers\UnsubscribeContr
 Route::get('/preferences/{subscriber}', [\App\Http\Controllers\SubscriberPreferencesController::class, 'show'])->name('subscriber.preferences');
 Route::post('/preferences/{subscriber}', [\App\Http\Controllers\SubscriberPreferencesController::class, 'update'])->name('subscriber.preferences.update');
 Route::get('/preferences/{subscriber}/confirm', [\App\Http\Controllers\SubscriberPreferencesController::class, 'confirm'])->name('subscriber.preferences.confirm');
+Route::post('/preferences/{subscriber}/confirm', [\App\Http\Controllers\SubscriberPreferencesController::class, 'applyConfirmed'])->name('subscriber.preferences.confirm.apply');
 
 // GDPR Data Deletion (Right to be Forgotten)
 Route::post('/preferences/{subscriber}/delete', [\App\Http\Controllers\SubscriberPreferencesController::class, 'requestDeletion'])->name('subscriber.data.delete');

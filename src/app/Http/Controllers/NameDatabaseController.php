@@ -43,7 +43,7 @@ class NameDatabaseController extends Controller
         }
 
         $names = $query->orderBy('name')
-            ->paginate(50)
+            ->paginate(max(1, min((int) $request->input('per_page', 50), 200)))
             ->withQueryString();
 
         // Get statistics
@@ -58,6 +58,7 @@ class NameDatabaseController extends Controller
                 'country' => $request->get('country', ''),
                 'gender' => $request->get('gender', ''),
                 'source' => $request->get('source', ''),
+                'per_page' => $request->get('per_page', ''),
             ],
         ]);
     }

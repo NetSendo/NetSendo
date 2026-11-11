@@ -9,6 +9,7 @@ use App\Models\AiIntegration;
 use App\Models\Mailbox;
 use App\Models\Message;
 use App\Models\Subscriber;
+use App\Services\DashboardStatsService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -46,129 +47,14 @@ class GlobalStatsController extends Controller
 
     /**
      * Get dashboard stats (for Dashboard.vue)
+     *
+     * GET /api/dashboard/stats?period=7|30|90
      */
-    public function getDashboardStats()
+    public function getDashboardStats(Request $request, DashboardStatsService $stats)
     {
-        $now = Carbon::now();
-        $startOfMonth = $now->copy()->startOfMonth();
-        $startOfLastMonth = $now->copy()->subMonth()->startOfMonth();
-        $endOfLastMonth = $now->copy()->subMonth()->endOfMonth();
-
-        // Current month stats - count unique subscribers with at least one active list subscription
-        $subscribersCount = Subscriber::whereHas('contactLists', function ($q) {
-            $q->where('contact_list_subscriber.status', 'active');
-        })->count();
-        $contactListsCount = ContactList::count();
-        $aiIntegrationsCount = AiIntegration::count();
-        $mailboxesCount = Mailbox::count();
-        $newSubscribersThisMonth = Subscriber::where('created_at', '>=', $startOfMonth)->count();
-        $newSubscribersLastMonth = Subscriber::whereBetween('created_at', [$startOfLastMonth, $endOfLastMonth])->count();
-
-        // Sent emails (from CRON logs or queue)
-        $emailsSentThisMonth = DB::table('cron_job_logs')
-            ->where('started_at', '>=', $startOfMonth)
-            ->sum('emails_sent') ?? 0;
-        $emailsSentLastMonth = DB::table('cron_job_logs')
-            ->whereBetween('started_at', [$startOfLastMonth, $endOfLastMonth])
-            ->sum('emails_sent') ?? 0;
-
-        // Open and click rate: each recipient of a message counts once, however often they opened
-        // or clicked it. Counting every open event gave rates over 100% (114% seen on a live
-        // instance); opens this month of mail sent last month still count, hence the 100% cap
-        $uniqueThisMonth = fn (string $model) => DB::query()
-            ->fromSub(
-                $model::query()
-                    ->select('message_id', 'subscriber_id')
-                    ->where('created_at', '>=', $startOfMonth)
-                    ->distinct(),
-                'unique_events'
-            )
-            ->count();
-        $opensThisMonth = $uniqueThisMonth(EmailOpen::class);
-        $clicksThisMonth = $uniqueThisMonth(EmailClick::class);
-
-        $openRate = $emailsSentThisMonth > 0
-            ? min(100, round(($opensThisMonth / $emailsSentThisMonth) * 100, 1))
-            : 0;
-
-        $clickRate = $emailsSentThisMonth > 0
-            ? min(100, round(($clicksThisMonth / $emailsSentThisMonth) * 100, 1))
-            : 0;
-
-        // Calculate trends
-        $subscribersTrend = $newSubscribersLastMonth > 0
-            ? round((($newSubscribersThisMonth - $newSubscribersLastMonth) / $newSubscribersLastMonth) * 100, 1)
-            : ($newSubscribersThisMonth > 0 ? 100 : 0);
-
-        $emailsTrend = $emailsSentLastMonth > 0
-            ? round((($emailsSentThisMonth - $emailsSentLastMonth) / $emailsSentLastMonth) * 100, 1)
-            : ($emailsSentThisMonth > 0 ? 100 : 0);
-
-        // Recent campaigns (last 4 messages)
-        $recentCampaigns = Message::with('contactLists')
-            ->orderByDesc('created_at')
-            ->limit(4)
-            ->get()
-            ->map(function ($message) {
-                $opens = EmailOpen::where('message_id', $message->id)->count();
-                $clicks = EmailClick::where('message_id', $message->id)->count();
-
-                return [
-                    'id' => $message->id,
-                    'name' => $message->subject,
-                    'date' => $message->scheduled_at ?? $message->created_at->format('Y-m-d'),
-                    'status' => $message->status,
-                    'opens' => $opens,
-                    'clicks' => $clicks,
-                ];
-            });
-
-        // Activity chart data (last 7 days)
-        $activityChart = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = $now->copy()->subDays($i);
-            $dayStart = $date->copy()->startOfDay();
-            $dayEnd = $date->copy()->endOfDay();
-
-            $emailsSent = DB::table('cron_job_logs')
-                ->whereBetween('started_at', [$dayStart, $dayEnd])
-                ->sum('emails_sent') ?? 0;
-
-            $activityChart[] = [
-                'label' => $date->isoFormat('ddd'),
-                'emails' => (int) $emailsSent,
-                'subscribers' => Subscriber::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
-                'opens' => EmailOpen::whereBetween('created_at', [$dayStart, $dayEnd])->count(),
-            ];
-        }
-
-        return response()->json([
-            'subscribers' => [
-                'total' => $subscribersCount,
-                'formatted' => number_format($subscribersCount, 0, ',', ' '),
-                'trend' => $subscribersTrend,
-            ],
-            'contact_lists_count' => $contactListsCount,
-            'ai_integrations_count' => $aiIntegrationsCount,
-            'mailboxes_count' => $mailboxesCount,
-            'emails_sent' => [
-                'total' => $emailsSentThisMonth,
-                'formatted' => number_format($emailsSentThisMonth, 0, ',', ' '),
-                'trend' => $emailsTrend,
-            ],
-            'open_rate' => [
-                'value' => $openRate,
-                'formatted' => $openRate . '%',
-                'trend' => 0, // Would need historical comparison
-            ],
-            'click_rate' => [
-                'value' => $clickRate,
-                'formatted' => $clickRate . '%',
-                'trend' => 0,
-            ],
-            'recent_campaigns' => $recentCampaigns,
-            'activity_chart' => $activityChart,
-        ]);
+        return response()->json(
+            $stats->forUser($request->user(), (int) $request->query('period', DashboardStatsService::DEFAULT_PERIOD))
+        );
     }
 
     /**
