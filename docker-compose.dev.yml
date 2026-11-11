@@ -203,6 +203,8 @@ services:
     environment:
       - NODE_ENV=development
       - NMI_AUTH_FILE=/opt/haraka/netsendo-storage/nmi-mta/auth.json
+      - NMI_HELO_HOST=${NMI_HELO_HOST:-}
+      - NMI_BIND_MAP=${NMI_BIND_MAP:-}
     networks:
       - netsendo-network
     healthcheck:

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\DedicatedIpAddress;
+use App\Models\DomainConfiguration;
 use App\Models\IpPool;
 use App\Models\IpProviderSetting;
 use App\Services\Nmi\BlacklistMonitorService;
@@ -351,6 +352,86 @@ class NmiController extends Controller
             'success' => true,
             'data' => $mta->probe(),
         ]);
+    }
+
+    /**
+     * The DKIM key of a sending domain: the DNS record to publish and whether it has been
+     * seen. Mail of the domain's NMI mailboxes is signed once it has.
+     */
+    public function getDomainDkim(Request $request, DomainConfiguration $domain): JsonResponse
+    {
+        $this->authorizeDomain($request, $domain);
+
+        return response()->json([
+            'success' => true,
+            'data' => $this->formatDomainDkim($domain),
+        ]);
+    }
+
+    /**
+     * Generate the domain's DKIM key. With `replace` an existing key is thrown away:
+     * mail goes out unsigned until the new record is published and verified.
+     */
+    public function generateDomainDkim(Request $request, DomainConfiguration $domain): JsonResponse
+    {
+        $this->authorizeDomain($request, $domain);
+
+        try {
+            $this->dkimManager->generateForDomain($domain, $request->boolean('replace'));
+        } catch (\RuntimeException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __('nmi.dkim_generated'),
+            'data' => $this->formatDomainDkim($domain->refresh()),
+        ]);
+    }
+
+    /**
+     * Look the domain's DKIM record up in DNS
+     */
+    public function verifyDomainDkim(Request $request, DomainConfiguration $domain): JsonResponse
+    {
+        $this->authorizeDomain($request, $domain);
+
+        $verified = $this->dkimManager->verifyForDomain($domain);
+
+        return response()->json([
+            'success' => true,
+            'message' => $verified ? __('nmi.dkim_verified') : __('nmi.dkim_not_verified'),
+            'data' => $this->formatDomainDkim($domain->refresh()),
+        ]);
+    }
+
+    private function formatDomainDkim(DomainConfiguration $domain): array
+    {
+        $record = $this->dkimManager->getDomainDnsInstructions($domain);
+
+        return [
+            'domain' => $domain->domain,
+            'has_key' => $record !== null,
+            'selector' => $record['selector'] ?? null,
+            'dns_name' => $record['name'] ?? null,
+            'dns_value' => $record['value'] ?? null,
+            'verified' => $domain->nmiDkimReady(),
+            'verified_at' => $domain->nmi_dkim_verified_at?->toIso8601String(),
+            'generated_at' => $domain->nmi_dkim_generated_at?->toIso8601String(),
+            // Dedicated IPs of the domain that carry a key of their own (used while the
+            // domain's key is not verified)
+            'ip_keys' => $domain->dedicatedIps()
+                ->whereNotNull('dkim_selector')
+                ->pluck('id')
+                ->all(),
+        ];
+    }
+
+    private function authorizeDomain(Request $request, DomainConfiguration $domain): void
+    {
+        if ($domain->user_id !== $request->user()->id) {
+            abort(403, 'Unauthorized access to this domain');
+        }
     }
 
     /**

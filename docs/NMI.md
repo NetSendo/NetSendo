@@ -31,8 +31,9 @@ Navigate to **Settings → Mail Infrastructure** in the UI.
 1. Add your sending domain in **Deliverability** and verify it (the CNAME record).
 2. Open **Settings → Mailboxes → Add mailbox** and choose **NetSendo MTA**. The provider is offered when `NMI_ENABLED=true`, the installation has GOLD, and the MTA container answers (the form shows its status and a *Check again* link).
 3. Choose the verified domain. The sender address must be in that domain.
-4. Optionally choose a dedicated IP from your pools. A free IP is assigned to the domain when you save.
-5. Save, then use **Test connection**: the MTA must accept the test message.
+4. Optionally choose a dedicated IP from your pools. A free IP is assigned to the domain when you save. The form says whether the MTA really sends from that address (see [Sending from dedicated IPs](#sending-from-dedicated-ips)).
+5. Save. Open the mailbox again: the **DKIM signature** block shows the TXT record of the domain's key. Publish it in the domain's DNS and click **Verify record**. Mail is signed from then on.
+6. Use **Test connection**: the MTA must accept the test message. The result says if the message went out unsigned or not from the dedicated IP.
 
 There is no login to type in. See [Sending through NMI](#sending-through-nmi) for what happens behind the form.
 
@@ -92,11 +93,51 @@ The MTA only relays mail of a session that has logged in; everything else is ref
 - The file is on the `nmi-auth` volume, which the MTA container mounts read-only at `/opt/haraka/netsendo`. The Haraka plugin `docker/haraka/plugins/netsendo_auth.js` reads it again whenever it changes, so a new or rotated login works without restarting the MTA.
 - Removing a domain removes its login. `php artisan nmi:sync-mta-auth` rewrites the file from the database (scheduled every ten minutes while `NMI_ENABLED=true`), which restores it after the volume was recreated.
 
-### What the dedicated IP does
+### DKIM
 
-- The warming schedule of the IP limits how much the mailbox sends per day, and its counters and reputation are updated.
-- Mail is signed with the DKIM key of the IP (generate it on the IP's page and publish the DNS record). The key belongs to the domain the IP is assigned to, which is why an IP serves one domain. **A mailbox without a dedicated IP is sent unsigned** by NetSendo: sign it elsewhere or use an IP with a key.
-- The MTA container itself sends from the address of the host it runs on. For mail to leave from the dedicated IP, that address has to be routed to the MTA host and used for its outbound connections (host networking and an outbound bind); this is not set up by `docker-compose.yml`.
+Mail is signed by NetSendo before it is handed to the MTA.
+
+- **The domain's key.** Saving an NMI mailbox creates a DKIM key for its domain (2048-bit RSA, the private key encrypted in `domain_configurations.nmi_dkim_private_key`). The mailbox form shows the TXT record (`<selector>._domainkey.<domain>`). Mail is signed with the key **only after the record has been verified**: a signature that points at a record nobody published would only produce `dkim=fail` at the receiver. *Check again* looks the record up once more; if it has disappeared, signing stops.
+- **The key of a dedicated IP** (the IP's page, *Generate DKIM*) is used while the domain's own key is not verified, provided the IP is assigned to the mailbox's domain.
+- Neither: the mail goes out unsigned, and *Test connection* says so.
+- The Deliverability check of the domain looks for these selectors first.
+
+Replacing a domain's key (`POST settings/nmi/domains/{domain}/dkim/generate` with `replace=1`) starts unverified again.
+
+### Sending from dedicated IPs
+
+With a dedicated IP chosen, every message tells the MTA which address to send from and which HELO name belongs to it (the IP's host name). The Haraka plugin `docker/haraka/plugins/netsendo_outbound.js` binds the outbound connection to that address and removes the internal headers. The IP's warming limit and counters apply as before.
+
+The MTA can only send from an address it owns. In the default setup the MTA container sits on NetSendo's Docker network and owns none of the server's addresses, so all mail leaves from the server's main address, whatever IP the mailbox has. The mailbox form shows this under the IP picker ("The MTA does not own this address…"), *Test connection* repeats it, and `docker logs netsendo-mta` has a warning per message.
+
+To send from dedicated IPs:
+
+1. **Configure the addresses on the server** (the provider's panel plus `ip addr add` or netplan), each with a PTR record that points to the IP's host name, and that host name resolving back to the IP.
+2. **Run the MTA on the server's network** with the override file (Linux, Docker Compose 2.24+):
+
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.nmi-host.yml --profile nmi up -d
+   ```
+
+   and in `.env`:
+
+   ```bash
+   NMI_MTA_HOST=10.58.0.1
+   NMI_MTA_PORT=2525
+   ```
+
+   In this mode the MTA listens only on the gateway address of NetSendo's Docker network (`docker/haraka/host-network/smtp.ini`), not on the server's public addresses.
+3. **Translated addresses.** Where the provider maps a public address to a private one on the server (DigitalOcean anchor IPs, Google Cloud, AWS), the server does not own the public address itself. Say which private address belongs to which public one:
+
+   ```bash
+   NMI_BIND_MAP=203.0.113.10=10.19.0.5,203.0.113.11=10.19.0.6
+   ```
+
+4. Open the mailbox form: under the IP picker it now says "The MTA sends from this address".
+
+`NMI_HELO_HOST` sets the HELO name of mail without a dedicated IP (default: the container's host name, which other servers cannot resolve). Use a name that resolves to the server's address and matches its PTR record.
+
+Not every host can do this. A Google Cloud VM, for example, has one external address per network interface, so one such VM cannot send from several dedicated IPs.
 
 ### What the server needs
 
@@ -170,6 +211,8 @@ This picks up the `nmi-auth` volume, the `netsendo_auth` plugin and the new plug
 | `NMI_MTA_PORT`       | `25`           | SMTP port                    |
 | `NMI_MTA_ENCRYPTION` | `none`         | `none` (clear text on the Docker network), `tls` (require STARTTLS) or `ssl` (TLS from the start) |
 | `NMI_MTA_AUTH_FILE`  | `storage/app/nmi-mta/auth.json` | Where the app writes the MTA logins; the MTA reads the same file (`NMI_AUTH_FILE` in its container) |
+| `NMI_HELO_HOST`      | (container name) | HELO name of the MTA for mail without a dedicated IP |
+| `NMI_BIND_MAP`       | (empty)        | Dedicated IPs the provider translates: `public=private,public=private` |
 
 ### IP Warming
 
@@ -298,6 +341,14 @@ The app cannot write to `storage/app/nmi-mta` (the `nmi-auth` volume was created
 docker compose exec -u root app chown dev:www-data /var/www/storage/app/nmi-mta
 ```
 
+### Mail does not come from the dedicated IP
+
+The mailbox form says "The MTA does not own this address" and the MTA log has `dedicated IP … is not an address of this MTA`. The address is not configured on the server, the MTA is not running on the server's network, or a translated address is missing from `NMI_BIND_MAP`. See [Sending from dedicated IPs](#sending-from-dedicated-ips). The addresses the MTA can send from are in its log at start (`can send from: …`).
+
+### The DKIM record does not verify
+
+Look the record up yourself: `dig +short TXT <selector>._domainkey.<domain>`. The value must contain the whole `p=` key from the form (DNS panels split long values into several strings, which is fine). Some panels append the domain to the name: enter only `<selector>._domainkey` there.
+
 ### Mail is accepted but never arrives
 
 `docker logs netsendo-mta` shows every delivery attempt. Timeouts on connecting to the recipients' servers mean outbound port 25 is blocked by the hosting provider (see [What the server needs](#what-the-server-needs)).
@@ -321,3 +372,13 @@ docker compose exec -u root app chown dev:www-data /var/www/storage/app/nmi-mta
 | `/settings/nmi/ips/{id}/warming/start`   | POST       | Start warming    |
 | `/settings/nmi/ips/{id}/dkim/generate`   | POST       | Generate DKIM    |
 | `/settings/nmi/ips/{id}/blacklist/check` | POST       | Check blacklists |
+| `/settings/nmi/mta/status`               | GET        | Whether the MTA answers, and the addresses it can send from |
+| `/settings/nmi/domains/{id}/dkim`        | GET        | DKIM record of a domain and whether it is verified |
+| `/settings/nmi/domains/{id}/dkim/generate` | POST     | Generate the domain's DKIM key (GOLD) |
+| `/settings/nmi/domains/{id}/dkim/verify` | POST       | Look the DKIM record up in DNS |
+
+---
+
+## Testing the MTA
+
+`docker/haraka/test/e2e.sh` builds the MTA image, starts it with three addresses next to a receiving mail server (`docker/haraka/test/sink.py`) and runs the two end-to-end tests of `tests/Feature/NmiMailboxTest.php` that the normal suite skips: login and acceptance, and source address, HELO name and DKIM verification at the receiver. Nothing leaves the test network.

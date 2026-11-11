@@ -4591,7 +4591,26 @@
             "mta_recheck": "Check again",
             "mta_required": "New NetSendo MTA mailboxes can be added once the MTA answers.",
             "sends_as": "NetSendo MTA · {domain}",
-            "no_domain": "NetSendo MTA · no domain"
+            "no_domain": "NetSendo MTA · no domain",
+            "ip_bound": "The MTA sends from this address.",
+            "ip_not_bound": "The MTA does not own this address, so mail will leave from the MTA's own address. To send from dedicated IPs, run the MTA on the server's network (docker-compose.nmi-host.yml, see docs/NMI.md).",
+            "dkim": {
+                "title": "DKIM signature",
+                "loading": "Checking the DKIM key…",
+                "created_on_save": "A DKIM key for this domain is created when you save. Its DNS record will be shown here.",
+                "no_key": "This domain has no DKIM key yet.",
+                "generate": "Generate key",
+                "status_verified": "Verified",
+                "status_pending": "Not verified",
+                "verified": "Mail from this domain is signed with this key.",
+                "pending": "Publish this TXT record in the domain's DNS, then verify it. Until then mail from this mailbox goes out without a DKIM signature.",
+                "pending_ip_key": "Publish this TXT record in the domain's DNS, then verify it. Until then mail is signed with the key of the dedicated IP.",
+                "record_name": "Name (TXT)",
+                "record_value": "Value",
+                "verify": "Verify record",
+                "verify_again": "Check again",
+                "copy": "Copy"
+            }
         }
     },
     "funnels": {

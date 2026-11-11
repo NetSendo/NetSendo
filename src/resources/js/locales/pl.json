@@ -4290,7 +4290,26 @@
             "mta_recheck": "Sprawdź ponownie",
             "mta_required": "Nowe skrzynki NetSendo MTA można dodawać, gdy MTA odpowiada.",
             "sends_as": "NetSendo MTA · {domain}",
-            "no_domain": "NetSendo MTA · brak domeny"
+            "no_domain": "NetSendo MTA · brak domeny",
+            "ip_bound": "MTA wysyła z tego adresu.",
+            "ip_not_bound": "MTA nie ma tego adresu, więc poczta wyjdzie z własnego adresu MTA. Aby wysyłać z dedykowanych adresów IP, uruchom MTA w sieci serwera (docker-compose.nmi-host.yml, zob. docs/NMI.md).",
+            "dkim": {
+                "title": "Podpis DKIM",
+                "loading": "Sprawdzam klucz DKIM…",
+                "created_on_save": "Klucz DKIM dla tej domeny zostanie utworzony przy zapisie. Jego rekord DNS pojawi się tutaj.",
+                "no_key": "Ta domena nie ma jeszcze klucza DKIM.",
+                "generate": "Wygeneruj klucz",
+                "status_verified": "Zweryfikowany",
+                "status_pending": "Niezweryfikowany",
+                "verified": "Poczta z tej domeny jest podpisywana tym kluczem.",
+                "pending": "Opublikuj ten rekord TXT w DNS domeny, a potem go zweryfikuj. Do tego czasu poczta z tej skrzynki wychodzi bez podpisu DKIM.",
+                "pending_ip_key": "Opublikuj ten rekord TXT w DNS domeny, a potem go zweryfikuj. Do tego czasu poczta jest podpisywana kluczem dedykowanego adresu IP.",
+                "record_name": "Nazwa (TXT)",
+                "record_value": "Wartość",
+                "verify": "Zweryfikuj rekord",
+                "verify_again": "Sprawdź ponownie",
+                "copy": "Kopiuj"
+            }
         }
     },
     "sms_providers": {

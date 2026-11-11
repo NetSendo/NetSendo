@@ -40,10 +40,17 @@ class DomainConfiguration extends Model
         'nmi_smtp_username',
         'nmi_smtp_password',
         'nmi_credentials_rotated_at',
+        // NetSendo Mail Infrastructure: the DKIM key the MTA signs this domain's mail with
+        'nmi_dkim_selector',
+        'nmi_dkim_private_key',
+        'nmi_dkim_public_key',
+        'nmi_dkim_generated_at',
+        'nmi_dkim_verified_at',
     ];
 
     protected $hidden = [
         'nmi_smtp_password',
+        'nmi_dkim_private_key',
     ];
 
     protected $casts = [
@@ -60,6 +67,8 @@ class DomainConfiguration extends Model
         'nmi_enabled' => 'boolean',
         'nmi_enabled_at' => 'datetime',
         'nmi_credentials_rotated_at' => 'datetime',
+        'nmi_dkim_generated_at' => 'datetime',
+        'nmi_dkim_verified_at' => 'datetime',
     ];
 
     /**
@@ -161,6 +170,53 @@ class DomainConfiguration extends Model
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    /**
+     * Dedicated IPs assigned to this domain (their DKIM keys are published under it)
+     */
+    public function dedicatedIps()
+    {
+        return $this->hasMany(DedicatedIpAddress::class, 'domain_configuration_id');
+    }
+
+    /**
+     * Set the NMI DKIM private key (auto-encrypt)
+     */
+    public function setNmiDkimPrivateKeyAttribute($value): void
+    {
+        $this->attributes['nmi_dkim_private_key'] = filled($value) ? Crypt::encryptString($value) : null;
+    }
+
+    /**
+     * The NMI DKIM private key as PEM, null when there is none
+     */
+    public function getDecryptedNmiDkimPrivateKey(): ?string
+    {
+        if (empty($this->attributes['nmi_dkim_private_key'])) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($this->attributes['nmi_dkim_private_key']);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    public function hasNmiDkimKey(): bool
+    {
+        return filled($this->nmi_dkim_selector) && filled($this->nmi_dkim_public_key)
+            && ! empty($this->attributes['nmi_dkim_private_key']);
+    }
+
+    /**
+     * Mail is signed with the domain's key once its DNS record has been seen: a signature
+     * that points at a record nobody published only produces "dkim=fail" at the receiver.
+     */
+    public function nmiDkimReady(): bool
+    {
+        return $this->hasNmiDkimKey() && $this->nmi_dkim_verified_at !== null;
     }
 
     /**

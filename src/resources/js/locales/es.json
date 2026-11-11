@@ -4979,7 +4979,26 @@
             "mta_recheck": "Comprobar de nuevo",
             "mta_required": "Se pueden añadir nuevos buzones de NetSendo MTA cuando el MTA responde.",
             "sends_as": "NetSendo MTA · {domain}",
-            "no_domain": "NetSendo MTA · sin dominio"
+            "no_domain": "NetSendo MTA · sin dominio",
+            "ip_bound": "El MTA envía desde esta dirección.",
+            "ip_not_bound": "El MTA no tiene esta dirección, así que el correo saldrá desde la dirección propia del MTA. Para enviar desde IP dedicadas, ejecuta el MTA en la red del servidor (docker-compose.nmi-host.yml, consulta docs/NMI.md).",
+            "dkim": {
+                "title": "Firma DKIM",
+                "loading": "Comprobando la clave DKIM…",
+                "created_on_save": "Al guardar se crea una clave DKIM para este dominio. Su registro DNS aparecerá aquí.",
+                "no_key": "Este dominio aún no tiene clave DKIM.",
+                "generate": "Generar clave",
+                "status_verified": "Verificado",
+                "status_pending": "Sin verificar",
+                "verified": "El correo de este dominio se firma con esta clave.",
+                "pending": "Publica este registro TXT en el DNS del dominio y después verifícalo. Hasta entonces el correo de este buzón sale sin firma DKIM.",
+                "pending_ip_key": "Publica este registro TXT en el DNS del dominio y después verifícalo. Hasta entonces el correo se firma con la clave de la IP dedicada.",
+                "record_name": "Nombre (TXT)",
+                "record_value": "Valor",
+                "verify": "Verificar registro",
+                "verify_again": "Comprobar de nuevo",
+                "copy": "Copiar"
+            }
         }
     },
     "tracked_links": {

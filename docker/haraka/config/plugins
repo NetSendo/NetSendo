@@ -11,3 +11,6 @@ limit
 
 # SMTP AUTH against the logins NetSendo issues (plugins/netsendo_auth.js)
 netsendo_auth
+
+# Dedicated IPs: the address and HELO name a message leaves with (plugins/netsendo_outbound.js)
+netsendo_outbound

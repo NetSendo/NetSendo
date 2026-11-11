@@ -7,7 +7,7 @@ use App\Models\DomainConfiguration;
 use App\Helpers\EmailHtmlDocument;
 use App\Helpers\EmailPlainText;
 use App\Services\Mail\MailProviderInterface;
-use App\Services\Nmi\DkimKeyManager;
+use App\Services\Nmi\MtaStatusService;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 use Symfony\Component\Mime\Email;
@@ -65,10 +65,34 @@ class NmiProvider implements MailProviderInterface
     }
 
     /**
-     * Initialize DKIM signer if keys are available
+     * Headers that tell the MTA where a message leaves from (docker/haraka/plugins/
+     * netsendo_outbound.js). The MTA removes them before delivery, so they must not be
+     * covered by the DKIM signature.
+     */
+    private const MTA_HEADERS = ['X-NMI-Domain', 'X-NMI-IP', 'X-NMI-Helo'];
+
+    /**
+     * Which key signs the mail: 'domain', 'ip' or null (unsigned)
+     */
+    private ?string $dkimSource = null;
+
+    /**
+     * Initialize the DKIM signer.
+     *
+     * The domain's own key signs once its DNS record has been verified. Without one, the
+     * key of the dedicated IP is used, provided the IP is assigned to this domain (its
+     * record is published there). Otherwise the mail goes out unsigned.
      */
     private function initializeDkimSigner(): void
     {
+        if ($this->domain->nmiDkimReady()) {
+            $this->useDkimKey($this->domain->getDecryptedNmiDkimPrivateKey(), $this->domain->nmi_dkim_selector, 'domain');
+        }
+
+        if ($this->dkimSigner !== null) {
+            return;
+        }
+
         if (!$this->dedicatedIp?->dkim_private_key || !$this->dedicatedIp?->dkim_selector) {
             return;
         }
@@ -79,23 +103,50 @@ class NmiProvider implements MailProviderInterface
             return;
         }
 
-        try {
-            $privateKey = $this->dedicatedIp->getDecryptedDkimPrivateKey();
-            if (!$privateKey) {
-                return;
-            }
+        $this->useDkimKey($this->dedicatedIp->getDecryptedDkimPrivateKey(), $this->dedicatedIp->dkim_selector, 'ip');
+    }
 
+    private function useDkimKey(?string $privateKey, string $selector, string $source): void
+    {
+        if (!$privateKey) {
+            return;
+        }
+
+        try {
             $this->dkimSigner = new DkimSigner(
                 $privateKey,
                 $this->domain->domain,
-                $this->dedicatedIp->dkim_selector
+                $selector,
+                ['headers_to_ignore' => self::MTA_HEADERS]
             );
-        } catch (Exception $e) {
+            $this->dkimSource = $source;
+        } catch (\Throwable $e) {
             Log::warning('Failed to initialize DKIM signer', [
                 'domain' => $this->domain->domain,
+                'key' => $source,
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    /**
+     * The internal headers of a message: the sending domain and, with a dedicated IP,
+     * the address the MTA must send from and the HELO name that belongs to it.
+     */
+    private function mtaHeaders(): array
+    {
+        $headers = ['X-NMI-Domain' => $this->domain->domain];
+
+        if ($this->dedicatedIp) {
+            $headers['X-NMI-IP'] = $this->dedicatedIp->ip_address;
+
+            $hostname = strtolower(trim((string) $this->dedicatedIp->hostname));
+            if ($hostname !== '' && filter_var($hostname, FILTER_VALIDATE_DOMAIN, FILTER_FLAG_HOSTNAME) && str_contains($hostname, '.')) {
+                $headers['X-NMI-Helo'] = $hostname;
+            }
+        }
+
+        return $headers;
     }
 
     /**
@@ -147,11 +198,8 @@ class NmiProvider implements MailProviderInterface
                 unset($headers['Return-Path']);
             }
 
-            // Add NMI-specific headers
-            $headers['X-NMI-Domain'] = $this->domain->domain;
-            if ($this->dedicatedIp) {
-                $headers['X-NMI-IP'] = $this->dedicatedIp->ip_address;
-            }
+            // Where the MTA sends this message from (removed by the MTA before delivery)
+            $headers = array_merge($headers, $this->mtaHeaders());
 
             // Add custom headers
             foreach ($headers as $name => $value) {
@@ -241,19 +289,39 @@ class NmiProvider implements MailProviderInterface
                 ->subject('NMI Connection Test')
                 ->text('This is a connection test from NetSendo Mail Infrastructure.');
 
+            foreach ($this->mtaHeaders() as $name => $value) {
+                $email->getHeaders()->addTextHeader($name, $value);
+            }
+
             if ($this->dkimSigner) {
                 $email = $this->dkimSigner->sign($email);
             }
 
             $this->mailer->send($email);
 
+            // What the person should know about how this mail left: unsigned, or not
+            // from the dedicated IP they chose
+            $notes = [];
+            $sentFromIp = $this->dedicatedIp
+                ? app(MtaStatusService::class)->canSendFrom($this->dedicatedIp->ip_address)
+                : null;
+
+            if ($sentFromIp === false) {
+                $notes[] = __('mailboxes.nmi.test.ip_not_on_mta', ['ip' => $this->dedicatedIp->ip_address]);
+            }
+            if ($this->dkimSigner === null) {
+                $notes[] = __('mailboxes.nmi.test.unsigned');
+            }
+
             return [
                 'success' => true,
-                'message' => 'Connection successful! Test email sent via NMI.',
+                'message' => trim('Connection successful! Test email sent via NMI. ' . implode(' ', $notes)),
                 'details' => [
                     'domain' => $this->domain->domain,
                     'ip' => $this->dedicatedIp?->ip_address ?? 'Shared Pool',
+                    'sent_from_dedicated_ip' => $sentFromIp,
                     'dkim_enabled' => $this->dkimSigner !== null,
+                    'dkim_key' => $this->dkimSource,
                     'warming_status' => $this->dedicatedIp?->warming_status ?? 'N/A',
                 ],
             ];
@@ -291,6 +359,7 @@ class NmiProvider implements MailProviderInterface
             'sent_today' => $this->dedicatedIp?->sent_today ?? 0,
             'remaining' => $this->getRemainingCapacity(),
             'dkim_enabled' => $this->dkimSigner !== null,
+            'dkim_key' => $this->dkimSource,
             'reputation_score' => $this->dedicatedIp?->reputation_score ?? 100,
             'blacklisted' => $this->dedicatedIp?->isBlacklisted() ?? false,
         ];

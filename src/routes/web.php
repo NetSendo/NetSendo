@@ -953,6 +953,11 @@ Route::middleware(['auth', '2fa'])->group(function () {
         // MTA Status
         Route::get('/mta/status', [\App\Http\Controllers\NmiController::class, 'getMtaStatus'])->name('mta.status');
 
+        // DKIM key of a sending domain (signs the mail of its NMI mailboxes)
+        Route::get('/domains/{domain}/dkim', [\App\Http\Controllers\NmiController::class, 'getDomainDkim'])->name('domains.dkim.show');
+        Route::post('/domains/{domain}/dkim/generate', [\App\Http\Controllers\NmiController::class, 'generateDomainDkim'])->name('domains.dkim.generate')->middleware('licensed:mail_infrastructure');
+        Route::post('/domains/{domain}/dkim/verify', [\App\Http\Controllers\NmiController::class, 'verifyDomainDkim'])->name('domains.dkim.verify');
+
         // IP Providers
         Route::get('/providers', [\App\Http\Controllers\NmiController::class, 'getProviderSettings'])->name('providers.index');
         Route::post('/providers', [\App\Http\Controllers\NmiController::class, 'saveProviderSettings'])->name('providers.store')->middleware('licensed:mail_infrastructure');

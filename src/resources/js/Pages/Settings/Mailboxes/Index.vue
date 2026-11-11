@@ -359,6 +359,107 @@ watch(
     },
 );
 
+// One spelling per address, so IPv6 written differently compares equal
+const normaliseIp = (ip) => {
+    const value = String(ip ?? "").trim().toLowerCase();
+    if (!value.includes(":")) return value;
+    try {
+        return new URL(`http://[${value}]/`).hostname.slice(1, -1);
+    } catch (error) {
+        return value;
+    }
+};
+
+// Whether the MTA really sends from the chosen dedicated IP: it lists the addresses it
+// owns (settings.nmi.mta.status). null = no IP chosen, or the MTA does not say.
+const nmiIpBound = computed(() => {
+    const ip = props.nmi.ips.find((option) => option.id === form.dedicated_ip_id);
+    const addresses = mtaStatus.value?.bind_addresses;
+    if (!ip || !Array.isArray(addresses)) return null;
+
+    return addresses.map(normaliseIp).includes(normaliseIp(ip.ip_address));
+});
+
+// DKIM key of the chosen domain: its DNS record and whether it has been verified
+const nmiDkim = ref(null);
+const nmiDkimLoading = ref(false);
+const nmiDkimBusy = ref(null);
+let nmiDkimRequest = 0;
+
+const jsonHeaders = () => ({
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content,
+    "X-Requested-With": "XMLHttpRequest",
+});
+
+const loadNmiDkim = async () => {
+    const domainId = form.domain_configuration_id;
+    const request = ++nmiDkimRequest;
+    nmiDkim.value = null;
+
+    if (!showModal.value || form.provider !== "nmi" || !domainId) return;
+
+    nmiDkimLoading.value = true;
+    try {
+        const response = await fetch(
+            route("settings.nmi.domains.dkim.show", domainId),
+            { headers: jsonHeaders() },
+        );
+        const payload = await response.json();
+        // The domain may have been changed while the answer was on its way
+        if (request === nmiDkimRequest) {
+            nmiDkim.value = response.ok ? payload.data : null;
+        }
+    } catch (error) {
+        if (request === nmiDkimRequest) nmiDkim.value = null;
+    } finally {
+        if (request === nmiDkimRequest) nmiDkimLoading.value = false;
+    }
+};
+
+watch(
+    [() => form.domain_configuration_id, () => form.provider, showModal],
+    loadNmiDkim,
+);
+
+// The mail is signed with the key of the dedicated IP while the domain's is not verified
+const nmiDkimIpKey = computed(
+    () => !!nmiDkim.value?.ip_keys?.includes(form.dedicated_ip_id),
+);
+
+const nmiDkimAction = async (action) => {
+    if (!nmiDkim.value || nmiDkimBusy.value) return;
+
+    const domainId = form.domain_configuration_id;
+    nmiDkimBusy.value = action;
+    try {
+        const response = await fetch(
+            route(`settings.nmi.domains.dkim.${action}`, domainId),
+            { method: "POST", headers: jsonHeaders(), body: "{}" },
+        );
+        const payload = await response.json();
+
+        if (response.status === 402) {
+            requireGold(NMI_FEATURE);
+            return;
+        }
+        if (payload.data && domainId === form.domain_configuration_id) {
+            nmiDkim.value = payload.data;
+        }
+        if (payload.message) {
+            showToast(
+                payload.message,
+                response.ok && (action !== "verify" || payload.data?.verified),
+            );
+        }
+    } catch (error) {
+        showToast(t("common.error") + ": " + error.message, false);
+    } finally {
+        nmiDkimBusy.value = null;
+    }
+};
+
 // Current provider fields
 const currentProviderFields = computed(() => {
     return props.providerFields[form.provider] || [];
@@ -1707,6 +1808,179 @@ const isBroadcastDisabled = computed(() => {
                                         {{ $t("mailboxes.nmi.manage_ips") }}
                                     </Link>
                                 </p>
+                                <!-- Whether mail really leaves from the chosen address -->
+                                <p
+                                    v-if="nmiIpBound !== null"
+                                    class="mt-1 text-xs"
+                                    :class="
+                                        nmiIpBound
+                                            ? 'text-emerald-600 dark:text-emerald-400'
+                                            : 'text-amber-700 dark:text-amber-300'
+                                    "
+                                    data-test="nmi-ip-bound"
+                                >
+                                    {{
+                                        nmiIpBound
+                                            ? $t("mailboxes.nmi.ip_bound")
+                                            : $t("mailboxes.nmi.ip_not_bound")
+                                    }}
+                                </p>
+                            </div>
+
+                            <!-- DKIM key of the domain: the record to publish, verified or not -->
+                            <div
+                                v-if="form.domain_configuration_id"
+                                class="rounded-lg border border-gray-200 bg-white p-3 dark:border-slate-600 dark:bg-slate-800"
+                                data-test="nmi-dkim"
+                            >
+                                <div class="flex items-center justify-between gap-2">
+                                    <span
+                                        class="text-sm font-medium text-gray-700 dark:text-gray-300"
+                                    >
+                                        {{ $t("mailboxes.nmi.dkim.title") }}
+                                    </span>
+                                    <span
+                                        v-if="nmiDkim?.has_key"
+                                        class="rounded-full px-2 py-0.5 text-xs font-medium"
+                                        :class="
+                                            nmiDkim.verified
+                                                ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                                                : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-200'
+                                        "
+                                    >
+                                        {{
+                                            nmiDkim.verified
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.status_verified",
+                                                  )
+                                                : $t(
+                                                      "mailboxes.nmi.dkim.status_pending",
+                                                  )
+                                        }}
+                                    </span>
+                                </div>
+
+                                <p
+                                    v-if="nmiDkimLoading"
+                                    class="mt-2 text-xs text-gray-500 dark:text-gray-400"
+                                >
+                                    {{ $t("mailboxes.nmi.dkim.loading") }}
+                                </p>
+
+                                <!-- No key yet -->
+                                <div
+                                    v-else-if="!nmiDkim?.has_key"
+                                    class="mt-2 flex flex-wrap items-center justify-between gap-2"
+                                >
+                                    <p
+                                        class="text-xs text-gray-500 dark:text-gray-400"
+                                    >
+                                        {{
+                                            modalMode === "create"
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.created_on_save",
+                                                  )
+                                                : $t("mailboxes.nmi.dkim.no_key")
+                                        }}
+                                    </p>
+                                    <button
+                                        v-if="
+                                            nmiDkim &&
+                                            modalMode === 'edit' &&
+                                            !nmiLocked
+                                        "
+                                        type="button"
+                                        class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
+                                        :disabled="nmiDkimBusy !== null"
+                                        @click="nmiDkimAction('generate')"
+                                    >
+                                        {{ $t("mailboxes.nmi.dkim.generate") }}
+                                    </button>
+                                </div>
+
+                                <!-- The record to publish -->
+                                <div v-else class="mt-2 space-y-2">
+                                    <p
+                                        class="text-xs"
+                                        :class="
+                                            nmiDkim.verified
+                                                ? 'text-emerald-600 dark:text-emerald-400'
+                                                : 'text-amber-700 dark:text-amber-300'
+                                        "
+                                    >
+                                        {{
+                                            nmiDkim.verified
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.verified",
+                                                  )
+                                                : nmiDkimIpKey
+                                                  ? $t(
+                                                        "mailboxes.nmi.dkim.pending_ip_key",
+                                                    )
+                                                  : $t(
+                                                        "mailboxes.nmi.dkim.pending",
+                                                    )
+                                        }}
+                                    </p>
+                                    <div
+                                        v-for="field in [
+                                            {
+                                                label: $t(
+                                                    'mailboxes.nmi.dkim.record_name',
+                                                ),
+                                                value: nmiDkim.dns_name,
+                                            },
+                                            {
+                                                label: $t(
+                                                    'mailboxes.nmi.dkim.record_value',
+                                                ),
+                                                value: nmiDkim.dns_value,
+                                            },
+                                        ]"
+                                        :key="field.label"
+                                    >
+                                        <div
+                                            class="flex items-center justify-between"
+                                        >
+                                            <span
+                                                class="text-xs font-medium text-gray-600 dark:text-gray-400"
+                                            >
+                                                {{ field.label }}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                class="text-xs font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+                                                @click="
+                                                    copyToClipboard(field.value)
+                                                "
+                                            >
+                                                {{
+                                                    $t(
+                                                        "mailboxes.nmi.dkim.copy",
+                                                    )
+                                                }}
+                                            </button>
+                                        </div>
+                                        <code
+                                            class="mt-0.5 block max-h-24 overflow-auto break-all rounded bg-gray-100 px-2 py-1 text-xs text-gray-800 dark:bg-slate-900 dark:text-gray-200"
+                                            >{{ field.value }}</code
+                                        >
+                                    </div>
+                                    <button
+                                        type="button"
+                                        class="rounded-md border border-gray-300 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-500 dark:text-gray-200 dark:hover:bg-slate-700"
+                                        :disabled="nmiDkimBusy !== null"
+                                        @click="nmiDkimAction('verify')"
+                                    >
+                                        {{
+                                            nmiDkim.verified
+                                                ? $t(
+                                                      "mailboxes.nmi.dkim.verify_again",
+                                                  )
+                                                : $t("mailboxes.nmi.dkim.verify")
+                                        }}
+                                    </button>
+                                </div>
                             </div>
                         </div>
 

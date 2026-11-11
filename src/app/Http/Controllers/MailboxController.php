@@ -12,6 +12,7 @@ use App\Services\Mail\BounceWebhookAuthenticator;
 use App\Services\Mail\MailProviderService;
 use App\Services\Mail\MailboxReputationService;
 use App\Services\Mail\ReplyMailboxService;
+use App\Services\Nmi\DkimKeyManager;
 use App\Services\Nmi\MtaCredentialService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +30,8 @@ class MailboxController extends Controller
         private MailboxReputationService $reputationService,
         private ReplyMailboxService $replyService,
         private MtaCredentialService $mtaCredentials,
-        private LicenseService $license
+        private LicenseService $license,
+        private DkimKeyManager $dkimKeys
     ) {}
 
     /**
@@ -661,6 +663,14 @@ class MailboxController extends Controller
             throw ValidationException::withMessages([
                 'domain_configuration_id' => __('mailboxes.nmi.errors.mta_login_file', ['file' => $this->mtaCredentials->authFile()]),
             ]);
+        }
+
+        // The domain's DKIM key, so its DNS record can be published right away. Without
+        // it the mailbox still sends (unsigned), so a failure here does not stop the save.
+        try {
+            $this->dkimKeys->generateForDomain($domain);
+        } catch (\RuntimeException $e) {
+            report($e);
         }
 
         return ['domain' => $domain, 'ip' => $ip];

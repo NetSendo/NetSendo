@@ -66,6 +66,11 @@ return [
             'mta_login_file' => 'NetSendo could not write the MTA login file (:file). Check that the directory exists and is writable, then save again.',
             'mta_login_refused' => 'The MTA does not know this domain\'s login: it must read the login file NetSendo writes (the nmi-auth volume in docker-compose.yml).',
         ],
+        // Added to the result of "Test connection" of an NMI mailbox
+        'test' => [
+            'ip_not_on_mta' => 'Note: the MTA does not own :ip, so this message left from the MTA\'s own address.',
+            'unsigned' => 'Note: the message was not DKIM-signed. Publish the domain\'s DKIM record and verify it in the mailbox form.',
+        ],
     ],
 
     // Field names in validation messages of the mailbox form

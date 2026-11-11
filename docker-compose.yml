@@ -353,6 +353,12 @@ services:
       - nmi-tls:/opt/haraka/config/tls
     environment:
       - NODE_ENV=production
+      # HELO name of the MTA: a host name that resolves to the server's address and
+      # that the address's PTR record points to (default: the container's own name)
+      - NMI_HELO_HOST=${NMI_HELO_HOST:-}
+      # Dedicated IPs the provider translates to a private address on the server:
+      # "public=private,public=private" (see docker-compose.nmi-host.yml)
+      - NMI_BIND_MAP=${NMI_BIND_MAP:-}
     networks:
       - netsendo-network
     healthcheck:

@@ -8836,7 +8836,26 @@
             "mta_recheck": "Erneut prüfen",
             "mta_required": "Neue NetSendo-MTA-Postfächer können angelegt werden, sobald der MTA antwortet.",
             "sends_as": "NetSendo MTA · {domain}",
-            "no_domain": "NetSendo MTA · keine Domain"
+            "no_domain": "NetSendo MTA · keine Domain",
+            "ip_bound": "Der MTA sendet von dieser Adresse.",
+            "ip_not_bound": "Der MTA besitzt diese Adresse nicht, daher verlässt die E-Mail den MTA über dessen eigene Adresse. Um von dedizierten IPs zu senden, betreiben Sie den MTA im Netzwerk des Servers (docker-compose.nmi-host.yml, siehe docs/NMI.md).",
+            "dkim": {
+                "title": "DKIM-Signatur",
+                "loading": "DKIM-Schlüssel wird geprüft…",
+                "created_on_save": "Beim Speichern wird ein DKIM-Schlüssel für diese Domain erstellt. Der DNS-Eintrag wird hier angezeigt.",
+                "no_key": "Diese Domain hat noch keinen DKIM-Schlüssel.",
+                "generate": "Schlüssel erzeugen",
+                "status_verified": "Verifiziert",
+                "status_pending": "Nicht verifiziert",
+                "verified": "E-Mails dieser Domain werden mit diesem Schlüssel signiert.",
+                "pending": "Veröffentlichen Sie diesen TXT-Eintrag im DNS der Domain und verifizieren Sie ihn dann. Bis dahin gehen E-Mails dieses Postfachs ohne DKIM-Signatur hinaus.",
+                "pending_ip_key": "Veröffentlichen Sie diesen TXT-Eintrag im DNS der Domain und verifizieren Sie ihn dann. Bis dahin wird mit dem Schlüssel der dedizierten IP signiert.",
+                "record_name": "Name (TXT)",
+                "record_value": "Wert",
+                "verify": "Eintrag verifizieren",
+                "verify_again": "Erneut prüfen",
+                "copy": "Kopieren"
+            }
         }
     },
     "mcp": {
