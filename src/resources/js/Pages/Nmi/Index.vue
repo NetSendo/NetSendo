@@ -120,27 +120,32 @@ const addIpToPool = async () => {
     }
 };
 
-// Provision IP modal
+// ---- IP providers: companies whose API can order an address for the server ----
+// vultr and linode can order; digitalocean cannot be used for mail (it is listed so an
+// old connection can be removed); "other" is the manual route.
+const ORDERABLE_PROVIDERS = ["vultr", "linode"];
+const GUIDE_STEPS = { vultr: 5, linode: 6, digitalocean: 1, other: 5 };
+
+// Order an address (modal)
 const showProvision = ref(false);
 const provisionPoolId = ref(null);
 const providers = ref([]);
-const regions = ref([]);
-const provisionForm = ref({
-    provider: "",
-    region: "",
-});
+const servers = ref([]);
+const provisionForm = ref({ provider: "", server_id: "", hostname: "" });
 const provisioning = ref(false);
 const provisionError = ref("");
 const loadingProviders = ref(false);
-const loadingRegions = ref(false);
+const loadingServers = ref(false);
+const provisioned = ref(null);
 
+// Connected providers that can order an address
 const loadProviders = async () => {
     loadingProviders.value = true;
     try {
         const response = await axios.get(route("settings.nmi.providers.index"));
         providers.value = Object.entries(response.data.data.providers)
-            .filter(([_, p]) => p.configured && p.enabled)
-            .map(([key, p]) => ({ id: key, ...p }));
+            .filter(([id, p]) => p.configured && ORDERABLE_PROVIDERS.includes(id))
+            .map(([id, p]) => ({ id, name: p.name }));
     } catch (error) {
         providers.value = [];
     } finally {
@@ -148,29 +153,52 @@ const loadProviders = async () => {
     }
 };
 
-const loadRegions = async (provider) => {
-    if (!provider) {
-        regions.value = [];
-        return;
-    }
-    loadingRegions.value = true;
+const loadServers = async (provider) => {
+    servers.value = [];
+    provisionForm.value.server_id = "";
+    if (!provider) return;
+
+    loadingServers.value = true;
+    provisionError.value = "";
     try {
-        const response = await axios.get(route("settings.nmi.providers.regions", provider));
-        regions.value = Object.entries(response.data.data.regions).map(([id, name]) => ({ id, name }));
+        const response = await axios.get(route("settings.nmi.providers.servers", provider));
+        servers.value = response.data.data.servers;
+        // One server in the account: that is the one
+        if (servers.value.length === 1) {
+            provisionForm.value.server_id = servers.value[0].id;
+        }
     } catch (error) {
-        regions.value = [];
+        provisionError.value = error.response?.data?.message || t("common.error");
     } finally {
-        loadingRegions.value = false;
+        loadingServers.value = false;
     }
 };
 
+const serverLabel = (server) =>
+    [
+        server.label,
+        server.region,
+        server.addresses?.[0],
+        server.smtp_restricted ? t("nmi.provision.smtp_restricted") : null,
+    ]
+        .filter(Boolean)
+        .join(" · ");
+
 const openProvisionModal = (poolId) => {
     provisionPoolId.value = poolId;
-    provisionForm.value = { provider: "", region: "" };
+    provisionForm.value = { provider: "", server_id: "", hostname: "" };
     provisionError.value = "";
-    regions.value = [];
+    provisioned.value = null;
+    servers.value = [];
     showProvision.value = true;
     loadProviders();
+};
+
+const closeProvisionModal = () => {
+    showProvision.value = false;
+    if (provisioned.value) {
+        router.reload({ only: ["pools", "ips", "stats"] });
+    }
 };
 
 const provisionIp = async () => {
@@ -178,37 +206,57 @@ const provisionIp = async () => {
     provisionError.value = "";
 
     try {
-        await axios.post(route("settings.nmi.pools.provision", provisionPoolId.value), provisionForm.value);
-        showProvision.value = false;
-        router.reload({ only: ["pools", "ips", "stats"] });
+        const response = await axios.post(
+            route("settings.nmi.pools.provision", provisionPoolId.value),
+            provisionForm.value,
+        );
+        provisioned.value = {
+            ...response.data.data,
+            provider: provisionForm.value.provider,
+            hostname: provisionForm.value.hostname.trim().toLowerCase(),
+        };
     } catch (error) {
-        provisionError.value = error.response?.data?.message || t("common.error");
+        const data = error.response?.data;
+        provisionError.value =
+            Object.values(data?.errors || {})[0]?.[0] || data?.message || t("common.error");
     } finally {
         provisioning.value = false;
     }
 };
 
-// Watch provider changes to load regions
-const onProviderChange = (provider) => {
-    provisionForm.value.region = "";
-    loadRegions(provider);
-};
+// What is left to do after an address was ordered, in order
+const nextSteps = computed(() => {
+    const ip = provisioned.value;
+    if (!ip) return [];
 
-// Provider Settings Modal
+    const values = { ip: ip.ip_address, hostname: ip.hostname };
+    const keys = ["a_record"];
+    if (ip.provider === "vultr") keys.push("vultr_os");
+    if (ip.provider === "linode") {
+        if (!ip.reverse_dns?.set) keys.push("linode_ptr");
+        keys.push("linode_os");
+    }
+    keys.push("host_network", "finish");
+
+    return keys.map((key) => t(`nmi.provision.next.${key}`, values));
+});
+
+const onProviderChange = (provider) => loadServers(provider);
+
+// Configure providers (modal)
 const showProviderSettings = ref(false);
 const providerSettings = ref({});
 const loadingSettings = ref(false);
 const savingProvider = ref(null);
-const providerApiKeys = ref({
-    vultr: "",
-    linode: "",
-    digitalocean: "",
-});
+const providerApiKeys = ref({ vultr: "", linode: "" });
+const providerErrors = ref({});
+const providerAccounts = ref({});
 
 const openProviderSettings = async () => {
     showProviderSettings.value = true;
     loadingSettings.value = true;
-    providerApiKeys.value = { vultr: "", linode: "", digitalocean: "" };
+    providerApiKeys.value = { vultr: "", linode: "" };
+    providerErrors.value = {};
 
     try {
         const response = await axios.get(route("settings.nmi.providers.index"));
@@ -220,8 +268,10 @@ const openProviderSettings = async () => {
     }
 };
 
+// The key is checked with the provider before it is stored: a refusal comes back here
 const saveProviderApiKey = async (provider) => {
     savingProvider.value = provider;
+    providerErrors.value = { ...providerErrors.value, [provider]: "" };
 
     try {
         const response = await axios.post(route("settings.nmi.providers.store"), {
@@ -230,9 +280,16 @@ const saveProviderApiKey = async (provider) => {
             enabled: true,
         });
         providerSettings.value = response.data.data.providers;
+        providerAccounts.value = {
+            ...providerAccounts.value,
+            [provider]: response.data.data.account?.name || response.data.data.account?.email || "",
+        };
         providerApiKeys.value[provider] = "";
     } catch (error) {
-        console.error("Failed to save provider:", error);
+        providerErrors.value = {
+            ...providerErrors.value,
+            [provider]: error.response?.data?.message || t("common.error"),
+        };
     } finally {
         savingProvider.value = null;
     }
@@ -248,8 +305,12 @@ const removeProvider = async (provider) => {
             enabled: false,
         });
         providerSettings.value = response.data.data.providers;
+        providerAccounts.value = { ...providerAccounts.value, [provider]: "" };
     } catch (error) {
-        console.error("Failed to remove provider:", error);
+        providerErrors.value = {
+            ...providerErrors.value,
+            [provider]: error.response?.data?.message || t("common.error"),
+        };
     } finally {
         savingProvider.value = null;
     }
@@ -659,6 +720,7 @@ const removeProvider = async (provider) => {
                     </button>
 
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t("nmi.add_ip.title") }}</h3>
+                    <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ $t("nmi.add_ip.manual_hint") }}</p>
 
                     <form @submit.prevent="addIpToPool" class="mt-6 space-y-4">
                         <!-- Error Alert -->
@@ -719,11 +781,11 @@ const removeProvider = async (provider) => {
             </div>
         </Teleport>
 
-        <!-- Provision IP Modal -->
+        <!-- Order an address from a provider -->
         <Teleport to="body">
-            <div v-if="showProvision" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                <div class="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
-                    <button @click="showProvision = false" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+            <div v-if="showProvision" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                <div class="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800" data-test="nmi-provision">
+                    <button @click="closeProvisionModal" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
@@ -738,21 +800,61 @@ const removeProvider = async (provider) => {
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t("nmi.provision.title") }}</h3>
                     </div>
 
-                    <form @submit.prevent="provisionIp" class="mt-6 space-y-4">
+                    <!-- Ordered: what is left to do -->
+                    <div v-if="provisioned" class="mt-6 space-y-4" data-test="nmi-provisioned">
+                        <div class="rounded-lg bg-emerald-50 p-4 text-sm text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                            <p class="font-medium">{{ $t("nmi.provision.done_title", { ip: provisioned.ip_address }) }}</p>
+                            <p v-if="provisioned.reverse_dns?.set" class="mt-1">
+                                {{ $t("nmi.provision.ptr_set", { hostname: provisioned.hostname }) }}
+                            </p>
+                        </div>
+                        <div
+                            v-if="provisioned.reverse_dns?.supported && !provisioned.reverse_dns?.set"
+                            class="rounded-lg bg-amber-50 p-4 text-sm text-amber-800 dark:bg-amber-900/30 dark:text-amber-300"
+                        >
+                            {{ $t("nmi.provision.ptr_not_set", { reason: provisioned.reverse_dns.message }) }}
+                        </div>
+
+                        <div>
+                            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ $t("nmi.provision.next_title") }}</p>
+                            <ol class="mt-2 list-decimal space-y-2 pl-5 text-sm text-gray-700 dark:text-gray-300">
+                                <li v-for="step in nextSteps" :key="step">{{ step }}</li>
+                            </ol>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-2">
+                            <Link
+                                :href="route('settings.nmi.ips.show', provisioned.id)"
+                                class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700"
+                            >
+                                {{ $t("nmi.provision.open_ip") }}
+                            </Link>
+                            <button
+                                type="button"
+                                @click="closeProvisionModal"
+                                class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+                            >
+                                {{ $t("nmi.provision.done") }}
+                            </button>
+                        </div>
+                    </div>
+
+                    <form v-else @submit.prevent="provisionIp" class="mt-6 space-y-4">
                         <!-- Error Alert -->
-                        <div v-if="provisionError" class="rounded-lg bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400">
+                        <div v-if="provisionError" class="rounded-lg bg-rose-50 p-4 text-sm text-rose-700 dark:bg-rose-900/30 dark:text-rose-400" role="alert">
                             {{ provisionError }}
                         </div>
 
-                        <!-- No Providers Warning -->
+                        <!-- No provider connected -->
                         <div v-if="!loadingProviders && providers.length === 0" class="rounded-lg bg-amber-50 p-4 text-sm text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
-                            {{ $t("nmi.provision.no_providers") }}
+                            {{ $t("nmi.provision.connect_first") }}
                         </div>
 
-                        <div v-else>
+                        <template v-else>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t("nmi.provision.provider") }}</label>
+                                <label for="provision-provider" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t("nmi.provision.provider") }}</label>
                                 <select
+                                    id="provision-provider"
                                     v-model="provisionForm.provider"
                                     @change="onProviderChange(provisionForm.provider)"
                                     required
@@ -766,33 +868,58 @@ const removeProvider = async (provider) => {
                                 </select>
                             </div>
 
-                            <div class="mt-4">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t("nmi.provision.region") }}</label>
+                            <div>
+                                <label for="provision-server" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t("nmi.provision.server") }}</label>
                                 <select
-                                    v-model="provisionForm.region"
+                                    id="provision-server"
+                                    v-model="provisionForm.server_id"
                                     required
-                                    :disabled="!provisionForm.provider || loadingRegions"
-                                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                    :disabled="!provisionForm.provider || loadingServers"
+                                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 disabled:opacity-60 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
                                 >
-                                    <option value="">{{ $t("nmi.provision.select_region") }}</option>
-                                    <option v-for="region in regions" :key="region.id" :value="region.id">
-                                        {{ region.name }}
+                                    <option value="">
+                                        {{ loadingServers ? $t("nmi.provision.loading_servers") : $t("nmi.provision.select_server") }}
+                                    </option>
+                                    <option v-for="server in servers" :key="server.id" :value="server.id">
+                                        {{ serverLabel(server) }}
                                     </option>
                                 </select>
+                                <p
+                                    v-if="provisionForm.provider && !loadingServers && !provisionError && servers.length === 0"
+                                    class="mt-1 text-sm text-amber-700 dark:text-amber-300"
+                                >
+                                    {{ $t("nmi.provision.no_servers") }}
+                                </p>
                             </div>
-                        </div>
+
+                            <div>
+                                <label for="provision-hostname" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ $t("nmi.provision.hostname") }}</label>
+                                <input
+                                    id="provision-hostname"
+                                    v-model="provisionForm.hostname"
+                                    type="text"
+                                    required
+                                    autocomplete="off"
+                                    :placeholder="$t('nmi.provision.hostname_placeholder')"
+                                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                />
+                                <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $t("nmi.provision.hostname_help") }}</p>
+                            </div>
+
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $t("nmi.provision.cost_note") }}</p>
+                        </template>
 
                         <div class="flex justify-end gap-3 pt-4">
                             <button
                                 type="button"
-                                @click="showProvision = false"
+                                @click="closeProvisionModal"
                                 class="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-slate-600 dark:text-gray-300 dark:hover:bg-slate-700"
                             >
                                 {{ $t("nmi.provision.cancel") }}
                             </button>
                             <button
                                 type="submit"
-                                :disabled="provisioning || providers.length === 0 || !provisionForm.provider || !provisionForm.region"
+                                :disabled="provisioning || !provisionForm.provider || !provisionForm.server_id || !provisionForm.hostname"
                                 class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
                             >
                                 {{ provisioning ? $t("nmi.provision.provisioning") : $t("nmi.provision.submit") }}
@@ -803,10 +930,10 @@ const removeProvider = async (provider) => {
             </div>
         </Teleport>
 
-        <!-- Provider Settings Modal -->
+        <!-- Configure providers: connect an API key, with how to get one -->
         <Teleport to="body">
-            <div v-if="showProviderSettings" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-                <div class="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800">
+            <div v-if="showProviderSettings" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                <div class="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800" data-test="nmi-providers">
                     <button @click="showProviderSettings = false" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -823,18 +950,27 @@ const removeProvider = async (provider) => {
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-white">{{ $t("nmi.providers.settings_title") }}</h3>
                     </div>
 
+                    <p class="mt-4 text-sm text-gray-600 dark:text-gray-300">{{ $t("nmi.providers.intro") }}</p>
+
                     <div v-if="loadingSettings" class="mt-6 flex justify-center py-8">
                         <div class="h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-indigo-600"></div>
                     </div>
 
                     <div v-else class="mt-6 space-y-4">
-                        <!-- Provider List -->
-                        <div v-for="(settings, provider) in providerSettings" :key="provider" class="rounded-lg border border-gray-200 p-4 dark:border-slate-700">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-3">
+                        <div
+                            v-for="(settings, provider) in providerSettings"
+                            :key="provider"
+                            class="rounded-lg border border-gray-200 p-4 dark:border-slate-700"
+                            :data-test="`nmi-provider-${provider}`"
+                        >
+                            <div class="flex items-center justify-between gap-3">
+                                <div class="flex flex-wrap items-center gap-2">
                                     <span class="font-medium text-gray-900 dark:text-white">{{ settings.name }}</span>
-                                    <span v-if="settings.configured" class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                        ✓ {{ $t("nmi.providers.connected") }}
+                                    <span v-if="!ORDERABLE_PROVIDERS.includes(provider)" class="inline-flex items-center rounded-full bg-rose-100 px-2 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-900/30 dark:text-rose-300">
+                                        {{ $t("nmi.providers.unavailable") }}
+                                    </span>
+                                    <span v-else-if="settings.configured" class="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+                                        ✓ {{ providerAccounts[provider] ? $t("nmi.providers.connected_as", { name: providerAccounts[provider] }) : $t("nmi.providers.connected") }}
                                     </span>
                                     <span v-else class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 dark:bg-slate-700 dark:text-gray-400">
                                         {{ $t("nmi.providers.not_connected") }}
@@ -844,27 +980,58 @@ const removeProvider = async (provider) => {
                                     v-if="settings.configured"
                                     @click="removeProvider(provider)"
                                     :disabled="savingProvider === provider"
-                                    class="text-sm text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                                    class="shrink-0 text-sm text-rose-600 hover:text-rose-700 disabled:opacity-50"
                                 >
                                     {{ $t("common.remove") }}
                                 </button>
                             </div>
 
-                            <div v-if="!settings.configured" class="mt-3 flex gap-2">
-                                <input
-                                    v-model="providerApiKeys[provider]"
-                                    type="password"
-                                    :placeholder="$t('nmi.providers.api_key_placeholder')"
-                                    class="flex-1 rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                                />
-                                <button
-                                    @click="saveProviderApiKey(provider)"
-                                    :disabled="!providerApiKeys[provider] || savingProvider === provider"
-                                    class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-                                >
-                                    {{ savingProvider === provider ? $t("common.saving") : $t("common.connect") }}
-                                </button>
+                            <div v-if="ORDERABLE_PROVIDERS.includes(provider) && !settings.configured" class="mt-3">
+                                <label :for="`provider-key-${provider}`" class="sr-only">{{ $t("nmi.providers.api_key_label") }}</label>
+                                <div class="flex gap-2">
+                                    <input
+                                        :id="`provider-key-${provider}`"
+                                        v-model="providerApiKeys[provider]"
+                                        type="password"
+                                        autocomplete="off"
+                                        :placeholder="$t('nmi.providers.api_key_placeholder')"
+                                        class="min-w-0 flex-1 rounded-lg border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                    />
+                                    <button
+                                        @click="saveProviderApiKey(provider)"
+                                        :disabled="!providerApiKeys[provider] || savingProvider === provider"
+                                        class="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                                    >
+                                        {{ savingProvider === provider ? $t("common.saving") : $t("nmi.providers.connect") }}
+                                    </button>
+                                </div>
                             </div>
+
+                            <p v-if="providerErrors[provider]" class="mt-2 text-sm text-rose-600 dark:text-rose-400" role="alert">
+                                {{ providerErrors[provider] }}
+                            </p>
+
+                            <!-- How to connect this provider -->
+                            <details class="mt-3" :open="!settings.configured && ORDERABLE_PROVIDERS.includes(provider)">
+                                <summary class="cursor-pointer text-sm font-medium text-indigo-600 dark:text-indigo-400">
+                                    {{ $t("nmi.providers.guide_title") }}
+                                </summary>
+                                <ol class="mt-2 space-y-1.5 pl-5 text-sm text-gray-700 dark:text-gray-300" :class="GUIDE_STEPS[provider] > 1 ? 'list-decimal' : 'list-none pl-0'">
+                                    <li v-for="n in GUIDE_STEPS[provider] || 0" :key="n">
+                                        {{ $t(`nmi.providers.guide.${provider}.s${n}`) }}
+                                    </li>
+                                </ol>
+                            </details>
+                        </div>
+
+                        <!-- Any other company: the manual route -->
+                        <div class="rounded-lg border border-gray-200 p-4 dark:border-slate-700" data-test="nmi-provider-other">
+                            <span class="font-medium text-gray-900 dark:text-white">{{ $t("nmi.providers.other_title") }}</span>
+                            <ol class="mt-2 list-decimal space-y-1.5 pl-5 text-sm text-gray-700 dark:text-gray-300">
+                                <li v-for="n in GUIDE_STEPS.other" :key="n">
+                                    {{ $t(`nmi.providers.guide.other.s${n}`) }}
+                                </li>
+                            </ol>
                         </div>
 
                         <p class="text-xs text-gray-500 dark:text-gray-400">

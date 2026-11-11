@@ -19,7 +19,9 @@ class DedicatedIpAddress extends Model
         'ip_version',
         'provider',
         'provider_id',
+        'provider_server_id',
         'provider_region',
+        'bind_address',
         'ptr_record',
         'ptr_verified',
         'ptr_verified_at',
@@ -114,6 +116,15 @@ class DedicatedIpAddress extends Model
     public function mailboxes()
     {
         return $this->hasMany(Mailbox::class, 'dedicated_ip_id');
+    }
+
+    /**
+     * Removed addresses are kept (soft-deleted) while `ip_address` is unique in the table:
+     * before an address is added again, its removed record has to go for good.
+     */
+    public static function forgetRemoved(string $address): void
+    {
+        static::onlyTrashed()->where('ip_address', $address)->forceDelete();
     }
 
     /**

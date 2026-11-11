@@ -135,9 +135,63 @@ To send from dedicated IPs:
 
 4. Open the mailbox form: under the IP picker it now says "The MTA sends from this address".
 
+See [Getting dedicated IPs](#getting-dedicated-ips) for where the addresses come from.
+
 `NMI_HELO_HOST` sets the HELO name of mail without a dedicated IP (default: the container's host name, which other servers cannot resolve). Use a name that resolves to the server's address and matches its PTR record.
 
 Not every host can do this. A Google Cloud VM, for example, has one external address per network interface, so one such VM cannot send from several dedicated IPs.
+
+### Getting dedicated IPs
+
+A dedicated IP comes from the company that hosts the server: **an address can only be used by a server at that same company.** The server NetSendo runs on (with the MTA) has to be one of your servers there. *Settings → Mail Infrastructure → Configure Providers* shows these instructions next to each provider.
+
+Whatever the route, an address needs four things before mail should leave from it:
+
+1. a **host name** (for example `mail2.yourdomain.com`) with an A record pointing to the address;
+2. **reverse DNS (PTR)** of the address pointing back to that host name;
+3. the address **configured on the server**;
+4. the **MTA on the server's network**, so it owns the address ([Sending from dedicated IPs](#sending-from-dedicated-ips)).
+
+The address's page checks 1 and 2 (*Reverse DNS → Check*); the mailbox form shows 3 and 4 ("The MTA sends from this address").
+
+#### Vultr (through the API)
+
+1. Your NetSendo server is a Vultr instance.
+2. In the Vultr panel: *Account → API*, enable the API and copy the key. If access is limited to certain addresses, add the server's address.
+3. *Configure Providers → Vultr*: paste the key and click *Connect*. NetSendo asks Vultr whose key it is and stores it (encrypted) only when Vultr accepts it.
+4. On a pool click *Provision IP*: choose Vultr, the server NetSendo runs on, and the host name of the new address. NetSendo reserves an address in the server's region, attaches it to the server and sets its reverse DNS.
+5. Configure the address on the server: Vultr does not do that for you. Add `<address>/32` to the network interface (the Vultr panel generates the netplan file under the instance's *Settings → IPv4*), apply it and restart the server.
+6. Vultr blocks outbound port 25 on new accounts: open a support ticket there (what you send, SPF and DKIM, expected volume).
+
+An address costs about 3 USD a month, billed by Vultr until it is deleted.
+
+#### Linode / Akamai Cloud (through the API)
+
+1. Your NetSendo server is a Linode.
+2. **Ask Akamai's support for additional IPv4 addresses first**: a ticket with a technical justification (a dedicated sending address for email). Without their approval the order is refused with "Additional IPv4 addresses require technical justification", which NetSendo shows as it is.
+3. In Cloud Manager: profile → *API Tokens*, create a Personal Access Token with the scope **Linodes: Read/Write**.
+4. *Configure Providers → Linode*: paste the token and click *Connect*.
+5. On a pool click *Provision IP*: choose Linode, the server and the host name. The server list marks servers on which outbound SMTP is restricted (newer accounts; a support ticket lifts it).
+6. Create the A record, then on the address's page click *Set reverse DNS*: Akamai accepts reverse DNS only once the host name already resolves to the address.
+7. Reboot the Linode: Network Helper configures the address at boot. With Network Helper off, add `<address>/24` to the interface by hand.
+
+Akamai bills each additional address by the hour until it is deleted.
+
+#### DigitalOcean: not possible
+
+DigitalOcean's Reserved IPs cannot send mail. Its documentation says SMTP ports 25, 465 and 587 are blocked on them, that they do not support PTR records, and that a Droplet can hold only one. Earlier versions of NetSendo could reserve such an address; that is gone, and an address reserved back then is given back to DigitalOcean when it is deleted in NetSendo.
+
+#### Any other company (Hetzner, OVH, your own data centre…)
+
+1. Order an additional IPv4 address for the server in the company's panel.
+2. Configure it on the server the way that company describes.
+3. Create the host name's A record and set the address's reverse DNS to the host name in the company's panel.
+4. On a pool click *Add IP*: the address and its host name.
+5. On the address's page click *Check* under Reverse DNS.
+
+#### Deleting an address
+
+*Delete address* on the address's page first gives an address ordered through the API back to the provider, so it is no longer billed. If the provider refuses, the address stays in NetSendo with the provider's reason; *Remove from NetSendo only* then removes it here and leaves it at the provider. An address that a mailbox sends through cannot be deleted.
 
 ### What the server needs
 
@@ -377,6 +431,12 @@ Look the record up yourself: `dig +short TXT <selector>._domainkey.<domain>`. Th
 | `/settings/nmi/ips/{id}/dkim/generate`   | POST       | Generate DKIM    |
 | `/settings/nmi/ips/{id}/blacklist/check` | POST       | Check blacklists |
 | `/settings/nmi/mta/status`               | GET        | Whether the MTA answers, and the addresses it can send from |
+| `/settings/nmi/providers`                | GET/POST   | Connected IP providers; connect (the key is checked first) or disconnect (GOLD) |
+| `/settings/nmi/providers/{provider}/servers` | GET    | The account's servers at a provider (GOLD) |
+| `/settings/nmi/pools/{id}/provision`     | POST       | Order an address for a server: `provider`, `server_id`, `hostname` (GOLD) |
+| `/settings/nmi/ips/{id}/ptr/check`       | POST       | Look the address's reverse DNS up |
+| `/settings/nmi/ips/{id}/ptr/set`         | POST       | Set reverse DNS at the provider the address was ordered from (GOLD) |
+| `/settings/nmi/ips/{id}`                 | DELETE     | Delete an address; an ordered one is released at the provider first |
 | `/settings/nmi/domains/{id}/dkim`        | GET        | DKIM record of a domain and whether it is verified |
 | `/settings/nmi/domains/{id}/dkim/generate` | POST     | Generate the domain's DKIM key (GOLD) |
 | `/settings/nmi/domains/{id}/dkim/verify` | POST       | Look the DKIM record up in DNS |

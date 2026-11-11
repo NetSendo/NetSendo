@@ -312,7 +312,12 @@
         "view_all": "Ver todo",
         "undo": "Deshacer",
         "redo": "Rehacer",
-        "date": "Fecha"
+        "date": "Fecha",
+        "adding": "Añadiendo...",
+        "creating": "Creando...",
+        "checking": "Comprobando...",
+        "generating": "Generando...",
+        "starting": "Iniciando..."
     },
     "ab_tests": {
         "enable_testing": "Habilitar pruebas A/B",
@@ -8368,12 +8373,17 @@
             "ip_address": "Dirección IP",
             "ip_address_placeholder": "p. ej. 192.168.1.100",
             "submit": "Añadir IP",
-            "title": "Añadir dirección IP"
+            "title": "Añadir dirección IP",
+            "manual_hint": "Para una dirección que has pedido tú. Debe estar ya configurada en el servidor, con el DNS inverso apuntando al nombre de host. Consulta Configurar proveedores → Otra empresa."
         },
         "delete_ip": {
             "confirm": "¿Seguro que desea eliminar esta dirección IP?",
             "title": "Eliminar dirección IP",
-            "warning": "Esta operación no se puede deshacer."
+            "warning": "Esta operación no se puede deshacer.",
+            "button": "Borrar dirección",
+            "release_note": "La dirección se pidió mediante la API del proveedor: primero se devuelve allí para que deje de cobrarse.",
+            "keep_at_provider": "Quitar solo de NetSendo",
+            "deleting": "Borrando…"
         },
         "invalid_ip_address": "Formato de dirección IP no válido.",
         "ip_added": "¡La dirección IP se ha añadido correctamente!",
@@ -8400,7 +8410,41 @@
             "not_configured": "No configurado",
             "not_connected": "No conectado",
             "settings_title": "Configuración de proveedores de IP",
-            "vultr": "Vultr"
+            "vultr": "Vultr",
+            "connect": "Conectar",
+            "connected_as": "Conectado como {name}",
+            "unavailable": "No apto para correo",
+            "guide_title": "Cómo conectar",
+            "intro": "Una IP dedicada procede de la empresa que aloja tu servidor: una dirección solo puede usarla un servidor de esa misma empresa. NetSendo puede pedirla por ti mediante la API de la empresa, o añades una dirección que hayas pedido tú.",
+            "api_key_label": "Clave API",
+            "other_title": "Otra empresa (Hetzner, OVH, tu propio centro de datos…)",
+            "guide": {
+                "vultr": {
+                    "s1": "Tu servidor de NetSendo debe ser una instancia de Vultr: una dirección de Vultr solo se puede asociar a un servidor de Vultr.",
+                    "s2": "En el panel de Vultr abre Account → API, activa la API y copia tu clave. Si el acceso está limitado a ciertas direcciones, añade la de este servidor.",
+                    "s3": "Pega la clave aquí y pulsa Conectar. NetSendo pregunta a Vultr de quién es la clave y solo la guarda cuando Vultr la acepta.",
+                    "s4": "Vultr bloquea el puerto 25 saliente en las cuentas nuevas. Abre allí un ticket de soporte (qué envías, SPF y DKIM, volumen previsto) y espera a que retiren el bloqueo.",
+                    "s5": "Una dirección cuesta unos 3 USD al mes; Vultr la cobra hasta que la borres en NetSendo."
+                },
+                "linode": {
+                    "s1": "Tu servidor de NetSendo debe ser un Linode (Akamai Cloud).",
+                    "s2": "Pide primero al soporte de Akamai direcciones IPv4 adicionales: abre un ticket con una justificación técnica (una dirección dedicada para enviar correo). Sin su aprobación, el pedido se rechaza.",
+                    "s3": "En Cloud Manager abre tu perfil → API Tokens y crea un Personal Access Token con el permiso Linodes: Read/Write.",
+                    "s4": "Pega el token aquí y pulsa Conectar.",
+                    "s5": "En las cuentas más recientes los puertos salientes 25, 465 y 587 están restringidos. La lista de servidores marca esos servidores; un ticket de soporte retira la restricción.",
+                    "s6": "Akamai cobra cada dirección adicional por horas hasta que la borres en NetSendo."
+                },
+                "digitalocean": {
+                    "s1": "Las Reserved IP de DigitalOcean no pueden enviar correo: los puertos SMTP 25, 465 y 587 están bloqueados en ellas, no admiten DNS inverso y un Droplet solo puede tener una. Usa otra empresa para direcciones de envío dedicadas."
+                },
+                "other": {
+                    "s1": "Pide una dirección IPv4 adicional para tu servidor de NetSendo en el panel de tu empresa de alojamiento.",
+                    "s2": "Configura la dirección en el servidor como indique esa empresa.",
+                    "s3": "Elige un nombre de host (por ejemplo mail2.tudominio.com), crea su registro A apuntando a la dirección y configura en el panel de la empresa el DNS inverso (PTR) de la dirección con ese nombre.",
+                    "s4": "Añádela en NetSendo con Añadir IP: la dirección y su nombre de host.",
+                    "s5": "En la página de la dirección comprueba su DNS inverso. En el formulario del buzón, el selector de IP indica si el MTA envía desde ella."
+                }
+            }
         },
         "provision": {
             "cancel": "Cancelar",
@@ -8411,7 +8455,51 @@
             "select_provider": "Seleccione un proveedor",
             "select_region": "Seleccione una región",
             "submit": "Aprovisionar IP",
-            "title": "Aprovisionar IP desde la nube"
+            "title": "Aprovisionar IP desde la nube",
+            "server": "Servidor",
+            "select_server": "Elige el servidor donde se ejecuta NetSendo",
+            "loading_servers": "Cargando tus servidores…",
+            "no_servers": "No se ha encontrado ningún servidor en esta cuenta.",
+            "smtp_restricted": "SMTP saliente restringido",
+            "hostname": "Nombre de host de la dirección",
+            "hostname_placeholder": "p. ej. mail2.tudominio.com",
+            "hostname_help": "La dirección responderá a este nombre: será su DNS inverso (PTR) y el nombre con el que se presenta el MTA.",
+            "cost_note": "La dirección se pide de inmediato y el proveedor la cobra hasta que la borres aquí.",
+            "connect_first": "Conecta primero un proveedor: Configurar proveedores.",
+            "done_title": "Se ha pedido la dirección {ip}",
+            "ptr_set": "El DNS inverso se ha configurado como {hostname}.",
+            "ptr_not_set": "Aún no se ha podido configurar el DNS inverso: {reason}",
+            "next_title": "Lo que queda por hacer",
+            "open_ip": "Abrir la dirección",
+            "done": "Listo",
+            "next": {
+                "a_record": "Crea un registro A en DNS: {hostname} → {ip}.",
+                "vultr_os": "Configura la dirección en el servidor: añade {ip}/32 a la interfaz de red (el panel de Vultr genera el archivo netplan en Settings → IPv4 de la instancia), aplícalo y reinicia el servidor.",
+                "linode_ptr": "Cuando el registro A resuelva, pulsa Configurar DNS inverso en la página de la dirección: antes Akamai lo rechaza.",
+                "linode_os": "Reinicia el Linode: Network Helper configura la dirección al arrancar. Con Network Helper desactivado, añade {ip}/24 a la interfaz a mano.",
+                "host_network": "Ejecuta el MTA en la red del servidor (docker-compose.nmi-host.yml) para que tenga la dirección.",
+                "finish": "En la página de la dirección comprueba el DNS inverso e inicia el calentamiento; después elige la dirección en un buzón de NetSendo MTA. El formulario del buzón indica si el MTA envía desde ella."
+            }
+        },
+        "setup": {
+            "title": "Configuración de la dirección",
+            "source": "Origen",
+            "source_manual": "Añadida a mano",
+            "source_provider": "Pedida a {provider}",
+            "region": "Región",
+            "bind_address": "Dirección local",
+            "ptr_title": "DNS inverso (PTR)",
+            "ptr_help": "Los servidores receptores desconfían del correo de una dirección que no nombra un host que a su vez apunte a la dirección. El MTA se presenta con ese mismo nombre.",
+            "ptr_expected": "Debe nombrar",
+            "ptr_found": "Nombra ahora",
+            "ptr_none": "nada",
+            "ptr_ok": "Correcto",
+            "ptr_wrong": "No es correcto",
+            "ptr_unchecked": "Sin comprobar",
+            "check_ptr": "Comprobar",
+            "set_ptr": "Configurar DNS inverso",
+            "ptr_manual": "Configúralo en el panel de la empresa de la que procede la dirección y después pulsa Comprobar.",
+            "checking": "Comprobando…"
         }
     },
     "high_confidence_data": "Datos de alta confianza",

@@ -38,29 +38,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | IP Provider Settings
-    |--------------------------------------------------------------------------
-    |
-    | Configuration for automatic IP provisioning via cloud providers.
-    |
-    */
-    'ip_providers' => [
-        'vultr' => [
-            'enabled' => env('NMI_VULTR_ENABLED', false),
-            'api_key' => env('NMI_VULTR_API_KEY'),
-        ],
-        'linode' => [
-            'enabled' => env('NMI_LINODE_ENABLED', false),
-            'api_key' => env('NMI_LINODE_API_KEY'),
-        ],
-        'digitalocean' => [
-            'enabled' => env('NMI_DO_ENABLED', false),
-            'api_key' => env('NMI_DO_API_KEY'),
-        ],
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
     | Warming Configuration
     |--------------------------------------------------------------------------
     |

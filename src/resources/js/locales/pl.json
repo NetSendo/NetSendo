@@ -312,7 +312,12 @@
         "source_placeholder": "Wpisz lub wklej kod HTML...",
         "undo": "Cofnij",
         "redo": "Ponów",
-        "date": "Data"
+        "date": "Data",
+        "adding": "Dodawanie...",
+        "creating": "Tworzenie...",
+        "checking": "Sprawdzanie...",
+        "generating": "Generowanie...",
+        "starting": "Uruchamianie..."
     },
     "ab_tests": {
         "enable_testing": "Włącz testy A/B",
@@ -8765,12 +8770,17 @@
             "description": "Opis (opcjonalnie)",
             "description_placeholder": "Opcjonalne notatki o tym IP",
             "submit": "Dodaj IP",
-            "cancel": "Anuluj"
+            "cancel": "Anuluj",
+            "manual_hint": "Dla adresu zamówionego samodzielnie. Musi być już skonfigurowany na serwerze, a jego rekord PTR wskazywać na nazwę hosta. Zob. Konfiguruj dostawców → Inna firma."
         },
         "delete_ip": {
             "title": "Usuń adres IP",
             "confirm": "Czy na pewno chcesz usunąć ten adres IP?",
-            "warning": "Tej operacji nie można cofnąć."
+            "warning": "Tej operacji nie można cofnąć.",
+            "button": "Usuń adres",
+            "release_note": "Adres został zamówiony przez API dostawcy: najpierw zostanie tam zwolniony, żeby nie był dalej naliczany.",
+            "keep_at_provider": "Usuń tylko z NetSendo",
+            "deleting": "Usuwam…"
         },
         "provision": {
             "title": "Zamów IP z chmury",
@@ -8781,7 +8791,31 @@
             "submit": "Zamów IP",
             "cancel": "Anuluj",
             "no_providers": "Brak skonfigurowanych dostawców. Kliknij Konfiguruj dostawców aby dodać klucze API.",
-            "provisioning": "Zamawianie..."
+            "provisioning": "Zamawianie...",
+            "server": "Serwer",
+            "select_server": "Wybierz serwer, na którym działa NetSendo",
+            "loading_servers": "Wczytuję Twoje serwery…",
+            "no_servers": "Na tym koncie nie znaleziono żadnego serwera.",
+            "smtp_restricted": "ograniczony wychodzący SMTP",
+            "hostname": "Nazwa hosta adresu",
+            "hostname_placeholder": "np. mail2.twojadomena.pl",
+            "hostname_help": "Pod tą nazwą adres będzie się przedstawiał: staje się jego rekordem PTR i nazwą, którą podaje MTA.",
+            "cost_note": "Adres jest zamawiany od razu, a dostawca nalicza opłatę, dopóki nie usuniesz go tutaj.",
+            "connect_first": "Najpierw podłącz dostawcę: Konfiguruj dostawców.",
+            "done_title": "Adres {ip} został zamówiony",
+            "ptr_set": "Rekord PTR ustawiono na {hostname}.",
+            "ptr_not_set": "Rekordu PTR nie udało się jeszcze ustawić: {reason}",
+            "next_title": "Co zostało do zrobienia",
+            "open_ip": "Otwórz adres",
+            "done": "Gotowe",
+            "next": {
+                "a_record": "Utwórz w DNS rekord A: {hostname} → {ip}.",
+                "vultr_os": "Skonfiguruj adres na serwerze: dodaj {ip}/32 do interfejsu sieciowego (panel Vultr generuje plik netplan w Settings → IPv4 instancji), zastosuj go i zrestartuj serwer.",
+                "linode_ptr": "Gdy rekord A zacznie działać, kliknij „Ustaw rekord PTR\" na stronie adresu: wcześniej Akamai go odrzuci.",
+                "linode_os": "Zrestartuj maszynę Linode: Network Helper konfiguruje adres przy starcie. Przy wyłączonym Network Helper dodaj {ip}/24 do interfejsu ręcznie.",
+                "host_network": "Uruchom MTA w sieci serwera (docker-compose.nmi-host.yml), żeby miał ten adres.",
+                "finish": "Na stronie adresu sprawdź rekord PTR i uruchom rozgrzewanie, a potem wybierz adres w skrzynce NetSendo MTA. Formularz skrzynki pokazuje, czy MTA z niego wysyła."
+            }
         },
         "providers": {
             "vultr": "Vultr",
@@ -8794,11 +8828,65 @@
             "connected": "Połączony",
             "not_connected": "Niepołączony",
             "api_key_placeholder": "Wprowadź klucz API...",
-            "info": "Klucze API są bezpiecznie szyfrowane. Dostawcy służą do automatycznego zamawiania adresów IP dla infrastruktury email."
+            "info": "Klucze API są bezpiecznie szyfrowane. Dostawcy służą do automatycznego zamawiania adresów IP dla infrastruktury email.",
+            "connect": "Połącz",
+            "connected_as": "Połączono jako {name}",
+            "unavailable": "Nie nadaje się do poczty",
+            "guide_title": "Jak podłączyć",
+            "intro": "Dedykowany adres IP pochodzi od firmy, która hostuje Twój serwer: adresu może używać tylko serwer w tej samej firmie. NetSendo może zamówić go za Ciebie przez API tej firmy albo dodajesz adres zamówiony samodzielnie.",
+            "api_key_label": "Klucz API",
+            "other_title": "Inna firma (Hetzner, OVH, własna serwerownia…)",
+            "guide": {
+                "vultr": {
+                    "s1": "Serwer NetSendo musi być instancją w Vultr: adres z Vultr można przypiąć tylko do serwera w Vultr.",
+                    "s2": "W panelu Vultr otwórz Account → API, włącz API i skopiuj klucz. Jeśli dostęp jest tam ograniczony do wybranych adresów, dodaj adres tego serwera.",
+                    "s3": "Wklej klucz tutaj i kliknij Połącz. NetSendo pyta Vultr, czyj to klucz, i zapisuje go dopiero, gdy Vultr go przyjmie.",
+                    "s4": "Vultr blokuje wychodzący port 25 na nowych kontach. Załóż tam zgłoszenie do wsparcia (co wysyłasz, SPF i DKIM, spodziewana liczba wiadomości) i poczekaj na zdjęcie blokady.",
+                    "s5": "Adres kosztuje około 3 USD miesięcznie; Vultr nalicza opłatę, dopóki nie usuniesz adresu w NetSendo."
+                },
+                "linode": {
+                    "s1": "Serwer NetSendo musi być maszyną Linode (Akamai Cloud).",
+                    "s2": "Najpierw poproś wsparcie Akamai o dodatkowe adresy IPv4: załóż zgłoszenie z uzasadnieniem technicznym (dedykowany adres do wysyłki poczty). Bez ich zgody zamówienie zostanie odrzucone.",
+                    "s3": "W Cloud Manager otwórz swój profil → API Tokens i utwórz Personal Access Token z uprawnieniem Linodes: Read/Write.",
+                    "s4": "Wklej token tutaj i kliknij Połącz.",
+                    "s5": "Na nowszych kontach wychodzące porty 25, 465 i 587 są ograniczone. Lista serwerów oznacza takie serwery; ograniczenie zdejmuje zgłoszenie do wsparcia.",
+                    "s6": "Akamai nalicza każdy dodatkowy adres godzinowo, dopóki nie usuniesz go w NetSendo."
+                },
+                "digitalocean": {
+                    "s1": "Adresy Reserved IP w DigitalOcean nie mogą wysyłać poczty: porty SMTP 25, 465 i 587 są na nich zablokowane, nie da się dla nich ustawić rekordu PTR, a Droplet może mieć tylko jeden taki adres. Dedykowane adresy do wysyłki weź od innej firmy."
+                },
+                "other": {
+                    "s1": "Zamów dodatkowy adres IPv4 dla serwera NetSendo w panelu swojej firmy hostingowej.",
+                    "s2": "Skonfiguruj adres na serwerze tak, jak opisuje to ta firma.",
+                    "s3": "Wybierz dla niego nazwę hosta (np. mail2.twojadomena.pl), utwórz jej rekord A wskazujący na adres i w panelu firmy ustaw rekord PTR adresu na tę nazwę.",
+                    "s4": "Dodaj go w NetSendo przyciskiem Dodaj IP: adres i jego nazwa hosta.",
+                    "s5": "Na stronie adresu sprawdź rekord PTR. W formularzu skrzynki wybór IP pokazuje, czy MTA wysyła z tego adresu."
+                }
+            }
         },
         "provider_not_configured": "Ten dostawca nie jest skonfigurowany. Dodaj klucz API w ustawieniach dostawców.",
         "provider_saved": "Ustawienia dostawcy zapisane pomyślnie!",
-        "ip_provisioned": "Adres IP zamówiony pomyślnie!"
+        "ip_provisioned": "Adres IP zamówiony pomyślnie!",
+        "setup": {
+            "title": "Konfiguracja adresu",
+            "source": "Pochodzenie",
+            "source_manual": "Dodany ręcznie",
+            "source_provider": "Zamówiony w {provider}",
+            "region": "Region",
+            "bind_address": "Adres lokalny",
+            "ptr_title": "Rekord PTR (odwrotny DNS)",
+            "ptr_help": "Serwery odbiorców nie ufają poczcie z adresu, który nie wskazuje na nazwę hosta, a ta nazwa z powrotem na adres. Tą samą nazwą przedstawia się MTA.",
+            "ptr_expected": "Powinien wskazywać",
+            "ptr_found": "Wskazuje teraz",
+            "ptr_none": "nic",
+            "ptr_ok": "Poprawny",
+            "ptr_wrong": "Niepoprawny",
+            "ptr_unchecked": "Niesprawdzony",
+            "check_ptr": "Sprawdź",
+            "set_ptr": "Ustaw rekord PTR",
+            "ptr_manual": "Ustaw go w panelu firmy, od której pochodzi adres, a potem kliknij Sprawdź.",
+            "checking": "Sprawdzam…"
+        }
     },
     "high_confidence_data": "Dane o wysokim zaufaniu",
     "brain": {

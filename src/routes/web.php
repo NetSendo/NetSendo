@@ -946,6 +946,9 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/ips/{ip}/dkim/verify', [\App\Http\Controllers\NmiController::class, 'verifyDkim'])->name('ips.dkim.verify');
         Route::post('/ips/{ip}/blacklist/check', [\App\Http\Controllers\NmiController::class, 'checkBlacklist'])->name('ips.blacklist.check')->middleware('licensed:mail_infrastructure');
         Route::delete('/ips/{ip}', [\App\Http\Controllers\NmiController::class, 'deleteIp'])->name('ips.destroy');
+        // Reverse DNS (PTR) of an address: look it up; set it at the provider it was ordered from
+        Route::post('/ips/{ip}/ptr/check', [\App\Http\Controllers\NmiController::class, 'checkPtr'])->name('ips.ptr.check');
+        Route::post('/ips/{ip}/ptr/set', [\App\Http\Controllers\NmiController::class, 'setPtr'])->name('ips.ptr.set')->middleware('licensed:mail_infrastructure');
 
         // Add IP to Pool
         Route::post('/pools/{pool}/ips', [\App\Http\Controllers\NmiController::class, 'addIpToPool'])->name('pools.ips.store')->middleware('licensed:mail_infrastructure');
@@ -961,7 +964,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         // IP Providers
         Route::get('/providers', [\App\Http\Controllers\NmiController::class, 'getProviderSettings'])->name('providers.index');
         Route::post('/providers', [\App\Http\Controllers\NmiController::class, 'saveProviderSettings'])->name('providers.store')->middleware('licensed:mail_infrastructure');
-        Route::get('/providers/{provider}/regions', [\App\Http\Controllers\NmiController::class, 'getProviderRegions'])->name('providers.regions')->middleware('licensed:mail_infrastructure');
+        Route::get('/providers/{provider}/servers', [\App\Http\Controllers\NmiController::class, 'getProviderServers'])->name('providers.servers')->middleware('licensed:mail_infrastructure');
         Route::post('/pools/{pool}/provision', [\App\Http\Controllers\NmiController::class, 'provisionIp'])->name('pools.provision')->middleware('licensed:mail_infrastructure');
     });
 });
