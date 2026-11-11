@@ -29,6 +29,22 @@
         <link rel="icon" type="image/png" href="{{ asset('images/brand/netsendo-icon.png') }}">
         <link rel="apple-touch-icon" href="{{ asset('images/brand/netsendo-icon.png') }}">
 
+        @php
+            // The texts of the page's language are a file of their own. Named here, the browser
+            // fetches it together with the scripts instead of after they have started.
+            $localeChunk = null;
+            try {
+                if (! \Illuminate\Support\Facades\Vite::isRunningHot()) {
+                    $localeChunk = \Illuminate\Support\Facades\Vite::asset('resources/js/locales/'.app()->getLocale().'.json');
+                }
+            } catch (\Throwable $e) {
+                // No build manifest (tests) or a language without a file: the page still loads it itself
+            }
+        @endphp
+        @if ($localeChunk)
+            <link rel="modulepreload" href="{{ $localeChunk }}">
+        @endif
+
         <!-- Scripts -->
         @routes
         @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
