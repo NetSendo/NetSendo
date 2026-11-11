@@ -145,7 +145,7 @@ class DedicatedIpAddress extends Model
      */
     public function getDeliveryRate(): float
     {
-        if ($this->total_sent === 0) {
+        if (! $this->total_sent) {
             return 100.0;
         }
 
@@ -157,7 +157,7 @@ class DedicatedIpAddress extends Model
      */
     public function getBounceRate(): float
     {
-        if ($this->total_sent === 0) {
+        if (! $this->total_sent) {
             return 0.0;
         }
 
@@ -169,7 +169,7 @@ class DedicatedIpAddress extends Model
      */
     public function getComplaintRate(): float
     {
-        if ($this->total_sent === 0) {
+        if (! $this->total_sent) {
             return 0.0;
         }
 

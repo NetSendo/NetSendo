@@ -4572,6 +4572,26 @@
         "tracking": {
             "label": "Track clicks and opens",
             "help": "Rewrites links through NetSendo and adds the open pixel. Off: links stay as written, no pixel, and SendGrid tracking is switched off per message. A message can override this."
+        },
+        "nmi": {
+            "info": "Mail goes out through NetSendo's own mail server (MTA). Choose the verified domain to send as; NetSendo issues the login to the MTA itself.",
+            "domain": "Sending domain",
+            "domain_placeholder": "-- Choose a verified domain --",
+            "no_domains": "No verified domain yet. Add your domain in Deliverability and verify it first.",
+            "manage_domains": "Open Deliverability",
+            "from_hint": "The sender address must be in this domain.",
+            "ip": "Dedicated IP",
+            "ip_none": "None (the MTA's own address)",
+            "ip_taken": "assigned to another domain",
+            "ip_help": "A dedicated IP signs with the DKIM key of one domain. A free IP is assigned to this domain when you save.",
+            "manage_ips": "Manage IP pools",
+            "mta_checking": "Checking the NetSendo MTA…",
+            "mta_online": "NetSendo MTA is online ({address}).",
+            "mta_offline": "NetSendo MTA is not reachable ({address}). Start its container (docker compose --profile nmi up -d), then check again.",
+            "mta_recheck": "Check again",
+            "mta_required": "New NetSendo MTA mailboxes can be added once the MTA answers.",
+            "sends_as": "NetSendo MTA · {domain}",
+            "no_domain": "NetSendo MTA · no domain"
         }
     },
     "funnels": {

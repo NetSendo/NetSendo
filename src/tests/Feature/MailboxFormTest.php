@@ -11,9 +11,12 @@ use Tests\TestCase;
 
 /**
  * Settings → Mailboxes, "Add mailbox" (client report 2026-11-11): choosing "NetSendo MTA"
- * could never be saved. The form offered the NMI provider, the server accepts only SMTP,
+ * could never be saved. The form offered the NMI provider, the server accepted only SMTP,
  * SendGrid and Gmail, and its errors (provider, credentials) had no place in the modal, so
  * all the person saw was a toast with the raw key "common.notifications.error".
+ *
+ * NMI is a working provider since then, offered only where the NetSendo MTA is switched on
+ * (NMI_ENABLED): see NmiMailboxTest. This class covers an installation without it.
  */
 class MailboxFormTest extends TestCase
 {
@@ -57,10 +60,11 @@ class MailboxFormTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('Settings/Mailboxes/Index')
-                ->where('providers', fn ($providers) => array_keys(collect($providers)->all()) === Mailbox::PANEL_PROVIDERS)
+                ->where('providers', fn ($providers) => array_keys(collect($providers)->all()) === Mailbox::panelProviders())
             );
 
-        $this->assertNotContains(Mailbox::PROVIDER_NMI, Mailbox::PANEL_PROVIDERS);
+        // Without the NetSendo MTA the form does not offer it
+        $this->assertSame(['smtp', 'sendgrid', 'gmail'], Mailbox::panelProviders());
     }
 
     public function test_an_smtp_mailbox_is_created(): void
@@ -76,11 +80,11 @@ class MailboxFormTest extends TestCase
         $this->assertSame('smtp.example.com', $mailbox->getDecryptedCredentials()['host']);
     }
 
-    public function test_an_nmi_mailbox_is_refused_with_a_message(): void
+    public function test_an_nmi_mailbox_is_refused_with_a_message_where_the_mta_is_off(): void
     {
         $this->actingAs($this->user)
             ->post(route('settings.mailboxes.store'), $this->smtpPayload(['provider' => 'nmi', 'credentials' => []]))
-            ->assertSessionHasErrors(['provider', 'credentials']);
+            ->assertSessionHasErrors(['provider', 'domain_configuration_id']);
 
         $this->assertSame(0, Mailbox::count());
     }

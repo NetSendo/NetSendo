@@ -9,6 +9,7 @@ use App\Services\Nmi\BlacklistMonitorService;
 use App\Services\Nmi\DkimKeyManager;
 use App\Services\Nmi\IpProvisioningService;
 use App\Services\Nmi\IpWarmingService;
+use App\Services\Nmi\MtaStatusService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -50,7 +51,9 @@ class NmiController extends Controller
             'stats' => $stats,
             'pools' => $pools,
             'ips' => $ips->map(fn($ip) => $this->formatIpForResponse($ip)),
-            'nmiEnabled' => config('netsendo.nmi.enabled', false),
+            // NMI_ENABLED (config/nmi.php). The key read here before, netsendo.nmi.enabled,
+            // never existed, so the dashboard always showed the "setup required" banner.
+            'nmiEnabled' => (bool) config('nmi.features.enabled', false),
         ];
 
         // Return JSON for AJAX requests
@@ -342,46 +345,11 @@ class NmiController extends Controller
     /**
      * Check MTA container status
      */
-    public function getMtaStatus(): JsonResponse
+    public function getMtaStatus(MtaStatusService $mta): JsonResponse
     {
-        $host = config('nmi.mta_host', 'netsendo-mta');
-        $port = (int) config('nmi.mta_port', 25);
-        $timeout = 3; // seconds
-
-        $isOnline = false;
-        $message = '';
-
-        try {
-            $socket = @fsockopen($host, $port, $errno, $errstr, $timeout);
-
-            if ($socket) {
-                // Read the SMTP greeting
-                $response = fgets($socket, 1024);
-                fclose($socket);
-
-                // Check for valid SMTP greeting (starts with 220)
-                if (str_starts_with(trim($response), '220')) {
-                    $isOnline = true;
-                    $message = 'MTA is online and accepting connections';
-                } else {
-                    $message = 'MTA responded but with unexpected greeting';
-                }
-            } else {
-                $message = "Cannot connect to MTA: {$errstr} (error {$errno})";
-            }
-        } catch (\Exception $e) {
-            $message = 'Connection error: ' . $e->getMessage();
-        }
-
         return response()->json([
             'success' => true,
-            'data' => [
-                'online' => $isOnline,
-                'host' => $host,
-                'port' => $port,
-                'message' => $message,
-                'checked_at' => now()->toIso8601String(),
-            ],
+            'data' => $mta->probe(),
         ]);
     }
 
@@ -416,8 +384,8 @@ class NmiController extends Controller
             'description' => ['nullable', 'string', 'max:500'],
         ]);
 
-        // Determine IP version
-        $ipVersion = filter_var($validated['ip_address'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 6 : 4;
+        // Determine IP version (the column is an enum of 'ipv4' and 'ipv6')
+        $ipVersion = filter_var($validated['ip_address'], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 'ipv6' : 'ipv4';
 
         $ip = DedicatedIpAddress::create([
             'ip_pool_id' => $pool->id,

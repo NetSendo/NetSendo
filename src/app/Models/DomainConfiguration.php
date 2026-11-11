@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Str;
 
 class DomainConfiguration extends Model
@@ -32,6 +33,17 @@ class DomainConfiguration extends Model
         'alerts_enabled',
         'last_alert_at',
         'mailbox_id',
+        // NetSendo Mail Infrastructure: the domain's own login to the MTA
+        'dedicated_ip_id',
+        'nmi_enabled',
+        'nmi_enabled_at',
+        'nmi_smtp_username',
+        'nmi_smtp_password',
+        'nmi_credentials_rotated_at',
+    ];
+
+    protected $hidden = [
+        'nmi_smtp_password',
     ];
 
     protected $casts = [
@@ -45,6 +57,9 @@ class DomainConfiguration extends Model
         'check_history' => 'array',
         'alerts_enabled' => 'boolean',
         'last_alert_at' => 'datetime',
+        'nmi_enabled' => 'boolean',
+        'nmi_enabled_at' => 'datetime',
+        'nmi_credentials_rotated_at' => 'datetime',
     ];
 
     /**
@@ -76,6 +91,25 @@ class DomainConfiguration extends Model
                 $model->cname_selector = 'ns-' . Str::random(12);
             }
         });
+
+        // A removed domain must not keep its login to the NetSendo MTA (and gets it
+        // back when restored): rewrite the MTA's login file
+        $syncMtaLogins = function ($model) {
+            // The instance may predate the login (nmi_enabled still false in memory):
+            // where the MTA is switched on, rewrite the file on every removal
+            if (! $model->nmi_enabled && ! Mailbox::nmiAvailable()) {
+                return;
+            }
+
+            try {
+                app(\App\Services\Nmi\MtaCredentialService::class)->sync();
+            } catch (\RuntimeException $e) {
+                report($e);
+            }
+        };
+
+        static::deleted($syncMtaLogins);
+        static::restored($syncMtaLogins);
     }
 
     /**
@@ -94,6 +128,47 @@ class DomainConfiguration extends Model
     public function simulations()
     {
         return $this->hasMany(InboxSimulation::class);
+    }
+
+    /**
+     * Mailboxes of the "NetSendo MTA" provider that send as this domain
+     * (mailboxes.domain_configuration_id; `mailbox()` above is the Deliverability link).
+     */
+    public function nmiMailboxes()
+    {
+        return $this->hasMany(Mailbox::class, 'domain_configuration_id');
+    }
+
+    /**
+     * Set the NMI SMTP password (auto-encrypt)
+     */
+    public function setNmiSmtpPasswordAttribute($value): void
+    {
+        $this->attributes['nmi_smtp_password'] = filled($value) ? Crypt::encryptString($value) : null;
+    }
+
+    /**
+     * The domain's NMI SMTP password in clear text, null when none was issued
+     */
+    public function getDecryptedNmiPassword(): ?string
+    {
+        if (empty($this->attributes['nmi_smtp_password'])) {
+            return null;
+        }
+
+        try {
+            return Crypt::decryptString($this->attributes['nmi_smtp_password']);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * Whether the domain has a login to the NetSendo MTA
+     */
+    public function hasNmiCredentials(): bool
+    {
+        return filled($this->nmi_smtp_username) && $this->getDecryptedNmiPassword() !== null;
     }
 
     /**

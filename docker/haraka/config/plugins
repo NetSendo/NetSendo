@@ -1,10 +1,13 @@
 # =============================================================================
-# Haraka Plugins for NetSendo Mail Infrastructure (Development)
+# Haraka Plugins for NetSendo Mail Infrastructure
 # =============================================================================
-# Minimal plugin set for development - only built-in plugins
+# The MTA only relays mail that NetSendo submits: a session must log in with a
+# domain's NMI login (netsendo_auth), everything else is refused at RCPT TO.
+# No queue plugin is listed on purpose: relayed mail goes to Haraka's own
+# outbound delivery (MX lookup, retries, bounces).
 
 # Rate limiting
 limit
 
-# Queue management
-queue/smtp_forward
+# SMTP AUTH against the logins NetSendo issues (plugins/netsendo_auth.js)
+netsendo_auth

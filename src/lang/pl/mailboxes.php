@@ -54,6 +54,20 @@ return [
         'value_placeholder' => 'np. campaign1:user123:netsendo',
     ],
 
+    // NetSendo MTA (NMI) mailboxes: a verified domain and, optionally, a dedicated IP
+    'nmi' => [
+        'errors' => [
+            'domain_required' => 'Wybierz jedną ze swoich zweryfikowanych domen dla skrzynki NetSendo MTA.',
+            'domain_not_verified' => 'Domena :domain nie jest jeszcze zweryfikowana. Najpierw zweryfikuj ją w module Dostarczalność.',
+            'domain_missing' => 'Ta skrzynka NetSendo MTA nie ma już domeny wysyłkowej (domena została usunięta). Edytuj skrzynkę i wybierz zweryfikowaną domenę.',
+            'from_domain_mismatch' => 'Adres nadawcy musi być w wybranej domenie (@:domain).',
+            'ip_invalid' => 'Wybierz aktywny dedykowany adres IP z jednej ze swoich pul albo żaden.',
+            'ip_other_domain' => 'Adres IP :ip jest już przypisany do innej domeny.',
+            'mta_login_file' => 'NetSendo nie mogło zapisać pliku loginów MTA (:file). Sprawdź, czy katalog istnieje i jest zapisywalny, i zapisz ponownie.',
+            'mta_login_refused' => 'MTA nie zna loginu tej domeny: musi czytać plik loginów zapisywany przez NetSendo (wolumen nmi-auth w docker-compose.yml).',
+        ],
+    ],
+
     // Field names in validation messages of the mailbox form
     'attributes' => [
         'name' => 'nazwa skrzynki',
@@ -67,6 +81,8 @@ return [
         'time_restriction' => 'minimalny odstęp',
         'custom_headers.*.key' => 'nazwa nagłówka',
         'custom_headers.*.value' => 'wartość nagłówka',
+        'domain_configuration_id' => 'domena wysyłkowa',
+        'dedicated_ip_id' => 'dedykowany adres IP',
         'reply_imap_host' => 'host IMAP odpowiedzi',
     ],
 ];

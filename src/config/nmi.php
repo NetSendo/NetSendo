@@ -25,6 +25,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | MTA Login File
+    |--------------------------------------------------------------------------
+    |
+    | NetSendo issues one SMTP login per sending domain and writes them (as
+    | password hashes) to this file. The MTA container reads it from the same
+    | volume: see docker-compose.yml (nmi-auth) and
+    | docker/haraka/plugins/netsendo_auth.js.
+    |
+    */
+    'mta_auth_file' => env('NMI_MTA_AUTH_FILE', storage_path('app/nmi-mta/auth.json')),
+
+    /*
+    |--------------------------------------------------------------------------
     | IP Provider Settings
     |--------------------------------------------------------------------------
     |

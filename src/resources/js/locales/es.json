@@ -4960,6 +4960,26 @@
         "tracking": {
             "label": "Seguir clics y aperturas",
             "help": "Reescribe los enlaces a través de NetSendo y añade el píxel de apertura. Desactivado: los enlaces quedan como están, sin píxel, y el seguimiento de SendGrid se desactiva por mensaje. Un mensaje puede cambiarlo."
+        },
+        "nmi": {
+            "info": "El correo sale por el servidor de correo propio de NetSendo (MTA). Elige el dominio verificado desde el que envías; NetSendo crea por sí mismo el acceso al MTA.",
+            "domain": "Dominio de envío",
+            "domain_placeholder": "-- Elige un dominio verificado --",
+            "no_domains": "Aún no hay ningún dominio verificado. Añade tu dominio en Entregabilidad y verifícalo primero.",
+            "manage_domains": "Abrir Entregabilidad",
+            "from_hint": "La dirección del remitente debe estar en este dominio.",
+            "ip": "IP dedicada",
+            "ip_none": "Ninguna (la dirección propia del MTA)",
+            "ip_taken": "asignada a otro dominio",
+            "ip_help": "Una IP dedicada firma con la clave DKIM de un dominio. Una IP libre se asigna a este dominio al guardar.",
+            "manage_ips": "Gestionar grupos de IP",
+            "mta_checking": "Comprobando NetSendo MTA…",
+            "mta_online": "NetSendo MTA está en línea ({address}).",
+            "mta_offline": "NetSendo MTA no responde ({address}). Inicia su contenedor (docker compose --profile nmi up -d) y comprueba de nuevo.",
+            "mta_recheck": "Comprobar de nuevo",
+            "mta_required": "Se pueden añadir nuevos buzones de NetSendo MTA cuando el MTA responde.",
+            "sends_as": "NetSendo MTA · {domain}",
+            "no_domain": "NetSendo MTA · sin dominio"
         }
     },
     "tracked_links": {

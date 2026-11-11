@@ -4271,6 +4271,26 @@
         "tracking": {
             "label": "Śledź kliknięcia i otwarcia",
             "help": "Przepisuje linki przez NetSendo i dodaje piksel otwarć. Wyłączone: linki zostają bez zmian, bez piksela, a śledzenie SendGrid jest wyłączane dla każdej wiadomości. Wiadomość może to nadpisać."
+        },
+        "nmi": {
+            "info": "Poczta wychodzi przez własny serwer pocztowy NetSendo (MTA). Wybierz zweryfikowaną domenę, z której wysyłasz; login do MTA NetSendo nadaje samo.",
+            "domain": "Domena wysyłkowa",
+            "domain_placeholder": "-- Wybierz zweryfikowaną domenę --",
+            "no_domains": "Nie masz jeszcze zweryfikowanej domeny. Najpierw dodaj domenę w module Dostarczalność i ją zweryfikuj.",
+            "manage_domains": "Otwórz Dostarczalność",
+            "from_hint": "Adres nadawcy musi być w tej domenie.",
+            "ip": "Dedykowany adres IP",
+            "ip_none": "Brak (własny adres MTA)",
+            "ip_taken": "przypisany do innej domeny",
+            "ip_help": "Dedykowany adres IP podpisuje kluczem DKIM jednej domeny. Wolny adres zostanie przypisany do tej domeny przy zapisie.",
+            "manage_ips": "Zarządzaj pulami IP",
+            "mta_checking": "Sprawdzam NetSendo MTA…",
+            "mta_online": "NetSendo MTA działa ({address}).",
+            "mta_offline": "NetSendo MTA nie odpowiada ({address}). Uruchom jego kontener (docker compose --profile nmi up -d) i sprawdź ponownie.",
+            "mta_recheck": "Sprawdź ponownie",
+            "mta_required": "Nowe skrzynki NetSendo MTA można dodawać, gdy MTA odpowiada.",
+            "sends_as": "NetSendo MTA · {domain}",
+            "no_domain": "NetSendo MTA · brak domeny"
         }
     },
     "sms_providers": {

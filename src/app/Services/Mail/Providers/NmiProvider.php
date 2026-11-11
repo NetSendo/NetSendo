@@ -9,7 +9,7 @@ use App\Helpers\EmailPlainText;
 use App\Services\Mail\MailProviderInterface;
 use App\Services\Nmi\DkimKeyManager;
 use Symfony\Component\Mailer\Mailer;
-use Symfony\Component\Mailer\Transport;
+use Symfony\Component\Mailer\Transport\Smtp\EsmtpTransport;
 use Symfony\Component\Mime\Email;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Crypto\DkimSigner;
@@ -43,14 +43,24 @@ class NmiProvider implements MailProviderInterface
      */
     private function initializeMailer(): void
     {
-        $host = config('nmi.mta_host', 'netsendo-mta');
-        $port = config('nmi.mta_port', 25);
-        $username = $this->domain->nmi_smtp_username;
-        $password = $this->domain->getDecryptedNmiPassword();
+        $host = (string) config('nmi.mta_host', 'netsendo-mta');
+        $port = (int) config('nmi.mta_port', 25);
+        $encryption = strtolower((string) config('nmi.mta_encryption', 'none'));
 
-        $dsn = "smtp://{$username}:{$password}@{$host}:{$port}";
+        // 'ssl' = TLS from the first byte (port 465). Otherwise the session starts in
+        // clear text: 'tls' insists on STARTTLS, 'none' never upgrades (the MTA sits on
+        // NetSendo's own Docker network and has no certificate by default).
+        $transport = new EsmtpTransport($host, $port, $encryption === 'ssl');
 
-        $transport = Transport::fromDsn($dsn);
+        if ($encryption === 'tls') {
+            $transport->setRequireTls(true);
+        } elseif ($encryption !== 'ssl') {
+            $transport->setAutoTls(false);
+        }
+
+        $transport->setUsername((string) $this->domain->nmi_smtp_username);
+        $transport->setPassword((string) $this->domain->getDecryptedNmiPassword());
+
         $this->mailer = new Mailer($transport);
     }
 
@@ -60,6 +70,12 @@ class NmiProvider implements MailProviderInterface
     private function initializeDkimSigner(): void
     {
         if (!$this->dedicatedIp?->dkim_private_key || !$this->dedicatedIp?->dkim_selector) {
+            return;
+        }
+
+        // The IP's DKIM record is published under the domain the IP is assigned to:
+        // a signature for another domain would point at a record that does not exist
+        if ((int) $this->dedicatedIp->domain_configuration_id !== (int) $this->domain->id) {
             return;
         }
 
@@ -201,7 +217,7 @@ class NmiProvider implements MailProviderInterface
             }
 
             // Check NMI credentials
-            if (!$this->domain->nmi_smtp_username || !$this->domain->nmi_smtp_password) {
+            if (!$this->domain->hasNmiCredentials()) {
                 return [
                     'success' => false,
                     'message' => 'NMI credentials not configured for this domain.',
@@ -242,9 +258,16 @@ class NmiProvider implements MailProviderInterface
                 ],
             ];
         } catch (Exception $e) {
+            $message = 'Connection failed: ' . $e->getMessage();
+
+            // 535 or "no authenticator": the MTA runs but has not read this domain's login
+            if (preg_match('/\b535\b|authenticat/i', $e->getMessage())) {
+                $message .= ' ' . __('mailboxes.nmi.errors.mta_login_refused');
+            }
+
             return [
                 'success' => false,
-                'message' => 'Connection failed: ' . $e->getMessage(),
+                'message' => $message,
             ];
         }
     }
