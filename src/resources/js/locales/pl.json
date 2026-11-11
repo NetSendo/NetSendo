@@ -4073,7 +4073,8 @@
             "select_integration_to_connect": "Wybierz integrację aby połączyć.",
             "integration_not_configured_warning": "Integracja Google nie jest skonfigurowana.",
             "go_to_integrations": "Przejdź do ustawień integracji",
-            "broadcast_disabled": "Niedostępne dla Gmail"
+            "broadcast_disabled": "Niedostępne dla Gmail",
+            "save_errors": "Nie udało się zapisać skrzynki:"
         },
         "info": {
             "title": "Informacje o dostawcach",

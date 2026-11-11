@@ -53,4 +53,20 @@ return [
         'key_placeholder' => 'z.B. Feedback-ID',
         'value_placeholder' => 'z.B. campaign1:user123:netsendo',
     ],
+
+    // Field names in validation messages of the mailbox form
+    'attributes' => [
+        'name' => 'Name des Postfachs',
+        'provider' => 'Anbieter',
+        'from_email' => 'Absenderadresse',
+        'from_name' => 'Absendername',
+        'reply_to' => 'Reply-To-Adresse',
+        'allowed_types' => 'erlaubte Nachrichtentypen',
+        'credentials' => 'Server-Zugangsdaten',
+        'daily_limit' => 'tägliches Versandlimit',
+        'time_restriction' => 'Mindestabstand',
+        'custom_headers.*.key' => 'Header-Name',
+        'custom_headers.*.value' => 'Header-Wert',
+        'reply_imap_host' => 'IMAP-Host für Antworten',
+    ],
 ];

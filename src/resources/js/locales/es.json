@@ -4762,7 +4762,8 @@
             "select_integration_to_connect": "Seleccione una integración para conectar.",
             "integration_not_configured_warning": "La integración de Google no está configurada.",
             "go_to_integrations": "Vaya a la configuración de integraciones",
-            "broadcast_disabled": "No disponible para Gmail"
+            "broadcast_disabled": "No disponible para Gmail",
+            "save_errors": "No se pudo guardar el buzón:"
         },
         "info": {
             "title": "Información de proveedores",

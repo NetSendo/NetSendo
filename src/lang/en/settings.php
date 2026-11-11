@@ -12,4 +12,7 @@ return [
         'store_updated' => 'Store has been updated',
         'store_url_exists' => 'A store with this URL is already connected',
     ],
+
+    // Sidebar update notice and Updates page: GitHub could not be asked
+    'updates_check_failed' => 'Could not check GitHub for updates.',
 ];

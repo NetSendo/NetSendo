@@ -4374,7 +4374,8 @@
             "select_integration_to_connect": "Select integration to connect.",
             "integration_not_configured_warning": "Google integration is not configured.",
             "go_to_integrations": "Go to integration settings",
-            "broadcast_disabled": "Not available for Gmail"
+            "broadcast_disabled": "Not available for Gmail",
+            "save_errors": "The mailbox could not be saved:"
         },
         "info": {
             "title": "Provider Information",

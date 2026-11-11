@@ -162,7 +162,7 @@ const submitForm = () => {
                     showToast(t("sms_providers.notifications.updated"));
                 },
                 onError: () => {
-                    showToast(t("common.notifications.error"), false);
+                    showToast(t("common.notifications.error_occurred"), false);
                 },
             }
         );
@@ -174,7 +174,7 @@ const submitForm = () => {
                 showToast(t("sms_providers.notifications.created"));
             },
             onError: () => {
-                showToast(t("common.notifications.error"), false);
+                showToast(t("common.notifications.error_occurred"), false);
             },
         });
     }
@@ -207,7 +207,7 @@ const testConnection = async (provider) => {
         router.reload({ only: ["providers"] });
     } catch (error) {
         showToast(
-            t("common.notifications.error") + ": " + error.message,
+            t("common.error") + ": " + error.message,
             false
         );
     } finally {

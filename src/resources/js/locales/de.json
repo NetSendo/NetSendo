@@ -8606,7 +8606,8 @@
             "reply_to": "Antwort an (Reply-To)",
             "reply_to_placeholder": "antwort-an{'@'}beispiel.de (optional)",
             "seconds": "Sekunden",
-            "select_integration_to_connect": "Wählen Sie eine Integration aus, um zu verbinden."
+            "select_integration_to_connect": "Wählen Sie eine Integration aus, um zu verbinden.",
+            "save_errors": "Das Postfach konnte nicht gespeichert werden:"
         },
         "notifications": {
             "created": "Postfach wurde erstellt.",

@@ -232,7 +232,7 @@ const testConnection = async (integration) => {
 
         if (!csrfToken) {
             console.error("CSRF token not found");
-            showToast(t("common.notifications.error"), false);
+            showToast(t("common.notifications.error_occurred"), false);
             return;
         }
 
@@ -260,7 +260,7 @@ const testConnection = async (integration) => {
     } catch (error) {
         console.error("Test connection error:", error);
         showToast(
-            t("common.notifications.error") + ": " + error.message,
+            t("common.error") + ": " + error.message,
             false,
         );
     } finally {

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Fixed
+
+- **A mailbox with the "NetSendo MTA" provider could never be saved.** *Settings → Mailboxes → Add mailbox* offered NetSendo MTA (NMI) next to SMTP, SendGrid and Gmail, but the server accepts only those three, and an NMI mailbox could not send anyway: a mailbox has no link to a domain or a dedicated IP, and nothing issues the domain's NMI SMTP login. Saving always failed, and the modal showed only a toast with the raw key `common.notifications.error`. The form now offers only the three providers it can save (`Mailbox::PANEL_PROVIDERS`). Use SMTP for your own mail server.
+- **The mailbox form says why a save failed.** Errors of fields without a message of their own (server login details, custom headers, limits) were not shown anywhere, and the ones that were sat at the top of a long, scrolled modal. All validation messages are now listed above the *Save* button, with readable field names ("server login details" instead of "credentials"; en, pl, de, es). A custom header row left empty is skipped instead of failing the save, and errors of a previous attempt no longer show when the form is opened again.
+- **Error toasts show text instead of `common.notifications.error`** on the Mailboxes, AI integrations, Custom fields, SMS providers and External pages settings: the key never existed. They now say "An error occurred. Please try again." (or "Error: " followed by the reason), and a failed mailbox save says "Please check your input and try again." Disconnecting Gmail showed `mailboxes.notifications.disconnected` for the same reason.
+- **`netsendo:check-updates failed with exit code [1]` every hour.** The sidebar asked the GitHub API for releases on every page view and the scheduler once an hour. GitHub allows 60 requests an hour per IP address without a token, so on a server shared by many installations the limit ran out: the command failed with an error in the log, and the update notice could not load. The release list is now fetched once and cached for 12 to 18 hours (different for every fetch, so installations drift apart), shared by the sidebar, the *Updates* page and the scheduled command, and a failed request pauses further attempts (until GitHub's reset after hitting the rate limit, 3 hours otherwise). The cache holds the release list, not the result, so the status is right straight after an update. GitHub being out of reach is no longer an error: the command prints a warning, logs one, and exits 0. The refresh buttons still ask GitHub at once (`UpdateCheckService`).
+  - Covered by `tests/Feature/MailboxFormTest.php` and `tests/Feature/UpdateCheckTest.php`.
+
 ## [2.8.7] – Installations on Podman update again - 2026-11-10
 
 **Release date:** 2026-11-10

@@ -342,6 +342,7 @@ const openModal = (mailbox = null) => {
         form.allowed_types = ["broadcast", "autoresponder", "system"];
         form.time_restriction = 2;
     }
+    form.clearErrors();
     testResult.value = null;
     bounceTestResult.value = null;
     replyTestResult.value = null;
@@ -389,7 +390,7 @@ const copyToClipboard = async (text) => {
         await navigator.clipboard.writeText(text);
         showToast(t("common.copied"));
     } catch (error) {
-        showToast(t("common.notifications.error"), false);
+        showToast(t("common.notifications.error_occurred"), false);
     }
 };
 
@@ -430,17 +431,23 @@ const generateWebhookToken = async () => {
         showToast(data.message);
         router.reload({ only: ["mailboxes"] });
     } catch (error) {
-        showToast(t("common.notifications.error") + ": " + error.message, false);
+        showToast(t("common.error") + ": " + error.message, false);
     } finally {
         generatingWebhookToken.value = false;
     }
 };
+
+// Every validation message of the last save, each once
+const formErrorMessages = computed(() => [
+    ...new Set(Object.values(form.errors).filter(Boolean)),
+]);
 
 // Close modal
 const closeModal = () => {
     showModal.value = false;
     editingMailbox.value = null;
     form.reset();
+    form.clearErrors();
     testResult.value = null;
     bounceTestResult.value = null;
     replyTestResult.value = null;
@@ -471,7 +478,7 @@ const testBounceConnection = async () => {
         showToast(data.message, data.success);
     } catch (error) {
         bounceTestResult.value = { success: false, message: error.message };
-        showToast(t("common.notifications.error") + ": " + error.message, false);
+        showToast(t("common.error") + ": " + error.message, false);
     } finally {
         testingBounce.value = false;
     }
@@ -502,7 +509,7 @@ const testReplyConnection = async () => {
         showToast(data.message, data.success);
     } catch (error) {
         replyTestResult.value = { success: false, message: error.message };
-        showToast(t("common.notifications.error") + ": " + error.message, false);
+        showToast(t("common.error") + ": " + error.message, false);
     } finally {
         testingReply.value = false;
     }
@@ -520,6 +527,14 @@ const submitForm = () => {
         form.credentials = {}; // Ensure no garbage credentials are sent
     }
 
+    // A header row added and left empty is not a header: skip it instead of
+    // failing the whole save on "header name is required"
+    form.custom_headers = form.custom_headers.filter(
+        (header) =>
+            String(header.key ?? "").trim() !== "" ||
+            String(header.value ?? "").trim() !== "",
+    );
+
     if (modalMode.value === "edit") {
         form.put(route("settings.mailboxes.update", editingMailbox.value.id), {
             preserveScroll: true,
@@ -528,7 +543,7 @@ const submitForm = () => {
                 showToast(t("mailboxes.notifications.updated"));
             },
             onError: () => {
-                showToast(t("common.notifications.error"), false);
+                showToast(t("common.notifications.validation_error"), false);
             },
         });
     } else {
@@ -555,7 +570,7 @@ const submitForm = () => {
                 closeModal();
             },
             onError: () => {
-                showToast(t("common.notifications.error"), false);
+                showToast(t("common.notifications.validation_error"), false);
             },
         });
     }
@@ -589,7 +604,7 @@ const testConnection = async (mailbox) => {
         router.reload({ only: ["mailboxes"] });
     } catch (error) {
         showToast(
-            t("common.notifications.error") + ": " + error.message,
+            t("common.error") + ": " + error.message,
             false,
         );
     } finally {
@@ -722,10 +737,10 @@ const disconnectGmail = () => {
                     // We should also clear any specific fields if they were set?
                     // But mainly we rely on editingMailbox.gmail_connected in the template.
                 }
-                showToast(t("mailboxes.notifications.disconnected"));
+                showToast(t("mailboxes.oauth.disconnected"));
             },
             onError: () => {
-                showToast(t("common.notifications.error"), false);
+                showToast(t("common.notifications.error_occurred"), false);
             },
         },
     );
@@ -2604,6 +2619,31 @@ const isBroadcastDisabled = computed(() => {
                                     {{ testResult.message }}
                                 </span>
                             </div>
+                        </div>
+
+                        <!-- Why the save failed: right next to the button, because the
+                             fields the errors belong to may be scrolled out of view or
+                             (credentials, custom headers) show no message of their own -->
+                        <div
+                            v-if="formErrorMessages.length"
+                            class="rounded-lg border border-rose-200 bg-rose-50 p-3 dark:border-rose-800 dark:bg-rose-900/20"
+                            role="alert"
+                        >
+                            <p
+                                class="text-sm font-medium text-rose-800 dark:text-rose-200"
+                            >
+                                {{ $t("mailboxes.modal.save_errors") }}
+                            </p>
+                            <ul
+                                class="mt-1 list-disc space-y-0.5 pl-5 text-sm text-rose-700 dark:text-rose-300"
+                            >
+                                <li
+                                    v-for="message in formErrorMessages"
+                                    :key="message"
+                                >
+                                    {{ message }}
+                                </li>
+                            </ul>
                         </div>
 
                         <!-- Form Actions -->

@@ -109,6 +109,15 @@ class Mailbox extends Model
     public const PROVIDER_NMI = 'nmi';
 
     /**
+     * Providers a mailbox can be created with or switched to in Settings → Mailboxes.
+     *
+     * NMI is left out: a mailbox has no column linking it to a domain or a dedicated IP,
+     * and nothing issues the domain's NMI SMTP login, so NmiProvider cannot send yet.
+     * Offering it only led to a form that could never be saved.
+     */
+    public const PANEL_PROVIDERS = [self::PROVIDER_SMTP, self::PROVIDER_SENDGRID, self::PROVIDER_GMAIL];
+
+    /**
      * Message type constants
      */
     public const TYPE_BROADCAST = 'broadcast';
@@ -142,6 +151,14 @@ class Mailbox extends Model
                 'description' => 'Built-in mail infrastructure with dedicated IP',
             ],
         ];
+    }
+
+    /**
+     * The providers offered in the mailbox form (see PANEL_PROVIDERS)
+     */
+    public static function getPanelProviders(): array
+    {
+        return array_intersect_key(self::getProviders(), array_flip(self::PANEL_PROVIDERS));
     }
 
     /**

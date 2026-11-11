@@ -76,7 +76,8 @@ Schedule::command('automations:process-date-triggers')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/cron-automations.log'));
 
-// Sprawdzanie dostępnych aktualizacji NetSendo - co godzinę
+// Available NetSendo updates: runs hourly but asks GitHub only when the cached release list
+// has expired (12-18 h) or a failed attempt's pause is over (UpdateCheckService)
 Schedule::command('netsendo:check-updates')
     ->hourly()
     ->withoutOverlapping()

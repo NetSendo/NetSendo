@@ -12,4 +12,7 @@ return [
         'store_updated' => 'Shop wurde aktualisiert',
         'store_url_exists' => 'Ein Shop mit dieser URL ist bereits verbunden',
     ],
+
+    // Sidebar update notice and Updates page: GitHub could not be asked
+    'updates_check_failed' => 'Updates konnten nicht bei GitHub geprüft werden.',
 ];

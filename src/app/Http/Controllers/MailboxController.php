@@ -93,7 +93,7 @@ class MailboxController extends Controller
 
         return Inertia::render('Settings/Mailboxes/Index', [
             'mailboxes' => $mailboxes,
-            'providers' => Mailbox::getProviders(),
+            'providers' => Mailbox::getPanelProviders(),
             'gmail_configured' => \App\Models\GoogleIntegration::where('user_id', Auth::id())->where('status', 'active')->exists() || \App\Models\Setting::where('key', 'google_client_id')->exists() || !empty(config('services.google.client_id')),
             'providerFields' => [
                 Mailbox::PROVIDER_SMTP => MailProviderService::getProviderFields(Mailbox::PROVIDER_SMTP),
@@ -129,7 +129,7 @@ class MailboxController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'provider' => ['required', Rule::in([Mailbox::PROVIDER_SMTP, Mailbox::PROVIDER_SENDGRID, Mailbox::PROVIDER_GMAIL])],
+            'provider' => ['required', Rule::in(Mailbox::PANEL_PROVIDERS)],
             'from_email' => ['required', 'email', 'max:255'],
             'from_name' => ['required', 'string', 'max:255'],
             'reply_to' => ['nullable', 'email', 'max:255'],
@@ -144,7 +144,7 @@ class MailboxController extends Controller
             'custom_headers' => ['nullable', 'array'],
             'custom_headers.*.key' => ['required_with:custom_headers', 'string', 'max:255'],
             'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
-        ]);
+        ], [], $this->fieldNames());
 
         $mailbox = Mailbox::create([
             'user_id' => Auth::id(),
@@ -233,7 +233,7 @@ class MailboxController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'provider' => ['required', Rule::in([Mailbox::PROVIDER_SMTP, Mailbox::PROVIDER_SENDGRID, Mailbox::PROVIDER_GMAIL])],
+            'provider' => ['required', Rule::in(Mailbox::PANEL_PROVIDERS)],
             'from_email' => ['required', 'email', 'max:255'],
             'from_name' => ['required', 'string', 'max:255'],
             'reply_to' => ['nullable', 'email', 'max:255'],
@@ -248,7 +248,7 @@ class MailboxController extends Controller
             'custom_headers' => ['nullable', 'array'],
             'custom_headers.*.key' => ['required_with:custom_headers', 'string', 'max:255'],
             'custom_headers.*.value' => ['required_with:custom_headers', 'string', 'max:1024'],
-        ]);
+        ], [], $this->fieldNames());
 
         $webhookValidated = $request->validate([
             'bounce_webhook_sendgrid_key' => [
@@ -273,7 +273,7 @@ class MailboxController extends Controller
             'reply_imap_folder' => ['nullable', 'string', 'max:100'],
             'reply_imap_username' => ['nullable', 'string', 'max:255'],
             'reply_imap_password' => ['nullable', 'string', 'max:1024'],
-        ]) : null;
+        ], [], $this->fieldNames()) : null;
 
         $updateData = [
             'name' => $validated['name'],
@@ -471,6 +471,17 @@ class MailboxController extends Controller
             'message' => __('mailboxes.bounce_webhooks.token_generated'),
             'bounce_webhook' => $this->bounceWebhookSettings($mailbox->fresh()),
         ]);
+    }
+
+    /**
+     * Readable field names for the form's validation messages ("credentials" alone means
+     * nothing to the person filling in the form).
+     */
+    private function fieldNames(): array
+    {
+        $names = __('mailboxes.attributes');
+
+        return is_array($names) ? $names : [];
     }
 
     /**
