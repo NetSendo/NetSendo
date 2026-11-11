@@ -876,7 +876,8 @@
             "sending": "Sending",
             "integrations": "Integrations",
             "system": "System"
-        }
+        },
+        "connector": "AI connector"
     },
     "dashboard": {
         "welcome_back": "Welcome back, {name}! 👋",
@@ -9890,6 +9891,116 @@
             "booking": "New booking",
             "cancellation": "Meeting cancelled",
             "no_show": "Invitee did not show up"
+        }
+    },
+    "connector": {
+        "marketplace_title": "A quicker way: the AI connector",
+        "marketplace_text": "Claude, Hermes, ChatGPT and other apps can connect to this NetSendo by address and sign-in, with no API key and nothing to install on your computer.",
+        "marketplace_link": "Open the AI connector",
+        "title": "AI connector",
+        "subtitle": "Connect Claude, Hermes and other AI apps to this NetSendo by address and sign-in",
+        "status_on": "Active",
+        "status_off": "Turned off",
+        "off_title": "The connector is turned off",
+        "off_text": "This installation runs with MCP_CONNECTOR_ENABLED=false, so AI apps cannot connect by address. API keys and the local MCP client keep working.",
+        "engine_missing_title": "The tools are not installed",
+        "engine_missing_text": "The connector could not load its tools. Update NetSendo to the current image; for a custom installation see docs/MCP_CONNECTOR.md.",
+        "not_public_title": "This address is not reachable from the internet over HTTPS",
+        "not_public_text": "Claude, ChatGPT and other cloud apps connect from their own servers: they need a public https address. Apps running on this computer (Claude Code, Hermes, Cursor) can use this address as it is.",
+        "address_title": "Connector address",
+        "address_text": "Paste this address into your AI app. The app sends you here to sign in and choose what it may do. No API key is needed.",
+        "address_label": "Address",
+        "address_hint": "{count} tools: lists, subscribers, campaigns, templates, automations and more",
+        "apps_title": "Connected apps",
+        "apps_text": "Apps you allowed to use your account.",
+        "apps_text_admin": "Apps you and your team members allowed to use their accounts.",
+        "apps_empty_title": "No app is connected",
+        "apps_empty_text": "An app appears here after you approve it on the sign-in screen.",
+        "apps_self_registered": "Self-registered",
+        "apps_user": "Account: {name} ({email})",
+        "apps_connected": "Connected {date}",
+        "apps_last_used": "last used {date}",
+        "apps_never_used": "not used yet",
+        "apps_full_access": "All permissions",
+        "apps_permissions": "Permissions: {count}",
+        "revoke": "Disconnect",
+        "revoke_title": "Disconnect this app?",
+        "revoke_message": "The app loses access immediately. It can ask to connect again.",
+        "authorize": {
+            "title": "Connect an app",
+            "heading": "Connect {app} to NetSendo?",
+            "intro": "{app} is asking for access to your account on {host}.",
+            "app_title": "The app",
+            "verified": "Identity confirmed",
+            "unverified": "Not verified",
+            "verified_text": "The identity of this app is published at {host}.",
+            "unverified_text": "This app registered itself, so NetSendo cannot confirm its name. Continue only if you started this connection yourself a moment ago.",
+            "returns_to": "After your decision you go back to {host}.",
+            "returns_local": "After your decision you go back to an app running on this computer.",
+            "account_title": "Your account",
+            "team_member": "You are a team member of the account of {owner}. The app gets access to what you can access, not to the whole account.",
+            "other_account": "To connect a different account, sign out in the panel and start again from the app.",
+            "permissions_title": "What the app may do",
+            "permissions_text": "Untick anything the app should not do. A write permission includes reading.",
+            "read_only": "Read only",
+            "select_all": "Select all",
+            "deny": "Deny",
+            "allow": "Allow",
+            "revoke_hint": "You can disconnect the app at any time in Settings → AI connector.",
+            "invalid_title": "This connection request cannot be shown",
+            "invalid_text": "The request from the app is not valid.",
+            "invalid_hint": "Go back to the app and start connecting again. If it keeps happening, remove the connector in the app and add it again."
+        },
+        "guide": {
+            "title": "How to connect",
+            "intro": "Pick your app. In every case you paste the address, sign in to NetSendo and choose the permissions.",
+            "other": "Other",
+            "claude": {
+                "intro": "Works in Claude on the web, in the desktop app and on the phone.",
+                "step_1": "Open Claude and go to Customize → Connectors. In a Team or Enterprise organisation an owner adds the connector under Organization settings → Connectors.",
+                "step_2": "Click the plus button and choose \"Add custom connector\".",
+                "step_3": "Type a name, for example NetSendo, and paste the address shown below.",
+                "step_4": "Leave the OAuth client on \"Use Claude's published identity\" and click Add.",
+                "step_5": "Click Connect. Claude opens NetSendo: sign in, choose the permissions and click Allow.",
+                "step_6": "In a chat, switch the NetSendo connector on in the tools menu and ask, for example: Show my contact lists.",
+                "note": "Claude connects from Anthropic's servers, not from your computer, so this address must be reachable from the internet over HTTPS. On the Free plan Claude allows one custom connector."
+            },
+            "claude_code": {
+                "intro": "Claude Code connects straight from your computer, so a local address works too.",
+                "step_1": "Run this in a terminal:",
+                "step_2": "Start Claude Code, type /mcp, choose netsendo and then Authenticate.",
+                "step_3": "Your browser opens NetSendo: sign in, choose the permissions and click Allow."
+            },
+            "hermes": {
+                "intro": "Hermes Agent (Nous Research) signs in the same way.",
+                "step_1": "Add the server and sign in:",
+                "step_2": "Your browser opens NetSendo: sign in, choose the permissions and click Allow. In a running session, /reload-mcp loads the tools.",
+                "config": "Or add this to ~/.hermes/config.yaml and run: hermes mcp login netsendo"
+            },
+            "chatgpt": {
+                "intro": "ChatGPT can use the connector as a custom MCP server. Where the option is depends on your ChatGPT plan and settings.",
+                "step_1": "In ChatGPT, open the settings for apps and connectors and choose to add a custom MCP server.",
+                "step_2": "Paste the address shown below (it ends with /mcp).",
+                "step_3": "If ChatGPT asks how to sign in, choose OAuth.",
+                "step_4": "Sign in to NetSendo, choose the permissions and click Allow.",
+                "note": "ChatGPT also connects from its own servers: this address must be reachable from the internet over HTTPS."
+            },
+            "generic": {
+                "intro": "Any MCP host that supports remote servers (Streamable HTTP) with OAuth sign-in works: give it the address above and it finds the sign-in page by itself.",
+                "cursor": "Add this to ~/.cursor/mcp.json (or .cursor/mcp.json in a project), then sign in from the MCP settings of Cursor:",
+                "vscode": "Add this to .vscode/mcp.json, start the server and sign in when VS Code asks:",
+                "stdio_title": "Apps that only run local commands",
+                "stdio": "The mcp-remote bridge signs in for them:",
+                "key_title": "Without sign-in: an API key",
+                "key": "An app that can only send a fixed header can use an API key from {link} instead of signing in:"
+            }
+        },
+        "safety": {
+            "title": "What a connected app can do",
+            "account": "It acts as the user who approved it and sees only the data of that user. An app connected by a team member does not get the access of the account owner.",
+            "permissions": "It can use only the permissions ticked on the sign-in screen. They are the same permissions API keys have. To change them, disconnect the app and connect it again.",
+            "tokens": "Disconnecting an app here stops it immediately. An app that has not been used for 90 days has to sign in again. NetSendo keeps only fingerprints of the access tokens.",
+            "sending": "With the sending permissions an app can send campaigns, emails and SMS to real recipients. Grant them only to apps you trust and check what the assistant is about to send."
         }
     }
 }

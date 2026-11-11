@@ -1357,7 +1357,8 @@
             "sending": "Versand",
             "integrations": "Integrationen",
             "system": "System"
-        }
+        },
+        "connector": "KI-Konnektor"
     },
     "dashboard": {
         "welcome_back": "Willkommen zurück, {name}! 👋",
@@ -9890,6 +9891,116 @@
             "booking": "Neue Buchung",
             "cancellation": "Treffen abgesagt",
             "no_show": "Eingeladene Person nicht erschienen"
+        }
+    },
+    "connector": {
+        "marketplace_title": "Der schnellere Weg: der KI-Konnektor",
+        "marketplace_text": "Claude, Hermes, ChatGPT und andere Apps können sich per Adresse und Anmeldung mit diesem NetSendo verbinden, ohne API-Schlüssel und ohne Installation auf Ihrem Computer.",
+        "marketplace_link": "KI-Konnektor öffnen",
+        "title": "KI-Konnektor",
+        "subtitle": "Claude, Hermes und andere KI-Apps per Adresse und Anmeldung mit diesem NetSendo verbinden",
+        "status_on": "Aktiv",
+        "status_off": "Ausgeschaltet",
+        "off_title": "Der Konnektor ist ausgeschaltet",
+        "off_text": "Diese Installation läuft mit MCP_CONNECTOR_ENABLED=false, daher können sich KI-Apps nicht per Adresse verbinden. API-Schlüssel und der lokale MCP-Client funktionieren weiter.",
+        "engine_missing_title": "Die Werkzeuge sind nicht installiert",
+        "engine_missing_text": "Der Konnektor konnte seine Werkzeuge nicht laden. Aktualisieren Sie NetSendo auf das aktuelle Image; bei einer eigenen Installation siehe docs/MCP_CONNECTOR.md.",
+        "not_public_title": "Diese Adresse ist nicht über HTTPS aus dem Internet erreichbar",
+        "not_public_text": "Claude, ChatGPT und andere Cloud-Apps verbinden sich von ihren eigenen Servern: Sie brauchen eine öffentliche https-Adresse. Apps auf diesem Computer (Claude Code, Hermes, Cursor) können diese Adresse unverändert nutzen.",
+        "address_title": "Adresse des Konnektors",
+        "address_text": "Fügen Sie diese Adresse in Ihre KI-App ein. Die App leitet Sie hierher, damit Sie sich anmelden und festlegen, was sie darf. Ein API-Schlüssel ist nicht nötig.",
+        "address_label": "Adresse",
+        "address_hint": "{count} Werkzeuge: Listen, Abonnenten, Kampagnen, Vorlagen, Automatisierungen und mehr",
+        "apps_title": "Verbundene Apps",
+        "apps_text": "Apps, denen Sie die Nutzung Ihres Kontos erlaubt haben.",
+        "apps_text_admin": "Apps, denen Sie und Ihre Teammitglieder die Nutzung ihrer Konten erlaubt haben.",
+        "apps_empty_title": "Keine App ist verbunden",
+        "apps_empty_text": "Eine App erscheint hier, nachdem Sie sie auf dem Anmeldebildschirm bestätigt haben.",
+        "apps_self_registered": "Selbst registriert",
+        "apps_user": "Konto: {name} ({email})",
+        "apps_connected": "Verbunden {date}",
+        "apps_last_used": "zuletzt genutzt {date}",
+        "apps_never_used": "noch nicht genutzt",
+        "apps_full_access": "Alle Berechtigungen",
+        "apps_permissions": "Berechtigungen: {count}",
+        "revoke": "Trennen",
+        "revoke_title": "Diese App trennen?",
+        "revoke_message": "Die App verliert sofort den Zugriff. Sie kann erneut um eine Verbindung bitten.",
+        "authorize": {
+            "title": "App verbinden",
+            "heading": "{app} mit NetSendo verbinden?",
+            "intro": "{app} bittet um Zugriff auf Ihr Konto auf {host}.",
+            "app_title": "Die App",
+            "verified": "Identität bestätigt",
+            "unverified": "Nicht verifiziert",
+            "verified_text": "Die Identität dieser App ist unter {host} veröffentlicht.",
+            "unverified_text": "Diese App hat sich selbst registriert, daher kann NetSendo ihren Namen nicht bestätigen. Fahren Sie nur fort, wenn Sie diese Verbindung gerade selbst gestartet haben.",
+            "returns_to": "Nach Ihrer Entscheidung kehren Sie zu {host} zurück.",
+            "returns_local": "Nach Ihrer Entscheidung kehren Sie zu einer App auf diesem Computer zurück.",
+            "account_title": "Ihr Konto",
+            "team_member": "Sie sind Teammitglied des Kontos von {owner}. Die App erhält Zugriff auf das, worauf Sie Zugriff haben, nicht auf das gesamte Konto.",
+            "other_account": "Um ein anderes Konto zu verbinden, melden Sie sich im Panel ab und beginnen Sie in der App von vorn.",
+            "permissions_title": "Was die App darf",
+            "permissions_text": "Entfernen Sie den Haken bei allem, was die App nicht tun soll. Eine Schreibberechtigung schließt das Lesen ein.",
+            "read_only": "Nur lesen",
+            "select_all": "Alle auswählen",
+            "deny": "Ablehnen",
+            "allow": "Erlauben",
+            "revoke_hint": "Sie können die App jederzeit unter Einstellungen → KI-Konnektor trennen.",
+            "invalid_title": "Diese Verbindungsanfrage kann nicht angezeigt werden",
+            "invalid_text": "Die Anfrage der App ist ungültig.",
+            "invalid_hint": "Gehen Sie zurück zur App und starten Sie die Verbindung erneut. Wenn es wieder passiert, entfernen Sie den Konnektor in der App und fügen Sie ihn neu hinzu."
+        },
+        "guide": {
+            "title": "So verbinden Sie",
+            "intro": "Wählen Sie Ihre App. In jedem Fall fügen Sie die Adresse ein, melden sich bei NetSendo an und wählen die Berechtigungen.",
+            "other": "Andere",
+            "claude": {
+                "intro": "Funktioniert in Claude im Web, in der Desktop-App und auf dem Telefon.",
+                "step_1": "Öffnen Sie Claude und gehen Sie zu Customize → Connectors. In einer Team- oder Enterprise-Organisation fügt ein Inhaber den Konnektor unter Organization settings → Connectors hinzu.",
+                "step_2": "Klicken Sie auf die Plus-Schaltfläche und wählen Sie „Add custom connector“.",
+                "step_3": "Geben Sie einen Namen ein, zum Beispiel NetSendo, und fügen Sie die unten gezeigte Adresse ein.",
+                "step_4": "Lassen Sie den OAuth-Client auf „Use Claude's published identity“ und klicken Sie auf Add.",
+                "step_5": "Klicken Sie auf Connect. Claude öffnet NetSendo: Melden Sie sich an, wählen Sie die Berechtigungen und klicken Sie auf Erlauben.",
+                "step_6": "Schalten Sie in einem Chat den NetSendo-Konnektor im Werkzeugmenü ein und fragen Sie zum Beispiel: Zeige meine Kontaktlisten.",
+                "note": "Claude verbindet sich von den Servern von Anthropic, nicht von Ihrem Computer; diese Adresse muss daher über HTTPS aus dem Internet erreichbar sein. Im Free-Tarif erlaubt Claude einen eigenen Konnektor."
+            },
+            "claude_code": {
+                "intro": "Claude Code verbindet sich direkt von Ihrem Computer, daher funktioniert auch eine lokale Adresse.",
+                "step_1": "Führen Sie im Terminal aus:",
+                "step_2": "Starten Sie Claude Code, geben Sie /mcp ein, wählen Sie netsendo und dann Authenticate.",
+                "step_3": "Ihr Browser öffnet NetSendo: Melden Sie sich an, wählen Sie die Berechtigungen und klicken Sie auf Erlauben."
+            },
+            "hermes": {
+                "intro": "Hermes Agent (Nous Research) meldet sich auf die gleiche Weise an.",
+                "step_1": "Server hinzufügen und anmelden:",
+                "step_2": "Ihr Browser öffnet NetSendo: Melden Sie sich an, wählen Sie die Berechtigungen und klicken Sie auf Erlauben. In einer laufenden Sitzung lädt /reload-mcp die Werkzeuge.",
+                "config": "Oder tragen Sie dies in ~/.hermes/config.yaml ein und führen Sie aus: hermes mcp login netsendo"
+            },
+            "chatgpt": {
+                "intro": "ChatGPT kann den Konnektor als eigenen MCP-Server nutzen. Wo die Option liegt, hängt von Ihrem ChatGPT-Tarif und Ihren Einstellungen ab.",
+                "step_1": "Öffnen Sie in ChatGPT die Einstellungen für Apps und Konnektoren und wählen Sie, einen eigenen MCP-Server hinzuzufügen.",
+                "step_2": "Fügen Sie die unten gezeigte Adresse ein (sie endet auf /mcp).",
+                "step_3": "Wenn ChatGPT nach der Anmeldeart fragt, wählen Sie OAuth.",
+                "step_4": "Melden Sie sich bei NetSendo an, wählen Sie die Berechtigungen und klicken Sie auf Erlauben.",
+                "note": "Auch ChatGPT verbindet sich von eigenen Servern: Diese Adresse muss über HTTPS aus dem Internet erreichbar sein."
+            },
+            "generic": {
+                "intro": "Jeder MCP-Host, der entfernte Server (Streamable HTTP) mit OAuth-Anmeldung unterstützt, funktioniert: Geben Sie ihm die Adresse oben, die Anmeldeseite findet er selbst.",
+                "cursor": "Tragen Sie dies in ~/.cursor/mcp.json (oder .cursor/mcp.json im Projekt) ein und melden Sie sich dann in den MCP-Einstellungen von Cursor an:",
+                "vscode": "Tragen Sie dies in .vscode/mcp.json ein, starten Sie den Server und melden Sie sich an, wenn VS Code danach fragt:",
+                "stdio_title": "Apps, die nur lokale Befehle ausführen",
+                "stdio": "Die Brücke mcp-remote meldet sich für sie an:",
+                "key_title": "Ohne Anmeldung: ein API-Schlüssel",
+                "key": "Eine App, die nur einen festen Header senden kann, kann statt der Anmeldung einen API-Schlüssel von der Seite {link} verwenden:"
+            }
+        },
+        "safety": {
+            "title": "Was eine verbundene App tun kann",
+            "account": "Sie handelt als der Benutzer, der sie bestätigt hat, und sieht nur dessen Daten. Eine von einem Teammitglied verbundene App erhält nicht den Zugriff des Kontoinhabers.",
+            "permissions": "Sie kann nur die Berechtigungen nutzen, die auf dem Anmeldebildschirm angehakt wurden. Es sind dieselben Berechtigungen wie bei API-Schlüsseln. Um sie zu ändern, trennen Sie die App und verbinden Sie sie erneut.",
+            "tokens": "Das Trennen einer App hier stoppt sie sofort. Eine App, die 90 Tage nicht genutzt wurde, muss sich erneut anmelden. NetSendo speichert nur Fingerabdrücke der Zugriffstoken.",
+            "sending": "Mit den Versandberechtigungen kann eine App Kampagnen, E-Mails und SMS an echte Empfänger senden. Vergeben Sie sie nur an Apps, denen Sie vertrauen, und prüfen Sie, was der Assistent senden will."
         }
     }
 }

@@ -471,6 +471,12 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::delete('/{apiKey}', [\App\Http\Controllers\ApiKeyController::class, 'destroy'])->name('destroy');
     });
 
+    // Connector: the remote MCP endpoint (/mcp) — address, connected apps, instructions
+    Route::prefix('settings/connector')->name('settings.connector.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ConnectorSettingsController::class, 'index'])->name('index');
+        Route::delete('/connections/{connection}', [\App\Http\Controllers\ConnectorSettingsController::class, 'destroy'])->name('connections.destroy');
+    });
+
     // Backup Management
     Route::prefix('settings/backup')->name('settings.backup.')->group(function () {
         Route::get('/', [\App\Http\Controllers\BackupController::class, 'index'])->name('index');

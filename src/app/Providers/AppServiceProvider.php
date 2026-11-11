@@ -13,6 +13,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(\App\Console\MigrationLock::class);
+
+        // NetSendo connector: tools are run by the @netsendo/mcp-client package (mcp/)
+        $this->app->singleton(\App\Services\Connector\ToolEngine::class, \App\Services\Connector\NodeToolEngine::class);
     }
 
     /**

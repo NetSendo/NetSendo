@@ -57,6 +57,21 @@ RUN cd /var/www && npm ci && npm run build && rm -rf node_modules
 RUN find /var/www/public/build -type f \( -name '*.js' -o -name '*.css' -o -name '*.json' -o -name '*.svg' \) -size +1k -exec gzip -9 -k {} +
 
 # =============================================================================
+# CONNECTOR TOOL ENGINE
+# =============================================================================
+# The connector (remote MCP endpoint, /mcp) runs the tools of the MCP client
+# package with Node.js: App\Services\Connector\NodeToolEngine starts
+# /opt/netsendo-mcp/dist/bridge.js for each tool call. Built from mcp/ so the
+# image always carries the tools of its own commit; only runtime dependencies stay.
+COPY mcp/package.json mcp/package-lock.json mcp/tsconfig.json /opt/netsendo-mcp/
+COPY mcp/src /opt/netsendo-mcp/src
+RUN cd /opt/netsendo-mcp \
+    && npm ci \
+    && npm run build \
+    && npm prune --omit=dev \
+    && rm -rf src tsconfig.json /root/.npm
+
+# =============================================================================
 # CREATE BACKUP OF PUBLIC DIRECTORY FOR PRODUCTION SYNC
 # =============================================================================
 # This backup is used by docker-entrypoint.sh to sync files to the shared volume.

@@ -36,6 +36,7 @@ NetSendo is a modern email marketing and automation platform that enables:
 - 🛍️ **E-commerce & Funnels** - Sell digital products with Stripe, Polar and Tpay, take orders from Shopify and WooCommerce, and follow up with built-in sales funnels
 - 🤖 **AI Suite** - NetSendo Brain, Campaign Auditor, Advisor and content generation with your own OpenAI, Anthropic Claude, Google Gemini or xAI Grok keys (OpenRouter and local Ollama models on GOLD)
 - 🔌 **MCP Server** - Model Context Protocol integration for AI assistants (Claude, Cursor, VS Code)
+- 🤝 **[AI connector](docs/MCP_CONNECTOR.md)** - Every installation is a remote MCP server with sign-in: connect Claude, Hermes, ChatGPT and other AI apps by pasting the instance address, no API key needed
 - 📱 **SMS Marketing** - Send SMS messages to your subscribers
 - 🔄 **Automations** - Build complex scenarios and workflows
 - 📦 **Integrations** - Native support for WordPress, WooCommerce, n8n, and more

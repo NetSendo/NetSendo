@@ -1,0 +1,1 @@
+{"version":3,"file":"annotations.d.ts","sourceRoot":"","sources":["../../src/tools/annotations.ts"],"names":[],"mappings":"AAAA;;;;;;;;;GASG;AAEH,MAAM,WAAW,eAAe;IAC9B,KAAK,EAAE,MAAM,CAAC;IACd,YAAY,EAAE,OAAO,CAAC;IACtB,eAAe,EAAE,OAAO,CAAC;IACzB,aAAa,EAAE,OAAO,CAAC;CACxB;AAUD,wBAAgB,eAAe,CAAC,IAAI,EAAE,MAAM,GAAG,eAAe,CAY7D"}
