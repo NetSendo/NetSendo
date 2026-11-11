@@ -141,7 +141,11 @@ Not every host can do this. A Google Cloud VM, for example, has one external add
 
 ### What the server needs
 
-- **Outbound port 25.** The MTA delivers straight to the recipients' mail servers. Many cloud providers block outbound port 25 (Google Cloud always does; AWS, Azure, DigitalOcean and others by default). On such a host the MTA accepts mail and then cannot deliver it: `docker logs netsendo-mta` shows the connection timeouts.
+- **Outbound port 25.** The MTA delivers straight to the recipients' mail servers. Most cloud providers block outbound port 25 by default (Google Cloud, AWS, Azure, DigitalOcean and others). Some lift the block on request; Google Cloud lifts it per project on its own once it considers the project low-risk, and shows the state in a banner on the *VPC networks* page. Where the port is blocked the MTA accepts mail and then cannot deliver it: `docker logs netsendo-mta` shows the connection timeouts. Test it on the server (a line starting with `220` means the port is open):
+
+  ```bash
+  timeout 10 bash -c 'exec 3<>/dev/tcp/gmail-smtp-in.l.google.com/25 && head -1 <&3' || echo "port 25 is blocked"
+  ```
 - **DNS for the sending address**: a PTR record of the sending IP that matches the MTA's host name, and the IP in the domain's SPF record.
 
 ### GOLD
