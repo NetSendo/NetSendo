@@ -40,7 +40,8 @@ class SmsController extends Controller
         // Default: use scheduled_at/send_at for sent/scheduled messages, created_at for drafts
         // For autoresponders (queues), always use created_at
         $sortField = $request->sort ?? 'effective_date';
-        $sortDirection = $request->direction ?? 'desc';
+        // The direction goes into raw SQL below, so it is one of two literals, never the request's text
+        $sortDirection = strtolower((string) $request->input('direction', 'desc')) === 'asc' ? 'asc' : 'desc';
         $allowedSortFields = ['id', 'subject', 'status', 'created_at', 'type', 'day'];
 
         if (in_array($sortField, $allowedSortFields)) {
