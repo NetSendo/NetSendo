@@ -245,7 +245,8 @@
             "validation_error": "Por favor, verifique su entrada e inténtelo de nuevo.",
             "confirm_delete": "¿Está seguro de que desea eliminar esto?",
             "confirm_action": "¿Está seguro de que desea continuar?",
-            "action_irreversible": "Esta acción es irreversible."
+            "action_irreversible": "Esta acción es irreversible.",
+            "error": "Se produjo un error"
         },
         "days": {
             "monday": "Lunes",
@@ -5014,7 +5015,9 @@
             "created": "Cuenta creada con éxito.",
             "updated": "Cuenta actualizada con éxito.",
             "deleted": "Cuenta eliminada con éxito.",
-            "set_default": "Cuenta establecida como predeterminada."
+            "set_default": "Cuenta establecida como predeterminada.",
+            "activated": "Buzón activado",
+            "deactivated": "Buzón desactivado"
         },
         "delete": {
             "title": "Eliminar cuenta",
@@ -5049,7 +5052,16 @@
             "select_integration_to_connect": "Seleccione una integración para conectar.",
             "integration_not_configured_warning": "La integración de Google no está configurada.",
             "go_to_integrations": "Vaya a la configuración de integraciones",
-            "broadcast_disabled": "No disponible para Gmail"
+            "broadcast_disabled": "No disponible para Gmail",
+            "tabs": {
+                "label": "Secciones de los ajustes del buzón",
+                "sending": "Envío",
+                "bounces": "Rebotes",
+                "replies": "Respuestas",
+                "headers": "Cabeceras"
+            },
+            "after_save_hint": "Los rebotes y la lectura de respuestas se configuran una vez guardado el buzón.",
+            "fix_errors": "No se guardó: corrige los campos marcados en rojo."
         },
         "info": {
             "title": "Información de proveedores",
@@ -5246,7 +5258,24 @@
         "tracking": {
             "label": "Seguir clics y aperturas",
             "help": "Reescribe los enlaces a través de NetSendo y añade el píxel de apertura. Desactivado: los enlaces quedan como están, sin píxel, y el seguimiento de SendGrid se desactiva por mensaje. Un mensaje puede cambiarlo."
-        }
+        },
+        "table": {
+            "mailbox": "Buzón",
+            "status": "Estado",
+            "reputation": "Reputación del dominio",
+            "used_for": "Envía",
+            "active": "Activado"
+        },
+        "types_short": {
+            "broadcast": "envíos únicos",
+            "autoresponder": "colas",
+            "system": "del sistema"
+        },
+        "types_all": "Todos los mensajes",
+        "no_limit": "sin límite",
+        "switch_label": "Activado: {name}",
+        "actions_for": "Acciones del buzón: {name}",
+        "testing": "Probando…"
     },
     "tracked_links": {
         "title": "Enlaces seguidos",

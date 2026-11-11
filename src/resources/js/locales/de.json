@@ -301,7 +301,8 @@
             "confirm_action": "Sind Sie sicher, dass Sie fortfahren möchten?",
             "action_irreversible": "Diese Aktion kann nicht rückgängig gemacht werden.",
             "exported_failed": "Export fehlgeschlagen.",
-            "imported_failed": "Import fehlgeschlagen."
+            "imported_failed": "Import fehlgeschlagen.",
+            "error": "Ein Fehler ist aufgetreten"
         },
         "days": {
             "monday": "Montag",
@@ -8893,13 +8894,24 @@
             "reply_to": "Antwort an (Reply-To)",
             "reply_to_placeholder": "antwort-an{'@'}beispiel.de (optional)",
             "seconds": "Sekunden",
-            "select_integration_to_connect": "Wählen Sie eine Integration aus, um zu verbinden."
+            "select_integration_to_connect": "Wählen Sie eine Integration aus, um zu verbinden.",
+            "tabs": {
+                "label": "Abschnitte der Postfach-Einstellungen",
+                "sending": "Versand",
+                "bounces": "Rückläufer",
+                "replies": "Antworten",
+                "headers": "Header"
+            },
+            "after_save_hint": "Rückläufer und das Lesen von Antworten richten Sie nach dem Speichern des Postfachs ein.",
+            "fix_errors": "Nicht gespeichert: Korrigieren Sie die rot markierten Felder."
         },
         "notifications": {
             "created": "Postfach wurde erstellt.",
             "deleted": "Postfach wurde gelöscht.",
             "set_default": "Postfach wurde als Standard festgelegt.",
-            "updated": "Postfach wurde aktualisiert."
+            "updated": "Postfach wurde aktualisiert.",
+            "activated": "Postfach eingeschaltet",
+            "deactivated": "Postfach ausgeschaltet"
         },
         "oauth": {
             "connect_google": "Mit Google verbinden",
@@ -9103,7 +9115,24 @@
         "tracking": {
             "label": "Klicks und Öffnungen tracken",
             "help": "Leitet Links über NetSendo und fügt das Öffnungspixel ein. Aus: Links bleiben unverändert, kein Pixel, und das SendGrid-Tracking wird pro Nachricht ausgeschaltet. Eine Nachricht kann das überschreiben."
-        }
+        },
+        "table": {
+            "mailbox": "Postfach",
+            "status": "Status",
+            "reputation": "Domain-Reputation",
+            "used_for": "Sendet",
+            "active": "Eingeschaltet"
+        },
+        "types_short": {
+            "broadcast": "Einmalversand",
+            "autoresponder": "Warteschlangen",
+            "system": "System"
+        },
+        "types_all": "Alle Nachrichten",
+        "no_limit": "ohne Limit",
+        "switch_label": "Eingeschaltet: {name}",
+        "actions_for": "Aktionen für das Postfach: {name}",
+        "testing": "Test läuft…"
     },
     "mcp": {
         "agent_prompt_content": "Sie sind ein KI-Assistent mit Zugriff auf NetSendo — eine E-Mail/SMS-Marketing-Plattform.\n\nVERFÜGBARE TOOLS:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)\n- list_templates, get_template, create_template, update_template\n- list_system_emails, update_system_email, list_system_pages, update_system_page\n- get_automation_options, list_automations, create_automation, update_automation\n- list_forms, get_form, create_form, update_form\n- create_tag, create_custom_field, list_webhooks, create_webhook\n- list_placeholders, test_connection, get_account_info\n\nPLATZHALTER IM INHALT:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - Abonnentendaten\n- [[!fname]] - Vorname im Vokativ (Polnisch)\n- [[unsubscribe_link]] - ERFORDERLICH in jeder E-Mail\n- [[manage]] - Link zur Verwaltung der Einstellungen\n- {'{'}{'{'}männlich|weiblich{'}'}{'}'}  - geschlechtsabhängige Form, z. B. {'{'}{'{'}Lieber|Liebe{'}'}{'}'} \n\nKAMPAGNEN-WORKFLOW:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nWICHTIG:\n- Verwenden Sie zu Beginn immer list_placeholders, um die verfügbaren Platzhalter zu kennen\n- Jede E-Mail MUSS [[unsubscribe_link]] enthalten\n- Vor dem Versand einer Kampagne MÜSSEN Sie Listen zuweisen (set_campaign_lists)",

@@ -286,7 +286,10 @@ class MailboxController extends Controller
             'daily_limit' => $validated['daily_limit'],
             'time_restriction' => $validated['time_restriction'] ?? null,
             'google_integration_id' => $validated['google_integration_id'] ?? null,
-            'custom_headers' => $validated['custom_headers'] ?? null,
+            // A request that does not mention the headers (the on/off switch of the list) keeps them
+            'custom_headers' => array_key_exists('custom_headers', $validated)
+                ? $validated['custom_headers']
+                : $mailbox->custom_headers,
             'tracking_enabled' => $validated['tracking_enabled'] ?? $mailbox->tracking_enabled ?? true,
         ];
 

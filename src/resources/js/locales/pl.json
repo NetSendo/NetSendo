@@ -262,7 +262,8 @@
             "confirm_action": "Czy na pewno chcesz kontynuować?",
             "action_irreversible": "Tej akcji nie można cofnąć.",
             "exported_failed": "Błąd eksportu.",
-            "imported_failed": "Błąd importu."
+            "imported_failed": "Błąd importu.",
+            "error": "Wystąpił błąd"
         },
         "days": {
             "monday": "Poniedziałek",
@@ -4224,7 +4225,9 @@
             "created": "Skrzynka została utworzona.",
             "updated": "Skrzynka została zaktualizowana.",
             "deleted": "Skrzynka została usunięta.",
-            "set_default": "Skrzynka została ustawiona jako domyślna."
+            "set_default": "Skrzynka została ustawiona jako domyślna.",
+            "activated": "Skrzynka włączona",
+            "deactivated": "Skrzynka wyłączona"
         },
         "delete": {
             "title": "Usuń skrzynkę",
@@ -4259,7 +4262,16 @@
             "select_integration_to_connect": "Wybierz integrację aby połączyć.",
             "integration_not_configured_warning": "Integracja Google nie jest skonfigurowana.",
             "go_to_integrations": "Przejdź do ustawień integracji",
-            "broadcast_disabled": "Niedostępne dla Gmail"
+            "broadcast_disabled": "Niedostępne dla Gmail",
+            "tabs": {
+                "label": "Sekcje ustawień skrzynki",
+                "sending": "Wysyłka",
+                "bounces": "Zwroty",
+                "replies": "Odpowiedzi",
+                "headers": "Nagłówki"
+            },
+            "after_save_hint": "Zwroty i odczyt odpowiedzi ustawisz po zapisaniu skrzynki.",
+            "fix_errors": "Zapis odrzucony: popraw pola zaznaczone na czerwono."
         },
         "info": {
             "title": "Informacje o dostawcach",
@@ -4456,7 +4468,24 @@
         "tracking": {
             "label": "Śledź kliknięcia i otwarcia",
             "help": "Przepisuje linki przez NetSendo i dodaje piksel otwarć. Wyłączone: linki zostają bez zmian, bez piksela, a śledzenie SendGrid jest wyłączane dla każdej wiadomości. Wiadomość może to nadpisać."
-        }
+        },
+        "table": {
+            "mailbox": "Skrzynka",
+            "status": "Status",
+            "reputation": "Reputacja domeny",
+            "used_for": "Wysyła",
+            "active": "Włączona"
+        },
+        "types_short": {
+            "broadcast": "jednorazowe",
+            "autoresponder": "kolejki",
+            "system": "systemowe"
+        },
+        "types_all": "Wszystkie wiadomości",
+        "no_limit": "bez limitu",
+        "switch_label": "Włączona: {name}",
+        "actions_for": "Akcje skrzynki: {name}",
+        "testing": "Testowanie…"
     },
     "sms_providers": {
         "title": "Dostawcy SMS",

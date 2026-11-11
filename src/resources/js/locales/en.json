@@ -262,7 +262,8 @@
             "confirm_action": "Are you sure you want to proceed?",
             "action_irreversible": "This action is irreversible.",
             "exported_failed": "Export failed.",
-            "imported_failed": "Import failed."
+            "imported_failed": "Import failed.",
+            "error": "Something went wrong"
         },
         "days": {
             "monday": "Monday",
@@ -4539,7 +4540,9 @@
             "created": "Mailbox created.",
             "updated": "Mailbox updated.",
             "deleted": "Mailbox deleted.",
-            "set_default": "Mailbox set as default."
+            "set_default": "Mailbox set as default.",
+            "activated": "Mailbox turned on",
+            "deactivated": "Mailbox turned off"
         },
         "delete": {
             "title": "Delete Mailbox",
@@ -4574,7 +4577,16 @@
             "select_integration_to_connect": "Select integration to connect.",
             "integration_not_configured_warning": "Google integration is not configured.",
             "go_to_integrations": "Go to integration settings",
-            "broadcast_disabled": "Not available for Gmail"
+            "broadcast_disabled": "Not available for Gmail",
+            "tabs": {
+                "label": "Mailbox settings sections",
+                "sending": "Sending",
+                "bounces": "Bounces",
+                "replies": "Replies",
+                "headers": "Headers"
+            },
+            "after_save_hint": "Bounces and reply reading can be set up once the mailbox is saved.",
+            "fix_errors": "Not saved: correct the fields marked in red."
         },
         "info": {
             "title": "Provider Information",
@@ -4771,7 +4783,24 @@
         "tracking": {
             "label": "Track clicks and opens",
             "help": "Rewrites links through NetSendo and adds the open pixel. Off: links stay as written, no pixel, and SendGrid tracking is switched off per message. A message can override this."
-        }
+        },
+        "table": {
+            "mailbox": "Mailbox",
+            "status": "Status",
+            "reputation": "Domain reputation",
+            "used_for": "Sends",
+            "active": "On"
+        },
+        "types_short": {
+            "broadcast": "broadcasts",
+            "autoresponder": "queues",
+            "system": "system"
+        },
+        "types_all": "All messages",
+        "no_limit": "no limit",
+        "switch_label": "On: {name}",
+        "actions_for": "Actions for the mailbox: {name}",
+        "testing": "Testing…"
     },
     "funnels": {
         "title": "Email Funnels",
