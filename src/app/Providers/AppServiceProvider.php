@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\File;
 
@@ -14,6 +13,9 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(\App\Console\MigrationLock::class);
+
+        // NetSendo connector: tools are run by the @netsendo/mcp-client package (mcp/)
+        $this->app->singleton(\App\Services\Connector\ToolEngine::class, \App\Services\Connector\NodeToolEngine::class);
     }
 
     /**
@@ -21,8 +23,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        Vite::prefetch(concurrency: 3);
-
         // `migrate` and `db:seed` started by several containers at once wait for each other
         // instead of racing (App\Console\MigrationLock)
         \Illuminate\Support\Facades\Event::listen(

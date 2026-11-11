@@ -5,7 +5,8 @@
 # Dependabot PR means the app still installs, passes its test suite and builds,
 # not only that its lock files have no known advisories (dependency-audit.yml).
 #
-#   php       composer install + php artisan test (SQLite in memory, see phpunit.xml)
+#   php       composer install + php artisan test (SQLite in memory, see phpunit.xml);
+#             the MCP client is built first, the connector tests run its tools
 #   frontend  composer install --no-dev + npm ci + npm run build, as in the image
 #   mcp       npm ci + tsc build + vitest for the MCP client
 # =============================================================================
@@ -64,6 +65,20 @@ jobs:
         run: |
           cp .env.example .env
           php artisan key:generate --ansi
+
+      # The connector (/mcp) runs the MCP client's tools with Node.js. Built here so
+      # that ConnectorNodeEngineTest exercises the real tools instead of skipping.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: mcp/package-lock.json
+
+      - name: Build the connector tool engine
+        working-directory: mcp
+        run: |
+          npm ci
+          npm run build
 
       - name: Run tests
         run: php artisan test

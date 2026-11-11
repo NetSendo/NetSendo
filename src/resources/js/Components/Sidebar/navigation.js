@@ -167,6 +167,7 @@ export function buildNavigation(t, { isAdmin = false } = {}) {
                 { label: t("navigation.marketplace"), href: "/marketplace", match: ["marketplace.*"] },
                 { label: t("navigation.ai_integrations"), href: route("settings.ai-integrations.index"), match: ["settings.ai-integrations.*"] },
                 { label: t("navigation.api_keys"), href: route("settings.api-keys.index"), match: ["settings.api-keys.*"] },
+                { label: t("navigation.connector"), href: route("settings.connector.index"), match: ["settings.connector.*"] },
                 { label: t("stripe.settings_title"), href: route("settings.stripe.index"), match: ["settings.stripe.*"] },
                 { label: t("polar.settings_title"), href: route("settings.polar.index"), match: ["settings.polar.*"] },
                 { label: t("tpay.settings_title"), href: route("settings.tpay.index"), match: ["settings.tpay.*"] },

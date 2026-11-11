@@ -2,6 +2,7 @@
 import { computed, ref, onMounted, onUnmounted } from "vue";
 import { Link, usePage, router } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
+import { setLocale } from "@/i18n";
 import Sidebar from "@/Components/Sidebar/Sidebar.vue";
 import Dropdown from "@/Components/Dropdown.vue";
 import DropdownLink from "@/Components/DropdownLink.vue";
@@ -29,19 +30,24 @@ const switchLocale = (code) => {
     // Switched before the request, so the page the answer brings is built in the new language
     // from its first render (texts and dates read once at setup would keep the old one)
     const previous = locale.value;
-    locale.value = code;
 
-    router.post(
-        route("locale.update"),
-        { locale: code },
-        {
-            preserveState: false,
-            preserveScroll: true,
-            onError: () => {
-                locale.value = previous;
-            },
-        },
-    );
+    // Its texts are downloaded first; the request goes out either way, so a failed download
+    // still changes the language on the next full load
+    setLocale(code)
+        .catch(() => {})
+        .then(() => {
+            router.post(
+                route("locale.update"),
+                { locale: code },
+                {
+                    preserveState: false,
+                    preserveScroll: true,
+                    onError: () => {
+                        locale.value = previous;
+                    },
+                },
+            );
+        });
 };
 
 // Meeting reminders

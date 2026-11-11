@@ -9,6 +9,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.10.0] – AI connector: connect Claude and other AI apps by sign-in, faster first load - 2026-11-11
+
+**Release date:** 2026-11-11
+
+### Added
+
+- **AI connector: connect Claude, Hermes and other AI apps by address and sign-in.** Every installation now serves a remote MCP endpoint at `https://<your-domain>/mcp`. You paste that address into the AI app, the app sends you to NetSendo, you sign in and choose what it may do, and it works with your account through the same 140 tools as the npm MCP client. No API key to create or paste, and no Node.js on your computer.
+  - **Settings → AI connector** shows the address of your installation, the apps that are connected (with *Disconnect*, which takes effect on the next request) and step-by-step instructions for Claude, Claude Code, Hermes Agent, ChatGPT, Cursor, VS Code, Gemini CLI and hosts that only run local commands, in Polish, English, German and Spanish.
+  - **The sign-in screen** names the app, says whether its identity is confirmed (Claude's published identity is), self-declared, or published on one site while returning to another (a warning), shows which NetSendo account is signed in, and lists the requested permissions with checkboxes, so you can grant fewer. The permissions are the same ones API keys have (`lists:read`, `subscribers:write`, `messages:write`, …).
+  - **A connected app acts as the user who approved it.** It sees that user's data only: an app connected by a team member does not get the account owner's access. The account owner sees and can disconnect the apps of team members.
+  - **Sign-in follows what MCP hosts expect**: OAuth authorization code with PKCE, Client ID Metadata Documents and dynamic client registration, refresh tokens that are replaced on every use, token revocation, and the discovery documents under `/.well-known/`. Access tokens live one hour; an app that is not used for 90 days has to sign in again. Only hashes of tokens are stored.
+  - **One app cannot occupy the installation**: an app may send 120 requests a minute and run two tool calls at the same time, all apps together three; a call over the limit answers "busy, call again", which the assistant does by itself. The limits can be changed in `.env`.
+  - **A host that cannot sign in** can call `/mcp` with a NetSendo API key in the `Authorization: Bearer` header.
+  - **For self-hosting:** cloud apps such as Claude connect from their provider's servers, so the installation needs a public HTTPS address; the bundled nginx configuration needs no change and there is no new container. `MCP_CONNECTOR_ENABLED=false` in `.env` turns the connector off. Requirements, reverse proxy notes, settings and troubleshooting: `docs/MCP_CONNECTOR.md`.
+  - API keys, the REST API and the local MCP client (`@netsendo/mcp-client`) work as before.
+
+### Changed
+
+- **The application image contains the MCP tools** (`/opt/netsendo-mcp`, built from `mcp/`): the connector runs them with the Node.js that is already in the image. Custom image builds need the new step in `docker/php/Dockerfile`.
+- The built files of the MCP client kept in the repository (`mcp/dist`) are rebuilt from the current source, which they had fallen behind: `send_sms` passes the SMS text under the name the API expects (fixed in the source in 2.7.2). The connector uses this build. The npm package `@netsendo/mcp-client` 1.6.0 was published before that fix and is not changed by this release.
+- The migration adds the tables `connector_clients`, `connector_connections`, `connector_tokens` and `connector_auth_codes`. A daily task (`connector:prune`) removes expired sign-in codes, tokens and connections.
+- **`docker/nginx/default.conf`:** compression is on for pages, API answers and text assets, also for requests that arrive through a proxy speaking HTTP/1.0, and files under `/build/assets/` (their names carry a hash) are cached for a year as immutable. The file is mounted from the installation's folder, so an existing installation gets this by taking the new file and restarting the `webserver` container.
+- After a language switch the page's `lang` attribute follows the new language.
+
+### Performance
+
+- **The first load is about a quarter of what it was.** Every page, the sign-in page included, downloaded all four interface languages inside the start-up script (1.85 MB). Now only the language in use is downloaded, as a file of its own that the browser fetches together with the script: 0.42 MB of script and about 0.36 MB of texts. English, the fallback for a missing text, is fetched only when a text really is missing; switching the language downloads the new one first.
+- **Guests no longer download the whole panel in the background.** After every full page load the browser fetched the scripts of all pages (286 files, 7.7 MB) so that later navigation is instant. That now happens only for a signed-in user. On the sign-in page a visit went from about 250 requests and 9 MB to 15 requests and 1.2 MB.
+- **Built scripts and styles are compressed in the image.** Each has a ready `.gz` file next to it, which the bundled nginx serves as is. Until now they travelled uncompressed unless a proxy in front compressed them, and nginx's default compresses HTML only.
+
+### Upgrading
+
+- **Docker:** update as usual (`docker compose pull && docker compose up -d`). The migration adds the connector's four tables.
+- **The AI connector is on after the update.** It answers at `/mcp`, `/oauth/*` and `/.well-known/oauth-*` and does nothing until someone signs in and approves an app. To turn it off, set `MCP_CONNECTOR_ENABLED=false` in `.env` and restart the containers. Cloud AI apps reach it only on an installation with a public HTTPS address.
+- **Compressed assets, optional:** take the new `docker/nginx/default.conf` and restart the `webserver` container. Without it the panel works as before; with a proxy in front that speaks HTTP/1.0 to NetSendo's nginx, scripts and styles keep travelling uncompressed until the file is replaced or the proxy compresses them itself.
+- **Custom image builds** need the two new steps in `docker/php/Dockerfile` (the MCP tools under `/opt/netsendo-mcp` and the `.gz` files of the built assets).
+
 ## [2.9.0] – New panel look, NetSendo MTA mailboxes, unsubscribing that never subscribes - 2026-11-11
 
 **Release date:** 2026-11-11

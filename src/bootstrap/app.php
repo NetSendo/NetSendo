@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -14,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
+        // NetSendo connector (remote MCP + OAuth): its own file, outside the web and api groups
+        then: fn () => Route::group([], __DIR__.'/../routes/connector.php'),
     )
     // Listeners are mapped explicitly in App\Providers\EventServiceProvider.
     // Discovery would register every typed handle*() in app/Listeners again.
@@ -85,6 +88,15 @@ return Application::configure(basePath: dirname(__DIR__))
             $identifier = $apiKey?->id ?? $request->ip();
 
             return Limit::perMinute(3000)->by($identifier);
+        });
+
+        // Connector (/mcp): per connected app or API key
+        RateLimiter::for('connector', function (Request $request) {
+            $connection = $request->attributes->get(\App\Http\Middleware\AuthenticateConnector::CONNECTION_ATTRIBUTE);
+            $identity = $request->attributes->get(\App\Http\Middleware\AuthenticateConnector::IDENTITY_ATTRIBUTE);
+            $identifier = $connection ? 'connection:'.$connection->id : ($identity?->id ? 'key:'.$identity->id : $request->ip());
+
+            return Limit::perMinute((int) config('connector.rate_limit', 120))->by($identifier);
         });
 
         // Configure Pixel rate limiting (protect against event flooding)

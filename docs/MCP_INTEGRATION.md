@@ -2,6 +2,8 @@
 
 This document describes the MCP integration in NetSendo, providing technical details for developers and AI agents building or maintaining this feature.
 
+> **Looking for the quickest way to connect Claude, Hermes or ChatGPT?** Since the AI connector, every installation is also a remote MCP server with sign-in at `https://<your-domain>/mcp`: no API key and no local Node.js. See [MCP_CONNECTOR.md](MCP_CONNECTOR.md). This document describes the local MCP client (`@netsendo/mcp-client`), which keeps working.
+
 ## Overview
 
 The MCP (Model Context Protocol) integration enables AI assistants to interact with NetSendo:

@@ -188,11 +188,12 @@ NOTE: For bulk SMS, use create_campaign with channel='sms'.`, {
                     isError: true,
                 };
             }
+            // POST /api/v1/sms/send names the text `message`
             const result = await api.sendSms({
                 subscriber_id,
                 phone,
                 provider_id,
-                content,
+                message: content,
             });
             return {
                 content: [{
