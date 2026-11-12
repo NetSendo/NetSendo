@@ -6026,6 +6026,7 @@
             "waiting_message": "Text des Wartebildschirms",
             "optional_hint": "Leer lassen, um den Standard zu verwenden.",
             "scheduled_at_help": "Dieses Datum steuert den Countdown auf der Webinarseite. Ohne Datum sehen Teilnehmer die Meldung „beginnt bald“.",
+            "scheduled_at_timezone": "Uhrzeit in der Zeitzone {timezone}.",
             "auto_schedule_hint": "Legen Sie die Sitzungszeiten des Auto-Webinars nach dem Speichern auf dem Bildschirm „Zeitplan“ fest.",
             "auto_schedule_hint_create": "Nach dem Erstellen legen Sie die Sitzungszeiten auf dem Bildschirm „Zeitplan“ fest."
         },

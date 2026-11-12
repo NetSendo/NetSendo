@@ -30,9 +30,8 @@
         <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-8">
             <p class="text-sm opacity-75 mb-2">{{ __('webinars.public.registered.starts_at') }}</p>
             @php
-                $displayTimezone = $registration->timezone ?? $webinar->timezone ?? 'UTC';
-                $sessionTime = $registration->session?->scheduled_at ?? $webinar->scheduled_at;
-                $displayTime = $sessionTime ? $sessionTime->copy()->setTimezone($displayTimezone) : null;
+                $displayTimezone = $registration->displayTimezone();
+                $displayTime = $registration->localStart();
             @endphp
             @if($displayTime)
                 <p class="text-2xl font-bold">{{ $displayTime->format('d.m.Y') }} o {{ $displayTime->format('H:i') }}</p>

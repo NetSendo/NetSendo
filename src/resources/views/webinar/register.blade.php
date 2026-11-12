@@ -31,10 +31,12 @@
 
             <!-- Date Info -->
             @if($webinar->scheduled_at)
+                {{-- scheduled_at is stored in UTC; show it in the zone named below --}}
+                @php($startsAt = $webinar->scheduled_at->copy()->setTimezone($scheduleTimezone))
                 <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-8 text-center">
                     <p class="text-sm uppercase tracking-wide opacity-75 mb-2">{{ __('webinars.public.register.starts_at') }}</p>
-                    <p class="text-3xl font-bold">{{ $webinar->scheduled_at->format('d.m.Y') }}</p>
-                    <p class="text-2xl">{{ __('webinars.public.register.at_hour') }} {{ $webinar->scheduled_at->format('H:i') }}</p>
+                    <p class="text-3xl font-bold">{{ $startsAt->format('d.m.Y') }}</p>
+                    <p class="text-2xl">{{ __('webinars.public.register.at_hour') }} {{ $startsAt->format('H:i') }}</p>
                     <p class="text-sm opacity-60 mt-1">({{ $scheduleTimezone }})</p>
                 </div>
             @endif

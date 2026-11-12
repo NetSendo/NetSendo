@@ -6377,6 +6377,7 @@
             "waiting_message": "Texto de la pantalla de espera",
             "optional_hint": "Déjalo vacío para usar el valor predeterminado.",
             "scheduled_at_help": "Esta fecha controla la cuenta atrás en la página del seminario. Sin fecha, los asistentes ven un mensaje de \"comienza pronto\".",
+            "scheduled_at_timezone": "Hora en la zona horaria {timezone}.",
             "auto_schedule_hint": "Configura los horarios de sesión del auto-seminario en la pantalla \"Horario\" después de guardar.",
             "auto_schedule_hint_create": "Después de crearlo, configura los horarios de sesión en la pantalla \"Horario\"."
         },

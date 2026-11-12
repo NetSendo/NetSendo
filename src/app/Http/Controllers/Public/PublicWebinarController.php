@@ -105,7 +105,7 @@ class PublicWebinarController extends Controller
             'title' => __('webinars.public.registered.title') . ' - ' . $webinar->name,
             'noindex' => true,
             'registration' => $registration,
-            'displayTimezone' => $registration->timezone ?? $webinar->timezone ?? 'UTC',
+            'displayTimezone' => $registration->displayTimezone(),
             'start_at' => $registration->scheduledStart(),
             'tokens' => WebinarPageRenderer::tokens($webinar, [
                 'first_name' => $registration->first_name,
@@ -200,7 +200,7 @@ class PublicWebinarController extends Controller
             && (!empty($webinar->video_url) || !empty($webinar->vimeo_id));
 
         // Get registration's timezone for display
-        $registrationTimezone = $registration->timezone ?? $webinar->timezone ?? 'UTC';
+        $registrationTimezone = $registration->displayTimezone();
 
         // A recording has no real audience count, so it shows the configured
         // social-proof count (Studio: viewers base ± variance).
@@ -311,7 +311,7 @@ class PublicWebinarController extends Controller
             'products' => $webinar->products()->active()->get(),
             'builderPage' => $this->builderSections($webinar, WebinarPageService::PAGE_REPLAY, [
                 'registration' => $registration,
-                'displayTimezone' => $registration->timezone ?? $webinar->timezone ?? 'UTC',
+                'displayTimezone' => $registration->displayTimezone(),
                 'tokens' => WebinarPageRenderer::tokens($webinar, [
                     'first_name' => $registration->first_name,
                     'watch_url' => $registration->watch_url,

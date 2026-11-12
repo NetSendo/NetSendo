@@ -6784,6 +6784,7 @@
             "waiting_message": "Waiting screen text",
             "optional_hint": "Leave blank to use the default.",
             "scheduled_at_help": "This date drives the countdown on the webinar page. Without a date, attendees see a \"starting soon\" message.",
+            "scheduled_at_timezone": "Time in the {timezone} time zone.",
             "auto_schedule_hint": "Set the auto-webinar session times on the \"Schedule\" screen after saving.",
             "auto_schedule_hint_create": "After creating, set the session times on the \"Schedule\" screen."
         },
