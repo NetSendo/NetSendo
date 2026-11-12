@@ -111,17 +111,33 @@ class AutomationService
             return true;
         }
 
-        // Check list_id filter (cast both to int for reliable comparison)
+        // Check list_id filter (cast both to int for reliable comparison).
+        // Date events (birthday, anniversary, date reached) are about the
+        // subscriber, not one list: they carry every list the subscriber is an
+        // active member of in list_ids.
         if (!empty($config['list_id'])) {
             $contextListId = (int) ($context['list_id'] ?? 0);
             $configListId = (int) $config['list_id'];
+            $contextListIds = array_map('intval', (array) ($context['list_ids'] ?? []));
 
-            if ($contextListId !== $configListId) {
+            if ($contextListId !== $configListId && !in_array($configListId, $contextListIds, true)) {
                 Log::debug('AutomationService: list_id mismatch', [
                     'rule_id' => $rule->id,
                     'context_list_id' => $contextListId,
                     'config_list_id' => $configListId,
                 ]);
+                return false;
+            }
+        }
+
+        // A date_reached rule runs on its own date only: processEvent is called
+        // with the date of whichever rule is due today.
+        if ($rule->trigger_event === 'date_reached' && !empty($config['date']) && !empty($context['date'])) {
+            try {
+                if (Carbon::parse($config['date'])->toDateString() !== Carbon::parse($context['date'])->toDateString()) {
+                    return false;
+                }
+            } catch (\Throwable) {
                 return false;
             }
         }

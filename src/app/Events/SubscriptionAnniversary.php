@@ -14,6 +14,8 @@ class SubscriptionAnniversary
     public int $subscriberId;
     public int $userId;
     public int $yearsSubscribed;
+    /** @var int[] lists the subscriber is an active member of */
+    public array $listIds;
 
     /**
      * Create a new event instance.
@@ -21,11 +23,13 @@ class SubscriptionAnniversary
     public function __construct(
         int $subscriberId,
         int $userId,
-        int $yearsSubscribed
+        int $yearsSubscribed,
+        array $listIds = []
     ) {
         $this->subscriberId = $subscriberId;
         $this->userId = $userId;
         $this->yearsSubscribed = $yearsSubscribed;
+        $this->listIds = $listIds;
     }
 
     /**
@@ -37,6 +41,7 @@ class SubscriptionAnniversary
             'subscriber_id' => $this->subscriberId,
             'user_id' => $this->userId,
             'years_subscribed' => $this->yearsSubscribed,
+            'list_ids' => $this->listIds,
         ];
     }
 

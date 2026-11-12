@@ -133,9 +133,18 @@ class CrmFollowUpEnrollment extends Model
      */
     public function cancel(): void
     {
+        // Only one enrollment per contact, sequence and status may exist
+        // (unique_active_enrollment): drop an older cancelled one first.
+        self::where('sequence_id', $this->sequence_id)
+            ->where('crm_contact_id', $this->crm_contact_id)
+            ->where('status', 'cancelled')
+            ->where('id', '!=', $this->id)
+            ->delete();
+
         $this->update([
             'status' => 'cancelled',
             'completed_at' => now(),
+            'next_action_at' => null,
         ]);
     }
 
@@ -172,6 +181,14 @@ class CrmFollowUpEnrollment extends Model
         $currentStep = $this->currentStep;
         if (!$currentStep) {
             $this->markCompleted();
+            return null;
+        }
+
+        // The contact was deleted (CRM contacts are soft-deleted, so the
+        // enrollment outlives it) or the sequence is gone: there is no one to
+        // follow up. Without this the step failed on every run, every 5 minutes.
+        if (!$this->contact || !$this->sequence) {
+            $this->cancel();
             return null;
         }
 
