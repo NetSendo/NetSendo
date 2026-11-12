@@ -78,6 +78,7 @@ return [
             'watch_replay' => 'Aufzeichnung ansehen',
             'register_another_time' => 'Für anderen Termin anmelden',
             'tap_to_unmute' => 'Zum Aktivieren des Tons klicken',
+            'video_unsupported' => 'Dein Browser kann dieses Video nicht abspielen.',
             'chat_empty' => 'Im Chat ist es noch still. Schreib die erste Nachricht!',
             'chat_you' => 'Du',
             'chat_host' => 'Moderator',

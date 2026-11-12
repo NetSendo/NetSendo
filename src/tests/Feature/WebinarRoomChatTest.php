@@ -310,6 +310,82 @@ class WebinarRoomChatTest extends TestCase
         $this->assertNotNull($viewer->left_at);
     }
 
+    public function test_waiting_in_the_countdown_does_not_count_as_watching(): void
+    {
+        $webinar = $this->autoWebinar();
+        $viewer = $this->viewer($webinar, -120); // starts in 2 minutes
+        $watch = "/webinar/auto-test/watch/{$viewer->access_token}";
+        $leave = "/webinar/auto-test/leave/{$viewer->access_token}";
+
+        $this->get($watch)->assertOk();
+        $this->travel(2)->minutes();
+        // the room reloads itself at the start: one leave and one join
+        $this->postJson($leave)->assertOk();
+        $this->assertSame(0, $viewer->fresh()->watch_time_seconds);
+
+        $this->get($watch)->assertOk();
+        $this->travel(5)->minutes();
+        $this->postJson($leave)->assertOk();
+
+        $this->assertSame(300, $viewer->fresh()->watch_time_seconds);
+    }
+
+    /**
+     * The room reloads itself when the session starts; the reloaded page can
+     * reach the server before the old page's leave beacon. That late beacon
+     * used to close the new visit, so its whole watch time was lost.
+     */
+    public function test_a_late_leave_from_the_page_before_a_reload_keeps_the_new_visit_open(): void
+    {
+        $webinar = $this->autoWebinar();
+        $viewer = $this->viewer($webinar, -120); // starts in 2 minutes
+        $watch = "/webinar/auto-test/watch/{$viewer->access_token}";
+        $leave = "/webinar/auto-test/leave/{$viewer->access_token}";
+
+        $this->get($watch)->assertOk()->assertSee('visit: ', false);
+        $countdownVisit = $viewer->fresh()->visit_started_at->getTimestamp();
+
+        $this->travel(123)->seconds();
+        $this->get($watch)->assertOk(); // the reload: visit 2
+        $this->postJson($leave, ['visit' => $countdownVisit])->assertOk(); // late beacon of visit 1
+
+        $viewer->refresh();
+        $this->assertSame(3, $viewer->watch_time_seconds, 'visit 1 counts from the start to the reload');
+        $this->assertNull($viewer->left_at, 'visit 2 is still open');
+        $this->assertNotNull($viewer->visit_started_at);
+
+        $this->travel(5)->minutes();
+        $this->postJson($leave, ['visit' => $viewer->visit_started_at->getTimestamp()])->assertOk();
+
+        $this->assertSame(303, $viewer->fresh()->watch_time_seconds);
+        $this->assertNotNull($viewer->fresh()->left_at);
+    }
+
+    public function test_coming_back_later_does_not_count_the_time_away(): void
+    {
+        $webinar = $this->autoWebinar();
+        $viewer = $this->viewer($webinar, 30);
+        $watch = "/webinar/auto-test/watch/{$viewer->access_token}";
+        $leave = "/webinar/auto-test/leave/{$viewer->access_token}";
+
+        $this->get($watch)->assertOk();
+        $this->travel(3)->minutes();
+        $this->postJson($leave)->assertOk();
+
+        $this->travel(20)->minutes(); // away
+
+        $this->get($watch)->assertOk();
+        $this->travel(2)->minutes();
+        $this->postJson($leave)->assertOk();
+        // a second tab or a repeated beacon closes nothing new
+        $this->postJson($leave)->assertOk();
+
+        $viewer->refresh();
+        $this->assertSame(300, $viewer->watch_time_seconds);
+        $this->assertNotNull($viewer->joined_at);
+        $this->assertNull($viewer->visit_started_at);
+    }
+
     /**
      * Europe/Warsaw in winter is UTC+1. The 18:40 slot of the sign-up page is
      * 17:40 UTC; it used to be stored as 18:40 UTC and shown as 19:40.

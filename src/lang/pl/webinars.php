@@ -78,6 +78,7 @@ return [
             'watch_replay' => 'Obejrzyj nagranie',
             'register_another_time' => 'Zapisz się na inny termin',
             'tap_to_unmute' => 'Kliknij, aby włączyć dźwięk',
+            'video_unsupported' => 'Twoja przeglądarka nie odtwarza tego wideo.',
             'chat_empty' => 'Na czacie jeszcze cisza. Napisz pierwszą wiadomość!',
             'chat_you' => 'Ty',
             'chat_host' => 'Prowadzący',

@@ -78,6 +78,7 @@ return [
             'watch_replay' => 'Watch Recording',
             'register_another_time' => 'Register for another time',
             'tap_to_unmute' => 'Tap to unmute',
+            'video_unsupported' => 'Your browser cannot play this video.',
             'chat_empty' => 'The chat is quiet so far. Write the first message!',
             'chat_you' => 'You',
             'chat_host' => 'Host',

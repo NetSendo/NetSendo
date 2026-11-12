@@ -233,6 +233,7 @@ class PublicWebinarController extends Controller
             'videoSyncEnabled' => $videoSyncEnabled,
             'registrationTimezone' => $registrationTimezone,
             'chatEnabled' => $webinar->isChatEnabled(),
+            'visitStartedAt' => $registration->visit_started_at?->getTimestamp(),
             'viewerCount' => $viewerCount,
         ]);
     }
@@ -330,7 +331,9 @@ class PublicWebinarController extends Controller
             $registration->webinar,
             $registration,
             null,
-            $request->filled('video_time_seconds') ? max(0, $request->integer('video_time_seconds')) : null
+            $request->filled('video_time_seconds') ? max(0, $request->integer('video_time_seconds')) : null,
+            // which visit the leaving page belongs to (see WebinarRegistration::leave)
+            $request->filled('visit') ? $request->integer('visit') : null
         );
 
         return response()->json(['success' => true]);

@@ -78,6 +78,7 @@ return [
             'watch_replay' => 'Ver grabación',
             'register_another_time' => 'Registrarse para otra hora',
             'tap_to_unmute' => 'Toca para activar el sonido',
+            'video_unsupported' => 'Tu navegador no puede reproducir este vídeo.',
             'chat_empty' => 'El chat aún está en silencio. ¡Escribe el primer mensaje!',
             'chat_you' => 'Tú',
             'chat_host' => 'Presentador',

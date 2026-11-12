@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -34,7 +34,7 @@
                 $displayTime = $registration->localStart();
             @endphp
             @if($displayTime)
-                <p class="text-2xl font-bold">{{ $displayTime->format('d.m.Y') }} o {{ $displayTime->format('H:i') }}</p>
+                <p class="text-2xl font-bold">{{ $displayTime->format('d.m.Y') }} · {{ $displayTime->format('H:i') }}</p>
                 <p class="text-sm opacity-60 mt-1">({{ $displayTimezone }})</p>
             @else
                 <p class="text-2xl font-bold">{{ __('webinars.public.registered.soon') }}</p>

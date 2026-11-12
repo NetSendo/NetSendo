@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -141,7 +141,7 @@
                             controlslist="nodownload nofullscreen noremoteplayback"
                         >
                             <source src="{{ $webinar->video_url }}" type="video/mp4">
-                            Twoja przeglądarka nie obsługuje wideo.
+                            {{ __('webinars.public.watch.video_unsupported') }}
                         </video>
                     @else
                         <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -499,6 +499,7 @@
         window.addEventListener('beforeunload', function() {
             navigator.sendBeacon('{{ route('webinar.leave', [$webinar->slug, $registration->access_token]) }}', new Blob([JSON.stringify({
                 _token: '{{ csrf_token() }}',
+                visit: @json($visitStartedAt),
                 video_time_seconds: videoTracker.currentTime()
             })], { type: 'application/json' }));
         });

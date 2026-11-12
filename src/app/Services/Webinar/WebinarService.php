@@ -294,9 +294,10 @@ class WebinarService
         Webinar $webinar,
         WebinarRegistration $registration,
         ?WebinarSession $session = null,
-        ?int $videoTimeSeconds = null
+        ?int $videoTimeSeconds = null,
+        ?int $visitStartedAt = null
     ): void {
-        $registration->leave();
+        $registration->leave($visitStartedAt);
 
         WebinarAnalytic::track(
             $webinar,

@@ -245,7 +245,7 @@ class LiveWebinarTimezoneTest extends TestCase
             'timezone' => 'Europe/Warsaw',
         ])
             ->assertOk()
-            ->assertSee('20.11.2026 o 19:00')
+            ->assertSee('20.11.2026 · 19:00')
             ->assertSee('(Europe/Warsaw)', false);
     }
 
@@ -257,7 +257,7 @@ class LiveWebinarTimezoneTest extends TestCase
 
         $this->post(route('webinar.register.submit', $webinar->slug), ['email' => 'bez-strefy@example.com'])
             ->assertOk()
-            ->assertSee('20.11.2026 o 19:00')
+            ->assertSee('20.11.2026 · 19:00')
             ->assertSee('(Europe/Warsaw)', false);
 
         $registration = WebinarRegistration::where('email', 'bez-strefy@example.com')->firstOrFail();

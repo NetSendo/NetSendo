@@ -33,6 +33,7 @@ class WebinarRegistration extends Model
         'status',
         'joined_at',
         'left_at',
+        'visit_started_at',
         'watch_time_seconds',
         'max_video_position_seconds',
         'utm_source',
@@ -58,6 +59,7 @@ class WebinarRegistration extends Model
         'custom_fields' => 'array',
         'joined_at' => 'datetime',
         'left_at' => 'datetime',
+        'visit_started_at' => 'datetime',
         'watch_time_seconds' => 'integer',
         'max_video_position_seconds' => 'integer',
         'reminder_24h_sent' => 'boolean',
@@ -368,13 +370,14 @@ class WebinarRegistration extends Model
     public function join(): void
     {
         if ($this->joined_at) {
-            // Already joined before, just update left_at to null (rejoining)
-            $this->update(['left_at' => null]);
+            // Coming back: a new visit starts now (joined_at keeps the first one)
+            $this->update(['left_at' => null, 'visit_started_at' => now()]);
             return;
         }
 
         $this->update([
             'joined_at' => now(),
+            'visit_started_at' => now(),
             'status' => self::STATUS_ATTENDED,
         ]);
 
@@ -391,21 +394,59 @@ class WebinarRegistration extends Model
 
     /**
      * Mark as left.
+     *
+     * @param int|null $visitStartedAt the visit the leaving page belongs to (unix
+     *                                 time of its visit_started_at); null closes the current visit
      */
-    public function leave(): void
+    public function leave(?int $visitStartedAt = null): void
     {
         if (!$this->joined_at) {
             return;
         }
 
-        // Carbon 3 diffs are signed floats: now()->diffInSeconds($joinedAt) is
-        // negative, which the unsigned column rejected (HTTP 500 on leaving).
-        $watchTime = max(0, (int) floor($this->joined_at->diffInSeconds(now())));
+        // A page of an earlier visit reports leaving after the next visit began:
+        // the room reloads itself when the session starts, and the reload can
+        // reach the server before the old page's beacon; a second tab can close
+        // later too. Count that earlier visit up to where the current one began
+        // and keep the current visit open.
+        if ($visitStartedAt !== null && $this->visit_started_at
+            && $visitStartedAt < $this->visit_started_at->getTimestamp()) {
+            if ($visitStartedAt >= $this->joined_at->getTimestamp()) {
+                $this->update([
+                    'watch_time_seconds' => $this->watch_time_seconds + $this->watchSecondsBetween(
+                        Carbon::createFromTimestamp($visitStartedAt, config('app.timezone')),
+                        $this->visit_started_at
+                    ),
+                ]);
+            }
+
+            return;
+        }
+
+        // Rows from before visit_started_at existed fall back to joined_at; a
+        // visit already closed (a repeated beacon) counts nothing.
+        $visitStart = $this->visit_started_at ?? ($this->left_at ? null : $this->joined_at);
 
         $this->update([
             'left_at' => now(),
-            'watch_time_seconds' => $this->watch_time_seconds + $watchTime,
+            'visit_started_at' => null,
+            'watch_time_seconds' => $this->watch_time_seconds
+                + ($visitStart ? $this->watchSecondsBetween($visitStart, now()) : 0),
         ]);
+    }
+
+    /**
+     * Seconds between $start and $end spent watching: waiting in the countdown
+     * before the session starts does not count.
+     */
+    protected function watchSecondsBetween(\Carbon\CarbonInterface $start, \Carbon\CarbonInterface $end): int
+    {
+        $sessionStart = $this->scheduledStart();
+        $from = $sessionStart && $sessionStart->gt($start) ? $sessionStart : $start;
+
+        // Carbon 3 diffs are signed floats: negative when $end is before $from,
+        // which the unsigned column refuses.
+        return max(0, (int) floor($from->diffInSeconds($end)));
     }
 
     /**
