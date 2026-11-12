@@ -132,6 +132,7 @@ NETSENDO_VERSION=2.11.0 docker compose up -d
 | **Mailpit**  | http://localhost:5031 | Test email inbox (`MAILPIT_HTTP_PORT`)       |
 | **MySQL**    | 127.0.0.1:3306        | Database (`DB_PORT`, 3306 in `.env.example`) |
 | **Reverb**   | localhost:8085        | WebSocket Server (`REVERB_PORT`)             |
+| **NetSendo MTA** | `nmi-mta:25`, inside Docker only | Mail server for mailboxes with the *NetSendo MTA* provider (GOLD), see [docs/NMI.md](docs/NMI.md) |
 
 > [!TIP]
 > The web app, MySQL and Mailpit are bound to `127.0.0.1`; put a reverse proxy (nginx, Caddy) in front of the web app for public access. Reverb listens on all interfaces because browsers connect to it directly.
@@ -434,6 +435,8 @@ Check for available updates:
 
    If you changed one of these files, carry your change over from its `.bak` copy. `.env` is never replaced; compare it with [`.env.example`](.env.example) for new settings.
 
+   Since 2.11.0 `docker-compose.yml` also runs the NetSendo MTA (service `nmi-mta`, image `ghcr.io/netsendo/netsendo:mta-<version>`). An installation that keeps an older compose file goes on working, but *Settings → Mailboxes* then reports that the MTA does not answer.
+
 3. **Pull the images and start:**
 
    ```bash
@@ -449,6 +452,8 @@ No frontend rebuild or cache clearing is needed: the image brings the built asse
 ```bash
 NETSENDO_VERSION=2.11.0 docker compose up -d
 ```
+
+Use the `docker-compose.yml` of the version you pin: versions before 2.11.0 have no `mta-` image, so the compose file of 2.11.0 or newer cannot start them.
 
 ## 📖 For detailed instructions, see [DOCKER_INSTALL.md](DOCKER_INSTALL.md)
 
