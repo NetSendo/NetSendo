@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.11.1] – No 502 after an update: the webserver restarts with the app - 2026-11-12
+
+**Release date:** 2026-11-12
+
 ### Fixed
 
 - **Pages answered 502 after an update until the webserver was restarted by hand.** nginx looks the app's address up once, when it starts (`fastcgi_pass app:9000`). `docker compose up -d` with a new image recreates the app container, which often gets a new address on the Docker network, and nginx kept sending every request to the old one ("connect() failed (111) while connecting to upstream"). On 2026-11-12 this hit 7 of 16 hosted installations after the update to 2.11.0. `docker-compose.yml` now has `restart: true` in the webserver's dependency on the app, so Docker Compose (2.17 or newer) restarts the webserver whenever it recreates the app. Installations that keep their compose file: after an update run `docker compose restart webserver` (README → Updates). podman-compose accepts the setting but does not act on it.
