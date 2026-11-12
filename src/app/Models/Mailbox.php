@@ -156,7 +156,7 @@ class Mailbox extends Model
     }
 
     /**
-     * Whether this installation runs the NetSendo MTA (NMI_ENABLED)
+     * Whether this installation offers the NetSendo MTA (on unless NMI_DISABLED=true)
      */
     public static function nmiAvailable(): bool
     {

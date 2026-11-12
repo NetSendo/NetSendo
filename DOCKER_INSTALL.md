@@ -80,35 +80,21 @@ Note: A background worker (`netsendo-scheduler`) is also started to handle sched
 
 ---
 
-## 📧 NMI - NetSendo Mail Infrastructure (Optional)
+## 📧 NMI - NetSendo Mail Infrastructure
 
-NMI provides professional email sending with dedicated IPs, IP warming, DKIM, and blacklist monitoring.
+NMI is NetSendo's own mail server (MTA) with dedicated IPs, IP warming, DKIM per domain and blacklist monitoring. It is a **GOLD** feature.
 
-### Enable NMI
+The MTA container (`nmi-mta`) starts with the rest of the stack: nothing to switch on. It relays nothing until a GOLD installation saves a mailbox with the **NetSendo MTA** provider.
 
-**1. Add NMI variables to `.env`:**
+**Before you send through it**, open **Settings → Mailboxes → Add mailbox → NetSendo MTA**. The box *Can this server send mail* shows whether this server can deliver:
 
-```env
-NMI_ENABLED=true
-NMI_MTA_HOST=netsendo-mta
-NMI_MTA_PORT=25
-```
+- **outbound port 25** (many cloud providers block it for new servers);
+- the server's **public address** and its **PTR** record (set at the company that gives you the address);
+- the **SPF** entry (`ip4:…`) to add to the sending domain's SPF record.
 
-> See `.env.example` for all NMI configuration options.
+Step-by-step instructions for common providers: [docs/NMI.md → Port 25, PTR and SPF](docs/NMI.md#port-25-ptr-and-spf).
 
-**2. Start with NMI profile:**
-
-```bash
-docker compose --profile nmi up -d
-```
-
-**3. Access NMI Dashboard:**
-
-Navigate to **Settings → Mail Infrastructure** in NetSendo UI.
-
-**4. Send through it:**
-
-Verify your domain in **Deliverability**, then add a mailbox with the **NetSendo MTA** provider in **Settings → Mailboxes**. The server needs outbound port 25, which many cloud providers block.
+Then verify your domain in **Deliverability** and add the mailbox. `NMI_DISABLED=true` in `.env` hides the provider.
 
 ### NMI Volumes
 

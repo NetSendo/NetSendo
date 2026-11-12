@@ -4,38 +4,120 @@ Professional email sending infrastructure with dedicated IP management, intellig
 
 ## Quick Start
 
-### 1. Enable in `.env`
+Since 2.11.0 the MTA (the `nmi-mta` service of `docker-compose.yml`) starts with every installation. It relays nothing until a **GOLD** installation saves a mailbox with the **NetSendo MTA** provider: only sessions that log in with a login NetSendo issued may send through it.
+
+### 1. Update
+
+Take the `docker-compose.yml` of 2.11.0 or newer (it has the `nmi-mta` service) and run:
 
 ```bash
-NMI_ENABLED=true
+docker compose pull && docker compose up -d
 ```
 
-### 2. Run Migrations
+The MTA image is published with the app: `ghcr.io/netsendo/netsendo:mta-<version>` (`mta-latest`). Migrations run when the app starts.
 
-```bash
-docker compose exec app php artisan migrate
-```
+### 2. Check that this server can send
 
-### 3. Start NMI Service
+Open **Settings → Mailboxes → Add mailbox** and choose **NetSendo MTA** (or **Settings → Mail Infrastructure**). The box **Can this server send mail** shows what the MTA found out by itself:
 
-```bash
-docker compose --profile nmi up -d
-```
+- **Outbound port 25**: open or blocked by the server's provider;
+- **Server address**: the public address receivers see, and whether its **PTR** record names a host that resolves back to it;
+- **SPF**: the entry (`ip4:…`) to add to the sending domain's SPF record.
 
-### 4. Access Dashboard
+Fix what it marks: [Port 25, PTR and SPF](#port-25-ptr-and-spf) has the steps for common providers.
 
-Navigate to **Settings → Mail Infrastructure** in the UI.
-
-### 5. Add a mailbox that sends through NMI
+### 3. Add a mailbox that sends through NMI
 
 1. Add your sending domain in **Deliverability** and verify it (the CNAME record).
-2. Open **Settings → Mailboxes → Add mailbox** and choose **NetSendo MTA**. The provider is offered when `NMI_ENABLED=true`, the installation has GOLD, and the MTA container answers (the form shows its status and a *Check again* link).
+2. Open **Settings → Mailboxes → Add mailbox** and choose **NetSendo MTA**. The provider is offered on a GOLD installation while the MTA container answers (the form shows its status and a *Check again* link).
 3. Choose the verified domain. The sender address must be in that domain.
 4. Optionally choose a dedicated IP from your pools. A free IP is assigned to the domain when you save. The form says whether the MTA really sends from that address (see [Sending from dedicated IPs](#sending-from-dedicated-ips)).
 5. Save. Open the mailbox again: the **DKIM signature** block shows the TXT record of the domain's key. Publish it in the domain's DNS and click **Verify record**. Mail is signed from then on.
 6. Use **Test connection**: the MTA must accept the test message. The result says if the message went out unsigned or not from the dedicated IP.
 
+`NMI_DISABLED=true` in `.env` hides the provider and stops NMI's scheduled jobs.
+
 There is no login to type in. See [Sending through NMI](#sending-through-nmi) for what happens behind the form.
+
+---
+
+## Port 25, PTR and SPF
+
+Receiving servers (Gmail, Outlook, Yahoo, WP, Onet…) decide about mail from an address by what they can check. Without these three, mail from the MTA is refused or ends up in spam. The box **Can this server send mail** in the mailbox form shows each of them for your server.
+
+### 1. Outbound port 25
+
+The MTA delivers straight to the recipients' mail servers, on port 25. Many providers block that port for new servers. Where it is blocked the MTA accepts mail and then cannot deliver it (the queue grows, `docker logs netsendo-mta` shows connection timeouts).
+
+The MTA checks the port itself at start and every few hours. You can also test it on the server (a line starting with `220` means the port is open):
+
+```bash
+timeout 10 bash -c 'exec 3<>/dev/tcp/gmail-smtp-in.l.google.com/25 && head -1 <&3' || echo "port 25 is blocked"
+```
+
+What the common providers do (their rules change, check their current documentation):
+
+| Provider | Outbound port 25 |
+| -------- | ---------------- |
+| Google Cloud | Blocked for most projects. Google lifts the block per project on its own once it considers the project low-risk; the *VPC networks* page shows the state. |
+| AWS (EC2) | Limited by default. Ask for the limit to be removed with the form *Request to remove email sending limitations*. |
+| Microsoft Azure | Blocked for most subscription types. |
+| DigitalOcean | Blocked on new accounts; a support ticket may lift it. |
+| Hetzner Cloud | Ports 25 and 465 blocked on new accounts; ask the support to lift it (usually after the first paid invoice). |
+| Vultr | Blocked on new accounts; open a support ticket. |
+| Linode / Akamai Cloud | Restricted on new accounts; open a support ticket. |
+| OVHcloud, Contabo, most dedicated servers | Usually open. |
+
+When you ask for the port to be opened, say what you send (newsletters to people who signed up), that SPF and DKIM are set, and the expected volume.
+
+If the port stays blocked, send through another service's SMTP (a mailbox with the SMTP or SendGrid provider) instead.
+
+### 2. PTR (reverse DNS)
+
+A PTR record maps the server's address back to a host name, and that host name must resolve to the same address again ("forward-confirmed"). The MTA introduces itself with that name (HELO). **The PTR is set at the company that gives you the address, not in your domain's DNS.**
+
+The MTA finds the name itself: when the PTR of the server's address names a host that resolves back to the address, it uses it in HELO and the box shows *PTR: name*. Many providers give every address such a name by default (Google Cloud: `x.x.x.x.bc.googleusercontent.com`), and that is enough to send. A name in your own domain looks better to the receivers; to set one:
+
+1. Choose a host name in a domain you own, for example `mail.yourdomain.com`, and create its **A record** pointing to the server's address (AAAA for IPv6).
+2. Set the address's **PTR** to that name in the provider's panel:
+
+   | Provider | Where |
+   | -------- | ----- |
+   | Hetzner Cloud | Cloud Console → the server → *Networking* → the address → *Edit Reverse DNS*. Dedicated servers: Robot → *IPs*. |
+   | OVHcloud | Control panel → *Bare Metal Cloud* → *Network* → *IP* → `…` next to the address → *Modify the reverse path*. |
+   | DigitalOcean | The PTR follows the Droplet's name: rename the Droplet to the full host name. |
+   | Vultr | The instance → *Settings* → *IPv4* → *Reverse DNS*. |
+   | Linode / Akamai Cloud | The Linode → *Network* → the address → *Edit RDNS* (the A record must already resolve). |
+   | AWS | *Elastic IPs* → the address → *Actions* → *Update reverse DNS* (the A record must already resolve). |
+   | Google Cloud | `gcloud compute instances update-access-config <VM> --zone <zone> --network-interface nic0 --access-config-name "External NAT" --public-ptr-domain=mail.yourdomain.com.` The domain must be verified in Google Search Console by the account that runs the command. |
+   | Contabo | Customer panel → *Reverse DNS management*. |
+
+3. Wait for DNS (minutes to an hour) and click *Check again* in the box. To force a name, set `NMI_HELO_HOST=mail.yourdomain.com` in `.env` and run `docker compose up -d`.
+
+Several installations on one server share its address and so its PTR name and its reputation with the receivers. Each sending domain still needs the address in its SPF record and its own DKIM key.
+
+### 3. SPF
+
+The sending domain's SPF record (a TXT record at the domain itself) must list the address the MTA sends from: the server's address, or the mailbox's dedicated IP. The box shows the entry, for example `ip4:203.0.113.10`.
+
+- The domain has an SPF record already (it starts with `v=spf1`): put the entry before its ending, `~all` or `-all`:
+
+  ```
+  v=spf1 include:_spf.google.com ip4:203.0.113.10 ~all
+  ```
+
+- It has none: create one:
+
+  ```
+  v=spf1 ip4:203.0.113.10 ~all
+  ```
+
+A domain may have **one** SPF record only; two make both invalid. **Deliverability → the domain** checks the record (it warns when the address is missing) and shows the complete record to publish.
+
+### 4. DKIM and DMARC
+
+- **DKIM**: each domain gets its own key when its first NetSendo MTA mailbox is saved; the mailbox form shows the TXT record to publish ([DKIM](#dkim)).
+- **DMARC**: Deliverability → the domain shows the record (`_dmarc.yourdomain.com`), starting with `p=none`.
 
 ---
 
@@ -91,7 +173,7 @@ The MTA only relays mail of a session that has logged in; everything else is ref
 - When the first NMI mailbox of a domain is saved, NetSendo issues an SMTP login for the domain: a username (`nmi-<domain id>-<random>`) and a 48-character random password. The password is stored encrypted in `domain_configurations.nmi_smtp_password` and is never shown or sent to the browser.
 - NetSendo writes all logins to `storage/app/nmi-mta/auth.json` (`NMI_MTA_AUTH_FILE`), as SHA-256 hashes: `{ "version": 1, "users": { "<username>": "<hash>" } }`.
 - The file is on the `nmi-auth` volume, which the MTA container mounts read-only at `/opt/haraka/netsendo`. The Haraka plugin `docker/haraka/plugins/netsendo_auth.js` reads it again whenever it changes, so a new or rotated login works without restarting the MTA.
-- Removing a domain removes its login. `php artisan nmi:sync-mta-auth` rewrites the file from the database (scheduled every ten minutes while `NMI_ENABLED=true`), which restores it after the volume was recreated.
+- Removing a domain removes its login. `php artisan nmi:sync-mta-auth` rewrites the file from the database (scheduled every ten minutes unless `NMI_DISABLED=true`), which restores it after the volume was recreated.
 
 ### DKIM
 
@@ -116,7 +198,7 @@ To send from dedicated IPs:
 2. **Run the MTA on the server's network** with the override file (Linux, Docker Compose 2.24+):
 
    ```bash
-   docker compose -f docker-compose.yml -f docker-compose.nmi-host.yml --profile nmi up -d
+   docker compose -f docker-compose.yml -f docker-compose.nmi-host.yml up -d
    ```
 
    and in `.env`:
@@ -137,7 +219,7 @@ To send from dedicated IPs:
 
 See [Getting dedicated IPs](#getting-dedicated-ips) for where the addresses come from.
 
-`NMI_HELO_HOST` sets the HELO name of mail without a dedicated IP (default: the container's host name, which other servers cannot resolve). Use a name that resolves to the server's address and matches its PTR record.
+`NMI_HELO_HOST` sets the HELO name of mail without a dedicated IP. Empty, the MTA uses the PTR name of the server's public address when that name resolves back to the address ([PTR](#2-ptr-reverse-dns)), else the container's host name, which other servers cannot resolve.
 
 Not every host can do this. A Google Cloud VM, for example, has one external address per network interface, so one such VM cannot send from several dedicated IPs.
 
@@ -195,12 +277,7 @@ DigitalOcean's Reserved IPs cannot send mail. Its documentation says SMTP ports 
 
 ### What the server needs
 
-- **Outbound port 25.** The MTA delivers straight to the recipients' mail servers. Most cloud providers block outbound port 25 by default (Google Cloud, AWS, Azure, DigitalOcean and others). Some lift the block on request; Google Cloud lifts it per project on its own once it considers the project low-risk, and shows the state in a banner on the *VPC networks* page. Where the port is blocked the MTA accepts mail and then cannot deliver it: `docker logs netsendo-mta` shows the connection timeouts. Test it on the server (a line starting with `220` means the port is open):
-
-  ```bash
-  timeout 10 bash -c 'exec 3<>/dev/tcp/gmail-smtp-in.l.google.com/25 && head -1 <&3' || echo "port 25 is blocked"
-  ```
-- **DNS for the sending address**: a PTR record of the sending IP that matches the MTA's host name, and the IP in the domain's SPF record.
+Outbound port 25, a PTR record of the sending address and that address in the domain's SPF record: [Port 25, PTR and SPF](#port-25-ptr-and-spf).
 
 ### GOLD
 
@@ -210,23 +287,23 @@ Setting NMI up needs GOLD: adding an NMI mailbox, switching a mailbox to NMI, ch
 
 ## Docker Setup
 
-NMI uses Haraka MTA running in a separate container.
+NMI uses the Haraka MTA, running in its own container (`nmi-mta`, container `netsendo-mta`). It starts with the stack; the app reaches it on the Docker network as `nmi-mta:25`. Nothing is published on the server's ports.
 
 ### Production
 
 ```bash
-# Start all services including NMI
-docker compose --profile nmi up -d
+# The image comes from the registry like the app's (ghcr.io/netsendo/netsendo:mta-<version>)
+docker compose pull && docker compose up -d
 
-# View MTA logs
+# View MTA logs: delivery, port 25 check, the HELO name it uses
 docker logs netsendo-mta
 ```
 
 ### Development
 
 ```bash
-# Start with NMI profile
-docker compose -f docker-compose.dev.yml --profile nmi up -d
+# Builds the MTA from docker/haraka, with the config and plugins mounted for editing
+docker compose -f docker-compose.dev.yml up -d
 ```
 
 ### Volumes
@@ -243,13 +320,13 @@ NMI creates the following persistent volumes:
 
 ### Updating an installation that already runs the MTA
 
-The MTA image is built on your server, so rebuild it after updating the files:
+Since 2.11.0 the MTA image is prebuilt and its configuration and plugins are part of it. Take the new `docker-compose.yml` (the `nmi-mta` service has `image:` instead of `build:` and no `profiles:`), then:
 
 ```bash
-docker compose --profile nmi up -d --build
+docker compose pull && docker compose up -d
 ```
 
-This picks up the `nmi-auth` volume, the `netsendo_auth` plugin and the new plugin list (`docker/haraka/config/plugins`).
+`NMI_ENABLED` is no longer read: remove it from `.env`. `NMI_MTA_HOST=netsendo-mta` keeps working while the container keeps that name; the default is now the service name, `nmi-mta`.
 
 ---
 
@@ -257,19 +334,21 @@ This picks up the `nmi-auth` volume, the `netsendo_auth` plugin and the new plug
 
 ### Master Switch
 
-| Variable      | Default | Description               |
-| ------------- | ------- | ------------------------- |
-| `NMI_ENABLED` | `false` | Enable NMI features in UI |
+| Variable       | Default | Description |
+| -------------- | ------- | ----------- |
+| `NMI_DISABLED` | `false` | `true` hides the NetSendo MTA provider and stops NMI's scheduled jobs. `NMI_ENABLED`, read before 2.11.0, is ignored. |
 
 ### MTA Connection
 
 | Variable             | Default        | Description                  |
 | -------------------- | -------------- | ---------------------------- |
-| `NMI_MTA_HOST`       | `netsendo-mta` | Haraka container hostname    |
+| `NMI_MTA_HOST`       | `nmi-mta`      | Host name of the MTA on the Docker network (the compose service) |
 | `NMI_MTA_PORT`       | `25`           | SMTP port                    |
 | `NMI_MTA_ENCRYPTION` | `none`         | `none` (clear text on the Docker network), `tls` (require STARTTLS) or `ssl` (TLS from the start) |
 | `NMI_MTA_AUTH_FILE`  | `storage/app/nmi-mta/auth.json` | Where the app writes the MTA logins; the MTA reads the same file (`NMI_AUTH_FILE` in its container) |
-| `NMI_HELO_HOST`      | (container name) | HELO name of the MTA for mail without a dedicated IP |
+| `NMI_HELO_HOST`      | (the confirmed PTR name) | HELO name of the MTA for mail without a dedicated IP. Empty: the PTR name of the server's public address when it resolves back to it |
+| `NMI_EGRESS_PROBE`   | `true`         | The MTA's check of outbound port 25, the public address and its PTR (an SMTP greeting with a Gmail MX, nothing sent). `false` turns it off; the panel then cannot say whether mail can leave |
+| `NMI_EGRESS_PROBE_HOSTS` | (Gmail MX) | Servers the check talks to on port 25, comma-separated |
 | `NMI_BIND_MAP`       | (empty)        | Dedicated IPs the provider translates: `public=private,public=private` |
 
 ### IP Warming
@@ -308,45 +387,12 @@ This picks up the `nmi-auth` volume, the `netsendo_auth` plugin and the new plug
 ## Migration Guide
 
 > [!IMPORTANT]
-> **For users upgrading from versions without NMI:**
+> **Upgrading to 2.11.0 or newer**
 
-### Step 1: Update Docker Compose
-
-Pull the latest `docker-compose.yml` which includes the `nmi-mta` service.
-
-### Step 2: Update `.env`
-
-Add NMI variables from `.env.example`:
-
-```bash
-NMI_ENABLED=false
-NMI_MTA_HOST=netsendo-mta
-# ... (see .env.example for full list)
-```
-
-### Step 3: Run Migrations
-
-```bash
-docker compose exec app php artisan migrate
-```
-
-This creates the required tables:
-
-- `ip_pools`
-- `dedicated_ip_addresses`
-- NMI fields in `domain_configurations`
-
-### Step 4: Enable NMI (Optional)
-
-When ready to use NMI:
-
-```bash
-# Update .env
-NMI_ENABLED=true
-
-# Start NMI container
-docker compose --profile nmi up -d
-```
+1. Take the `docker-compose.yml` of the new version: it adds the `nmi-mta` service and its volumes (`nmi-auth` is also mounted by `app`, `scheduler` and `queue`).
+2. `docker compose pull && docker compose up -d`. The migrations run when the app starts.
+3. Remove `NMI_ENABLED` from `.env` (no longer read). To keep NMI off, set `NMI_DISABLED=true`.
+4. Open **Settings → Mailboxes → NetSendo MTA** and fix what *Can this server send mail* marks ([Port 25, PTR and SPF](#port-25-ptr-and-spf)).
 
 ---
 
@@ -354,9 +400,8 @@ docker compose --profile nmi up -d
 
 ### NMI not showing in menu
 
-1. Verify `NMI_ENABLED=true` in `.env`
+1. `NMI_DISABLED` must not be `true` in `.env`
 2. Clear cache: `php artisan optimize:clear`
-3. Rebuild frontend: `npm run build`
 
 ### MTA container not starting
 
@@ -370,9 +415,13 @@ docker network ls | grep netsendo
 
 ### "NetSendo MTA" is not offered in the mailbox form
 
-1. `NMI_ENABLED=true` in `.env`, then recreate the containers (`docker compose up -d`): the provider is hidden otherwise.
-2. The button is greyed out while the MTA does not answer: start it with `docker compose --profile nmi up -d` and click *Check again*.
+1. `NMI_DISABLED=true` in `.env` hides it.
+2. The button is greyed out while the MTA does not answer. The `docker-compose.yml` must have the `nmi-mta` service (2.11.0 or newer, see [Migration Guide](#migration-guide)); then `docker compose up -d` and click *Check again*.
 3. A GOLD badge on the button means the installation has no GOLD licence.
+
+### Mail stays in the MTA's queue
+
+The box *Can this server send mail* says why: port 25 blocked, or no PTR. `docker logs netsendo-mta` shows the delivery attempts. See [Port 25, PTR and SPF](#port-25-ptr-and-spf).
 
 ### Test connection says "535 Authentication failed"
 
@@ -389,7 +438,7 @@ docker exec netsendo-mta cat /opt/haraka/netsendo/auth.json
 docker compose exec app php artisan nmi:sync-mta-auth
 ```
 
-If the second command fails, the MTA container was created before the `nmi-auth` volume existed: `docker compose --profile nmi up -d --build`.
+If the second command fails, the MTA container was created before the `nmi-auth` volume existed: `docker compose up -d --force-recreate nmi-mta`.
 
 ### Saving the mailbox says the MTA login file could not be written
 

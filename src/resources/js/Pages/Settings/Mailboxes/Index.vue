@@ -16,6 +16,7 @@ import Switch from "@/Components/Ui/Switch.vue";
 import Toast from "@/Components/Ui/Toast.vue";
 import GoldBadge from "@/Components/License/GoldBadge.vue";
 import GoldNotice from "@/Components/License/GoldNotice.vue";
+import MtaReadiness from "@/Components/Nmi/MtaReadiness.vue";
 import { useLicense } from "@/Composables/useLicense";
 import { useToast } from "@/Composables/useToast";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
@@ -386,6 +387,11 @@ const normaliseIp = (ip) => {
         return value;
     }
 };
+
+// The dedicated IP chosen for the mailbox, null = the MTA's own address
+const nmiSelectedIp = computed(
+    () => props.nmi.ips.find((option) => option.id === form.dedicated_ip_id)?.ip_address ?? null,
+);
 
 // Whether the MTA really sends from the chosen dedicated IP: it lists the addresses it
 // owns (settings.nmi.mta.status). null = no IP chosen, or the MTA does not say.
@@ -1419,6 +1425,15 @@ const isBroadcastDisabled = computed(() => {
                                 v-if="nmiLocked"
                                 :feature="NMI_FEATURE"
                                 :message="$t('license.gating.nmi_locked')"
+                            />
+
+                            <!-- Can this server deliver: port 25, PTR, the SPF entry -->
+                            <MtaReadiness
+                                v-if="mtaOnline"
+                                :status="mtaStatus"
+                                :domain="nmiDomain?.domain ?? null"
+                                :ip="nmiSelectedIp"
+                                @recheck="checkMta"
                             />
 
                             <!-- Sending domain -->

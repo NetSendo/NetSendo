@@ -55,8 +55,7 @@ class NmiController extends Controller
             'stats' => $stats,
             'pools' => $pools,
             'ips' => $ips->map(fn($ip) => $this->formatIpForResponse($ip)),
-            // NMI_ENABLED (config/nmi.php). The key read here before, netsendo.nmi.enabled,
-            // never existed, so the dashboard always showed the "setup required" banner.
+            // nmi.features.enabled: on unless NMI_DISABLED=true (config/nmi.php)
             'nmiEnabled' => (bool) config('nmi.features.enabled', false),
         ];
 

@@ -6,7 +6,7 @@
 # to own them, which a container can only do on the server's own network.
 #
 # USAGE (Docker Compose 2.24 or newer, Linux):
-#   docker compose -f docker-compose.yml -f docker-compose.nmi-host.yml --profile nmi up -d
+#   docker compose -f docker-compose.yml -f docker-compose.nmi-host.yml up -d
 #
 # In .env:
 #   NMI_MTA_HOST=10.58.0.1

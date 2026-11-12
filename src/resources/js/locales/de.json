@@ -9282,7 +9282,7 @@
             "manage_ips": "IP-Pools verwalten",
             "mta_checking": "NetSendo MTA wird geprüft…",
             "mta_online": "NetSendo MTA ist online ({address}).",
-            "mta_offline": "NetSendo MTA ist nicht erreichbar ({address}). Starten Sie den Container (docker compose --profile nmi up -d) und prüfen Sie erneut.",
+            "mta_offline": "NetSendo MTA antwortet nicht ({address}). Aktualisieren Sie docker-compose.yml auf eine Version mit dem Dienst nmi-mta (docs/NMI.md), führen Sie docker compose up -d aus und prüfen Sie erneut.",
             "mta_recheck": "Erneut prüfen",
             "mta_required": "Neue NetSendo-MTA-Postfächer können angelegt werden, sobald der MTA antwortet.",
             "sends_as": "NetSendo MTA · {domain}",
@@ -9305,6 +9305,27 @@
                 "verify": "Eintrag verifizieren",
                 "verify_again": "Erneut prüfen",
                 "copy": "Kopieren"
+            },
+            "readiness": {
+                "title": "Kann dieser Server E-Mails senden",
+                "recheck": "Erneut prüfen",
+                "old_mta": "Der MTA-Container ist älter als diese NetSendo-Version und prüft weder Port 25 noch PTR. Neues Image holen: docker compose pull && docker compose up -d.",
+                "port25": "Ausgehender Port 25",
+                "port25_open": "offen",
+                "port25_blocked": "gesperrt",
+                "port25_unknown": "konnte nicht geprüft werden (z. B. kein DNS auf dem Server)",
+                "port25_pending": "wird geprüft, gleich noch einmal ansehen",
+                "port25_off": "Prüfung ausgeschaltet (NMI_EGRESS_PROBE=false)",
+                "port25_blocked_help": "Der Anbieter des Servers sperrt ausgehenden Port 25, die E-Mails bleiben in der Warteschlange des MTA. Bitten Sie den Anbieter, Port 25 freizugeben, oder senden Sie über den SMTP eines anderen Dienstes.",
+                "address": "Serveradresse",
+                "ptr_ok": "PTR: {name}",
+                "ptr_missing": "Kein gültiger PTR-Eintrag. Setzen Sie beim Anbieter des Servers (nicht im DNS der Domain) den PTR von {address} auf einen Hostnamen, der wieder auf diese Adresse zeigt (A-Eintrag). Ohne ihn weisen Gmail und Outlook die E-Mails ab oder sortieren sie als Spam ein.",
+                "ptr_dedicated": "Den PTR einer dedizierten IP prüfen Sie unter NetSendo MTA → IP-Adresse.",
+                "spf": "in den SPF-Eintrag der Absenderdomain aufnehmen:",
+                "spf_domain": "in den SPF-Eintrag von {domain} aufnehmen:",
+                "spf_help": "Vor dem ~all oder -all des vorhandenen Eintrags einfügen (keinen zweiten SPF-Eintrag anlegen). Zustellbarkeit → Domain zeigt den vollständigen Eintrag.",
+                "copied": "Kopiert",
+                "guide": "Schritt für Schritt: Port 25, PTR und SPF bei gängigen Anbietern"
             }
         }
     },

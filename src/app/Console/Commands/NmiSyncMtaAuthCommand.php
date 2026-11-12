@@ -19,7 +19,7 @@ class NmiSyncMtaAuthCommand extends Command
     public function handle(MtaCredentialService $credentials): int
     {
         if (! config('nmi.features.enabled')) {
-            $this->info('NMI is not enabled (NMI_ENABLED): nothing to write.');
+            $this->info('NMI is switched off (NMI_DISABLED=true): nothing to write.');
 
             return self::SUCCESS;
         }

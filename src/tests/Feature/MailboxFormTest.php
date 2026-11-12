@@ -15,8 +15,8 @@ use Tests\TestCase;
  * SendGrid and Gmail, and its errors (provider, credentials) had no place in the modal, so
  * all the person saw was a toast with the raw key "common.notifications.error".
  *
- * NMI is a working provider since then, offered only where the NetSendo MTA is switched on
- * (NMI_ENABLED): see NmiMailboxTest. This class covers an installation without it.
+ * NMI is a working provider since then, on by default since 2.11.0 (NMI_DISABLED=true turns it
+ * off): see NmiMailboxTest and NmiDefaultOnTest. This class covers an installation without it.
  */
 class MailboxFormTest extends TestCase
 {
@@ -31,6 +31,7 @@ class MailboxFormTest extends TestCase
         parent::setUp();
 
         $this->user = User::factory()->create();
+        config(['nmi.features.enabled' => false]);
     }
 
     private function smtpPayload(array $extra = []): array

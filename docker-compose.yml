@@ -322,27 +322,22 @@ services:
   # =============================================================================
   # NMI - NetSendo Mail Infrastructure (Haraka MTA)
   # =============================================================================
-  # Built-in mail transfer agent for sending emails with dedicated IPs.
-  # Only enable if NMI feature is activated.
+  # NetSendo's own mail server, for mailboxes with the "NetSendo MTA" provider (GOLD).
+  # It starts with the rest of the stack and does nothing until a GOLD installation
+  # saves such a mailbox: it relays only mail that logs in with a login NetSendo
+  # issued. It also checks whether this server can send on port 25 and which public
+  # address and PTR name receivers see; Settings -> Mailboxes shows the result, with
+  # what to set up (PTR, SPF). NMI_ENABLED=false in .env hides the provider.
+  # Configuration and plugins are part of the image (docker/haraka).
   nmi-mta:
-    build:
-      context: ./docker/haraka
-      dockerfile: Dockerfile
+    image: ghcr.io/netsendo/netsendo:mta-${NETSENDO_VERSION:-latest}
     container_name: netsendo-mta
     restart: unless-stopped
-    profiles:
-      - nmi  # Only starts when explicitly enabled with --profile nmi
-    ports:
-      - "127.0.0.1:${NMI_SMTP_PORT:-2525}:25"
-      - "127.0.0.1:${NMI_SUBMISSION_PORT:-2587}:587"
     # The app starts first, so the nmi-auth volume is created with the app's ownership
     depends_on:
       app:
         condition: service_started
     volumes:
-      - ./docker/haraka/config:/opt/haraka/config:ro
-      # NetSendo's own Haraka plugins (SMTP AUTH against the logins NetSendo issues)
-      - ./docker/haraka/plugins:/opt/haraka/plugins:ro
       # Logins of the sending domains, written by the app (storage/app/nmi-mta/auth.json)
       - nmi-auth:/opt/haraka/netsendo:ro
       - nmi-queue:/opt/haraka/queue
@@ -353,12 +348,14 @@ services:
       - nmi-tls:/opt/haraka/config/tls
     environment:
       - NODE_ENV=production
-      # HELO name of the MTA: a host name that resolves to the server's address and
-      # that the address's PTR record points to (default: the container's own name)
+      # HELO name of mail without a dedicated IP. Empty: the PTR name of the server's
+      # public address, when it resolves back to the address
       - NMI_HELO_HOST=${NMI_HELO_HOST:-}
       # Dedicated IPs the provider translates to a private address on the server:
       # "public=private,public=private" (see docker-compose.nmi-host.yml)
       - NMI_BIND_MAP=${NMI_BIND_MAP:-}
+      # false: no port 25 check (the panel then cannot say whether mail can leave)
+      - NMI_EGRESS_PROBE=${NMI_EGRESS_PROBE:-true}
     networks:
       - netsendo-network
     healthcheck:

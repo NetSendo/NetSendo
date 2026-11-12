@@ -133,6 +133,47 @@ jobs:
           build-args: |
             APP_VERSION=${{ github.ref_name }}
 
+      # The NetSendo MTA (docker/haraka) is published as tags of the same public package,
+      # prefixed "mta-": mta-latest, mta-2.11.0, ... (docker-compose.yml: nmi-mta). One
+      # package keeps the MTA as public as the app, with no second package to configure.
+      - name: Extract MTA metadata
+        id: meta-mta
+        uses: docker/metadata-action@v6
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
+            prefix=mta-,onlatest=true
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=${{ github.event.inputs.version }},enable=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version != '' }}
+            type=sha,prefix=mta-sha-
+          labels: |
+            org.opencontainers.image.description=NetSendo MTA (Haraka) for the "NetSendo MTA" mailbox provider. Proprietary, source-available under the NetSendo EULA - not open source.
+            org.opencontainers.image.licenses=LicenseRef-NetSendo-EULA
+            org.opencontainers.image.url=https://netsendo.com
+          annotations: |
+            org.opencontainers.image.description=NetSendo MTA (Haraka) for the "NetSendo MTA" mailbox provider. Proprietary, source-available under the NetSendo EULA - not open source.
+            org.opencontainers.image.licenses=LicenseRef-NetSendo-EULA
+
+      - name: Build and push MTA image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./docker/haraka
+          file: ./docker/haraka/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta-mta.outputs.tags }}
+          labels: ${{ steps.meta-mta.outputs.labels }}
+          annotations: ${{ steps.meta-mta.outputs.annotations }}
+          cache-from: type=gha,scope=mta
+          cache-to: type=gha,mode=max,scope=mta
+
       - name: Generate image summary
         run: |
           echo "## Docker Image Published 🐳" >> $GITHUB_STEP_SUMMARY
@@ -148,6 +189,11 @@ jobs:
           echo "### Pull Command:" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### MTA tags:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta-mta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
 
   # Tells Aderlo (NetSendo Cloud hosting) about the new version right away
