@@ -136,7 +136,10 @@ services:
     networks:
       - netsendo-network
     depends_on:
-      - app
+      app:
+        condition: service_started
+        # Restarted with the app, so nginx picks up its new address (docker-compose.yml)
+        restart: true
 
   db:
     image: mysql:8.4

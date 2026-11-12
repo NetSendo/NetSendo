@@ -143,6 +143,8 @@ NetSendo supports the standard Docker update workflow:
    docker compose logs -f app   # migrations run here; scheduler, queue and reverb wait for them
    ```
 
+   With a `docker-compose.yml` older than 2.11.1, also run `docker compose restart webserver` once the app is up: the old file does not restart it, and nginx keeps the app's previous address (every page answers 502).
+
 No frontend rebuild or cache clearing is needed: the image brings the built assets and the containers rebuild their caches on start.
 
 The `app` container runs pending migrations and seeds missing starter data on

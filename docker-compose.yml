@@ -205,6 +205,11 @@ services:
     depends_on:
       app:
         condition: service_healthy
+        # nginx looks the app's address up once, at start (fastcgi_pass app:9000). An
+        # update recreates the app container, which often gets a new address: without
+        # this restart every page answers 502 until the webserver is restarted by hand.
+        # Docker Compose 2.17+ restarts the webserver whenever it recreates the app.
+        restart: true
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
       interval: 10s
