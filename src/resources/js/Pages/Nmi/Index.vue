@@ -5,6 +5,7 @@ import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
 import GoldNotice from "@/Components/License/GoldNotice.vue";
+import MtaReadiness from "@/Components/Nmi/MtaReadiness.vue";
 import { useLicense } from "@/Composables/useLicense";
 
 // NMI is GOLD: without it the setup stays readable, changes answer 402 (upgrade dialog)
@@ -34,6 +35,8 @@ const checkMtaStatus = async () => {
             online: response.data.data.online,
             message: response.data.data.message,
             checking: false,
+            // Port 25, public address, PTR (MtaReadiness)
+            data: response.data.data,
         };
     } catch (error) {
         mtaStatus.value = {
@@ -379,6 +382,13 @@ const removeProvider = async (provider) => {
                 v-if="!can('mail_infrastructure')"
                 feature="mail_infrastructure"
                 :message="$t('license.gating.nmi_locked')"
+            />
+
+            <!-- Can this server deliver: port 25, PTR, the SPF entry -->
+            <MtaReadiness
+                v-if="nmiEnabled && mtaStatus.online"
+                :status="mtaStatus.data"
+                @recheck="checkMtaStatus"
             />
 
             <!-- NMI Disabled Banner -->

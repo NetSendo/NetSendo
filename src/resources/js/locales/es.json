@@ -5329,7 +5329,7 @@
             "manage_ips": "Gestionar grupos de IP",
             "mta_checking": "Comprobando NetSendo MTA…",
             "mta_online": "NetSendo MTA está en línea ({address}).",
-            "mta_offline": "NetSendo MTA no responde ({address}). Inicia su contenedor (docker compose --profile nmi up -d) y comprueba de nuevo.",
+            "mta_offline": "NetSendo MTA no responde ({address}). Actualice docker-compose.yml a una versión con el servicio nmi-mta (docs/NMI.md), ejecute docker compose up -d y compruebe de nuevo.",
             "mta_recheck": "Comprobar de nuevo",
             "mta_required": "Se pueden añadir nuevos buzones de NetSendo MTA cuando el MTA responde.",
             "sends_as": "NetSendo MTA · {domain}",
@@ -5352,6 +5352,27 @@
                 "verify": "Verificar registro",
                 "verify_again": "Comprobar de nuevo",
                 "copy": "Copiar"
+            },
+            "readiness": {
+                "title": "¿Puede este servidor enviar correo?",
+                "recheck": "Comprobar de nuevo",
+                "old_mta": "El contenedor del MTA es anterior a esta versión de NetSendo y no comprueba el puerto 25 ni el PTR. Descargue la imagen nueva: docker compose pull && docker compose up -d.",
+                "port25": "Puerto 25 saliente",
+                "port25_open": "abierto",
+                "port25_blocked": "bloqueado",
+                "port25_unknown": "no se pudo comprobar (p. ej., sin DNS en el servidor)",
+                "port25_pending": "comprobándose, vuelva a mirar en un momento",
+                "port25_off": "comprobación desactivada (NMI_EGRESS_PROBE=false)",
+                "port25_blocked_help": "El proveedor del servidor bloquea el puerto 25 saliente, así que el correo se queda en la cola del MTA. Pida al proveedor que abra el puerto 25 o envíe por el SMTP de otro servicio.",
+                "address": "Dirección del servidor",
+                "ptr_ok": "PTR: {name}",
+                "ptr_missing": "No hay un registro PTR válido. En el proveedor del servidor (no en el DNS del dominio), configure el PTR de {address} con un nombre de host que apunte de vuelta a esta dirección (registro A). Sin él, Gmail y Outlook rechazan el correo o lo envían a spam.",
+                "ptr_dedicated": "El PTR de una IP dedicada se comprueba en NetSendo MTA → dirección IP.",
+                "spf": "añada al registro SPF del dominio de envío:",
+                "spf_domain": "añada al registro SPF de {domain}:",
+                "spf_help": "Póngalo antes del ~all o -all del registro existente (no cree un segundo registro SPF). Entregabilidad → dominio muestra el registro completo.",
+                "copied": "Copiado",
+                "guide": "Paso a paso: puerto 25, PTR y SPF en los proveedores habituales"
             }
         }
     },

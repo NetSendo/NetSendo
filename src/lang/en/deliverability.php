@@ -82,6 +82,7 @@ return [
         'spf_missing' => 'No SPF record found for this domain',
         'spf_no_include' => 'SPF record is missing required include',
         'spf_no_provider_include' => 'SPF record is missing :provider include (:required)',
+        'spf_missing_ip' => 'SPF record is missing the address NetSendo MTA sends from (:ips). Add :mechanisms to it',
         'spf_permissive' => 'SPF record is too permissive (+all or ?all)',
         'dkim_missing' => 'No DKIM record found (checked selectors: :selectors_checked)',
         'dkim_invalid' => 'DKIM record is invalid (missing public key)',

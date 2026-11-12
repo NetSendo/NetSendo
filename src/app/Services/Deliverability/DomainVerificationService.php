@@ -72,9 +72,6 @@ class DomainVerificationService
      */
     public function getProviderConfig(?string $provider, ?string $smtpHost = null): array
     {
-        // Get the installation domain for NMI provider SPF
-        $installDomain = $this->getVerifyDomain();
-
         if ($provider === null) {
             return [
                 'spf_includes' => [], // No default includes - use aggregated config
@@ -117,8 +114,11 @@ class DomainVerificationService
                 'provider_name' => 'SMTP',
                 'dkim_selector_required' => false,
             ],
+            // The addresses are added per mailbox (getMailboxProviderConfig): an include of the
+            // installation's host would need an SPF record there that nobody publishes
             'nmi' => [
-                'spf_includes' => ['_spf.' . $installDomain],
+                'spf_includes' => [],
+                'spf_ips' => [],
                 'dkim_selectors' => ['netsendo', 'default'],
                 'provider_name' => 'NetSendo MTA',
                 'dkim_selector_required' => false,
@@ -142,7 +142,17 @@ class DomainVerificationService
             $smtpHost = $mailbox->getDecryptedCredentials()['host'] ?? null;
         }
 
-        return $this->getProviderConfig($mailbox->provider, $smtpHost);
+        $config = $this->getProviderConfig($mailbox->provider, $smtpHost);
+
+        // NetSendo's own MTA sends from this server: the domain's SPF record must name the
+        // address the mail leaves from, the mailbox's dedicated IP or the server's own
+        if ($mailbox->provider === Mailbox::PROVIDER_NMI) {
+            $ip = $mailbox->dedicatedIp?->ip_address
+                ?? app(\App\Services\Nmi\MtaStatusService::class)->serverAddress();
+            $config['spf_ips'] = $ip ? [$ip] : [];
+        }
+
+        return $config;
     }
 
     /**
@@ -166,6 +176,55 @@ class DomainVerificationService
     /**
      * Get the verify domain from APP_URL
      */
+    /** "ip4:203.0.113.10" or "ip6:2001:db8::1" */
+    public static function spfIpMechanism(string $ip): string
+    {
+        return (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) ? 'ip6:' : 'ip4:') . $ip;
+    }
+
+    /**
+     * Whether an ip4/ip6 mechanism of the record (with or without a CIDR range and a "+"
+     * qualifier) covers the address. Includes are not followed: an address that only an
+     * included record names is reported as missing.
+     */
+    public static function spfCoversIp(array $mechanisms, string $ip): bool
+    {
+        $packed = @inet_pton($ip);
+        if ($packed === false) {
+            return false;
+        }
+
+        foreach ($mechanisms as $mechanism) {
+            if (! preg_match('/^\+?ip[46]:([^\/\s]+)(?:\/(\d{1,3}))?$/i', trim($mechanism), $match)) {
+                continue;
+            }
+
+            $network = @inet_pton($match[1]);
+            if ($network === false || strlen($network) !== strlen($packed)) {
+                continue;
+            }
+
+            $bits = isset($match[2]) && $match[2] !== '' ? (int) $match[2] : strlen($packed) * 8;
+            $bits = min($bits, strlen($packed) * 8);
+            $bytes = intdiv($bits, 8);
+            $rest = $bits % 8;
+
+            if (substr($network, 0, $bytes) !== substr($packed, 0, $bytes)) {
+                continue;
+            }
+            if ($rest === 0) {
+                return true;
+            }
+
+            $mask = (0xFF << (8 - $rest)) & 0xFF;
+            if ((ord($network[$bytes]) & $mask) === (ord($packed[$bytes]) & $mask)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function getVerifyDomain(): string
     {
         $appUrl = config('app.url');
@@ -199,6 +258,7 @@ class DomainVerificationService
         }
 
         $allIncludes = [];
+        $allIps = [];
         $allSelectors = [];
         $providers = [];
         $selectorRequiredBy = [];
@@ -206,6 +266,7 @@ class DomainVerificationService
         foreach ($mailboxes as $mailbox) {
             $config = $this->getMailboxProviderConfig($mailbox);
             $allIncludes = array_merge($allIncludes, $config['spf_includes']);
+            $allIps = array_merge($allIps, $config['spf_ips'] ?? []);
             $allSelectors = array_merge($allSelectors, $config['dkim_selectors']);
             if ($config['provider_name']) {
                 $providers[] = $config['provider_name'];
@@ -232,6 +293,7 @@ class DomainVerificationService
 
         return [
             'spf_includes' => array_values(array_unique($allIncludes)),
+            'spf_ips' => array_values(array_unique($allIps)),
             'dkim_selectors' => array_values(array_unique(array_merge($customSelectors, $nmiSelectors, $allSelectors))),
             'custom_dkim_selectors' => $customSelectors,
             'provider_name' => count($providers) === 1 ? $providers[0] : null,
@@ -415,6 +477,24 @@ class DomainVerificationService
                     ],
                 ];
             }
+        }
+
+        // Addresses NetSendo's own MTA sends from must be in the record
+        $missingIps = array_values(array_filter(
+            $providerConfig['spf_ips'] ?? [],
+            fn (string $ip) => ! self::spfCoversIp($parsed['mechanisms'] ?? [], $ip)
+        ));
+        if (! empty($missingIps)) {
+            $analysis->status = DomainConfiguration::STATUS_WARNING;
+            $analysis->issues[] = [
+                'code' => 'spf_no_ip',
+                'severity' => 'warning',
+                'message_key' => 'deliverability.issues.spf_missing_ip',
+                'context' => [
+                    'ips' => implode(', ', $missingIps),
+                    'mechanisms' => implode(' ', array_map(fn ($ip) => self::spfIpMechanism($ip), $missingIps)),
+                ],
+            ];
         }
 
         // Check for -all (hard fail) vs ~all (soft fail)
@@ -742,8 +822,17 @@ class DomainVerificationService
             }
         }
 
-        // Add the includes the sending providers need and the record does not have yet
+        // Add the addresses NetSendo's own MTA sends from, unless the record has them
         $added = [];
+        foreach ($providerConfig['spf_ips'] ?? [] as $ip) {
+            if (self::spfCoversIp(array_map('strtolower', $terms), $ip)) {
+                continue;
+            }
+            $terms[] = self::spfIpMechanism($ip);
+            $added[] = self::spfIpMechanism($ip);
+        }
+
+        // Add the includes the sending providers need and the record does not have yet
         $currentIncludes = $parsedCurrent['includes'] ?? [];
         foreach ($providerConfig['spf_includes'] as $include) {
             if ($include === '' || in_array(strtolower($include), $currentIncludes, true)) {

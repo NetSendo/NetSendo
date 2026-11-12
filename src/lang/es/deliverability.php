@@ -82,6 +82,7 @@ return [
         'spf_missing' => 'No se encontró registro SPF para este dominio',
         'spf_no_include' => 'El registro SPF no contiene el include requerido',
         'spf_no_provider_include' => 'El registro SPF no contiene include de :provider (:required)',
+        'spf_missing_ip' => 'El registro SPF no contiene la dirección desde la que envía NetSendo MTA (:ips). Añada :mechanisms',
         'spf_permissive' => 'El registro SPF es demasiado permisivo (+all o ?all)',
         'dkim_missing' => 'No se encontró registro DKIM (selectores comprobados: :selectors_checked)',
         'dkim_invalid' => 'El registro DKIM es inválido (falta la clave pública)',

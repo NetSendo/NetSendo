@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.11.0] – NetSendo MTA in every installation, with what the server needs to send - 2026-11-12
+
+**Release date:** 2026-11-12
+
+### Changed
+
+- **NetSendo MTA starts with every installation and works for GOLD.** The MTA container (`nmi-mta`) used to start only with `docker compose --profile nmi`, was built on the server from files `install.sh` never downloads, and the provider was hidden unless `NMI_ENABLED=true`, which no installation had. Now the MTA is part of `docker-compose.yml` like the other services, from a published image (`ghcr.io/netsendo/netsendo:mta-<version>`, built by the same workflow as the app), and the **NetSendo MTA** provider is offered in *Settings → Mailboxes* wherever it answers. Without GOLD the provider shows its GOLD badge; the MTA relays nothing until a GOLD installation saves a mailbox with this provider, because it only accepts sessions that log in with a login NetSendo issued.
+  - **`NMI_DISABLED=true`** in `.env` hides the provider and stops NMI's scheduled jobs. **`NMI_ENABLED` is no longer read**: `.env` files made from the example before this version say `NMI_ENABLED=false` without anyone having chosen it.
+  - The MTA publishes no port on the server (several installations on one host no longer collide on 2525/2587), and its configuration and plugins are in the image, so nothing is mounted from the installation's folder. The app reaches it by the service name, `nmi-mta` (`NMI_MTA_HOST`; `netsendo-mta` keeps working while the container has that name).
+- **The SPF record of a domain that sends through NetSendo MTA must name the address the mail leaves from.** Deliverability used to ask for `include:_spf.<installation's host>`, a record nobody publishes. It now checks for the server's public address (or the mailbox's dedicated IP) as `ip4:`/`ip6:`, with ranges, warns when it is missing, and the generated record adds it.
+
+### Added
+
+- **"Can this server send mail"** in the NetSendo MTA part of the mailbox form and on *Settings → Mail Infrastructure*. The MTA checks it by itself, at start and every few hours, the way a receiver sees it: it greets a Gmail MX on port 25 (sending nothing) and reads the address the MX names. The box shows:
+  - **outbound port 25**: open, or blocked by the server's provider (then mail would stay in the queue), with what to do;
+  - **the server's public address and its PTR record**, and whether the PTR name resolves back to the address;
+  - **the SPF entry** (`ip4:…`) to add to the sending domain's record, with a copy button.
+- **The MTA introduces itself by the server's PTR name.** Mail without a dedicated IP used the container's host name in HELO, which no receiver can resolve. When the PTR of the server's public address names a host that resolves back to it, the MTA now uses that name; `NMI_HELO_HOST` still overrides it. `NMI_EGRESS_PROBE=false` turns the check off.
+- **Step-by-step guide: port 25, PTR and SPF** (`docs/NMI.md`, linked from the panel): what each provider (Google Cloud, AWS, Azure, DigitalOcean, Hetzner, Vultr, Linode, OVHcloud, Contabo) does with port 25, where to set the PTR at each of them, and how to add the address to an existing SPF record.
+
+### Upgrading
+
+- Take the new `docker-compose.yml` (it adds the `nmi-mta` service and the `nmi-*` volumes) and run `docker compose pull && docker compose up -d`. An installation that keeps its old compose file goes on working; the mailbox form then says the MTA does not answer.
+- Installations that ran the MTA with `--profile nmi` and `--build`: the new service uses the published image, so drop `--profile nmi` and `--build`. Remove `NMI_ENABLED` from `.env`.
+- Covered by `tests/Feature/NmiDefaultOnTest.php` and `docker/haraka/test/egress.test.js` (`node --test`).
+
 ## [2.10.0] – AI connector: connect Claude and other AI apps by sign-in, faster first load - 2026-11-11
 
 **Release date:** 2026-11-11

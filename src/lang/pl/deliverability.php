@@ -82,6 +82,7 @@ return [
         'spf_missing' => 'Brak rekordu SPF dla domeny',
         'spf_no_include' => 'Rekord SPF nie zawiera wymaganego include',
         'spf_no_provider_include' => 'Rekord SPF nie zawiera include dla :provider (:required)',
+        'spf_missing_ip' => 'Rekord SPF nie zawiera adresu, z którego wysyła NetSendo MTA (:ips). Dodaj do niego :mechanisms',
         'spf_permissive' => 'Rekord SPF jest zbyt permisywny (+all lub ?all)',
         'dkim_missing' => 'Brak rekordu DKIM (sprawdzono selektory: :selectors_checked)',
         'dkim_invalid' => 'Rekord DKIM jest nieprawidłowy (brak klucza publicznego)',

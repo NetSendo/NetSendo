@@ -4838,7 +4838,7 @@
             "manage_ips": "Manage IP pools",
             "mta_checking": "Checking the NetSendo MTA…",
             "mta_online": "NetSendo MTA is online ({address}).",
-            "mta_offline": "NetSendo MTA is not reachable ({address}). Start its container (docker compose --profile nmi up -d), then check again.",
+            "mta_offline": "NetSendo MTA does not answer ({address}). Update docker-compose.yml to a version with the nmi-mta service (docs/NMI.md), run docker compose up -d and check again.",
             "mta_recheck": "Check again",
             "mta_required": "New NetSendo MTA mailboxes can be added once the MTA answers.",
             "sends_as": "NetSendo MTA · {domain}",
@@ -4861,6 +4861,27 @@
                 "verify": "Verify record",
                 "verify_again": "Check again",
                 "copy": "Copy"
+            },
+            "readiness": {
+                "title": "Can this server send mail",
+                "recheck": "Check again",
+                "old_mta": "The MTA container is older than this NetSendo version and does not check port 25 or PTR. Get the new image: docker compose pull && docker compose up -d.",
+                "port25": "Outbound port 25",
+                "port25_open": "open",
+                "port25_blocked": "blocked",
+                "port25_unknown": "could not be checked (e.g. no DNS on the server)",
+                "port25_pending": "being checked, look again in a moment",
+                "port25_off": "check switched off (NMI_EGRESS_PROBE=false)",
+                "port25_blocked_help": "The server's provider blocks outbound port 25, so mail stays in the MTA's queue. Ask the provider to open port 25, or send through another service's SMTP.",
+                "address": "Server address",
+                "ptr_ok": "PTR: {name}",
+                "ptr_missing": "No valid PTR record. At the server's provider (not in the domain's DNS), set the PTR of {address} to a host name that points back to this address (A record). Without it Gmail and Outlook reject the mail or file it as spam.",
+                "ptr_dedicated": "The PTR of a dedicated IP is checked under NetSendo MTA → IP address.",
+                "spf": "add to the SPF record of the sending domain:",
+                "spf_domain": "add to the SPF record of {domain}:",
+                "spf_help": "Put it before the ~all or -all of the existing record (do not create a second SPF record). Deliverability → domain shows the complete record.",
+                "copied": "Copied",
+                "guide": "Step by step: port 25, PTR and SPF at common providers"
             }
         }
     },

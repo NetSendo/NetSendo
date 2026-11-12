@@ -4521,7 +4521,7 @@
             "manage_ips": "Zarządzaj pulami IP",
             "mta_checking": "Sprawdzam NetSendo MTA…",
             "mta_online": "NetSendo MTA działa ({address}).",
-            "mta_offline": "NetSendo MTA nie odpowiada ({address}). Uruchom jego kontener (docker compose --profile nmi up -d) i sprawdź ponownie.",
+            "mta_offline": "NetSendo MTA nie odpowiada ({address}). Zaktualizuj docker-compose.yml do wersji z usługą nmi-mta (docs/NMI.md), uruchom docker compose up -d i sprawdź ponownie.",
             "mta_recheck": "Sprawdź ponownie",
             "mta_required": "Nowe skrzynki NetSendo MTA można dodawać, gdy MTA odpowiada.",
             "sends_as": "NetSendo MTA · {domain}",
@@ -4544,6 +4544,27 @@
                 "verify": "Zweryfikuj rekord",
                 "verify_again": "Sprawdź ponownie",
                 "copy": "Kopiuj"
+            },
+            "readiness": {
+                "title": "Czy ten serwer może wysyłać pocztę",
+                "recheck": "Sprawdź ponownie",
+                "old_mta": "Kontener MTA jest starszy niż ta wersja NetSendo i nie sprawdza portu 25 ani PTR. Pobierz nowy obraz: docker compose pull && docker compose up -d.",
+                "port25": "Port 25 na zewnątrz",
+                "port25_open": "otwarty",
+                "port25_blocked": "zablokowany",
+                "port25_unknown": "nie udało się sprawdzić (np. brak DNS na serwerze)",
+                "port25_pending": "sprawdzanie trwa, zajrzyj za chwilę",
+                "port25_off": "sprawdzanie wyłączone (NMI_EGRESS_PROBE=false)",
+                "port25_blocked_help": "Dostawca serwera blokuje wychodzący port 25, więc poczta zostanie w kolejce MTA. Poproś go o odblokowanie portu 25 albo wysyłaj przez SMTP innej usługi.",
+                "address": "Adres serwera",
+                "ptr_ok": "PTR: {name}",
+                "ptr_missing": "Brak poprawnego rekordu PTR. U dostawcy serwera (nie w DNS domeny) ustaw PTR adresu {address} na nazwę hosta, która wskazuje z powrotem na ten adres (rekord A). Bez tego Gmail i Outlook odrzucają albo kierują pocztę do spamu.",
+                "ptr_dedicated": "PTR dedykowanego adresu sprawdzisz w NetSendo MTA → adres IP.",
+                "spf": "dodaj do rekordu SPF domeny wysyłkowej:",
+                "spf_domain": "dodaj do rekordu SPF domeny {domain}:",
+                "spf_help": "Dopisz to przed końcówką ~all lub -all istniejącego rekordu (nie twórz drugiego rekordu SPF). Gotowy rekord pokazuje Dostarczalność → domena.",
+                "copied": "Skopiowano",
+                "guide": "Instrukcja krok po kroku: port 25, PTR i SPF u popularnych dostawców"
             }
         }
     },

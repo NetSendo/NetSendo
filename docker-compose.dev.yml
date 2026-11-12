@@ -205,6 +205,7 @@ services:
       - NMI_AUTH_FILE=/opt/haraka/netsendo-storage/nmi-mta/auth.json
       - NMI_HELO_HOST=${NMI_HELO_HOST:-}
       - NMI_BIND_MAP=${NMI_BIND_MAP:-}
+      - NMI_EGRESS_PROBE=${NMI_EGRESS_PROBE:-true}
     networks:
       - netsendo-network
     healthcheck:

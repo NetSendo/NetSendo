@@ -82,6 +82,7 @@ return [
         'spf_missing' => 'Kein SPF-Eintrag für diese Domain gefunden',
         'spf_no_include' => 'SPF-Eintrag enthält nicht das erforderliche Include',
         'spf_no_provider_include' => 'SPF-Eintrag enthält kein :provider Include (:required)',
+        'spf_missing_ip' => 'SPF-Eintrag enthält nicht die Adresse, von der NetSendo MTA sendet (:ips). Fügen Sie :mechanisms hinzu',
         'spf_permissive' => 'SPF-Eintrag ist zu permissiv (+all oder ?all)',
         'dkim_missing' => 'Kein DKIM-Eintrag gefunden (geprüfte Selektoren: :selectors_checked)',
         'dkim_invalid' => 'DKIM-Eintrag ist ungültig (fehlender öffentlicher Schlüssel)',
