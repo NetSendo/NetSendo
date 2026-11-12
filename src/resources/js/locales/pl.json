@@ -6843,6 +6843,7 @@
             "waiting_message": "Tekst ekranu oczekiwania",
             "optional_hint": "Pozostaw puste, aby użyć wartości domyślnej.",
             "scheduled_at_help": "Ta data steruje odliczaniem na stronie webinaru. Bez ustawionej daty uczestnik zobaczy komunikat „wkrótce”.",
+            "scheduled_at_timezone": "Godzina w strefie czasowej {timezone}.",
             "auto_schedule_hint": "Terminy sesji auto-webinaru ustawisz na ekranie „Harmonogram” po zapisaniu.",
             "auto_schedule_hint_create": "Po utworzeniu ustawisz terminy sesji na ekranie „Harmonogram”."
         },
@@ -6895,7 +6896,10 @@
             "host": "Host",
             "pinned_message": "Przypięta wiadomość",
             "slow_mode": "Tryb powolny jest aktywny. Możesz wysłać wiadomość co {seconds} sekund.",
-            "viewers": "{count} widzów"
+            "viewers": "{count} widzów",
+            "disabled": "Czat jest wyłączony — widzowie nie widzą panelu czatu.",
+            "host_only_mode": "Pisać może tylko prowadzący.",
+            "ask_question": "Zadaj pytanie..."
         },
         "products": {
             "title": "Produkty",

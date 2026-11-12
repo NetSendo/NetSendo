@@ -985,6 +985,8 @@ Route::prefix('webinar')->name('webinar.')->group(function () {
     Route::get('/{slug}/calendar/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'calendar'])->name('calendar');
     Route::post('/{slug}/leave/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'leave'])->name('leave');
     Route::post('/{slug}/progress/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'trackProgress'])->name('progress');
+    Route::get('/{slug}/chat/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'chatFeed'])->name('chat')->middleware('throttle:webinar-chat');
+    Route::post('/{slug}/chat/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'chatSend'])->name('chat.send')->middleware('throttle:webinar-chat-send');
     Route::get('/{slug}/auto/{subscriberToken}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'autoRegister'])->name('auto-register')->middleware('signed');
 });
 

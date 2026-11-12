@@ -10,6 +10,7 @@ use App\Models\Subscriber;
 use App\Models\ContactList;
 use App\Models\Tag;
 use App\Events\SubscriberSignedUp;
+use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
 
@@ -169,13 +170,18 @@ class WebinarService
         // For auto-webinars, determine session from user selection or calculate
         $newSession = null;
         if ($webinar->isAutoWebinar() && !$session && $webinar->schedule) {
-            // Use session_time from form if provided, otherwise calculate
+            // Use session_time from form if provided, otherwise calculate.
+            // The sign-up page lists slots in the schedule's timezone: a value
+            // without an offset is wall-clock time there, not UTC (it used to be
+            // read as UTC, so Europe/Warsaw sessions started an hour late).
             if (!empty($data['session_time'])) {
-                $sessionTime = new \DateTime($data['session_time']);
+                $sessionTime = Carbon::parse($data['session_time'], $webinar->schedule->effective_timezone);
             } else {
                 $sessionTime = $webinar->schedule->calculateSessionTimeForRegistration();
             }
-            $newSession = $this->getOrCreateSession($webinar, $sessionTime);
+            // Sessions are stored in the app timezone; Eloquent writes a Carbon's
+            // wall-clock digits without converting it.
+            $newSession = $this->getOrCreateSession($webinar, $sessionTime->copy()->setTimezone(config('app.timezone')));
         }
 
         // Check if already registered
@@ -288,9 +294,10 @@ class WebinarService
         Webinar $webinar,
         WebinarRegistration $registration,
         ?WebinarSession $session = null,
-        ?int $videoTimeSeconds = null
+        ?int $videoTimeSeconds = null,
+        ?int $visitStartedAt = null
     ): void {
-        $registration->leave();
+        $registration->leave($visitStartedAt);
 
         WebinarAnalytic::track(
             $webinar,

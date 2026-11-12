@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -141,7 +141,7 @@
                             controlslist="nodownload nofullscreen noremoteplayback"
                         >
                             <source src="{{ $webinar->video_url }}" type="video/mp4">
-                            Twoja przeglądarka nie obsługuje wideo.
+                            {{ __('webinars.public.watch.video_unsupported') }}
                         </video>
                     @else
                         <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
@@ -209,40 +209,42 @@
             @endif
         </div>
 
-        <!-- Chat Sidebar -->
-        <div class="w-full lg:w-96 bg-gray-800 flex flex-col h-64 lg:h-full">
+        @if($chatEnabled)
+        <!-- Chat Sidebar (filled by the room chat script below) -->
+        <div id="chat-panel" class="w-full lg:w-96 bg-gray-800 flex flex-col h-64 lg:h-full">
             <div class="p-4 border-b border-gray-700 flex items-center justify-between">
                 <h2 class="font-semibold">{{ __('webinars.public.watch.live_chat') }}</h2>
-                <span class="text-sm text-gray-400" id="viewer-count">{{ __('webinars.public.watch.viewers', ['count' => $session?->current_viewers ?? 0]) }}</span>
+                <span class="text-sm text-gray-400" id="viewer-count">{{ __('webinars.public.watch.viewers', ['count' => $viewerCount]) }}</span>
             </div>
 
             <!-- Chat Messages -->
-            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3">
-                <!-- Messages will be loaded via JavaScript -->
-                <div class="text-center text-gray-500 py-4">
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-3" aria-live="polite">
+                <div id="chat-placeholder" class="text-center text-gray-500 py-4">
                     <p>{{ __('webinars.public.watch.loading_chat') }}</p>
                 </div>
             </div>
 
             <!-- Chat Input -->
             <div class="p-4 border-t border-gray-700">
+                <p id="chat-notice" class="hidden text-xs text-yellow-300 mb-2" role="status"></p>
                 <form id="chat-form" class="flex gap-2">
-                    <input type="hidden" name="token" value="{{ $registration->access_token }}">
                     <input
                         type="text"
                         id="chat-input"
                         placeholder="{{ __('webinars.public.watch.type_message') }}"
-                        class="flex-1 rounded-lg bg-gray-700 border-gray-600 text-white placeholder-gray-400"
+                        class="flex-1 min-w-0 rounded-lg bg-gray-700 border-gray-600 text-white placeholder-gray-400 disabled:opacity-50"
                         maxlength="500"
+                        autocomplete="off"
                     >
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button type="submit" id="chat-send" aria-label="{{ __('webinars.public.watch.chat_send') }}" class="px-4 py-2 bg-indigo-600 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                         </svg>
                     </button>
                 </form>
             </div>
         </div>
+        @endif
     </div>
 
     @include('webinar.builder.embed')
@@ -250,6 +252,18 @@
     @if($rendersVimeo)
         <script src="https://player.vimeo.com/api/player.js"></script>
     @endif
+    @php
+        $chatText = [
+            'empty' => __('webinars.public.watch.chat_empty'),
+            'you' => __('webinars.public.watch.chat_you'),
+            'host' => __('webinars.public.watch.chat_host'),
+            'question' => __('webinars.public.watch.chat_question'),
+            'pending' => __('webinars.public.watch.chat_pending'),
+            'hostOnly' => __('webinars.public.watch.chat_host_only'),
+            'qaOnly' => __('webinars.public.watch.chat_qa_only'),
+            'failed' => __('webinars.public.watch.chat_send_failed'),
+        ];
+    @endphp
     <script>
         // Session start time from server
         const sessionStartTime = @json($sessionStartTime);
@@ -481,12 +495,227 @@
             }
         });
 
-        // Leave tracking
+        // Leave tracking (a JSON blob, so the server reads video_time_seconds)
         window.addEventListener('beforeunload', function() {
-            navigator.sendBeacon('{{ route('webinar.leave', [$webinar->slug, $registration->access_token]) }}', JSON.stringify({
+            navigator.sendBeacon('{{ route('webinar.leave', [$webinar->slug, $registration->access_token]) }}', new Blob([JSON.stringify({
+                _token: '{{ csrf_token() }}',
+                visit: @json($visitStartedAt),
                 video_time_seconds: videoTracker.currentTime()
-            }));
+            })], { type: 'application/json' }));
         });
+
+        // Room chat. The page has no WebSocket client, so it polls the feed:
+        // scripted lines of an auto-webinar arrive when this viewer's session
+        // clock reaches them, plus the host's and the viewer's own messages.
+        (function () {
+            const panel = document.getElementById('chat-panel');
+            if (!panel) return;
+
+            const feedUrl = @json(route('webinar.chat', [$webinar->slug, $registration->access_token]));
+            const sendUrl = @json(route('webinar.chat.send', [$webinar->slug, $registration->access_token]));
+            const csrfToken = @json(csrf_token());
+            const t = @json($chatText);
+            const POLL_MS = 4000;
+            const COLORS = ['bg-indigo-500', 'bg-pink-500', 'bg-emerald-500', 'bg-amber-500', 'bg-sky-500', 'bg-violet-500', 'bg-rose-500', 'bg-teal-500'];
+
+            const list = document.getElementById('chat-messages');
+            const form = document.getElementById('chat-form');
+            const input = document.getElementById('chat-input');
+            const sendButton = document.getElementById('chat-send');
+            const notice = document.getElementById('chat-notice');
+            const rows = new Map(); // message key -> { el, pending }
+            let loaded = false;
+            let stopped = false;
+            let timer = null;
+
+            function initials(name) {
+                const parts = String(name || '?').trim().split(/\s+/).filter(Boolean);
+                return ((parts[0] || '?')[0] + (parts.length > 1 ? parts[parts.length - 1][0] : '')).toUpperCase();
+            }
+
+            function colorFor(name) {
+                let hash = 0;
+                for (const ch of String(name || '')) hash = (hash * 31 + ch.charCodeAt(0)) | 0;
+                return COLORS[Math.abs(hash) % COLORS.length];
+            }
+
+            function badge(text, classes) {
+                const el = document.createElement('span');
+                el.className = 'text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded ' + classes;
+                el.textContent = text;
+                return el;
+            }
+
+            function buildRow(m) {
+                const row = document.createElement('div');
+                row.className = 'flex gap-2 items-start' + (m.pending ? ' opacity-60' : '');
+
+                const avatar = document.createElement('span');
+                avatar.className = 'shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold '
+                    + (m.is_host ? 'bg-yellow-500 text-gray-900' : 'text-white ' + colorFor(m.sender_name));
+                avatar.setAttribute('aria-hidden', 'true');
+                avatar.textContent = initials(m.sender_name);
+
+                const body = document.createElement('div');
+                body.className = 'min-w-0 flex-1';
+
+                const head = document.createElement('div');
+                head.className = 'flex flex-wrap items-center gap-1.5';
+                const name = document.createElement('span');
+                name.className = 'text-sm font-semibold ' + (m.is_host ? 'text-yellow-300' : 'text-indigo-300');
+                name.textContent = m.sender_name;
+                head.appendChild(name);
+                if (m.is_host) head.appendChild(badge(t.host, 'bg-yellow-500/20 text-yellow-300'));
+                if (m.is_own) head.appendChild(badge(t.you, 'bg-white/10 text-gray-300'));
+                if (m.kind === 'question') head.appendChild(badge(t.question, 'bg-sky-500/20 text-sky-300'));
+
+                const text = document.createElement('p');
+                text.className = 'text-sm text-gray-100 break-words whitespace-pre-line';
+                text.textContent = m.message;
+
+                body.appendChild(head);
+                body.appendChild(text);
+
+                if (m.pending) {
+                    const wait = document.createElement('p');
+                    wait.className = 'text-xs text-gray-400 italic mt-0.5';
+                    wait.textContent = t.pending;
+                    body.appendChild(wait);
+                }
+
+                row.appendChild(avatar);
+                row.appendChild(body);
+                return row;
+            }
+
+            function nearBottom() {
+                return list.scrollHeight - list.scrollTop - list.clientHeight < 80;
+            }
+
+            function setNotice(text) {
+                notice.textContent = text || '';
+                notice.classList.toggle('hidden', !text);
+            }
+
+            function showMessages(messages, { replace }) {
+                const stick = !loaded || nearBottom();
+                const placeholder = document.getElementById('chat-placeholder');
+                if (placeholder) placeholder.remove();
+
+                if (replace) {
+                    const keep = new Set(messages.map(m => m.key));
+                    for (const [key, row] of rows) {
+                        if (!keep.has(key)) { row.el.remove(); rows.delete(key); }
+                    }
+                }
+
+                for (const m of messages) {
+                    const known = rows.get(m.key);
+                    if (known && known.pending === m.pending) {
+                        list.appendChild(known.el); // keeps feed order
+                        continue;
+                    }
+                    const el = buildRow(m);
+                    if (known) known.el.replaceWith(el);
+                    list.appendChild(el);
+                    rows.set(m.key, { el, pending: m.pending });
+                }
+
+                let empty = document.getElementById('chat-empty');
+                if (rows.size === 0 && !empty) {
+                    empty = document.createElement('p');
+                    empty.id = 'chat-empty';
+                    empty.className = 'text-center text-gray-500 text-sm py-4';
+                    empty.textContent = t.empty;
+                    list.appendChild(empty);
+                } else if (rows.size > 0 && empty) {
+                    empty.remove();
+                }
+
+                loaded = true;
+                if (stick) list.scrollTop = list.scrollHeight;
+            }
+
+            function applyFeed(feed) {
+                if (!feed.enabled) {
+                    // Turned off in the Studio while the room was open.
+                    stopped = true;
+                    panel.remove();
+                    return;
+                }
+
+                input.disabled = !feed.can_send;
+                sendButton.disabled = !feed.can_send;
+                if (!feed.can_send) setNotice(t.hostOnly);
+                else if (feed.mode === 'qa_only') setNotice(t.qaOnly);
+                else if (notice.dataset.sticky !== '1') setNotice('');
+
+                showMessages(feed.messages || [], { replace: true });
+            }
+
+            async function poll() {
+                if (stopped) return;
+                if (!document.hidden) {
+                    try {
+                        const response = await fetch(feedUrl + '?position=' + videoTracker.currentTime(), {
+                            headers: { 'Accept': 'application/json' },
+                            credentials: 'same-origin',
+                        });
+                        if (response.ok) applyFeed(await response.json());
+                    } catch (e) {
+                        // Network hiccup: try again on the next tick.
+                    }
+                }
+                if (!stopped) timer = setTimeout(poll, POLL_MS);
+            }
+
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const text = input.value.trim();
+                if (!text || input.disabled) return;
+
+                sendButton.disabled = true;
+                try {
+                    const response = await fetch(sendUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        credentials: 'same-origin',
+                        body: JSON.stringify({ message: text }),
+                    });
+                    const data = await response.json().catch(() => ({}));
+
+                    if (response.ok && data.message) {
+                        input.value = '';
+                        notice.dataset.sticky = '';
+                        setNotice('');
+                        showMessages([data.message], { replace: false });
+                        list.scrollTop = list.scrollHeight;
+                    } else {
+                        notice.dataset.sticky = '1';
+                        setNotice(data.message || t.failed);
+                        setTimeout(() => { notice.dataset.sticky = ''; }, (data.retry_after || 5) * 1000);
+                    }
+                } catch (err) {
+                    setNotice(t.failed);
+                } finally {
+                    sendButton.disabled = input.disabled;
+                    input.focus();
+                }
+            });
+
+            document.addEventListener('visibilitychange', function () {
+                if (!document.hidden && !stopped) {
+                    clearTimeout(timer);
+                    poll();
+                }
+            });
+
+            poll();
+        })();
 
         // Progress tracking every 30 seconds
         setInterval(function() {

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -30,12 +30,11 @@
         <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-8">
             <p class="text-sm opacity-75 mb-2">{{ __('webinars.public.registered.starts_at') }}</p>
             @php
-                $displayTimezone = $registration->timezone ?? $webinar->timezone ?? 'UTC';
-                $sessionTime = $registration->session?->scheduled_at ?? $webinar->scheduled_at;
-                $displayTime = $sessionTime ? $sessionTime->copy()->setTimezone($displayTimezone) : null;
+                $displayTimezone = $registration->displayTimezone();
+                $displayTime = $registration->localStart();
             @endphp
             @if($displayTime)
-                <p class="text-2xl font-bold">{{ $displayTime->format('d.m.Y') }} o {{ $displayTime->format('H:i') }}</p>
+                <p class="text-2xl font-bold">{{ $displayTime->format('d.m.Y') }} · {{ $displayTime->format('H:i') }}</p>
                 <p class="text-sm opacity-60 mt-1">({{ $displayTimezone }})</p>
             @else
                 <p class="text-2xl font-bold">{{ __('webinars.public.registered.soon') }}</p>

@@ -469,7 +469,29 @@ class Webinar extends Model
      */
     public function getChatEnabledAttribute(): bool
     {
-        return $this->chat_settings_with_defaults['enabled'] ?? true;
+        return $this->isChatEnabled();
+    }
+
+    /**
+     * Chat is on when neither switch turns it off: "Chat enabled" in the
+     * Studio (chat_settings.enabled) and settings.chat_enabled (API, older forms).
+     */
+    public function isChatEnabled(): bool
+    {
+        return (bool) ($this->chat_settings_with_defaults['enabled'] ?? true)
+            && (bool) ($this->settings_with_defaults['chat_enabled'] ?? true);
+    }
+
+    /**
+     * Viewers' messages wait for the host's approval before others see them.
+     */
+    public function chatNeedsApproval(): bool
+    {
+        $chat = $this->chat_settings_with_defaults;
+
+        return ($chat['mode'] ?? 'open') === 'moderated'
+            || (bool) ($chat['require_approval'] ?? false)
+            || (bool) ($this->settings_with_defaults['chat_moderated'] ?? false);
     }
 
     /**
