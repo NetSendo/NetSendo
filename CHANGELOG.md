@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Fixed
+
+- **Time differences were counted backwards in several places since the move to Carbon 3**, which returns signed differences (`$later->diffInDays($earlier)` is negative) where Carbon 2 always returned a positive number:
+  - **The automation condition "subscribed at least N days ago" (`subscribed_days_ago`) never matched**, so rules with it never ran. It now counts whole days since the subscriber joined the event's list.
+  - **Brain's CRON gave the lowest urgency to the agents that had been idle the longest** (down to negative scores: an agent last run 14 days ago scored −16 instead of 25), so their tasks lost to those of agents that had just run. Urgency now grows with the days since the agent's last successful run, as intended.
+  - **"Avg. duration" in *Settings → CRON* was negative.**
+  - **CRM task reminders reached Google Calendar as "0 minutes before"** instead of the time between the reminder and the task. A task with a reminder but no due date could not be synced at all; it now gets the calendar's default reminders.
+  - **Copying the chat of an ended live session into an auto-webinar's chat script failed on MySQL** (`POST /webinars/{webinar}/auto-config/import-chat`, and the chat step of `…/auto-config/convert`): every message got a negative show time, which the column refuses. Messages now keep their offset from the session's start; one written before the start shows at 0:00.
+
 ## [2.11.1] – No 502 after an update: the webserver restarts with the app - 2026-11-12
 
 **Release date:** 2026-11-12

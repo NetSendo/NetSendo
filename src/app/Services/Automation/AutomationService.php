@@ -5,6 +5,7 @@ namespace App\Services\Automation;
 use App\Models\AutomationRule;
 use App\Models\AutomationRuleLog;
 use App\Models\Subscriber;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
 class AutomationService
@@ -444,7 +445,11 @@ class AutomationService
             return false;
         }
 
-        $subscribedDaysAgo = now()->diffInDays($pivot->subscribed_at);
+        // Carbon 3 diffs are signed floats: now()->diffInDays($past) is negative,
+        // so "subscribed at least N days ago" never matched. Whole days since the
+        // subscription (the pivot value is an uncast string).
+        $subscribedDaysAgo = (int) floor(Carbon::parse($pivot->subscribed_at)->diffInDays(now()));
+
         return $subscribedDaysAgo >= (int) $days;
     }
 

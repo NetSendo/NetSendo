@@ -114,7 +114,10 @@ class AutoWebinarScriptBuilderService
 
         $imported = 0;
         foreach ($messages as $message) {
-            $relativeSeconds = $message->created_at->diffInSeconds($startTime);
+            // Carbon 3 diffs are signed floats: message->diffInSeconds(earlier start) is
+            // negative, which the unsigned show_at_seconds column refuses. A message
+            // written before the start shows at 0.
+            $relativeSeconds = max(0, (int) floor($startTime->diffInSeconds($message->created_at)));
 
             // Determine message type
             $type = $this->mapMessageType($message);

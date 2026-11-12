@@ -164,7 +164,11 @@ class AutoWebinarService
         $imported = 0;
 
         foreach ($messages as $message) {
-            $showAtSeconds = $sessionStart ? $message->created_at->diffInSeconds($sessionStart) : 0;
+            // Carbon 3 diffs are signed floats: message->diffInSeconds(earlier start) is
+            // negative, which the unsigned show_at_seconds column refuses.
+            $showAtSeconds = $sessionStart
+                ? max(0, (int) floor($sessionStart->diffInSeconds($message->created_at)))
+                : 0;
 
             AutoWebinarChatScript::create([
                 'webinar_id' => $autoWebinar->id,
