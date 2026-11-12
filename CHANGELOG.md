@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.11.3] – Birthday, anniversary and date automations run; stuck CRM follow-ups stop - 2026-11-12
+
+**Release date:** 2026-11-12
+
+### Fixed
+
+- **Birthday, subscription-anniversary and "date reached" automations never ran.** The job that checks them every minute asked for a `contactList` relation the subscriber does not have and logged "DateTriggerService error: Call to undefined method App\Models\Subscriber::contactList()" each time (seen about 60 times an hour on a client installation). Behind that error the queries would have failed or misfired too: they read a `birth_date` column and a custom-field `slug` that do not exist, and the birthday condition was joined with `OR`, so it was not limited to the account. Now:
+  - **The birthday comes from a custom field** of type *date* whose name or label mentions it (`urodzin…`, `birth…`), stored as `YYYY-MM-DD` or `DD.MM.YYYY`. Subscribers have no built-in birthday field; without such a custom field birthday automations have no one to run for. The age is taken from that field.
+  - Only deliverable subscribers of the account who are an active member of at least one of its lists count.
+  - **Rules limited to a list now match.** The date events did not say which lists the subscriber is on, so a rule with a list — which is what a message sent "on the subscriber's birthday" or "on the anniversary" creates — never matched. The events now carry the subscriber's active lists.
+  - **A "date reached" rule runs on its own date only, once per subscriber.** The job ran every "date reached" rule of the account whenever any of them was due, so a rule set for another day ran too, and two rules on the same day ran each other twice.
+- **A CRM follow-up sequence of a deleted contact failed every five minutes forever** ("Follow-up processing error … Attempt to read property "id" on null", and `crm:process-follow-ups` reported a failure on every run). CRM contacts are soft-deleted, so their enrollments stayed active. Such an enrollment is now cancelled, as is one whose sequence is gone, and cancelling no longer collides with an earlier cancelled enrollment of the same contact and sequence.
+
 ## [2.11.2] – Webinar room chat that works, webinar times in the right timezone - 2026-11-12
 
 **Release date:** 2026-11-12
