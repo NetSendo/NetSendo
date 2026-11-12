@@ -471,10 +471,13 @@ CSS;
      */
     public static function tokens(Webinar $webinar, array $extra = []): array
     {
+        // scheduled_at is stored in UTC; authors mean the webinar's own zone.
+        $start = $webinar->scheduled_at?->copy()->setTimezone($webinar->effective_timezone);
+
         $tokens = [
             'webinar_name' => $webinar->name,
-            'webinar_date' => $webinar->scheduled_at?->format('d.m.Y') ?? '',
-            'webinar_time' => $webinar->scheduled_at?->format('H:i') ?? '',
+            'webinar_date' => $start?->format('d.m.Y') ?? '',
+            'webinar_time' => $start?->format('H:i') ?? '',
             'register_url' => route('webinar.register', $webinar->slug),
         ];
 

@@ -141,8 +141,8 @@ class WebinarPageBuilderController extends Controller
      */
     protected function previewContext(Webinar $webinar, string $page): array
     {
-        $timezone = $webinar->timezone ?? config('app.timezone') ?? 'UTC';
-        $start = $webinar->scheduled_at ?? now()->addDays(3)->setTime(19, 0);
+        $timezone = $webinar->effective_timezone;
+        $start = $webinar->scheduled_at ?? now($timezone)->addDays(3)->setTime(19, 0);
 
         $sessions = [];
         if ($webinar->isAutoWebinar() && $webinar->schedule) {

@@ -178,6 +178,7 @@ const typeDescriptions = {
                                     type="datetime-local"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 />
+                                <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.content.scheduled_at_timezone', { timezone: $page.props.auth?.user?.timezone || 'UTC' }) }}</p>
                                 <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.content.scheduled_at_help') }}</p>
                             </div>
                             <div v-else-if="form.type === 'auto'">

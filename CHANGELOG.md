@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Fixed
+
+- **A live or hybrid webinar set for 19:00 started at 19:00 UTC, not 19:00 in its timezone.** The panel sends the start time without a timezone, and it was read as UTC: in Europe/Warsaw the countdown, the watch page, the reminders and the calendar file said 20:00 (in winter; 21:00 in summer), while the sign-up page, the confirmation email and the 24-hour reminder printed the stored digits and said 19:00. The time typed when creating or editing a webinar is now read in the webinar's timezone (its own, or the owner's account timezone, also when the timezone is changed in the same save) and stored in UTC; a value sent with an offset (`2026-11-20T18:00:00Z`) keeps it. The edit form shows the time in that zone and says which zone it is, and creating a webinar refuses a time that has already passed there. Every place that shows the time converts it: the sign-up page, the screen after signing up, the watch page, the confirmation and reminder emails, the page builder's date blocks and the `{{webinar_date}}`/`{{webinar_time}}` tokens. A registrant who picked no timezone sees the webinar's instead of UTC.
+  - **Hosts: re-check upcoming live and hybrid webinars.** Webinars scheduled before this version keep their stored instant, which is the one the countdown and the reminders already used: one entered as 19:00 in Warsaw now shows as 20:00 everywhere, the sign-up page and the emails included. If 19:00 was meant, open the webinar, set 19:00 again and save.
+
 ## [2.11.1] – No 502 after an update: the webserver restarts with the app - 2026-11-12
 
 **Release date:** 2026-11-12

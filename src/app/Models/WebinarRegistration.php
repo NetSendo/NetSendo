@@ -192,6 +192,24 @@ class WebinarRegistration extends Model
     }
 
     /**
+     * The timezone this registrant sees times in: the one picked on the
+     * sign-up form, else the webinar's (its own or its owner's).
+     */
+    public function displayTimezone(): string
+    {
+        return $this->timezone ?: $this->webinar->effective_timezone;
+    }
+
+    /**
+     * scheduledStart() (stored in UTC) in displayTimezone(), for showing to
+     * the registrant on pages and in emails.
+     */
+    public function localStart(): ?Carbon
+    {
+        return $this->scheduledStart()?->copy()->setTimezone($this->displayTimezone());
+    }
+
+    /**
      * Get Google Calendar link, or null when the webinar has no start time yet
      * (so the UI can hide the button instead of linking to a dead "#").
      */
