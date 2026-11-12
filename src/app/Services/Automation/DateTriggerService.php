@@ -3,9 +3,13 @@
 namespace App\Services\Automation;
 
 use App\Models\AutomationRule;
+use App\Models\CustomField;
 use App\Models\Subscriber;
 use App\Events\SubscriberBirthday;
 use App\Events\SubscriptionAnniversary;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
 class DateTriggerService
@@ -62,12 +66,11 @@ class DateTriggerService
                     continue;
                 }
 
-                $age = $this->calculateAge($subscriber);
-
                 event(new SubscriberBirthday(
                     $subscriber->id,
                     $userId,
-                    $age
+                    $this->calculateAge($subscriber),
+                    $this->activeListIds($subscriber)
                 ));
 
                 $count++;
@@ -106,14 +109,16 @@ class DateTriggerService
                     continue;
                 }
 
-                $yearsSubscribed = $subscriber->created_at->diffInYears(now());
+                // Carbon 3 returns a float; whole years since the signup
+                $yearsSubscribed = (int) floor($subscriber->created_at->diffInYears(now()));
 
                 // Only trigger for actual anniversaries (1+ years)
                 if ($yearsSubscribed > 0) {
                     event(new SubscriptionAnniversary(
                         $subscriber->id,
                         $userId,
-                        $yearsSubscribed
+                        $yearsSubscribed,
+                        $this->activeListIds($subscriber)
                     ));
 
                     $count++;
@@ -145,8 +150,8 @@ class DateTriggerService
             }
 
             // Check if target date is today
-            $targetCarbon = \Carbon\Carbon::parse($targetDate);
-            
+            $targetCarbon = Carbon::parse($targetDate);
+
             if (!$targetCarbon->isToday()) {
                 continue;
             }
@@ -155,8 +160,11 @@ class DateTriggerService
             $subscribers = $this->getSubscribersForUser($rule->user_id);
 
             foreach ($subscribers as $subscriber) {
-                // Deduplication: Ensure we process this rule for this subscriber only once
-                if (!$this->shouldProcess('date_rule_' . $rule->id, $subscriber->id)) {
+                // processEvent runs every date_reached rule of this account for
+                // this date, so process each (account, date, subscriber) once —
+                // a second rule with the same date must not run the first again.
+                $key = 'date_' . $rule->user_id . '_' . $targetCarbon->toDateString();
+                if (!$this->shouldProcess($key, $subscriber->id)) {
                     continue;
                 }
 
@@ -166,7 +174,8 @@ class DateTriggerService
                     [
                         'subscriber_id' => $subscriber->id,
                         'user_id' => $rule->user_id,
-                        'date' => $targetDate,
+                        'date' => $targetCarbon->toDateString(),
+                        'list_ids' => $this->activeListIds($subscriber),
                     ]
                 );
 
@@ -192,75 +201,116 @@ class DateTriggerService
     }
 
     /**
+     * Deliverable subscribers of an account (not unsubscribed, bounced or
+     * inactive) who are an active member of at least one of its lists, with
+     * those memberships loaded.
+     */
+    protected function subscribersOf(int $userId): Builder
+    {
+        $query = Subscriber::query()
+            ->where('subscribers.user_id', $userId)
+            ->whereHas('contactLists', fn ($lists) => $lists
+                ->where('contact_lists.user_id', $userId)
+                ->where('contact_list_subscriber.status', 'active'))
+            ->with(['contactLists' => fn ($lists) => $lists
+                ->where('contact_lists.user_id', $userId)
+                ->where('contact_list_subscriber.status', 'active')]);
+
+        return Subscriber::applyStatusFilter($query, Subscriber::STATUS_ACTIVE);
+    }
+
+    /**
+     * Lists the subscriber is an active member of, so rules limited to one
+     * list (e.g. a message sent "on the subscriber's birthday") can match.
+     */
+    protected function activeListIds(Subscriber $subscriber): array
+    {
+        return $subscriber->contactLists->pluck('id')->map(fn ($id) => (int) $id)->values()->all();
+    }
+
+    /**
+     * The account's date custom fields that hold a birthday: subscribers have
+     * no birth date column, so the birthday is a "date" field whose name or
+     * label mentions it (urodziny, birthday, birth date…).
+     */
+    protected function birthdayFieldIds(int $userId): \Illuminate\Support\Collection
+    {
+        return CustomField::where('user_id', $userId)
+            ->where('type', 'date')
+            ->where(function ($query) {
+                foreach (['name', 'label'] as $column) {
+                    $query->orWhere($column, 'like', '%urodzin%')
+                        ->orWhere($column, 'like', '%birth%');
+                }
+            })
+            ->pluck('id');
+    }
+
+    /**
      * Get subscribers with birthdays today for a specific user.
      */
-    protected function getSubscribersWithBirthdayToday(int $userId): \Illuminate\Database\Eloquent\Collection
+    protected function getSubscribersWithBirthdayToday(int $userId): Collection
     {
+        $fieldIds = $this->birthdayFieldIds($userId);
+        if ($fieldIds->isEmpty()) {
+            return new Collection();
+        }
+
         $today = now();
 
-        return Subscriber::whereHas('contactList', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            })
-            ->where('status', 'active')
-            ->where(function ($query) use ($today) {
-                // Check standard birth_date field
-                $query->whereMonth('birth_date', $today->month)
-                      ->whereDay('birth_date', $today->day);
-            })
-            ->orWhereHas('fieldValues', function ($query) use ($today) {
-                // Check custom birthday fields
-                $query->whereHas('customField', function ($q) {
-                    $q->where('type', 'date')
-                      ->where(function ($q2) {
-                          $q2->where('name', 'like', '%urodzin%')
-                             ->orWhere('name', 'like', '%birthday%')
-                             ->orWhere('slug', 'like', '%birthday%');
-                      });
-                })
-                ->whereMonth('value', $today->month)
-                ->whereDay('value', $today->day);
-            })
+        return $this->subscribersOf($userId)
+            ->whereHas('fieldValues', fn ($values) => $values
+                ->whereIn('custom_field_id', $fieldIds)
+                // a date field stores Y-m-d; imports may bring d.m.Y
+                ->where(fn ($value) => $value
+                    ->where('value', 'like', '%' . $today->format('-m-d'))
+                    ->orWhere('value', 'like', $today->format('d.m.') . '%')))
+            ->with(['fieldValues' => fn ($values) => $values->whereIn('custom_field_id', $fieldIds)])
             ->get();
     }
 
     /**
      * Get subscribers with subscription anniversaries today.
      */
-    protected function getSubscribersWithAnniversaryToday(int $userId): \Illuminate\Database\Eloquent\Collection
+    protected function getSubscribersWithAnniversaryToday(int $userId): Collection
     {
         $today = now();
 
-        return Subscriber::whereHas('contactList', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            })
-            ->where('status', 'active')
-            ->whereMonth('created_at', $today->month)
-            ->whereDay('created_at', $today->day)
-            ->whereYear('created_at', '<', $today->year) // Exclude signups from today
+        return $this->subscribersOf($userId)
+            ->whereMonth('subscribers.created_at', $today->month)
+            ->whereDay('subscribers.created_at', $today->day)
+            ->whereYear('subscribers.created_at', '<', $today->year) // Exclude signups from today
             ->get();
     }
 
     /**
      * Get all active subscribers for a user.
      */
-    protected function getSubscribersForUser(int $userId): \Illuminate\Database\Eloquent\Collection
+    protected function getSubscribersForUser(int $userId): Collection
     {
-        return Subscriber::whereHas('contactList', function ($query) use ($userId) {
-                $query->where('user_id', $userId);
-            })
-            ->where('status', 'active')
-            ->get();
+        return $this->subscribersOf($userId)->get();
     }
 
     /**
-     * Calculate subscriber's age from birth_date.
+     * Age from the birthday field, when its value is a full date.
      */
     protected function calculateAge(Subscriber $subscriber): ?int
     {
-        if (!$subscriber->birth_date) {
-            return null;
+        foreach ($subscriber->fieldValues as $fieldValue) {
+            $value = trim((string) $fieldValue->value);
+
+            foreach (['Y-m-d', 'd.m.Y'] as $format) {
+                try {
+                    $date = Carbon::createFromFormat('!' . $format, substr($value, 0, 10));
+                } catch (\Throwable) {
+                    continue;
+                }
+                if ($date->format($format) === substr($value, 0, 10) && $date->isPast()) {
+                    return (int) floor($date->diffInYears(now()));
+                }
+            }
         }
 
-        return \Carbon\Carbon::parse($subscriber->birth_date)->age;
+        return null;
     }
 }
