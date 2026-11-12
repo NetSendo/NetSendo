@@ -50,7 +50,8 @@ class AutoWebinarService
 
         return WebinarSession::create([
             'webinar_id' => $webinar->id,
-            'scheduled_at' => $scheduledAt,
+            // slots come in the schedule's timezone; sessions are stored in the app's
+            'scheduled_at' => $scheduledAt->copy()->setTimezone(config('app.timezone')),
             'status' => WebinarSession::STATUS_SCHEDULED,
             'is_replay' => true,
             'session_number' => $sessionNumber,
@@ -268,7 +269,7 @@ class AutoWebinarService
 
             // Check if session already exists
             $exists = $webinar->sessions()
-                ->where('scheduled_at', $time)
+                ->where('scheduled_at', $time->copy()->setTimezone(config('app.timezone')))
                 ->exists();
 
             if (!$exists && $schedule->canScheduleAt($time)) {

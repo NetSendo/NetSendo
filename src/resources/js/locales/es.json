@@ -6429,7 +6429,10 @@
             "host": "Anfitrión",
             "pinned_message": "Mensaje fijado",
             "slow_mode": "El modo lento está activo. Puedes enviar un mensaje cada {seconds} segundos.",
-            "viewers": "{count} espectadores"
+            "viewers": "{count} espectadores",
+            "disabled": "El chat está desactivado: los espectadores no ven el panel del chat.",
+            "host_only_mode": "Solo el presentador puede escribir.",
+            "ask_question": "Haz una pregunta..."
         },
         "products": {
             "title": "Productos",

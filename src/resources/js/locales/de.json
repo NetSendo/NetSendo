@@ -6078,7 +6078,10 @@
             "host": "Gastgeber",
             "pinned_message": "Angepinnte Nachricht",
             "slow_mode": "Der langsame Modus ist aktiv. Sie können alle {seconds} Sekunden eine Nachricht senden.",
-            "viewers": "{count} Zuschauer"
+            "viewers": "{count} Zuschauer",
+            "disabled": "Der Chat ist aus — Zuschauer sehen das Chat-Fenster nicht.",
+            "host_only_mode": "Nur der Moderator kann schreiben.",
+            "ask_question": "Stelle eine Frage..."
         },
         "products": {
             "title": "Produkte",

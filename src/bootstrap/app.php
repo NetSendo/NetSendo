@@ -99,6 +99,19 @@ return Application::configure(basePath: dirname(__DIR__))
             return Limit::perMinute((int) config('connector.rate_limit', 120))->by($identifier);
         });
 
+        // Webinar room chat: the page polls every few seconds, so limit per
+        // registration token (viewers behind one office IP do not share a budget)
+        RateLimiter::for('webinar-chat', function (Request $request) {
+            return Limit::perMinute(60)->by('room:'.$request->route('token'));
+        });
+
+        RateLimiter::for('webinar-chat-send', function (Request $request) {
+            return [
+                Limit::perMinute(12)->by('room-send:'.$request->route('token')),
+                Limit::perMinute(60)->by('room-send-ip:'.$request->ip()),
+            ];
+        });
+
         // Configure Pixel rate limiting (protect against event flooding)
         RateLimiter::for('pixel', function (Request $request) {
             return Limit::perMinute(200)->by($request->ip());

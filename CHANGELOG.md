@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Fixed
+
+- **The chat of the webinar room said "Loading chat…" forever.** The room (`/webinar/{slug}/watch/{token}`) had a chat panel but no code behind it and no public endpoint, so neither the chat script of an auto-webinar nor anything else ever appeared. The room now polls `GET /webinar/{slug}/chat/{token}` every 4 seconds and posts through `POST` on the same address (rate-limited per registration).
+  - **Auto and hybrid webinars** replay their chat script on each viewer's own session clock: a line set at 00:25 appears 25 seconds after that viewer's session started, a late joiner sees what was "said" before they arrived, and lines not yet due never reach the browser. "Show randomly" lines are chosen once per viewer, so they do not flicker between polls. On a recording a viewer sees their own messages and what the host wrote; in a live session everyone sees the session's chat.
+  - Viewers can write. The Studio's chat mode applies: *host only* refuses messages, *Q&A only* saves them as questions, *moderated* (or "require approval") keeps a message hidden from others until the host approves it, and slow mode makes a viewer wait. A message waiting for approval is no longer broadcast to other viewers before it is hidden.
+  - A recording shows the Studio's viewer count (base ± variance) instead of "0 viewers".
+- **Turning "Chat enabled" off in the Studio did not remove the chat from the room**, and the Studio showed the raw key `webinars.chat.disabled`. The room now leaves the panel out (and an open room drops it at the next poll), and the Studio texts exist in all four languages.
+- **Leaving the webinar room answered HTTP 500.** Carbon 3 returns signed differences, so the watch time added on leaving was negative and MySQL refused it for the unsigned column. The watch time is now counted forward from joining. The "session ended" check of the room had the same sign error.
+- **A slot picked on the sign-up page of an auto-webinar started an hour late in Europe/Warsaw** (the zone's offset late in general; UTC was unaffected). The page lists slots in the schedule's timezone, but the chosen value was read as UTC. The slots now carry their offset (`2026-11-12T18:40:00+01:00`), a value without one is read in the schedule's timezone, and sessions are stored in UTC. The same applied to registrations without a picked slot (*on demand*) and to sessions created from the schedule. A schedule without its own timezone now generates slots in the webinar's timezone, the one its page names. Sessions booked before this fix keep their stored time.
+
 ## [2.11.1] – No 502 after an update: the webserver restarts with the app - 2026-11-12
 
 **Release date:** 2026-11-12

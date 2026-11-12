@@ -47,7 +47,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         @foreach($nextSessions as $session)
                             <label class="cursor-pointer">
-                                <input type="radio" name="session_time" value="{{ $session->format('Y-m-d H:i:s') }}" form="registration-form" class="sr-only peer">
+                                <input type="radio" name="session_time" value="{{ $session->toIso8601String() }}" form="registration-form" class="sr-only peer">
                                 <div class="p-3 rounded-lg bg-white/5 border-2 border-transparent peer-checked:border-white peer-checked:bg-white/20 text-center transition-all hover:bg-white/10">
                                     <p class="font-medium">{{ $session->format('d.m') }}</p>
                                     <p class="text-sm opacity-75">{{ $session->format('H:i') }}</p>

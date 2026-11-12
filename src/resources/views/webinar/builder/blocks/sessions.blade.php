@@ -15,7 +15,7 @@
         <div class="wb-sessions">
             @foreach($sessions as $session)
                 <label class="wb-sessions__option">
-                    <input type="radio" name="session_time" value="{{ $session->format('Y-m-d H:i:s') }}" form="wb-registration-form" @if($loop->first) checked @endif>
+                    <input type="radio" name="session_time" value="{{ $session->toIso8601String() }}" form="wb-registration-form" @if($loop->first) checked @endif>
                     <span class="wb-sessions__box">
                         <span class="wb-sessions__day">{{ $session->format('d.m') }}</span><br>
                         <span class="wb-sessions__hour">{{ $session->format('H:i') }}</span>

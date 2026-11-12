@@ -79,27 +79,33 @@ class WebinarChatService
         Webinar $webinar,
         WebinarRegistration $registration,
         string $message,
-        ?WebinarSession $session = null
+        ?WebinarSession $session = null,
+        string $messageType = WebinarChatMessage::TYPE_TEXT
     ): WebinarChatMessage {
-        // Check if chat is enabled and not moderated (or handle moderation)
-        $settings = $webinar->settings_with_defaults;
-
-        if (!$settings['chat_enabled']) {
+        if (!$webinar->isChatEnabled()) {
             throw new \Exception('Chat is disabled for this webinar.');
         }
 
-        $chatMessage = $this->sendMessage(
-            $webinar,
-            $message,
-            WebinarChatMessage::SENDER_ATTENDEE,
-            $registration->display_name,
-            $session,
-            $registration
-        );
+        // A message waiting for approval is saved hidden and reaches other
+        // viewers only through approveMessage().
+        $visible = !$webinar->chatNeedsApproval();
 
-        // If moderated, mark as not visible until approved
-        if ($settings['chat_moderated']) {
-            $chatMessage->update(['is_visible' => false]);
+        $chatMessage = WebinarChatMessage::create([
+            'webinar_id' => $webinar->id,
+            'webinar_session_id' => $session?->id,
+            'registration_id' => $registration->id,
+            'sender_type' => WebinarChatMessage::SENDER_ATTENDEE,
+            'sender_name' => $registration->display_name,
+            'message' => $message,
+            'message_type' => $messageType,
+            'is_visible' => $visible,
+        ]);
+
+        $registration->increment('chat_messages_count');
+        $session?->incrementChatMessages();
+
+        if ($visible) {
+            $this->broadcastMessage($chatMessage);
         }
 
         return $chatMessage;
@@ -303,9 +309,13 @@ class WebinarChatService
      */
     protected function broadcastMessage(WebinarChatMessage $message): void
     {
-        // Broadcast to webinar channel
-        // Using Laravel Broadcasting (Reverb/Pusher)
-        broadcast(new WebinarChatMessageSent($message))->toOthers();
+        // Broadcast to webinar channel (Reverb/Pusher). The public room polls,
+        // so a broadcaster that is down must not lose the saved message.
+        try {
+            broadcast(new WebinarChatMessageSent($message))->toOthers();
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     /**

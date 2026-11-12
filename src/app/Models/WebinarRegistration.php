@@ -380,7 +380,9 @@ class WebinarRegistration extends Model
             return;
         }
 
-        $watchTime = now()->diffInSeconds($this->joined_at);
+        // Carbon 3 diffs are signed floats: now()->diffInSeconds($joinedAt) is
+        // negative, which the unsigned column rejected (HTTP 500 on leaving).
+        $watchTime = max(0, (int) floor($this->joined_at->diffInSeconds(now())));
 
         $this->update([
             'left_at' => now(),

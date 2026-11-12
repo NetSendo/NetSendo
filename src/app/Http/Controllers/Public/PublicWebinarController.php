@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\Webinar;
 use App\Models\WebinarRegistration;
 use App\Models\WebinarAnalytic;
+use App\Services\Webinar\RoomChatRefused;
 use App\Services\Webinar\WebinarPageRenderer;
 use App\Services\Webinar\WebinarPageService;
+use App\Services\Webinar\WebinarRoomChatService;
 use App\Services\Webinar\WebinarService;
 use Carbon\Carbon;
 use DateTimeZone;
@@ -16,7 +18,10 @@ use Illuminate\View\View;
 
 class PublicWebinarController extends Controller
 {
-    public function __construct(protected WebinarService $webinarService) {}
+    public function __construct(
+        protected WebinarService $webinarService,
+        protected WebinarRoomChatService $roomChat,
+    ) {}
 
     public function register(string $slug): View
     {
@@ -41,7 +46,8 @@ class PublicWebinarController extends Controller
         $defaultTimezone = $webinar->timezone ?? $webinar->user->timezone ?? 'Europe/Warsaw';
 
         // Schedule timezone for displaying session times
-        $scheduleTimezone = $webinar->schedule?->timezone ?? $webinar->timezone ?? $webinar->user->timezone ?? 'UTC';
+        // (the same zone the schedule generates the slots in)
+        $scheduleTimezone = $webinar->schedule?->effective_timezone ?? $webinar->timezone ?? $webinar->user->timezone ?? 'UTC';
 
         $context = [
             'title' => $webinar->name,
@@ -153,22 +159,8 @@ class PublicWebinarController extends Controller
         $session = $webinar->sessions()->where('status', 'live')->first();
         $this->webinarService->handleJoin($webinar, $registration, $session);
 
-        // Calculate session start time for countdown
-        $sessionStartTime = null;
-
-        if ($registration->session && $registration->session->scheduled_at) {
-            // Use the registered session's scheduled time
-            $sessionStartTime = $registration->session->scheduled_at;
-        } elseif ($webinar->scheduled_at) {
-            // Use webinar's scheduled time for live webinars
-            $sessionStartTime = $webinar->scheduled_at;
-        } elseif ($webinar->isAutoWebinar() && $webinar->schedule) {
-            // Get next session time for autowebinars
-            $nextSessions = $webinar->schedule->getNextSessionTimes(1);
-            if (!empty($nextSessions)) {
-                $sessionStartTime = $nextSessions[0];
-            }
-        }
+        // Session start time for the countdown (and the chat script clock)
+        $sessionStartTime = $this->roomChat->sessionStart($registration);
 
         // Check if session should already be playing
         $isLive = $session && $session->status === 'live';
@@ -181,7 +173,8 @@ class PublicWebinarController extends Controller
         // For autowebinars: if session start time was more than 2 hours ago and no video
         $sessionEnded = false;
         if ($sessionStartTime && now()->gte($sessionStartTime)) {
-            $hoursAfterStart = now()->diffInHours($sessionStartTime);
+            // Carbon 3 diffs are signed: start->diffInHours(now) is positive once started
+            $hoursAfterStart = $sessionStartTime->diffInHours(now());
             // Consider ended if more than 2 hours passed from start time and no active live session
             if (!$isLive && !$hasVideo && $hoursAfterStart >= 2) {
                 $sessionEnded = true;
@@ -209,6 +202,12 @@ class PublicWebinarController extends Controller
         // Get registration's timezone for display
         $registrationTimezone = $registration->timezone ?? $webinar->timezone ?? 'UTC';
 
+        // A recording has no real audience count, so it shows the configured
+        // social-proof count (Studio: viewers base ± variance).
+        $viewerCount = $isLive || $webinar->type === Webinar::TYPE_LIVE
+            ? ($session?->current_viewers ?? 0)
+            : $webinar->getCurrentViewersCount($session?->current_viewers);
+
         return view('webinar.watch', [
             'builderPage' => $this->builderSections($webinar, WebinarPageService::PAGE_WATCH, [
                 'registration' => $registration,
@@ -233,7 +232,64 @@ class PublicWebinarController extends Controller
             'hasReplay' => $hasReplay,
             'videoSyncEnabled' => $videoSyncEnabled,
             'registrationTimezone' => $registrationTimezone,
+            'chatEnabled' => $webinar->isChatEnabled(),
+            'viewerCount' => $viewerCount,
         ]);
+    }
+
+    /**
+     * Chat panel of the room: messages due now for this viewer (polled by watch.blade.php).
+     */
+    public function chatFeed(Request $request, string $slug, string $token)
+    {
+        $registration = $this->registrationFor($slug, $token);
+
+        $position = $request->filled('position') ? max(0, $request->integer('position')) : null;
+
+        return response()->json($this->roomChat->feed($registration, $position));
+    }
+
+    /**
+     * A viewer writes in the room chat.
+     */
+    public function chatSend(Request $request, string $slug, string $token)
+    {
+        $registration = $this->registrationFor($slug, $token);
+
+        $validated = $request->validate([
+            'message' => 'required|string|max:500',
+        ]);
+
+        $text = trim($validated['message']);
+        if ($text === '') {
+            return response()->json(['error' => 'empty'], 422);
+        }
+
+        try {
+            $message = $this->roomChat->post($registration, $text);
+        } catch (RoomChatRefused $refused) {
+            $status = $refused->reason === 'slow_mode' ? 429 : 403;
+
+            return response()->json([
+                'error' => $refused->reason,
+                'retry_after' => $refused->retryAfter,
+                'message' => match ($refused->reason) {
+                    'slow_mode' => __('webinars.public.watch.chat_slow_mode', ['seconds' => $refused->retryAfter]),
+                    'host_only' => __('webinars.public.watch.chat_host_only'),
+                    default => __('webinars.public.watch.chat_disabled'),
+                },
+            ], $status);
+        }
+
+        return response()->json(['message' => $message], 201);
+    }
+
+    protected function registrationFor(string $slug, string $token): WebinarRegistration
+    {
+        return WebinarRegistration::where('access_token', $token)
+            ->whereHas('webinar', fn($q) => $q->where('slug', $slug))
+            ->with(['webinar', 'session'])
+            ->firstOrFail();
     }
 
     public function replay(string $slug, string $token): View
@@ -274,7 +330,7 @@ class PublicWebinarController extends Controller
             $registration->webinar,
             $registration,
             null,
-            $request->get('video_time_seconds')
+            $request->filled('video_time_seconds') ? max(0, $request->integer('video_time_seconds')) : null
         );
 
         return response()->json(['success' => true]);

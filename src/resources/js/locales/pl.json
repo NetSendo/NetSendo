@@ -6895,7 +6895,10 @@
             "host": "Host",
             "pinned_message": "Przypięta wiadomość",
             "slow_mode": "Tryb powolny jest aktywny. Możesz wysłać wiadomość co {seconds} sekund.",
-            "viewers": "{count} widzów"
+            "viewers": "{count} widzów",
+            "disabled": "Czat jest wyłączony — widzowie nie widzą panelu czatu.",
+            "host_only_mode": "Pisać może tylko prowadzący.",
+            "ask_question": "Zadaj pytanie..."
         },
         "products": {
             "title": "Produkty",

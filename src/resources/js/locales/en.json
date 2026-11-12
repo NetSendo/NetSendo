@@ -6836,7 +6836,10 @@
             "host": "Host",
             "pinned_message": "Pinned Message",
             "slow_mode": "Slow mode is active. You can send a message every {seconds} seconds.",
-            "viewers": "{count} viewers"
+            "viewers": "{count} viewers",
+            "disabled": "Chat is off — viewers do not see the chat panel.",
+            "host_only_mode": "Only the host can write.",
+            "ask_question": "Ask a question..."
         },
         "products": {
             "title": "Products",
