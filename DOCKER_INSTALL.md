@@ -125,7 +125,7 @@ NetSendo supports the standard Docker update workflow:
 2. **Update the configuration files.** `docker-compose.yml` mounts your own copies of `docker/php/docker-entrypoint.sh`, `docker/php/uploads.ini` and `docker/nginx/default.conf` over the ones in the image, so `docker compose pull` alone does not bring their changes. In a git checkout run `git pull`. In a folder made by `install.sh`, or with downloaded copies:
 
    ```bash
-   V=v2.7.1   # the release you update to, or main for the newest
+   V=v2.11.0   # the release you update to, or main for the newest
    for f in docker-compose.yml docker/php/docker-entrypoint.sh docker/php/uploads.ini docker/nginx/default.conf; do
      cp "$f" "$f.bak" 2>/dev/null
      curl -fsSL "https://raw.githubusercontent.com/NetSendo/NetSendo/$V/$f" -o "$f"
@@ -151,11 +151,15 @@ start; `scheduler`, `queue` and `reverb` (`NETSENDO_RUN_MIGRATIONS=false` in
 container prepare the database at a time, also with an older compose file.
 Follow it with `docker compose logs -f app`.
 
+Since 2.11.0 `docker-compose.yml` also runs the NetSendo MTA (service `nmi-mta`, image `ghcr.io/netsendo/netsendo:mta-<version>`, no port published on the server). An installation that keeps an older compose file goes on working, but *Settings → Mailboxes* then reports that the MTA does not answer.
+
 ### Update to Specific Version
 
 ```bash
-NETSENDO_VERSION=2.7.1 docker compose up -d
+NETSENDO_VERSION=2.11.0 docker compose up -d
 ```
+
+Use the `docker-compose.yml` of the version you pin: versions before 2.11.0 have no `mta-` image, so the compose file of 2.11.0 or newer cannot start them.
 
 ### ⚠️ Manual Update Required (v1.6.9+)
 
