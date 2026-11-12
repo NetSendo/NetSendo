@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.11.2] – Webinar room chat that works, webinar times in the right timezone - 2026-11-12
+
+**Release date:** 2026-11-12
+
 ### Fixed
 
 - **The chat of the webinar room said "Loading chat…" forever.** The room (`/webinar/{slug}/watch/{token}`) had a chat panel but no code behind it and no public endpoint, so neither the chat script of an auto-webinar nor anything else ever appeared. The room now polls `GET /webinar/{slug}/chat/{token}` every 4 seconds and posts through `POST` on the same address (rate-limited per registration).
