@@ -211,7 +211,9 @@ services:
         # Docker Compose 2.17+ restarts the webserver whenever it recreates the app.
         restart: true
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
+      # 127.0.0.1, not localhost: in this image localhost resolves to ::1 first,
+      # where nginx (listen 80) does not listen, so the check always failed.
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/"]
       interval: 10s
       timeout: 5s
       retries: 3
