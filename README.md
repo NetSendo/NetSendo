@@ -461,6 +461,24 @@ Use the `docker-compose.yml` of the version you pin: versions before 2.11.0 have
 
 ## 🔧 Troubleshooting
 
+### AI connector: AI apps cannot sign in (403 on `/.well-known/`)
+
+`docker compose pull` does not update `docker/nginx/default.conf`: the installation keeps its own copy. Some copies deny every path that starts with a dot, which also blocks the connector's discovery documents. Check it on the server:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:${HTTP_PORT:-5029}/.well-known/oauth-protected-resource/mcp
+```
+
+`403` means the rule is there. Take the current file and reload nginx:
+
+```bash
+cp docker/nginx/default.conf docker/nginx/default.conf.bak
+curl -fsSL https://raw.githubusercontent.com/NetSendo/NetSendo/main/docker/nginx/default.conf -o docker/nginx/default.conf
+docker compose exec webserver nginx -t && docker compose exec webserver nginx -s reload
+```
+
+The current file also sends scripts and styles compressed. Details: [docs/MCP_CONNECTOR.md](docs/MCP_CONNECTOR.md#reverse-proxy).
+
 ### Container Won't Start
 
 ```bash

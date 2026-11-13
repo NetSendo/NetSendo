@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Fixed
+
+- **AI apps could not sign in on installations whose nginx file denies hidden paths.** Some installations carry a `docker/nginx/default.conf` with `location ~ /\. { deny all; }`. That rule also blocked `/.well-known/oauth-…`, where AI apps look up how to sign in, so they got `403` and gave up. The same copies served scripts and styles uncompressed. `docker compose pull` never replaces that file, so updates did not help. The current file now refuses hidden files itself (`.git`, `.env`, `.htaccess`) except `/.well-known/`, and keeps PHP requests open for up to 300 seconds like those copies did. The README (*Troubleshooting*) and `docs/MCP_CONNECTOR.md` say how to check a copy and replace it.
+
 ## [2.11.4] – The webserver reports healthy - 2026-11-13
 
 **Release date:** 2026-11-13
