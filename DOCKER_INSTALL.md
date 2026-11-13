@@ -125,7 +125,7 @@ NetSendo supports the standard Docker update workflow:
 2. **Update the configuration files.** `docker-compose.yml` mounts your own copies of `docker/php/docker-entrypoint.sh`, `docker/php/uploads.ini` and `docker/nginx/default.conf` over the ones in the image, so `docker compose pull` alone does not bring their changes. In a git checkout run `git pull`. In a folder made by `install.sh`, or with downloaded copies:
 
    ```bash
-   V=v2.11.3   # the release you update to, or main for the newest
+   V=v2.11.4   # the release you update to, or main for the newest
    for f in docker-compose.yml docker/php/docker-entrypoint.sh docker/php/uploads.ini docker/nginx/default.conf; do
      cp "$f" "$f.bak" 2>/dev/null
      curl -fsSL "https://raw.githubusercontent.com/NetSendo/NetSendo/$V/$f" -o "$f"
@@ -158,7 +158,7 @@ Since 2.11.0 `docker-compose.yml` also runs the NetSendo MTA (service `nmi-mta`,
 ### Update to Specific Version
 
 ```bash
-NETSENDO_VERSION=2.11.3 docker compose up -d
+NETSENDO_VERSION=2.11.4 docker compose up -d
 ```
 
 Use the `docker-compose.yml` of the version you pin: versions before 2.11.0 have no `mta-` image, so the compose file of 2.11.0 or newer cannot start them.

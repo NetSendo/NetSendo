@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.11.4] – The webserver reports healthy - 2026-11-13
+
+**Release date:** 2026-11-13
+
+### Fixed
+
+- **The webserver container was always "unhealthy", though the site worked.** Its healthcheck asked `http://localhost/`, which in the nginx image resolves to `::1` first, and nginx listens on IPv4 only, so every check was refused. Monitoring that reads Docker's health saw a broken webserver on every installation, and the opt-in `mcp` service, which waits for a healthy webserver, could not start. The check now asks `http://127.0.0.1/`. Nothing in the app changed, only `docker-compose.yml`, so pulling the new image alone does not fix it: take the new file as described in README → Updates, or change `localhost` to `127.0.0.1` in the webserver's `healthcheck`, then `docker compose up -d`.
+
 ## [2.11.3] – Birthday, anniversary and date automations run; stuck CRM follow-ups stop - 2026-11-12
 
 **Release date:** 2026-11-12
