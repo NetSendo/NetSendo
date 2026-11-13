@@ -53,7 +53,23 @@ and the address in that header must be the public one (`https://`, your domain).
 
 ## Reverse proxy
 
-**The bundled nginx** (`docker/nginx/default.conf`) needs no change: every path that is not a file goes to the application, including `/.well-known/…`, and the `Authorization` header is passed on. An installation that still uses an older copy of that file does not need to update it for the connector.
+**The bundled nginx** (`docker/nginx/default.conf`) needs no change: every path that is not a file goes to the application, including `/.well-known/…`, and the `Authorization` header is passed on.
+
+**Check your copy of that file.** `docker-compose.yml` mounts the copy in your installation folder, and `docker compose pull` never changes it. Some installations carry a copy that blocks every path starting with a dot:
+
+```nginx
+location ~ /\. {
+    deny all;
+}
+```
+
+That rule also blocks `/.well-known/oauth-…`, so AI apps cannot find where to sign in. Test it from the server:
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:${HTTP_PORT:-5029}/.well-known/oauth-protected-resource/mcp
+```
+
+`200` is right. `403` means the rule is there: take the current `docker/nginx/default.conf` (see *Updating* in the README), or change the line to `location ~ /\.(?!well-known/) {`, then reload nginx with `docker compose exec webserver nginx -s reload`. The current file still refuses hidden files such as `.git` or `.env`; it only lets `/.well-known/` through to the application.
 
 **Your own proxy in front** (Caddy, Traefik, nginx, Cloudflare, a load balancer) must:
 
@@ -160,6 +176,7 @@ To block it at the proxy as well, deny `/mcp`, `/oauth/` and `/.well-known/oauth
 | What you see | Cause and fix |
 | --- | --- |
 | The app says it cannot reach the server, or "authorization failed" at once | The address is not public, not https, or resolves to a private IP. Run the `curl` check above from outside your network |
+| `/.well-known/oauth-protected-resource/mcp` answers `403 Forbidden` (nginx page), so the app says it cannot sign in | Your `docker/nginx/default.conf` denies every path starting with a dot. See *Check your copy of that file* above |
 | The `WWW-Authenticate` header or the discovery documents show `http://` or an internal host | The proxy in front does not send `X-Forwarded-Proto` / the public `Host` |
 | The app connects but shows no tools; the panel page says "The tools are not installed" | The image has no tool engine (a custom build without the `mcp/` step in `docker/php/Dockerfile`), or Node.js cannot be started. `docker compose exec app node /opt/netsendo-mcp/dist/bridge.js < /dev/null` must exit without an error; details are in `storage/logs/laravel.log` (lines starting with "Connector tool engine") |
 | The consent screen says the request cannot be shown | The app sent a redirect address it did not register, or its registration was removed. Remove the connector in the app and add it again |
