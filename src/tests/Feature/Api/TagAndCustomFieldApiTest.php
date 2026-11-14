@@ -133,8 +133,8 @@ class TagAndCustomFieldApiTest extends TestCase
 
     public function test_deleting_a_tag_detaches_it_from_subscribers_and_lists(): void
     {
-        $tag = Tag::create(['user_id' => $this->user->id, 'name' => 'vip']);
-        $keep = Tag::create(['user_id' => $this->user->id, 'name' => 'keep']);
+        $tag = Tag::factory()->create(['user_id' => $this->user->id, 'name' => 'vip']);
+        $keep = Tag::factory()->create(['user_id' => $this->user->id, 'name' => 'keep']);
         $subscriber = $this->makeSubscriber('anna@example.com');
         $subscriber->tags()->attach([$tag->id, $keep->id]);
         $list = $this->makeList();
@@ -158,7 +158,7 @@ class TagAndCustomFieldApiTest extends TestCase
 
     public function test_unused_tag_is_deleted_without_confirmation(): void
     {
-        $tag = Tag::create(['user_id' => $this->user->id, 'name' => 'unused']);
+        $tag = Tag::factory()->create(['user_id' => $this->user->id, 'name' => 'unused']);
 
         $this->api('DELETE', "tags/{$tag->id}")->assertOk();
         $this->assertNull($tag->fresh());

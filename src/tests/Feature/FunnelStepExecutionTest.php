@@ -154,7 +154,7 @@ class FunnelStepExecutionTest extends TestCase
         $enrollment = $this->enroll($funnel, $subscriber);
         $this->assertSame(FunnelSubscriber::STATUS_WAITING_CONDITION, $enrollment->status);
 
-        $field = CustomField::create(['user_id' => $this->user->id, 'name' => 'plan', 'label' => 'Plan', 'type' => 'text']);
+        $field = CustomField::factory()->text()->create(['user_id' => $this->user->id, 'name' => 'plan', 'label' => 'Plan']);
         SubscriberFieldValue::create(['subscriber_id' => $subscriber->id, 'custom_field_id' => $field->id, 'value' => 'pro']);
 
         // The retry service had its own copy of the conditions, without field_value
@@ -254,7 +254,7 @@ class FunnelStepExecutionTest extends TestCase
         Event::fake([SubscriberUnsubscribed::class]);
 
         $list = $this->makeList();
-        $autoresponder = Message::create(['user_id' => $this->user->id, 'channel' => 'email', 'type' => 'autoresponder', 'subject' => 'Day 3', 'content' => 'x', 'status' => 'scheduled']);
+        $autoresponder = Message::factory()->autoresponder()->create(['user_id' => $this->user->id, 'channel' => 'email', 'subject' => 'Day 3', 'content' => 'x', 'status' => 'scheduled']);
         $autoresponder->contactLists()->attach($list->id);
 
         $active = $this->makeSubscriber('active@example.com');
@@ -396,7 +396,7 @@ class FunnelStepExecutionTest extends TestCase
     public function test_the_sms_job_no_longer_calls_a_missing_placeholder_method(): void
     {
         $subscriber = $this->makeSubscriber('jan@example.com', ['first_name' => 'Jan', 'phone' => '+48500100200']);
-        $message = Message::create(['user_id' => $this->user->id, 'channel' => 'sms', 'type' => 'broadcast', 'subject' => 'SMS', 'content' => 'Hi [[first_name]]', 'status' => 'scheduled']);
+        $message = Message::factory()->sms()->broadcast()->create(['user_id' => $this->user->id, 'subject' => 'SMS', 'content' => 'Hi [[first_name]]', 'status' => 'scheduled']);
         $this->fakeSmsProvider('+48500100200', 'Hi Jan');
 
         (new SendSmsJob($message, $subscriber))
