@@ -336,22 +336,14 @@ class MessageFieldFilterTest extends TestCase
     {
         $otherList = ContactList::create(['user_id' => $this->user->id, 'name' => 'Other']);
 
-        $listField = CustomField::create([
-            'user_id' => $this->user->id,
+        $listField = CustomField::factory()->text()->forList($this->list)->create([
             'name' => 'nip',
             'label' => 'NIP',
-            'type' => 'text',
-            'scope' => 'list',
-            'contact_list_id' => $this->list->id,
         ]);
 
-        CustomField::create([
-            'user_id' => $this->user->id,
+        CustomField::factory()->text()->forList($otherList)->create([
             'name' => 'other_only',
             'label' => 'Other only',
-            'type' => 'text',
-            'scope' => 'list',
-            'contact_list_id' => $otherList->id,
         ]);
 
         $response = $this->actingAs($this->user)->getJson(route('messages.audience.fields', [

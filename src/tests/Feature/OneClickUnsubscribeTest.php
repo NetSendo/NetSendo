@@ -46,15 +46,11 @@ class OneClickUnsubscribeTest extends TestCase
         $this->user = User::factory()->create();
         $this->list = ContactList::create(['user_id' => $this->user->id, 'name' => 'Newsletter', 'type' => 'email']);
         $this->otherList = ContactList::create(['user_id' => $this->user->id, 'name' => 'Offers', 'type' => 'email']);
-        $this->mailbox = Mailbox::create([
+        $this->mailbox = Mailbox::factory()->default()->create([
             'user_id' => $this->user->id,
             'name' => 'Main',
-            'provider' => 'smtp',
             'from_email' => 'news@example.com',
             'from_name' => 'News',
-            'is_default' => true,
-            'is_active' => true,
-            'allowed_types' => ['broadcast', 'autoresponder', 'system'],
             'credentials' => ['host' => 'localhost', 'port' => 1025],
         ]);
         $this->subscriber = Subscriber::create([
