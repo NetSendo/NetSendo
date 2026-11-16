@@ -9,8 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.12.0] – Automations that run, saved segments - 2026-11-16
+
+**Release date:** 2026-11-16
+
+### Added
+
+- **Saved segments (Contacts → Segments).** A segment is a named set of conditions that keeps itself up to date, instead of a list filled by hand ("opened, did not click"). Conditions: on a list / not on a list, has a tag / does not, a custom field (the same comparisons as the message audience filters), opened / clicked in the last N days or not for N days, opened / clicked a given message or not, added in the last N days or more than N days ago; all of them or any of them. The builder counts the people as you edit and shows a few example addresses. Available on SILVER.
+  - **A message can target a segment** (*Audience* tab, or `segment_id` in the API): it then goes only to the people on its lists who are in the segment, counted at the moment of sending. Autoresponders check the segment for each new subscriber. Deleting a segment sends its messages to their whole lists again.
+  - `GET /api/v1/segments` and `GET /api/v1/segments/{id}` (with a fresh count). New tables/columns `segments` and `messages.segment_id`, added by the automatic migration.
+- **CRM → Tasks: "Close stale automatic tasks".** Tasks that follow-up sequences created and that are more than 14 days overdue can be closed in one click; their sequences stop. Tasks added by hand and tasks synced to a calendar stay.
+
+### Changed
+
+- **The dashboard puts clicks before opens.** Apple Mail and Gmail open messages without a reader, so the open rate is marked as overstated.
+- **The automation builder offers only triggers that run.** "List join" and "Subscriber activated" were never raised; they meant the same as "Signup to list" (which fires after double opt-in confirmation), and existing rules with them become signup rules. Trigger names follow the interface language.
+- **The default "After the meeting" CRM sequence runs after completed meetings only**, not after any task; existing default copies are changed by the migration unless they have conditions of their own. A task a sequence created no longer enrolls the contact in another sequence, and contacts of a CRM file import are not enrolled in "on contact created" sequences.
+
 ### Fixed
 
+- **Subscribers' opens and clicks were never recorded on the subscriber.** Tracking stored each open and click but left `opens_count`, `clicks_count`, `last_opened_at` and `last_clicked_at` untouched, so the subscriber card, list engagement ("most engaged", "never engaged", seen as 711 of 711 on a list with 233 openers), exports and engaged/not engaged filters read 0 for everyone. Tracking now writes them (counts are unique per message), and the migration rebuilds them from the stored opens and clicks.
+- **"No activity" automations never ran**, including the default "Cold Lead Detection" rule active on every installation, and so did messages triggered by inactivity: nothing raised `subscriber_inactive`. An hourly job (`automations:process-inactivity`) now runs such rules for subscribers who have neither opened nor clicked for the rule's days (default 30; counted from joining the rule's list when it has one), once per subscriber until they open or click again, up to 1000 subscribers per rule per run. **After updating, "Cold Lead Detection" starts tagging quiet subscribers** (`add_tag` + `add_score`, no emails); switch it off in *Automations* if that is not wanted.
+- **"Field changed", "Click on a specific link" and "Pixel: return visit" automations never ran.** Field rules now run when a field of an existing subscriber changes (a standard field or a custom field, optionally to a given value; not for fields set while a subscriber is created, and not for a rule's own *update field* action). Link rules run on a click whose address matches the rule's link and need one. Return-visit rules run when an identified visitor comes back after at least a day (or the rule's `min_days_away`).
+- **URL patterns with `*` never matched** in automation triggers ("page visited", link rules): `https://shop.example.com/offer*` was turned into a pattern that only matched dots.
+- **A list filter on "email opened", "link clicked" or "email bounced" rules never matched.** The events read the message's list from a column removed in December 2025 (a message has several lists now); they now carry all of the message's lists.
+- **"CRM contact created" automations ran twice** for contacts converted from a subscriber by an automation.
+- **Automation builder: the list filter of a new rule showed an empty box** instead of "All lists", and the URL pattern field of "page visited" rules was in Polish only. Triggers without an icon of their own (unsubscribed, bounced, the pixel triggers) now have one.
 - **AI apps could not sign in on installations whose nginx file denies hidden paths.** Some installations carry a `docker/nginx/default.conf` with `location ~ /\. { deny all; }`. That rule also blocked `/.well-known/oauth-…`, where AI apps look up how to sign in, so they got `403` and gave up. The same copies served scripts and styles uncompressed. `docker compose pull` never replaces that file, so updates did not help. The current file now refuses hidden files itself (`.git`, `.env`, `.htaccess`) except `/.well-known/`, and keeps PHP requests open for up to 300 seconds like those copies did. The README (*Troubleshooting*) and `docs/MCP_CONNECTOR.md` say how to check a copy and replace it.
 
 ## [2.11.4] – The webserver reports healthy - 2026-11-13

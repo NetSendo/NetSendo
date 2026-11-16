@@ -1028,7 +1028,8 @@
             "up": "wzrost o",
             "down": "spadek o",
             "new_subscribers": "nowi: {count} · poprzednio {previous}",
-            "previously": "poprzednio {value}"
+            "previously": "poprzednio {value}",
+            "open_rate_note": "Zawyżone: Apple Mail i Gmail otwierają wiadomości automatycznie. Kliknięcia są pewniejsze."
         },
         "attention": {
             "title": "Wymaga uwagi",
@@ -5417,6 +5418,20 @@
                 "activity_type": "Typ aktywności",
                 "activity_note": "Notatka",
                 "activity_content": "Treść aktywności"
+            },
+            "trigger_config": {
+                "inactive_days": "Dni bez otwarcia i kliknięcia",
+                "inactive_days_hint": "Sprawdzane co godzinę. Reguła działa raz na subskrybenta, dopóki znów nie otworzy albo nie kliknie. Przy wybranej liście dni liczą się od dołączenia do niej.",
+                "field": "Pole",
+                "any_field": "Dowolne pole",
+                "value_optional": "Nowa wartość (opcjonalnie)",
+                "field_hint": "Działa dla istniejących subskrybentów: pola ustawione przy zapisie albo imporcie nowego adresu się nie liczą. Wartość porównywana bez względu na wielkość liter.",
+                "min_days_away": "Minimum dni od poprzedniej wizyty",
+                "link_url": "Adres linku",
+                "link_url_hint": "Dokładny adres, wzorzec z * (https://sklep.pl/oferta*) albo fragment adresu bez http (np. /cennik).",
+                "url_pattern": "Wzorzec adresu (* zastępuje dowolny fragment)",
+                "url_pattern_hint": "Np. */cennik albo https://twojastrona.pl/dziekujemy",
+                "url_pattern_placeholder": "https://twojastrona.pl/oferta/*"
             }
         },
         "logs_page": {
@@ -8182,7 +8197,11 @@
             "deleted": "Zadanie usunięte",
             "created": "Zadanie utworzone",
             "updated": "Zadanie zaktualizowane",
-            "completed": "Zadanie ukończone"
+            "completed": "Zadanie ukończone",
+            "stale_title": "{count} zadań z sekwencji czeka ponad 14 dni",
+            "stale_body": "Te zadania utworzyły automatyczne sekwencje follow-up i nikt ich nie wykonał. Możesz je zamknąć jednym kliknięciem; ich sekwencje zostaną zatrzymane. Zadania dodane ręcznie zostają.",
+            "stale_action": "Zamknij stare zadania automatyczne",
+            "stale_confirm": "Zamknąć {count} zadań i zatrzymać ich sekwencje?"
         },
         "activities": {
             "title": "Aktywności",
@@ -10028,6 +10047,92 @@
             "permissions": "Może używać tylko uprawnień zaznaczonych na ekranie logowania. To te same uprawnienia, które mają klucze API. Żeby je zmienić, odłącz aplikację i podłącz ją ponownie.",
             "tokens": "Odłączenie aplikacji tutaj zatrzymuje ją od razu. Aplikacja nieużywana przez 90 dni musi zalogować się ponownie. NetSendo przechowuje tylko skróty tokenów dostępu.",
             "sending": "Z uprawnieniami do wysyłki aplikacja może wysyłać kampanie, e-maile i SMS-y do prawdziwych odbiorców. Nadawaj je tylko aplikacjom, którym ufasz, i sprawdzaj, co asystent zamierza wysłać."
+        }
+    },
+    "segments": {
+        "title": "Segmenty",
+        "subtitle": "Zapisane grupy odbiorców, które aktualizują się same",
+        "create": "Nowy segment",
+        "edit": "Edycja segmentu",
+        "create_first": "Utwórz pierwszy segment",
+        "empty_title": "Nie masz jeszcze segmentów",
+        "empty_description": "Segment to zapisany zestaw warunków, np. „otworzył w ostatnich 30 dniach i nie ma tagu klient”. Skład zmienia się sam, bez przenoszenia osób między listami.",
+        "table": {
+            "name": "Segment",
+            "people": "Osoby",
+            "conditions": "Warunki",
+            "messages": "Wiadomości",
+            "actions": "Akcje"
+        },
+        "people_count": "{count} os.",
+        "actions_for": "Akcje segmentu {name}",
+        "send_message": "Wyślij wiadomość do segmentu",
+        "how_it_works": "Liczba osób to stan z ostatniego przeliczenia (najwyżej sprzed 10 minut). Wysyłka zawsze liczy segment od nowa.",
+        "delete_title": "Usunąć segment?",
+        "delete_description": "Wiadomości, które go używały, trafią do całych wybranych list.",
+        "saved": "Segment zapisany.",
+        "deleted": "Segment usunięty.",
+        "groups": {
+            "membership": "Listy i tagi",
+            "data": "Dane subskrybenta",
+            "engagement": "Aktywność w e-mailach"
+        },
+        "types": {
+            "on_list": "Jest na liście",
+            "not_on_list": "Nie jest na liście",
+            "has_tag": "Ma tag",
+            "not_has_tag": "Nie ma tagu",
+            "field": "Pole dodatkowe",
+            "joined_within": "Dodany w ciągu ostatnich … dni",
+            "joined_before": "Dodany ponad … dni temu",
+            "opened_within": "Otworzył w ciągu ostatnich … dni",
+            "not_opened_within": "Nie otworzył od … dni",
+            "clicked_within": "Kliknął w ciągu ostatnich … dni",
+            "not_clicked_within": "Nie kliknął od … dni",
+            "opened_message": "Otworzył wiadomość",
+            "not_opened_message": "Nie otworzył wiadomości",
+            "clicked_message": "Kliknął w wiadomości",
+            "not_clicked_message": "Nie kliknął w wiadomości"
+        },
+        "builder": {
+            "subtitle": "Opisz, kogo segment obejmuje. Liczba osób odświeża się na bieżąco.",
+            "details": "Nazwa i opis",
+            "name": "Nazwa",
+            "name_placeholder": "np. Ciepli, bez zakupu",
+            "description": "Opis (opcjonalnie)",
+            "conditions": "Warunki",
+            "match_label": "Dopasowanie warunków",
+            "match_all": "Wszystkie warunki",
+            "match_any": "Dowolny warunek",
+            "where": "Gdy",
+            "and": "oraz",
+            "or": "lub",
+            "condition_type": "Rodzaj warunku",
+            "list": "Lista",
+            "tag": "Tag",
+            "message": "Wiadomość",
+            "days": "Liczba dni",
+            "days_unit": "dni",
+            "field": "Pole",
+            "operator": "Porównanie",
+            "value": "Wartość",
+            "value_placeholder": "Wartość; kilka rozdziel przecinkiem",
+            "value_from": "Od",
+            "value_to": "Do",
+            "remove": "Usuń",
+            "add_condition": "Dodaj warunek",
+            "preview": "Osoby w segmencie",
+            "of_total": "z {total} aktywnych subskrybentów",
+            "sample": "Przykładowe adresy",
+            "preview_failed": "Nie udało się policzyć osób.",
+            "dynamic_note": "Segment liczony jest przy każdym użyciu: kto spełni warunki jutro, będzie w nim jutro. Wysyłka do segmentu idzie tylko do osób z wybranych w wiadomości list.",
+            "save": "Zapisz segment",
+            "create": "Utwórz segment"
+        },
+        "message": {
+            "label": "Segment",
+            "none": "Bez segmentu — wszyscy z wybranych list",
+            "help": "Wiadomość trafi tylko do osób z wybranych list, które są w segmencie. Segment liczy się w chwili wysyłki."
         }
     }
 }

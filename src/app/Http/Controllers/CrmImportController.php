@@ -139,6 +139,8 @@ class CrmImportController extends Controller
         $companyCache = [];
 
         DB::beginTransaction();
+        // Imported contacts are not enrolled in follow-up sequences
+        CrmContact::$creatingInBulk = true;
 
         try {
             foreach ($records as $row) {
@@ -175,6 +177,7 @@ class CrmImportController extends Controller
             }
 
             DB::commit();
+            CrmContact::$creatingInBulk = false;
 
             // Clean up temp file
             @unlink($filePath);
@@ -184,6 +187,7 @@ class CrmImportController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            CrmContact::$creatingInBulk = false;
             @unlink($filePath);
 
             return redirect()->back()->with('error', 'Błąd podczas importu: ' . $e->getMessage());

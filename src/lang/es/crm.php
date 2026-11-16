@@ -269,4 +269,8 @@ return [
             'outro' => 'Complétala o establece una nueva fecha límite.',
         ],
     ],
+
+    'tasks' => [
+        'stale_closed' => 'Se cerraron :count tareas automáticas antiguas.',
+    ],
 ];

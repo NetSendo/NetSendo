@@ -83,6 +83,12 @@ class Subscriber extends Model
         self::STATUS_BOUNCED,
     ];
 
+    protected static function booted(): void
+    {
+        // "field_updated" automations (FieldChangeNotifier decides if any listen)
+        static::updated(fn (Subscriber $subscriber) => \App\Services\Automation\FieldChangeNotifier::subscriberUpdated($subscriber));
+    }
+
     /**
      * Columns a condition can test by name (getFieldValue()), next to the
      * account's custom fields.
@@ -572,21 +578,38 @@ class Subscriber extends Model
     }
 
     /**
-     * Record an email open event
+     * Record an open: last_opened_at moves to now, and opens_count (unique
+     * opens: messages opened) grows on the first open of a message.
      */
-    public function recordOpen(): void
+    public static function recordOpen(int $subscriberId, bool $firstForMessage): void
     {
-        $this->increment('opens_count');
-        $this->update(['last_opened_at' => now()]);
+        self::recordEngagement($subscriberId, 'last_opened_at', $firstForMessage ? 'opens_count' : null);
     }
 
     /**
-     * Record a link click event
+     * Record a click: last_clicked_at moves to now, and clicks_count (unique
+     * clicks: messages clicked) grows on the first click in a message.
      */
-    public function recordClick(): void
+    public static function recordClick(int $subscriberId, bool $firstForMessage): void
     {
-        $this->increment('clicks_count');
-        $this->update(['last_clicked_at' => now()]);
+        self::recordEngagement($subscriberId, 'last_clicked_at', $firstForMessage ? 'clicks_count' : null);
+    }
+
+    /**
+     * Written with a query, not the model: no model events, no lost updates
+     * when two tracking requests arrive at once. Activity ends an inactive
+     * spell, so "subscriber_inactive" rules may run again later.
+     */
+    protected static function recordEngagement(int $subscriberId, string $timestampColumn, ?string $counterColumn): void
+    {
+        $values = [$timestampColumn => now()];
+
+        if ($counterColumn) {
+            $values[$counterColumn] = DB::raw("COALESCE({$counterColumn}, 0) + 1");
+        }
+
+        DB::table('subscribers')->where('id', $subscriberId)->update($values);
+        DB::table('automation_inactivity_marks')->where('subscriber_id', $subscriberId)->delete();
     }
 
     public function tags(): BelongsToMany

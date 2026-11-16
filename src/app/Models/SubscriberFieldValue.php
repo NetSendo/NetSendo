@@ -16,6 +16,12 @@ class SubscriberFieldValue extends Model
         'value',
     ];
 
+    protected static function booted(): void
+    {
+        // "field_updated" automations (FieldChangeNotifier decides if any listen)
+        static::saved(fn (SubscriberFieldValue $value) => \App\Services\Automation\FieldChangeNotifier::fieldValueSaved($value));
+    }
+
     /**
      * Get the subscriber this value belongs to
      */

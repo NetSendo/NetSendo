@@ -141,6 +141,13 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api', \App\Http\Middleware
     Route::post('notifications', [NotificationController::class, 'store'])
         ->name('api.v1.notifications.store');
 
+    // Saved segments (read-only; a message targets one with segment_id)
+    Route::get('segments', [\App\Http\Controllers\Api\V1\SegmentController::class, 'index'])
+        ->name('api.v1.segments.index');
+    Route::get('segments/{id}', [\App\Http\Controllers\Api\V1\SegmentController::class, 'show'])
+        ->whereNumber('id')
+        ->name('api.v1.segments.show');
+
     // Tags (read-only)
     Route::get('tags', [TagController::class, 'index'])
         ->name('api.v1.tags.index');

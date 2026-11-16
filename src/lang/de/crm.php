@@ -269,4 +269,8 @@ return [
             'outro' => 'Erledigen Sie sie oder legen Sie einen neuen Termin fest.',
         ],
     ],
+
+    'tasks' => [
+        'stale_closed' => ':count veraltete automatische Aufgaben geschlossen.',
+    ],
 ];

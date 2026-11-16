@@ -74,6 +74,8 @@ class CrmTaskController extends Controller
             'overdue' => CrmTask::forUser($userId)->overdue()->count(),
             'today' => CrmTask::forUser($userId)->today()->count(),
             'upcoming' => CrmTask::forUser($userId)->upcoming()->count(),
+            // Tasks follow-up sequences made that are long overdue (closeStale)
+            'stale_automatic' => $this->staleAutomaticTasks($userId)->count(),
         ];
 
         // Get filter options
@@ -316,6 +318,51 @@ class CrmTaskController extends Controller
         }
 
         return redirect()->back()->with('success', 'Zadanie zostało zaktualizowane.');
+    }
+
+    /** Days overdue after which a sequence task counts as stale. */
+    public const STALE_AUTOMATIC_DAYS = 14;
+
+    /**
+     * Overdue tasks that follow-up sequences created more than
+     * STALE_AUTOMATIC_DAYS ago and nobody touched. Tasks synced to a calendar
+     * are left alone (closing them would need the calendar too).
+     */
+    protected function staleAutomaticTasks(int $userId)
+    {
+        return CrmTask::forUser($userId)
+            ->overdue()
+            ->whereNotNull('follow_up_enrollment_id')
+            ->whereNull('google_calendar_event_id')
+            ->where('due_date', '<', now()->subDays(self::STALE_AUTOMATIC_DAYS));
+    }
+
+    /**
+     * Close stale sequence tasks in one go (status "cancelled") and stop the
+     * enrollments they belong to, so the sequences do not add more.
+     */
+    public function closeStale(Request $request): RedirectResponse
+    {
+        $userId = auth()->id();
+        $closed = 0;
+        $enrollmentIds = [];
+
+        $this->staleAutomaticTasks($userId)
+            ->select(['id', 'follow_up_enrollment_id'])
+            ->chunkById(500, function ($tasks) use (&$closed, &$enrollmentIds) {
+                $enrollmentIds = array_merge($enrollmentIds, $tasks->pluck('follow_up_enrollment_id')->all());
+                $closed += CrmTask::whereIn('id', $tasks->pluck('id'))->update([
+                    'status' => 'cancelled',
+                    'updated_at' => now(),
+                ]);
+            });
+
+        \App\Models\CrmFollowUpEnrollment::whereIn('id', array_unique($enrollmentIds))
+            ->whereIn('status', ['active', 'paused'])
+            ->get()
+            ->each(fn ($enrollment) => $enrollment->cancel());
+
+        return back()->with('success', __('crm.tasks.stale_closed', ['count' => $closed]));
     }
 
     /**

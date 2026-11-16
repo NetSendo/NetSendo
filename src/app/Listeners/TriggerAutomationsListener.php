@@ -20,6 +20,9 @@ use App\Events\PixelProductViewed;
 use App\Events\PixelAddToCart;
 use App\Events\PixelCheckoutStarted;
 use App\Events\PixelCartAbandoned;
+use App\Events\PixelReturnVisit;
+use App\Events\SubscriberInactive;
+use App\Events\SubscriberFieldUpdated;
 // CRM events
 use App\Events\CrmDealStageChanged;
 use App\Events\CrmTaskOverdue;
@@ -86,6 +89,12 @@ class TriggerAutomationsListener
             return [];
         }
 
+        // A click is also a click on that particular link: specific_link_clicked
+        // rules filter it by trigger_config.link_url.
+        if ($event instanceof EmailClicked) {
+            return [$trigger, 'specific_link_clicked'];
+        }
+
         // A move into a closing stage is also a won or lost deal.
         if ($event instanceof CrmDealStageChanged) {
             return array_values(array_filter([
@@ -123,6 +132,9 @@ class TriggerAutomationsListener
             PixelAddToCart::class => 'pixel_add_to_cart',
             PixelCheckoutStarted::class => 'pixel_checkout_started',
             PixelCartAbandoned::class => 'pixel_cart_abandoned',
+            PixelReturnVisit::class => 'pixel_return_visit',
+            SubscriberInactive::class => 'subscriber_inactive',
+            SubscriberFieldUpdated::class => 'field_updated',
             // CRM event mappings
             CrmDealStageChanged::class => 'crm_deal_stage_changed',
             CrmTaskOverdue::class => 'crm_task_overdue',

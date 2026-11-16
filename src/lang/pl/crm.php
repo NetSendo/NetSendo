@@ -174,6 +174,7 @@ return [
         ],
     ],
     'tasks' => [
+        'stale_closed' => 'Zamknięto :count starych zadań automatycznych.',
         'list_view' => 'Lista',
         'calendar_view' => 'Kalendarz',
         'month_view' => 'Miesiąc',

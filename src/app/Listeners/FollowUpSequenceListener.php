@@ -55,6 +55,10 @@ class FollowUpSequenceListener implements ShouldQueue
     {
         $contact = $event->contact;
 
+        if ($event->bulkImport) {
+            return;
+        }
+
         $sequences = CrmFollowUpSequence::forUser($contact->user_id)
             ->active()
             ->byTrigger('on_contact_created')
@@ -76,7 +80,9 @@ class FollowUpSequenceListener implements ShouldQueue
         $task = $event->task;
         $contact = $task->contact;
 
-        if (!$contact) {
+        // A task a sequence created does not start another sequence: completing
+        // "Meeting summary" enrolled the contact in "After the meeting" again.
+        if (!$contact || $task->follow_up_enrollment_id) {
             return;
         }
 
@@ -86,6 +92,13 @@ class FollowUpSequenceListener implements ShouldQueue
             ->get();
 
         foreach ($sequences as $sequence) {
+            // Optional task type condition (the default "After the meeting"
+            // sequence runs after meetings only).
+            $taskType = ($sequence->trigger_conditions ?? [])['task_type'] ?? null;
+            if ($taskType && $taskType !== $task->type) {
+                continue;
+            }
+
             $this->enrollContactIfNotEnrolled($sequence, $contact, [
                 'triggered_by' => 'task_completed',
                 'task_id' => $task->id,

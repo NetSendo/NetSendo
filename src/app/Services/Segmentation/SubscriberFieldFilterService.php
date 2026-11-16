@@ -139,7 +139,8 @@ class SubscriberFieldFilterService
         array $includedListIds,
         array $excludedEmails,
         $includeFilters,
-        string $match = MessageFieldFilter::MATCH_ALL
+        string $match = MessageFieldFilter::MATCH_ALL,
+        ?\App\Models\Segment $segment = null
     ): Builder {
         $query = Subscriber::active()->whereHas('contactLists', function ($q) use ($includedListIds) {
             $q->whereIn('contact_lists.id', $includedListIds)
@@ -150,7 +151,14 @@ class SubscriberFieldFilterService
             $query->whereNotIn('email', $excludedEmails);
         }
 
-        return $this->applyFilters($query, $includeFilters, $match);
+        $query = $this->applyFilters($query, $includeFilters, $match);
+
+        // A saved segment narrows the list audience further.
+        if ($segment) {
+            app(SegmentQueryService::class)->apply($query, $segment->conditions ?? [], $segment->match);
+        }
+
+        return $query;
     }
 
     /**
@@ -167,7 +175,8 @@ class SubscriberFieldFilterService
         $includeFilters,
         string $includeMatch,
         $excludeFilters,
-        string $excludeMatch
+        string $excludeMatch,
+        ?\App\Models\Segment $segment = null
     ): array {
         if (empty($includedListIds)) {
             return ['base' => 0, 'total' => 0, 'excluded' => 0];
@@ -179,7 +188,7 @@ class SubscriberFieldFilterService
 
         $excludedEmails = $this->excludedEmails($includedListIds, $excludedListIds, $excludeFilters, $excludeMatch);
 
-        $total = $this->audienceQuery($includedListIds, $excludedEmails, $includeFilters, $includeMatch)
+        $total = $this->audienceQuery($includedListIds, $excludedEmails, $includeFilters, $includeMatch, $segment)
             ->distinct()
             ->count('subscribers.email');
 

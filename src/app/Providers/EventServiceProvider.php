@@ -109,6 +109,15 @@ class EventServiceProvider extends ServiceProvider
         \App\Events\PixelCartAbandoned::class => [
             TriggerAutomationsListener::class,
         ],
+        \App\Events\PixelReturnVisit::class => [
+            TriggerAutomationsListener::class,
+        ],
+        \App\Events\SubscriberInactive::class => [
+            TriggerAutomationsListener::class,
+        ],
+        \App\Events\SubscriberFieldUpdated::class => [
+            TriggerAutomationsListener::class,
+        ],
         // System events
         \App\Events\UserTimezoneUpdated::class => [
             \App\Listeners\SyncWebinarTimezonesOnUserUpdate::class,

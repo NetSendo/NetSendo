@@ -1454,7 +1454,8 @@
             "up": "sube",
             "down": "baja",
             "new_subscribers": "nuevos: {count} · antes {previous}",
-            "previously": "antes {value}"
+            "previously": "antes {value}",
+            "open_rate_note": "Inflado: Apple Mail y Gmail abren los mensajes automáticamente. Los clics son más fiables."
         },
         "attention": {
             "title": "Requiere atención",
@@ -4457,6 +4458,20 @@
                 "activity_type": "Tipo de actividad",
                 "activity_note": "Nota",
                 "activity_content": "Contenido de la actividad"
+            },
+            "trigger_config": {
+                "inactive_days": "Días sin aperturas ni clics",
+                "inactive_days_hint": "Se comprueba cada hora. La regla se ejecuta una vez por suscriptor hasta que vuelva a abrir o hacer clic. Con una lista elegida, los días cuentan desde que se unió a ella.",
+                "field": "Campo",
+                "any_field": "Cualquier campo",
+                "value_optional": "Nuevo valor (opcional)",
+                "field_hint": "Para suscriptores existentes: los campos establecidos al registrarse o importar una dirección nueva no cuentan. El valor se compara sin distinguir mayúsculas.",
+                "min_days_away": "Días mínimos desde la visita anterior",
+                "link_url": "Dirección del enlace",
+                "link_url_hint": "Una dirección exacta, un patrón con * (https://tienda.com/oferta*) o parte de la dirección sin http (p. ej. /precios).",
+                "url_pattern": "Patrón de URL (* sustituye cualquier parte)",
+                "url_pattern_hint": "P. ej. */precios o https://ejemplo.com/gracias",
+                "url_pattern_placeholder": "https://ejemplo.com/oferta/*"
             }
         },
         "logs_page": {
@@ -7780,7 +7795,11 @@
             "created": "Tarea creada",
             "updated": "Tarea actualizada",
             "completed": "Tarea completada",
-            "empty_contact": "No hay tareas para este contacto"
+            "empty_contact": "No hay tareas para este contacto",
+            "stale_title": "{count} tareas de secuencias llevan más de 14 días esperando",
+            "stale_body": "Las secuencias automáticas de seguimiento crearon estas tareas y nadie las hizo. Puedes cerrarlas con un clic; sus secuencias se detendrán. Las tareas añadidas a mano se quedan.",
+            "stale_action": "Cerrar tareas automáticas antiguas",
+            "stale_confirm": "¿Cerrar {count} tareas y detener sus secuencias?"
         },
         "activities": {
             "title": "Actividades",
@@ -10028,6 +10047,92 @@
             "permissions": "Solo puede usar los permisos marcados en la pantalla de inicio de sesión. Son los mismos permisos que tienen las claves API. Para cambiarlos, desconecta la aplicación y conéctala de nuevo.",
             "tokens": "Desconectar una aplicación aquí la detiene de inmediato. Una aplicación que no se ha usado durante 90 días tiene que iniciar sesión otra vez. NetSendo solo guarda huellas de los tokens de acceso.",
             "sending": "Con los permisos de envío, una aplicación puede enviar campañas, correos y SMS a destinatarios reales. Concédelos solo a aplicaciones en las que confíes y revisa lo que el asistente va a enviar."
+        }
+    },
+    "segments": {
+        "title": "Segmentos",
+        "subtitle": "Grupos de destinatarios guardados que se actualizan solos",
+        "create": "Nuevo segmento",
+        "edit": "Editar segmento",
+        "create_first": "Crea tu primer segmento",
+        "empty_title": "Aún no hay segmentos",
+        "empty_description": "Un segmento es un conjunto de condiciones guardado, como «abrió en los últimos 30 días y no tiene la etiqueta cliente». Sus miembros cambian solos, sin mover personas entre listas.",
+        "table": {
+            "name": "Segmento",
+            "people": "Personas",
+            "conditions": "Condiciones",
+            "messages": "Mensajes",
+            "actions": "Acciones"
+        },
+        "people_count": "{count} personas",
+        "actions_for": "Acciones del segmento {name}",
+        "send_message": "Enviar un mensaje al segmento",
+        "how_it_works": "El número de personas es del último recuento (como mucho de hace 10 minutos). El envío siempre vuelve a contar el segmento.",
+        "delete_title": "¿Eliminar el segmento?",
+        "delete_description": "Los mensajes que lo usaban irán a las listas elegidas completas.",
+        "saved": "Segmento guardado.",
+        "deleted": "Segmento eliminado.",
+        "groups": {
+            "membership": "Listas y etiquetas",
+            "data": "Datos del suscriptor",
+            "engagement": "Actividad en emails"
+        },
+        "types": {
+            "on_list": "Está en la lista",
+            "not_on_list": "No está en la lista",
+            "has_tag": "Tiene la etiqueta",
+            "not_has_tag": "No tiene la etiqueta",
+            "field": "Campo personalizado",
+            "joined_within": "Añadido en los últimos … días",
+            "joined_before": "Añadido hace más de … días",
+            "opened_within": "Abrió en los últimos … días",
+            "not_opened_within": "No abre desde hace … días",
+            "clicked_within": "Hizo clic en los últimos … días",
+            "not_clicked_within": "No hace clic desde hace … días",
+            "opened_message": "Abrió el mensaje",
+            "not_opened_message": "No abrió el mensaje",
+            "clicked_message": "Hizo clic en el mensaje",
+            "not_clicked_message": "No hizo clic en el mensaje"
+        },
+        "builder": {
+            "subtitle": "Describe a quién incluye el segmento. El número de personas se actualiza sobre la marcha.",
+            "details": "Nombre y descripción",
+            "name": "Nombre",
+            "name_placeholder": "p. ej. Interesados, sin compra",
+            "description": "Descripción (opcional)",
+            "conditions": "Condiciones",
+            "match_label": "Coincidencia de condiciones",
+            "match_all": "Todas las condiciones",
+            "match_any": "Cualquier condición",
+            "where": "Si",
+            "and": "y",
+            "or": "o",
+            "condition_type": "Tipo de condición",
+            "list": "Lista",
+            "tag": "Etiqueta",
+            "message": "Mensaje",
+            "days": "Número de días",
+            "days_unit": "días",
+            "field": "Campo",
+            "operator": "Comparación",
+            "value": "Valor",
+            "value_placeholder": "Valor; separa varios con comas",
+            "value_from": "Desde",
+            "value_to": "Hasta",
+            "remove": "Quitar",
+            "add_condition": "Añadir condición",
+            "preview": "Personas en el segmento",
+            "of_total": "de {total} suscriptores activos",
+            "sample": "Direcciones de ejemplo",
+            "preview_failed": "No se pudo contar a las personas.",
+            "dynamic_note": "El segmento se evalúa cada vez que se usa: quien cumpla las condiciones mañana estará en él mañana. Un mensaje a un segmento solo llega a personas de las listas elegidas en el mensaje.",
+            "save": "Guardar segmento",
+            "create": "Crear segmento"
+        },
+        "message": {
+            "label": "Segmento",
+            "none": "Sin segmento: todos los de las listas elegidas",
+            "help": "El mensaje llega solo a las personas de las listas elegidas que están en el segmento. El segmento se cuenta en el momento del envío."
         }
     }
 }

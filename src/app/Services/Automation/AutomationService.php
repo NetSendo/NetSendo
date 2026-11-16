@@ -106,9 +106,43 @@ class AutomationService
             return false;
         }
 
+        // Events raised for one rule (inactivity) run that rule only.
+        if (!empty($context['target_rule_id']) && (int) $context['target_rule_id'] !== (int) $rule->id) {
+            return false;
+        }
+
+        // Without a link to look for, a "specific link" rule would run on
+        // every click — that is email_clicked.
+        if ($rule->trigger_event === 'specific_link_clicked' && empty($config['link_url'])) {
+            return false;
+        }
+
         // No config means match all events of the rule's account
         if (empty($config)) {
             return true;
+        }
+
+        // Field rules: the field that changed, and optionally its new value
+        // (compared as text, ignoring case and surrounding spaces).
+        if ($rule->trigger_event === 'field_updated') {
+            if (!empty($config['field']) && ($context['field'] ?? null) !== $config['field']) {
+                return false;
+            }
+
+            if (isset($config['value']) && $config['value'] !== '' && $config['value'] !== null) {
+                $expected = mb_strtolower(trim((string) $config['value']));
+                $actual = mb_strtolower(trim((string) ($context['new_value'] ?? '')));
+
+                if ($expected !== $actual) {
+                    return false;
+                }
+            }
+        }
+
+        // A returning visitor counts after being away at least min_days_away.
+        if (!empty($config['min_days_away'])
+            && (int) ($context['days_away'] ?? 0) < (int) $config['min_days_away']) {
+            return false;
         }
 
         // Check list_id filter (cast both to int for reliable comparison).
@@ -367,12 +401,10 @@ class AutomationService
         }
 
         // Wildcard pattern matching
+        // (preg_quote escapes * as \* and / as \/, so only \* is swapped.)
         if (str_contains($pattern, '*')) {
-            $regex = '/^' . str_replace(
-                ['*', '/'],
-                ['.*', '\/'],
-                preg_quote($pattern, '/')
-            ) . '$/i';
+            $regex = '/^' . str_replace('\\*', '.*', preg_quote($pattern, '/')) . '$/i';
+
             return (bool) preg_match($regex, $url);
         }
 

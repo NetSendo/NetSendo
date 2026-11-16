@@ -79,6 +79,15 @@ const props = defineProps({
         type: Number,
         default: null,
     },
+    // Saved segments of the account: [{ id, name, subscribers_count }]
+    segments: {
+        type: Array,
+        default: () => [],
+    },
+    preselectedSegmentId: {
+        type: Number,
+        default: null,
+    },
     availableLanguages: {
         type: Object,
         default: () => ({}),
@@ -260,6 +269,10 @@ const form = useForm({
     // Custom-field audience filters
     include_field_filters: props.message?.include_field_filters || [],
     exclude_field_filters: props.message?.exclude_field_filters || [],
+    // Saved segment narrowing the list audience (null: everyone on the lists)
+    segment_id: props.message
+        ? (props.message.segment_id ?? null)
+        : props.preselectedSegmentId,
     include_field_filter_match:
         props.message?.include_field_filter_match || "all",
     exclude_field_filter_match:
@@ -1367,6 +1380,7 @@ const fetchAudienceEstimate = debounce(async () => {
             exclude_field_filters: form.exclude_field_filters,
             include_field_filter_match: form.include_field_filter_match,
             exclude_field_filter_match: form.exclude_field_filter_match,
+            segment_id: form.segment_id,
         });
         audienceEstimate.value = response.data;
     } catch (error) {
@@ -1384,6 +1398,7 @@ watch(
         form.exclude_field_filters,
         form.include_field_filter_match,
         form.exclude_field_filter_match,
+        form.segment_id,
     ],
     fetchAudienceEstimate,
     { deep: true, immediate: true },
@@ -2815,6 +2830,32 @@ watch(
 
                 <!-- TAB: Audience — who gets the message (left), who does not (right) -->
                 <div v-show="activeTab === 'audience'" class="space-y-6">
+                        <!-- Saved segment: narrows whoever the lists hold -->
+                        <div
+                            v-if="segments.length > 0 || form.segment_id"
+                            class="rounded-xl border border-slate-200 p-4 dark:border-slate-700"
+                        >
+                            <label
+                                for="message-segment"
+                                class="block text-sm font-medium text-slate-800 dark:text-slate-200"
+                            >
+                                {{ $t("segments.message.label") }}
+                            </label>
+                            <select
+                                id="message-segment"
+                                v-model="form.segment_id"
+                                class="mt-1 block min-h-10 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 sm:max-w-md dark:border-slate-600 dark:bg-slate-900/40 dark:text-white"
+                            >
+                                <option :value="null">{{ $t("segments.message.none") }}</option>
+                                <option v-for="segment in segments" :key="segment.id" :value="segment.id">
+                                    {{ segment.name }}
+                                </option>
+                            </select>
+                            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                                {{ $t("segments.message.help") }}
+                            </p>
+                        </div>
+
                         <!-- Estimated reach of the current selection -->
                         <div
                             v-if="form.contact_list_ids.length > 0"

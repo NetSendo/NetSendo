@@ -83,7 +83,7 @@ class AutomationController extends Controller
     {
         return Inertia::render('Automations/Builder', [
             'rule' => null,
-            'triggerEvents' => AutomationRule::getTriggerEvents(),
+            'triggerEvents' => AutomationRule::getSelectableTriggerEvents(),
             'actionTypes' => AutomationRule::getActionTypes(),
             'conditionTypes' => AutomationRule::getConditionTypes(),
             'lists' => Auth::user()->accessibleLists()->select('id', 'name')->get(),
@@ -141,7 +141,7 @@ class AutomationController extends Controller
                 'limit_count' => $automation->limit_count,
                 'limit_period' => $automation->limit_period,
             ],
-            'triggerEvents' => AutomationRule::getTriggerEvents(),
+            'triggerEvents' => AutomationRule::getSelectableTriggerEvents($automation->trigger_event),
             'actionTypes' => AutomationRule::getActionTypes(),
             'conditionTypes' => AutomationRule::getConditionTypes(),
             'lists' => Auth::user()->accessibleLists()->select('id', 'name')->get(),

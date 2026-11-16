@@ -666,8 +666,8 @@ class AutomationActionExecutor
             'crm_company_id' => $config['company_id'] ?? null,
         ]);
 
-        // Dispatch event for further automations
-        event(new \App\Events\CrmContactCreated($contact));
+        // CrmContact raises CrmContactCreated itself when it is created; a second
+        // dispatch here ran "CRM contact created" automations twice.
 
         return ['contact_id' => $contact->id, 'created' => true];
     }
