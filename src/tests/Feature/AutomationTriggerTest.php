@@ -42,10 +42,9 @@ class AutomationTriggerTest extends TestCase
     public function test_bulk_move_triggers_automation()
     {
         // Create automation: when subscribing to List B, unsubscribe from List A
-        $automation = AutomationRule::create([
+        $automation = AutomationRule::factory()->subscriberSignup()->create([
             'user_id' => $this->user->id,
             'name' => 'Remove from A when added to B',
-            'trigger_event' => 'subscriber_signup',
             'trigger_config' => ['list_id' => $this->listB->id],
             'conditions' => [],
             'actions' => [
@@ -104,10 +103,9 @@ class AutomationTriggerTest extends TestCase
             'name' => 'Auto Tag',
         ]);
 
-        $automation = AutomationRule::create([
+        $automation = AutomationRule::factory()->subscriberSignup()->create([
             'user_id' => $this->user->id,
             'name' => 'Add tag when added to B',
-            'trigger_event' => 'subscriber_signup',
             'trigger_config' => ['list_id' => $this->listB->id],
             'conditions' => [],
             'actions' => [
@@ -161,10 +159,9 @@ class AutomationTriggerTest extends TestCase
             'name' => 'Bulk Add Tag',
         ]);
 
-        $automation = AutomationRule::create([
+        $automation = AutomationRule::factory()->subscriberSignup()->create([
             'user_id' => $this->user->id,
             'name' => 'Add tag when added to B',
-            'trigger_event' => 'subscriber_signup',
             'trigger_config' => ['list_id' => $this->listB->id],
             'conditions' => [],
             'actions' => [

@@ -107,7 +107,7 @@ class FunnelBuilderAndManagementTest extends TestCase
     public function test_the_builder_offers_the_accounts_emails_not_only_brains(): void
     {
         $draft = $this->makeEmail('Written by hand');
-        $ready = Message::create(['user_id' => $this->user->id, 'channel' => 'email', 'type' => 'broadcast', 'subject' => 'Written by Brain', 'content' => 'x', 'status' => 'ready']);
+        $ready = Message::factory()->broadcast()->create(['user_id' => $this->user->id, 'channel' => 'email', 'subject' => 'Written by Brain', 'content' => 'x', 'status' => 'ready']);
         Message::create(['user_id' => $this->user->id, 'channel' => 'sms', 'type' => 'broadcast', 'subject' => 'An SMS', 'content' => 'x', 'status' => 'draft']);
 
         $offered = app(FunnelService::class)->getAvailableMessages($this->user->id)->pluck('id')->all();
