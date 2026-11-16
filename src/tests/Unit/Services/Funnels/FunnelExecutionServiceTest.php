@@ -14,6 +14,7 @@ use App\Services\Funnels\ABTestService;
 use App\Services\Funnels\WebhookService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Queue;
+use PHPUnit\Framework\Attributes\Test;
 
 class FunnelExecutionServiceTest extends TestCase
 {
@@ -49,7 +50,7 @@ class FunnelExecutionServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function test_can_enroll_subscriber_in_active_funnel()
     {
         // Create start step
@@ -64,12 +65,13 @@ class FunnelExecutionServiceTest extends TestCase
         $enrollment = $this->service->enrollSubscriber($this->funnel, $this->subscriber);
 
         $this->assertNotNull($enrollment);
-        $this->assertEquals(FunnelSubscriber::STATUS_ACTIVE, $enrollment->status);
+        // A start step with nothing after it finishes the enrollment right away.
+        $this->assertEquals(FunnelSubscriber::STATUS_COMPLETED, $enrollment->fresh()->status);
         $this->assertEquals($this->funnel->id, $enrollment->funnel_id);
         $this->assertEquals($this->subscriber->id, $enrollment->subscriber_id);
     }
 
-    /** @test */
+    #[Test]
     public function test_cannot_enroll_subscriber_in_inactive_funnel()
     {
         $this->funnel->update(['status' => Funnel::STATUS_DRAFT]);
@@ -79,7 +81,7 @@ class FunnelExecutionServiceTest extends TestCase
         $this->assertNull($enrollment);
     }
 
-    /** @test */
+    #[Test]
     public function test_delay_step_schedules_next_action()
     {
         // Create steps: Start -> Delay -> End
@@ -120,7 +122,7 @@ class FunnelExecutionServiceTest extends TestCase
         $this->assertTrue($enrollment->next_action_at->isFuture());
     }
 
-    /** @test */
+    #[Test]
     public function test_end_step_marks_enrollment_as_completed()
     {
         // Create simple funnel: Start -> End
@@ -150,7 +152,7 @@ class FunnelExecutionServiceTest extends TestCase
         $this->assertNotNull($enrollment->completed_at);
     }
 
-    /** @test */
+    #[Test]
     public function test_condition_step_branches_correctly()
     {
         // Create condition step with yes/no branches
@@ -180,8 +182,8 @@ class FunnelExecutionServiceTest extends TestCase
 
         $startStep->update(['next_step_id' => $conditionStep->id]);
         $conditionStep->update([
-            'next_step_id_yes' => $yesEndStep->id,
-            'next_step_id_no' => $noEndStep->id,
+            'next_step_yes_id' => $yesEndStep->id,
+            'next_step_no_id' => $noEndStep->id,
         ]);
         $this->funnel->update(['start_step_id' => $startStep->id]);
 
@@ -192,13 +194,13 @@ class FunnelExecutionServiceTest extends TestCase
         $this->assertEquals(FunnelSubscriber::STATUS_COMPLETED, $enrollment->status);
 
         // Check history - condition was evaluated as false
-        $history = $enrollment->history;
-        $conditionEntry = collect($history)->firstWhere('event', 'condition_evaluated');
+        $history = $enrollment->getHistory();
+        $conditionEntry = collect($history)->firstWhere('action', 'condition_evaluated');
         $this->assertNotNull($conditionEntry);
-        $this->assertFalse($conditionEntry['data']['result']);
+        $this->assertFalse($conditionEntry['details']['result']);
     }
 
-    /** @test */
+    #[Test]
     public function test_goal_step_records_conversion()
     {
         // Create funnel with goal step
@@ -235,7 +237,7 @@ class FunnelExecutionServiceTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function test_action_step_executes_add_tag()
     {
         // Create tag
@@ -271,10 +273,10 @@ class FunnelExecutionServiceTest extends TestCase
 
         // Verify tag was added
         $this->subscriber->refresh();
-        $this->assertTrue($this->subscriber->tags->contains('name', 'Funnel Tag'));
+        $this->assertTrue($this->subscriber->tags()->get()->contains('name', 'Funnel Tag'));
     }
 
-    /** @test */
+    #[Test]
     public function test_process_ready_enrollments()
     {
         // Create simple funnel

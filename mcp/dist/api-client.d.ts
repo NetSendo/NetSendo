@@ -3,6 +3,7 @@
  *
  * HTTP client for communicating with NetSendo REST API v1
  */
+import { AxiosAdapter } from 'axios';
 import type { Config } from './config.js';
 import type { Subscriber, SubscriberCreateInput, SubscriberUpdateInput, ContactList, Tag, EmailSendInput, EmailStatus, Mailbox, SmsSendInput, SmsStatus, SmsProvider, CustomField, PaginatedResponse, Message, MessageCreateInput, MessageUpdateInput, MessageStats, AbTest, AbTestCreateInput, AbTestVariant, AbTestVariantInput, AbTestVariantResult, Funnel, FunnelCreateInput, FunnelStep, FunnelStepInput, FunnelStepUpdateInput, FunnelEnrollment, FunnelStats, ContactListCreateInput, ContactListUpdateInput, ListStats, ListImportPayload, ListImportPreview, ListImportResult, ListExportOptions, ListExportResult, ListHygieneReport, ListCleanResult, ListDedupeResult, ListVerifyResult, HygieneCategory, HygieneAction, MemberSelection, ListActivityFeed, ListEngagement, SubscriberActivity, SuppressionEntry, NotificationInput } from './types.js';
 export declare class NetSendoApiError extends Error {
@@ -13,7 +14,14 @@ export declare class NetSendoApiError extends Error {
 export declare class NetSendoApiClient {
     private client;
     private debug;
-    constructor(config: Config);
+    /**
+     * @param options.adapter Replaces the HTTP transport. The in-app connector
+     *   bridge (bridge.ts) uses it to hand API calls to the NetSendo application
+     *   that started it instead of opening a network connection.
+     */
+    constructor(config: Config, options?: {
+        adapter?: AxiosAdapter;
+    });
     listSubscribers(params?: {
         page?: number;
         per_page?: number;

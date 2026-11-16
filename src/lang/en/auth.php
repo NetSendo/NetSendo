@@ -10,6 +10,7 @@ return [
     'login_to_account' => 'Sign in to your account',
     'forgot_password_link' => 'Forgot password?',
     'no_account' => 'Don\'t have an account?',
+    'registration_closed' => 'Registration is closed: this NetSendo already has an administrator. Sign in, or ask the administrator to add you.',
     'register' => [
         'title' => 'Registration',
         'admin_title' => 'Create Admin Account',

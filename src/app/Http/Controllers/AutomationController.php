@@ -43,11 +43,15 @@ class AutomationController extends Controller
             $query->where('name', 'like', '%' . $request->search . '%');
         }
 
-        $rules = $query->paginate(15)->through(function ($rule) {
+        $perPage = max(1, min((int) $request->input('per_page', 30), 100));
+
+        // The page links keep the filters: without withQueryString() page 2 forgot them
+        $rules = $query->paginate($perPage)->withQueryString()->through(function ($rule) {
             return [
                 'id' => $rule->id,
                 'name' => $rule->name,
                 'description' => $rule->description,
+                'is_system' => (bool) $rule->is_system,
                 'trigger_event' => $rule->trigger_event,
                 'trigger_event_label' => $rule->trigger_event_label,
                 'actions_count' => $rule->actions_count,
@@ -61,7 +65,13 @@ class AutomationController extends Controller
 
         return Inertia::render('Automations/Index', [
             'rules' => $rules,
-            'filters' => $request->only(['status', 'trigger', 'search']),
+            // An object even when empty: an empty JSON list would bring Array's own properties
+            'filters' => (object) $request->only(['status', 'trigger', 'search', 'per_page']),
+            'counts' => [
+                'all' => AutomationRule::forUser(Auth::id())->count(),
+                'active' => AutomationRule::forUser(Auth::id())->where('is_active', true)->count(),
+                'inactive' => AutomationRule::forUser(Auth::id())->where('is_active', false)->count(),
+            ],
             'triggerEvents' => AutomationRule::getTriggerEvents(),
         ]);
     }

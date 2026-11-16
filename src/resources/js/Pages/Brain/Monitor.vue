@@ -4,8 +4,13 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
+import GoldNotice from "@/Components/License/GoldNotice.vue";
+import { useLicense } from "@/Composables/useLicense";
 
 const { t } = useI18n();
+// Brain working on its own is GOLD; the chat in manual mode is SILVER
+const { can, requireGold } = useLicense();
+const autonomyLocked = computed(() => !can("brain_autonomy"));
 
 const props = defineProps({
     settings: Object,
@@ -490,6 +495,10 @@ function trendClass(trend, higherIsBetter = true) {
             </div>
         </template>
 
+        <div v-if="autonomyLocked" class="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+            <GoldNotice feature="brain_autonomy" :message="t('license.gating.brain_locked')" />
+        </div>
+
         <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
             <!-- Loading -->
             <div v-if="loading" class="flex items-center justify-center py-20">
@@ -603,13 +612,13 @@ function trendClass(trend, higherIsBetter = true) {
                             class="mt-1 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"
                         >
                             <span class="text-green-500"
-                                >✓ {{ planStats.completed || 0 }}</span
+                                >✓ {{ planStats.completed_today || 0 }}</span
                             >
                             <span class="text-amber-500"
                                 >⏳ {{ planStats.active || 0 }}</span
                             >
                             <span class="text-red-500"
-                                >✕ {{ planStats.failed || 0 }}</span
+                                >✕ {{ planStats.failed_today || 0 }}</span
                             >
                         </div>
                     </div>
@@ -660,6 +669,24 @@ function trendClass(trend, higherIsBetter = true) {
                                 }}</span
                             >
                         </div>
+                        <p
+                            class="mt-1 text-xs text-gray-500 dark:text-gray-400"
+                        >
+                            {{
+                                t(
+                                    "brain.monitor.task_token_limit",
+                                    "Limit na zadanie",
+                                )
+                            }}:
+                            {{
+                                (settings?.task_token_limit ?? 0) > 0
+                                    ? settings.task_token_limit.toLocaleString()
+                                    : t(
+                                          "brain.monitor.no_task_token_limit",
+                                          "bez limitu",
+                                      )
+                            }}
+                        </p>
                         <button
                             v-if="tokensToday.by_model?.length"
                             @click="showModelBreakdown = !showModelBreakdown"
@@ -1827,8 +1854,8 @@ function trendClass(trend, higherIsBetter = true) {
                                 📋
                                 {{
                                     t(
-                                        "brain.monitor.executed_plans",
-                                        "Wykonane plany",
+                                        "brain.monitor.activity_feed",
+                                        "Aktywność Braina",
                                     )
                                 }}
                             </h3>
@@ -1847,7 +1874,7 @@ function trendClass(trend, higherIsBetter = true) {
                                 <span
                                     class="rounded-full bg-amber-100 px-3 py-1 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
                                 >
-                                    ⏳ {{ planStats.pending || 0 }}
+                                    ⏳ {{ planStats.active || 0 }}
                                 </span>
                                 <span
                                     class="rounded-full bg-red-100 px-3 py-1 text-red-700 dark:bg-red-900/30 dark:text-red-400"
@@ -1880,19 +1907,53 @@ function trendClass(trend, higherIsBetter = true) {
                                     <p
                                         class="truncate text-sm font-medium text-gray-900 dark:text-white"
                                     >
-                                        {{ activity.event_type }}
+                                        {{
+                                            t(
+                                                `brain.monitor.events.${activity.event_type}`,
+                                                activity.event_type,
+                                            )
+                                        }}
                                         <span
                                             v-if="activity.agent_name"
                                             class="ml-1 text-xs text-gray-500"
                                             >({{ activity.agent_name }})</span
                                         >
                                     </p>
+                                    <p
+                                        v-if="
+                                            activity.metadata?.error ||
+                                            activity.metadata?.task_title ||
+                                            activity.metadata?.title
+                                        "
+                                        class="truncate text-xs"
+                                        :class="
+                                            activity.metadata?.error
+                                                ? 'text-red-500 dark:text-red-400'
+                                                : 'text-gray-500 dark:text-gray-400'
+                                        "
+                                        :title="
+                                            activity.metadata?.error ||
+                                            activity.metadata?.task_title ||
+                                            activity.metadata?.title
+                                        "
+                                    >
+                                        {{
+                                            activity.metadata?.error ||
+                                            activity.metadata?.task_title ||
+                                            activity.metadata?.title
+                                        }}
+                                    </p>
                                 </div>
                                 <span
                                     class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
                                     :class="statusBadgeClass(activity.status)"
                                 >
-                                    {{ activity.status }}
+                                    {{
+                                        t(
+                                            `brain.monitor.statuses.${activity.status}`,
+                                            activity.status,
+                                        )
+                                    }}
                                 </span>
                                 <span
                                     class="whitespace-nowrap text-xs text-gray-400 dark:text-gray-500"

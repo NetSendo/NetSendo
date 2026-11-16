@@ -172,12 +172,27 @@ PROMPT;
 
     protected function comparePerformance(AiActionPlanStep $step, User $user): array
     {
-        $messages = Message::where('user_id', $user->id)->where('status', 'sent')
-            ->orderByDesc('updated_at')->limit(5)->get();
+        // The campaigns of the report's period: the last five sent ones used to be compared
+        // whatever their date, and a report "for the last 30 days" named an August campaign the
+        // best of the period
+        $days = (int) ($step->config['days'] ?? 30);
+        $since = Carbon::now()->subDays($days);
+        $sent = fn () => Message::where('user_id', $user->id)->where('status', 'sent');
+
+        $messages = $sent()
+            ->where(fn ($q) => $q->where('scheduled_at', '>=', $since)
+                ->orWhere(fn ($q) => $q->whereNull('scheduled_at')->where('updated_at', '>=', $since)))
+            ->orderByDesc('updated_at')->limit(10)->get();
+        $header = __('brain.analytics.compare_header_period', ['days' => $days]);
+
+        if ($messages->isEmpty()) {
+            $messages = $sent()->orderByDesc('updated_at')->limit(5)->get();
+            $header = __('brain.analytics.compare_outside_period', ['days' => $days]);
+        }
 
         if ($messages->isEmpty()) return ['status' => 'completed', 'message' => __('brain.analytics.no_campaigns')];
 
-        $cmp = __('brain.analytics.compare_header') . "\n\n";
+        $cmp = $header . "\n\n";
         foreach ($messages as $msg) {
             $delivered = $msg->queueEntries()->where('status', MessageQueueEntry::STATUS_SENT)->count();
             $opens = EmailOpen::where('message_id', $msg->id)->distinct('subscriber_id')->count('subscriber_id');
@@ -195,10 +210,14 @@ PROMPT;
         $days = $step->config['days'] ?? 14;
         $half = intdiv($days, 2);
 
+        // Unique openers, like the campaign statistics step (all open events gave "32 opens"
+        // next to "7 opens" in the same report)
         $recentOpens = EmailOpen::whereHas('message', fn($q) => $q->where('user_id', $user->id))
-            ->where('created_at', '>=', Carbon::now()->subDays($half))->count();
+            ->where('created_at', '>=', Carbon::now()->subDays($half))
+            ->distinct('subscriber_id')->count('subscriber_id');
         $prevOpens = EmailOpen::whereHas('message', fn($q) => $q->where('user_id', $user->id))
-            ->whereBetween('created_at', [Carbon::now()->subDays($days), Carbon::now()->subDays($half)])->count();
+            ->whereBetween('created_at', [Carbon::now()->subDays($days), Carbon::now()->subDays($half)])
+            ->distinct('subscriber_id')->count('subscriber_id');
 
         $recentSubs = Subscriber::where('user_id', $user->id)
             ->where('created_at', '>=', Carbon::now()->subDays($half))->count();

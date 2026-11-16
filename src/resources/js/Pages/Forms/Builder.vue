@@ -145,8 +145,9 @@ async function saveForm() {
                 onError: (errors) => {
                     console.error("Form update errors:", errors);
                     alert(
-                        "Błąd walidacji: " +
-                            Object.values(errors).flat().join(", ")
+                        t("forms.builder.validation_error", {
+                            errors: Object.values(errors).flat().join(", "),
+                        })
                     );
                 },
                 onFinish: () => (isSaving.value = false),
@@ -159,7 +160,9 @@ async function saveForm() {
             onError: (errors) => {
                 console.error("Form create errors:", errors);
                 alert(
-                    "Błąd walidacji: " + Object.values(errors).flat().join(", ")
+                    t("forms.builder.validation_error", {
+                        errors: Object.values(errors).flat().join(", "),
+                    })
                 );
             },
             onFinish: () => (isSaving.value = false),
@@ -479,7 +482,7 @@ const previewContainerStyle = computed(() => {
                     <h3
                         class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3"
                     >
-                        Presety designu
+                        {{ t("forms.builder.design_presets") }}
                     </h3>
                     <div class="space-y-2">
                         <button
@@ -777,7 +780,7 @@ const previewContainerStyle = computed(() => {
                                     class="input w-full"
                                 />
                                 <p class="text-xs text-gray-500 mt-1">
-                                    Ten tekst pojawi się w polu jako podpowiedź
+                                    {{ t("forms.builder.placeholder_hint") }}
                                 </p>
                             </div>
 
@@ -841,12 +844,12 @@ const previewContainerStyle = computed(() => {
                             >
                                 {{
                                     section === "container"
-                                        ? "Kontener"
+                                        ? t("forms.builder.style_section_container")
                                         : section === "fields"
-                                        ? "Pola"
+                                        ? t("forms.builder.style_section_fields")
                                         : section === "button"
-                                        ? "Przycisk"
-                                        : "Efekty"
+                                        ? t("forms.builder.style_section_button")
+                                        : t("forms.builder.style_section_effects")
                                 }}
                             </button>
                         </div>
@@ -865,12 +868,12 @@ const previewContainerStyle = computed(() => {
                                         <p
                                             class="text-sm font-medium text-indigo-900 dark:text-indigo-100"
                                         >
-                                            Przezroczysty kontener
+                                            {{ t("forms.builder.transparent_container") }}
                                         </p>
                                         <p
                                             class="text-xs text-indigo-600 dark:text-indigo-400"
                                         >
-                                            Tylko pola i przycisk
+                                            {{ t("forms.builder.transparent_container_hint") }}
                                         </p>
                                     </div>
                                     <label
@@ -909,7 +912,7 @@ const previewContainerStyle = computed(() => {
 
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Kolor tła</label
+                                    >{{ t("forms.builder.background_color") }}</label
                                 >
                                 <div class="flex gap-2">
                                     <input
@@ -926,7 +929,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Przezroczystość tła:
+                                    >{{ t("forms.builder.background_opacity") }}:
                                     {{
                                         formData.styles.bgcolor_opacity ?? 100
                                     }}%</label
@@ -943,7 +946,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Kolor tekstu</label
+                                    >{{ t("forms.builder.text_color") }}</label
                                 >
                                 <input
                                     v-model="formData.styles.text_color"
@@ -953,7 +956,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Kolor ramki</label
+                                    >{{ t("forms.builder.border_color") }}</label
                                 >
                                 <input
                                     v-model="formData.styles.border_color"
@@ -963,7 +966,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Grubość ramki:
+                                    >{{ t("forms.builder.border_width") }}:
                                     {{ formData.styles.border_width }}px</label
                                 >
                                 <input
@@ -978,7 +981,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Zaokrąglenie:
+                                    >{{ t("forms.builder.border_radius") }}:
                                     {{ formData.styles.border_radius }}px</label
                                 >
                                 <input
@@ -993,7 +996,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Padding:
+                                    >{{ t("forms.builder.padding") }}:
                                     {{ formData.styles.padding }}px</label
                                 >
                                 <input
@@ -1013,7 +1016,7 @@ const previewContainerStyle = computed(() => {
                         >
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Tło pola</label
+                                    >{{ t("forms.builder.field_background") }}</label
                                 >
                                 <input
                                     v-model="formData.styles.field_bgcolor"
@@ -1023,7 +1026,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Kolor tekstu pola</label
+                                    >{{ t("forms.builder.field_text_color") }}</label
                                 >
                                 <input
                                     v-model="formData.styles.field_text"
@@ -1033,7 +1036,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Kolor placeholdera</label
+                                    >{{ t("forms.builder.placeholder_color") }}</label
                                 >
                                 <input
                                     v-model="formData.styles.placeholder_color"
@@ -1043,7 +1046,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Ramka pola</label
+                                    >{{ t("forms.builder.field_border") }}</label
                                 >
                                 <input
                                     v-model="formData.styles.field_border_color"
@@ -1053,7 +1056,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Ramka pola (focus)</label
+                                    >{{ t("forms.builder.field_border_focus") }}</label
                                 >
                                 <input
                                     v-model="
@@ -1066,7 +1069,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Wysokość pola:
+                                    >{{ t("forms.builder.field_height") }}:
                                     {{ formData.styles.field_height }}px</label
                                 >
                                 <input
@@ -1081,7 +1084,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Zaokrąglenie pól:
+                                    >{{ t("forms.builder.field_border_radius") }}:
                                     {{
                                         formData.styles.field_border_radius
                                     }}px</label
@@ -1105,7 +1108,7 @@ const previewContainerStyle = computed(() => {
                         >
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Tekst przycisku</label
+                                    >{{ t("forms.builder.button_text") }}</label
                                 >
                                 <input
                                     v-model="formData.styles.submit_text"
@@ -1115,7 +1118,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Kolor przycisku</label
+                                    >{{ t("forms.builder.button_color") }}</label
                                 >
                                 <input
                                     v-model="formData.styles.submit_color"
@@ -1125,7 +1128,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Kolor tekstu przycisku</label
+                                    >{{ t("forms.builder.button_text_color") }}</label
                                 >
                                 <input
                                     v-model="formData.styles.submit_text_color"
@@ -1135,7 +1138,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Kolor hover</label
+                                    >{{ t("forms.builder.button_hover_color") }}</label
                                 >
                                 <input
                                     v-model="formData.styles.submit_hover_color"
@@ -1145,7 +1148,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Zaokrąglenie:
+                                    >{{ t("forms.builder.border_radius") }}:
                                     {{
                                         formData.styles.submit_border_radius
                                     }}px</label
@@ -1162,7 +1165,7 @@ const previewContainerStyle = computed(() => {
                             </div>
                             <div>
                                 <label class="block text-xs text-gray-500 mb-1"
-                                    >Rozmiar czcionki:
+                                    >{{ t("forms.builder.font_size") }}:
                                     {{
                                         formData.styles.submit_font_size
                                     }}px</label
@@ -1187,7 +1190,7 @@ const previewContainerStyle = computed(() => {
                                 <label
                                     for="btn-full-width"
                                     class="text-sm text-gray-700 dark:text-gray-300"
-                                    >Pełna szerokość</label
+                                    >{{ t("forms.builder.full_width") }}</label
                                 >
                             </div>
                         </div>
@@ -1207,7 +1210,7 @@ const previewContainerStyle = computed(() => {
                                     <h5
                                         class="text-sm font-medium text-gray-900 dark:text-gray-100"
                                     >
-                                        Cień
+                                        {{ t("forms.builder.shadow") }}
                                     </h5>
                                     <label
                                         class="relative inline-flex items-center cursor-pointer"
@@ -1231,7 +1234,7 @@ const previewContainerStyle = computed(() => {
                                     <div>
                                         <label
                                             class="block text-xs text-gray-500 mb-1"
-                                            >Kolor cienia</label
+                                            >{{ t("forms.builder.shadow_color") }}</label
                                         >
                                         <input
                                             v-model="
@@ -1244,7 +1247,7 @@ const previewContainerStyle = computed(() => {
                                     <div>
                                         <label
                                             class="block text-xs text-gray-500 mb-1"
-                                            >Przezroczystość:
+                                            >{{ t("forms.builder.opacity") }}:
                                             {{
                                                 formData.styles.shadow_opacity
                                             }}%</label
@@ -1262,7 +1265,7 @@ const previewContainerStyle = computed(() => {
                                     <div>
                                         <label
                                             class="block text-xs text-gray-500 mb-1"
-                                            >Rozmycie:
+                                            >{{ t("forms.builder.blur") }}:
                                             {{
                                                 formData.styles.shadow_blur
                                             }}px</label
@@ -1328,7 +1331,7 @@ const previewContainerStyle = computed(() => {
                                     <h5
                                         class="text-sm font-medium text-gray-900 dark:text-gray-100"
                                     >
-                                        Gradient
+                                        {{ t("forms.builder.gradient") }}
                                     </h5>
                                     <label
                                         class="relative inline-flex items-center cursor-pointer"
@@ -1352,7 +1355,7 @@ const previewContainerStyle = computed(() => {
                                     <div>
                                         <label
                                             class="block text-xs text-gray-500 mb-1"
-                                            >Kierunek</label
+                                            >{{ t("forms.builder.direction") }}</label
                                         >
                                         <select
                                             v-model="
@@ -1362,28 +1365,28 @@ const previewContainerStyle = computed(() => {
                                             class="input w-full text-sm"
                                         >
                                             <option value="to right">
-                                                Prawo →
+                                                {{ t("forms.builder.dir_right") }}
                                             </option>
                                             <option value="to left">
-                                                Lewo ←
+                                                {{ t("forms.builder.dir_left") }}
                                             </option>
                                             <option value="to bottom">
-                                                Dół ↓
+                                                {{ t("forms.builder.dir_down") }}
                                             </option>
                                             <option value="to top">
-                                                Góra ↑
+                                                {{ t("forms.builder.dir_up") }}
                                             </option>
                                             <option value="to bottom right">
-                                                Prawy dół ↘
+                                                {{ t("forms.builder.dir_down_right") }}
                                             </option>
                                             <option value="to bottom left">
-                                                Lewy dół ↙
+                                                {{ t("forms.builder.dir_down_left") }}
                                             </option>
                                             <option value="to top right">
-                                                Prawy górny ↗
+                                                {{ t("forms.builder.dir_up_right") }}
                                             </option>
                                             <option value="to top left">
-                                                Lewy górny ↖
+                                                {{ t("forms.builder.dir_up_left") }}
                                             </option>
                                         </select>
                                     </div>
@@ -1391,7 +1394,7 @@ const previewContainerStyle = computed(() => {
                                         <div>
                                             <label
                                                 class="block text-xs text-gray-500 mb-1"
-                                                >Kolor od</label
+                                                >{{ t("forms.builder.gradient_from") }}</label
                                             >
                                             <input
                                                 v-model="
@@ -1405,7 +1408,7 @@ const previewContainerStyle = computed(() => {
                                         <div>
                                             <label
                                                 class="block text-xs text-gray-500 mb-1"
-                                                >Kolor do</label
+                                                >{{ t("forms.builder.gradient_to") }}</label
                                             >
                                             <input
                                                 v-model="
@@ -1429,7 +1432,7 @@ const previewContainerStyle = computed(() => {
                                     <h5
                                         class="text-sm font-medium text-gray-900 dark:text-gray-100"
                                     >
-                                        Animacja
+                                        {{ t("forms.builder.animation") }}
                                     </h5>
                                     <label
                                         class="relative inline-flex items-center cursor-pointer"
@@ -1534,7 +1537,7 @@ const previewContainerStyle = computed(() => {
                             <h4
                                 class="text-sm font-medium text-gray-900 dark:text-gray-100"
                             >
-                                Przekierowanie po zapisie
+                                {{ t("forms.builder.redirect_title") }}
                             </h4>
 
                             <div class="flex items-center gap-2">
@@ -1548,7 +1551,7 @@ const previewContainerStyle = computed(() => {
                                     for="use-list-redirect"
                                     class="text-sm text-gray-700 dark:text-gray-300"
                                 >
-                                    Użyj ustawień listy
+                                    {{ t("forms.builder.use_list_redirect") }}
                                 </label>
                             </div>
 
@@ -1569,8 +1572,8 @@ const previewContainerStyle = computed(() => {
                             <p class="text-xs text-gray-500">
                                 {{
                                     formData.use_list_redirect
-                                        ? "Przekierowanie będzie zależeć od ustawień Double Opt-in listy"
-                                        : "Własny adres URL przekierowania po zapisie"
+                                        ? t("forms.builder.use_list_redirect_hint")
+                                        : t("forms.builder.custom_redirect_hint")
                                 }}
                             </p>
                         </div>

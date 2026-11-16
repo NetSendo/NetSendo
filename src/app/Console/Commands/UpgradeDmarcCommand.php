@@ -42,7 +42,7 @@ class UpgradeDmarcCommand extends Command
             // Get domains that are verified and have DMARC configured
             $domains = DomainConfiguration::query()
                 ->where('cname_verified', true)
-                ->where('dmarc_status', 'pass')
+                ->where('dmarc_status', DomainConfiguration::STATUS_VALID)
                 ->whereIn('dmarc_policy', ['none', 'quarantine'])
                 ->get();
 

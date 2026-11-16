@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Licensing\Feature;
 use App\Models\AiActionPlan;
 use App\Models\AiBrainActivityLog;
 use App\Models\AiBrainSettings;
@@ -21,6 +22,7 @@ use App\Services\Brain\Telegram\TelegramBotService;
 use App\Services\Brain\WeeklyDigestService;
 use App\Services\Brain\Skills\MarketingSalesSkill;
 use App\Services\Brain\Skills\ResearchSkill;
+use App\Services\LicenseService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
@@ -147,13 +149,15 @@ class BrainController extends Controller
             );
 
             if ($stream === null) {
-                // Not streamable (agent request) — fall back to synchronous
+                // Not streamable (agent request) — fall back to synchronous, in the conversation
+                // the stream attempt already opened (a second new one was left empty in the list)
+                $openedId = $this->orchestrator->streamConversationId;
                 $result = $this->orchestrator->processMessage(
                     $message,
                     $user,
                     'web',
-                    $conversationId,
-                    $forceNew,
+                    $openedId ?? $conversationId,
+                    $openedId ? false : $forceNew,
                 );
 
                 echo "data: " . json_encode([
@@ -203,7 +207,9 @@ class BrainController extends Controller
     {
         $user = $request->user();
 
+        // Conversations without a single message are not listed
         $conversations = AiConversation::forUser($user->id)
+            ->whereHas('messages')
             ->orderByDesc('last_activity_at')
             ->with(['messages' => function ($q) {
                 $q->orderByDesc('created_at')->limit(1);
@@ -222,6 +228,23 @@ class BrainController extends Controller
         $conversation = AiConversation::forUser($request->user()->id)
             ->with('messages')
             ->findOrFail($id);
+
+        // Plans still waiting for a decision keep their approve/reject buttons after a reload
+        $planIds = $conversation->messages
+            ->map(fn ($message) => $message->metadata['plan_id'] ?? null)
+            ->filter()
+            ->unique();
+        $pendingPlans = $planIds->isEmpty() ? collect() : AiActionPlan::forUser($request->user()->id)
+            ->whereIn('id', $planIds)
+            ->where('status', 'pending_approval')
+            ->whereHas('pendingApproval')
+            ->get()
+            ->keyBy('id');
+
+        $conversation->messages->each(function ($message) use ($pendingPlans) {
+            $plan = $pendingPlans->get($message->metadata['plan_id'] ?? null);
+            $message->setAttribute('plan', $plan ? \App\Services\Brain\AgentOrchestrator::planCard($plan) : null);
+        });
 
         return response()->json($conversation);
     }
@@ -274,7 +297,8 @@ class BrainController extends Controller
         $request->validate([
             'category' => 'required|string|in:' . implode(',', array_keys(KnowledgeEntry::CATEGORIES)),
             'title' => 'required|string|max:255',
-            'content' => 'required|string|max:10000',
+            // Longer entries come with the semantic knowledge base (GOLD), which sends only matching chunks
+            'content' => 'required|string|max:' . KnowledgeEntry::contentLimit(),
             'tags' => 'nullable|array',
         ]);
 
@@ -302,7 +326,7 @@ class BrainController extends Controller
         $request->validate([
             'category' => 'nullable|string|in:' . implode(',', array_keys(KnowledgeEntry::CATEGORIES)),
             'title' => 'nullable|string|max:255',
-            'content' => 'nullable|string|max:10000',
+            'content' => 'nullable|string|max:' . KnowledgeEntry::contentLimit(),
             'is_active' => 'nullable|boolean',
             'is_verified' => 'nullable|boolean',
         ]);
@@ -498,6 +522,10 @@ class BrainController extends Controller
             }
 
             if ($approved) {
+                // Goals are part of Brain autonomy (GOLD): a proposal left from GOLD days
+                // can still be rejected, but not turned into a goal without it
+                app(LicenseService::class)->ensureAllows(Feature::BrainAutonomy);
+
                 $goalPlanner = app(\App\Services\Brain\GoalPlanner::class);
                 $goal = $goalPlanner->createGoal(
                     $user,
@@ -708,7 +736,15 @@ class BrainController extends Controller
         $request->validate([
             'work_mode' => 'nullable|string|in:autonomous,semi_auto,manual',
             'preferred_language' => 'nullable|string|max:5',
-            'daily_token_limit' => 'nullable|integer|min:1000',
+            // Tokens one task may use (TaskTokenBudget); 0 = no limit
+            'task_token_limit' => [
+                'nullable', 'integer', 'min:0', 'max:100000000',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if ($value > 0 && $value < 1000) {
+                        $fail(__('brain.task_token_limit_too_low'));
+                    }
+                },
+            ],
             'preferences' => 'nullable|array',
             'telegram_bot_token' => 'nullable|string|max:255',
             'perplexity_api_key' => 'nullable|string|max:255',
@@ -727,11 +763,32 @@ class BrainController extends Controller
             'agent_modes' => 'nullable|array',
         ]);
 
+        // Brain working on its own is GOLD: the automatic modes, the Telegram bot and the
+        // research keys answer 402 without it; manual mode, language, model and strategy stay open
+        $wantsAutonomy = in_array($request->input('work_mode'), ['autonomous', 'semi_auto'], true)
+            || collect($request->input('agent_modes', []))->contains(fn ($mode) => $mode !== 'manual')
+            || filled($request->input('telegram_bot_token'))
+            || filled($request->input('perplexity_api_key'))
+            || filled($request->input('serpapi_api_key'));
+        if ($wantsAutonomy) {
+            app(LicenseService::class)->ensureAllows(Feature::BrainAutonomy);
+        }
+
         $settings = AiBrainSettings::getForUser($request->user()->id);
+
+        // Choosing a global mode applies it to every agent (per-agent modes are cleared), unless
+        // the same request sets agent modes too
+        if ($request->filled('work_mode')) {
+            if ($request->has('agent_modes')) {
+                $settings->update(['work_mode' => $request->input('work_mode')]);
+            } else {
+                $settings->setWorkMode($request->input('work_mode'));
+            }
+        }
 
         // Standard fields
         $settings->update($request->only([
-            'work_mode', 'preferred_language', 'daily_token_limit',
+            'preferred_language', 'task_token_limit',
             'telegram_bot_token',
             'perplexity_api_key', 'serpapi_api_key',
             'preferred_model', 'preferred_integration_id',
@@ -868,11 +925,18 @@ class BrainController extends Controller
     {
         $request->validate([
             'provider' => 'required|string|in:perplexity,serpapi',
-            'api_key' => 'required|string|max:255',
+            // Without a key the saved one is tested: the panel no longer receives saved keys
+            'api_key' => 'nullable|string|max:255',
         ]);
 
         $provider = $request->input('provider');
-        $apiKey = $request->input('api_key');
+        $apiKey = $request->input('api_key')
+            ?: AiBrainSettings::getForUser($request->user()->id)->{$provider === 'perplexity' ? 'perplexity_api_key' : 'serpapi_api_key'};
+
+        if (blank($apiKey)) {
+            return response()->json(['success' => false, 'message' => __('brain.research_key_missing')], 422);
+        }
+
         $webResearch = app(WebResearchService::class);
 
         $result = match ($provider) {
@@ -898,10 +962,18 @@ class BrainController extends Controller
 
         return response()->json([
             'work_mode' => $settings->work_mode ?? 'semi_auto',
-            'mode_label' => $this->modeController->getModeLabel($settings->work_mode ?? 'semi_auto'),
+            'mode_label' => $this->effectiveModeLabel($settings),
             'knowledge_count' => $knowledgeCount,
             'telegram_connected' => $settings->isTelegramConnected(),
         ]);
+    }
+
+    /** Label key of the mode the agents really work in ("mixed" when per-agent modes differ). */
+    private function effectiveModeLabel(AiBrainSettings $settings): string
+    {
+        $mode = $settings->effectiveMode();
+
+        return $mode === 'mixed' ? 'brain.mode.mixed_label' : $this->modeController->getModeLabel($mode);
     }
 
     /**
@@ -948,6 +1020,9 @@ class BrainController extends Controller
             'completed' => AiActionPlan::forUser($user->id)->withStatus('completed')->count(),
             'failed' => AiActionPlan::forUser($user->id)->withStatus('failed')->count(),
             'pending' => AiActionPlan::forUser($user->id)->pending()->count(),
+            // The "Plans today" card shows today's split, not the all-time totals under today's count
+            'completed_today' => AiActionPlan::forUser($user->id)->withStatus('completed')->whereDate('created_at', today())->count(),
+            'failed_today' => AiActionPlan::forUser($user->id)->withStatus('failed')->whereDate('created_at', today())->count(),
         ];
 
         // Today's token usage — real values with cost estimation
@@ -998,10 +1073,12 @@ class BrainController extends Controller
         // This ensures the activity bar remains visible even after synchronous plan execution
         $isRecentlyActive = $lastActivity && $lastActivity->created_at->diffInSeconds(now()) < 30;
 
-        // Currently executing plan?
+        // Currently executing plan? One that stopped moving hours ago is no current work
+        // (brain:close-stale-plans marks it failed)
         $executingPlan = AiActionPlan::forUser($user->id)
-            ->withStatus('executing')
+            ->running()
             ->with('steps')
+            ->latest('started_at')
             ->first();
 
         $isRunning = $executingPlan !== null || $isRecentlyActive;
@@ -1047,9 +1124,13 @@ class BrainController extends Controller
                 'is_active' => $isActive,
                 'is_running' => $isRunning,
                 'work_mode' => $settings->work_mode ?? 'semi_auto',
-                'mode_label' => $this->modeController->getModeLabel($settings->work_mode ?? 'semi_auto'),
+                // The mode the agents really work in: per-agent modes win over the global one
+                'mode_label' => $this->effectiveModeLabel($settings),
+                'effective_mode' => $settings->effectiveMode(),
                 'dry_run_mode' => (bool) (($settings->preferences ?? [])['dry_run_mode'] ?? false),
-                'last_activity_at' => $settings->last_activity_at ?? $lastActivity?->created_at,
+                // The latest of the stored timestamp (cron runs) and the latest logged AI work
+                // (the chat does not update the stored one)
+                'last_activity_at' => collect([$settings->last_activity_at, $lastActivity?->created_at])->filter()->max(),
                 'is_active_flag' => $settings->is_active,
             ],
             'current_task' => $currentTask,
@@ -1140,6 +1221,11 @@ class BrainController extends Controller
             'cron_enabled' => 'required|boolean',
             'cron_interval_minutes' => 'required|integer|in:5,15,30,60,120,240,360,720,1440',
         ]);
+
+        // The autonomous cron is GOLD; turning it off stays open
+        if ($request->boolean('cron_enabled')) {
+            app(LicenseService::class)->ensureAllows(Feature::BrainAutonomy);
+        }
 
         $settings = AiBrainSettings::getForUser($request->user()->id);
         $settings->update([

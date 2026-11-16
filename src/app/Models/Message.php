@@ -348,8 +348,9 @@ class Message extends Model
      * anchored at the given base time (usually the subscription/re-signup moment).
      *
      * Applies the day offset and, when time_of_day is set, the configured hour —
-     * interpreted in the subscriber's timezone when send_in_subscriber_timezone
-     * is enabled. Single source of truth shared by the signup listener and CRON.
+     * interpreted in the message's effective timezone, or in the subscriber's timezone
+     * when send_in_subscriber_timezone is enabled. Single source of truth shared by
+     * the signup listener and CRON.
      */
     public function calculateExpectedSendAt(\Carbon\Carbon $base, ?Subscriber $subscriber = null): \Carbon\Carbon
     {
@@ -360,9 +361,11 @@ class Message extends Model
             $hour = (int) ($timeParts[0] ?? 0);
             $minute = (int) ($timeParts[1] ?? 0);
 
-            $targetTimezone = 'UTC';
+            // "Pick a time" is in the message's timezone (Message > List > Group > User Account),
+            // or in the subscriber's own when "Send in subscriber's timezone" is ticked
+            $targetTimezone = $this->effective_timezone;
             if ($this->send_in_subscriber_timezone && $subscriber) {
-                $targetTimezone = $subscriber->getEffectiveTimezone($this->effective_timezone);
+                $targetTimezone = $subscriber->getEffectiveTimezone($targetTimezone);
             }
 
             $expected = $expected->copy()
@@ -987,12 +990,23 @@ class Message extends Model
      */
     public function getEffectiveTimezoneAttribute()
     {
-        if ($this->timezone) {
-            return $this->timezone;
+        return self::resolveTimezone($this->timezone, $this->contactLists, $this->user);
+    }
+
+    /**
+     * The timezone a message's times are in: Message > List > Group > User Account
+     * (the order the message form's Timezone field describes), then the app timezone.
+     *
+     * Several lists: the one with the lowest ID decides, so the panel (before the
+     * message is saved) and the CRON (after) pick the same one.
+     */
+    public static function resolveTimezone(?string $messageTimezone, iterable $lists, ?User $user): string
+    {
+        if ($messageTimezone) {
+            return $messageTimezone;
         }
 
-        // Check primary contact list (if any)
-        $list = $this->contactLists->first();
+        $list = collect($lists)->sortBy('id')->first();
         if ($list) {
             if ($list->timezone) {
                 return $list->timezone;
@@ -1002,11 +1016,11 @@ class Message extends Model
             }
         }
 
-        if ($this->user && $this->user->timezone) {
-            return $this->user->timezone;
+        if ($user && $user->timezone) {
+            return $user->timezone;
         }
 
-        return 'UTC';
+        return config('app.timezone') ?: 'UTC';
     }
 }
 

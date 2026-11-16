@@ -9,7 +9,687 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Fixed
+
+- **AI apps could not sign in on installations whose nginx file denies hidden paths.** Some installations carry a `docker/nginx/default.conf` with `location ~ /\. { deny all; }`. That rule also blocked `/.well-known/oauth-…`, where AI apps look up how to sign in, so they got `403` and gave up. The same copies served scripts and styles uncompressed. `docker compose pull` never replaces that file, so updates did not help. The current file now refuses hidden files itself (`.git`, `.env`, `.htaccess`) except `/.well-known/`, and keeps PHP requests open for up to 300 seconds like those copies did. The README (*Troubleshooting*) and `docs/MCP_CONNECTOR.md` say how to check a copy and replace it.
+
+## [2.11.4] – The webserver reports healthy - 2026-11-13
+
+**Release date:** 2026-11-13
+
+### Fixed
+
+- **The webserver container was always "unhealthy", though the site worked.** Its healthcheck asked `http://localhost/`, which in the nginx image resolves to `::1` first, and nginx listens on IPv4 only, so every check was refused. Monitoring that reads Docker's health saw a broken webserver on every installation, and the opt-in `mcp` service, which waits for a healthy webserver, could not start. The check now asks `http://127.0.0.1/`. Nothing in the app changed, only `docker-compose.yml`, so pulling the new image alone does not fix it: take the new file as described in README → Updates, or change `localhost` to `127.0.0.1` in the webserver's `healthcheck`, then `docker compose up -d`.
+
+## [2.11.3] – Birthday, anniversary and date automations run; stuck CRM follow-ups stop - 2026-11-12
+
+**Release date:** 2026-11-12
+
+### Fixed
+
+- **Birthday, subscription-anniversary and "date reached" automations never ran.** The job that checks them every minute asked for a `contactList` relation the subscriber does not have and logged "DateTriggerService error: Call to undefined method App\Models\Subscriber::contactList()" each time (seen about 60 times an hour on a client installation). Behind that error the queries would have failed or misfired too: they read a `birth_date` column and a custom-field `slug` that do not exist, and the birthday condition was joined with `OR`, so it was not limited to the account. Now:
+  - **The birthday comes from a custom field** of type *date* whose name or label mentions it (`urodzin…`, `birth…`), stored as `YYYY-MM-DD` or `DD.MM.YYYY`. Subscribers have no built-in birthday field; without such a custom field birthday automations have no one to run for. The age is taken from that field.
+  - Only deliverable subscribers of the account who are an active member of at least one of its lists count.
+  - **Rules limited to a list now match.** The date events did not say which lists the subscriber is on, so a rule with a list — which is what a message sent "on the subscriber's birthday" or "on the anniversary" creates — never matched. The events now carry the subscriber's active lists.
+  - **A "date reached" rule runs on its own date only, once per subscriber.** The job ran every "date reached" rule of the account whenever any of them was due, so a rule set for another day ran too, and two rules on the same day ran each other twice.
+- **A CRM follow-up sequence of a deleted contact failed every five minutes forever** ("Follow-up processing error … Attempt to read property "id" on null", and `crm:process-follow-ups` reported a failure on every run). CRM contacts are soft-deleted, so their enrollments stayed active. Such an enrollment is now cancelled, as is one whose sequence is gone, and cancelling no longer collides with an earlier cancelled enrollment of the same contact and sequence.
+
+## [2.11.2] – Webinar room chat that works, webinar times in the right timezone - 2026-11-12
+
+**Release date:** 2026-11-12
+
+### Fixed
+
+- **The chat of the webinar room said "Loading chat…" forever.** The room (`/webinar/{slug}/watch/{token}`) had a chat panel but no code behind it and no public endpoint, so neither the chat script of an auto-webinar nor anything else ever appeared. The room now polls `GET /webinar/{slug}/chat/{token}` every 4 seconds and posts through `POST` on the same address (rate-limited per registration).
+  - **Auto and hybrid webinars** replay their chat script on each viewer's own session clock: a line set at 00:25 appears 25 seconds after that viewer's session started, a late joiner sees what was "said" before they arrived, and lines not yet due never reach the browser. "Show randomly" lines are chosen once per viewer, so they do not flicker between polls. On a recording a viewer sees their own messages and what the host wrote; in a live session everyone sees the session's chat.
+  - Viewers can write. The Studio's chat mode applies: *host only* refuses messages, *Q&A only* saves them as questions, *moderated* (or "require approval") keeps a message hidden from others until the host approves it, and slow mode makes a viewer wait. A message waiting for approval is no longer broadcast to other viewers before it is hidden.
+  - A recording shows the Studio's viewer count (base ± variance) instead of "0 viewers".
+- **Turning "Chat enabled" off in the Studio did not remove the chat from the room**, and the Studio showed the raw key `webinars.chat.disabled`. The room now leaves the panel out (and an open room drops it at the next poll), and the Studio texts exist in all four languages.
+- **Leaving the webinar room answered HTTP 500.** Carbon 3 returns signed differences, so the watch time added on leaving was negative and MySQL refused it for the unsigned column. The watch time is now counted forward from joining. The "session ended" check of the room had the same sign error.
+- **A slot picked on the sign-up page of an auto-webinar started an hour late in Europe/Warsaw** (the zone's offset late in general; UTC was unaffected). The page lists slots in the schedule's timezone, but the chosen value was read as UTC. The slots now carry their offset (`2026-11-12T18:40:00+01:00`), a value without one is read in the schedule's timezone, and sessions are stored in UTC. The same applied to registrations without a picked slot (*on demand*) and to sessions created from the schedule. A schedule without its own timezone now generates slots in the webinar's timezone, the one its page names. Sessions booked before this fix keep their stored time.
+- **Time differences were counted backwards in several places since the move to Carbon 3**, which returns signed differences (`$later->diffInDays($earlier)` is negative) where Carbon 2 always returned a positive number:
+  - **The automation condition "subscribed at least N days ago" (`subscribed_days_ago`) never matched**, so rules with it never ran. It now counts whole days since the subscriber joined the event's list.
+  - **Brain's CRON gave the lowest urgency to the agents that had been idle the longest** (down to negative scores: an agent last run 14 days ago scored −16 instead of 25), so their tasks lost to those of agents that had just run. Urgency now grows with the days since the agent's last successful run, as intended.
+  - **"Avg. duration" in *Settings → CRON* was negative.**
+  - **CRM task reminders reached Google Calendar as "0 minutes before"** instead of the time between the reminder and the task. A task with a reminder but no due date could not be synced at all; it now gets the calendar's default reminders.
+  - **Copying the chat of an ended live session into an auto-webinar's chat script failed on MySQL** (`POST /webinars/{webinar}/auto-config/import-chat`, and the chat step of `…/auto-config/convert`): every message got a negative show time, which the column refuses. Messages now keep their offset from the session's start; one written before the start shows at 0:00.
+- **A live or hybrid webinar set for 19:00 started at 19:00 UTC, not 19:00 in its timezone.** The panel sends the start time without a timezone, and it was read as UTC: in Europe/Warsaw the countdown, the watch page, the reminders and the calendar file said 20:00 (in winter; 21:00 in summer), while the sign-up page, the confirmation email and the 24-hour reminder printed the stored digits and said 19:00. The time typed when creating or editing a webinar is now read in the webinar's timezone (its own, or the owner's account timezone, also when the timezone is changed in the same save) and stored in UTC; a value sent with an offset (`2026-11-20T18:00:00Z`) keeps it. The edit form shows the time in that zone and says which zone it is, and creating a webinar refuses a time that has already passed there. Every place that shows the time converts it: the sign-up page, the screen after signing up, the watch page, the confirmation and reminder emails, the page builder's date blocks and the `{{webinar_date}}`/`{{webinar_time}}` tokens. A registrant who picked no timezone sees the webinar's instead of UTC.
+  - **Hosts: re-check upcoming live and hybrid webinars.** Webinars scheduled before this version keep their stored instant, which is the one the countdown and the reminders already used: one entered as 19:00 in Warsaw now shows as 20:00 everywhere, the sign-up page and the emails included. If 19:00 was meant, open the webinar, set 19:00 again and save.
+- **Watch time in the webinar room counted time nobody watched**, which put people on the webinar's "attended" list (and gave the attended tag's follow-ups) who had not watched the minimum. Coming back to the room added the whole time since the first visit, the time away included; waiting in the countdown counted as watching; and the room's own reload at the start could close the new visit, so what was watched after it was lost and the viewer counted as gone. Watch time is now counted per visit and from the session start, and a page that reports leaving late closes only its own visit (new column `webinar_registrations.visit_started_at`; added by the automatic migration).
+- **Public webinar pages declared Polish whatever their language** (`<html lang="pl">`), and the thank-you screen wrote the time as "12.11.2026 o 21:25" in every language. The pages now declare the page's language, the time reads "12.11.2026 · 21:25", and the room's "your browser cannot play this video" text is translated.
+
+## [2.11.1] – No 502 after an update: the webserver restarts with the app - 2026-11-12
+
+**Release date:** 2026-11-12
+
+### Fixed
+
+- **Pages answered 502 after an update until the webserver was restarted by hand.** nginx looks the app's address up once, when it starts (`fastcgi_pass app:9000`). `docker compose up -d` with a new image recreates the app container, which often gets a new address on the Docker network, and nginx kept sending every request to the old one ("connect() failed (111) while connecting to upstream"). On 2026-11-12 this hit 7 of 16 hosted installations after the update to 2.11.0. `docker-compose.yml` now has `restart: true` in the webserver's dependency on the app, so Docker Compose (2.17 or newer) restarts the webserver whenever it recreates the app. Installations that keep their compose file: after an update run `docker compose restart webserver` (README → Updates). podman-compose accepts the setting but does not act on it.
+
+## [2.11.0] – NetSendo MTA in every installation, with what the server needs to send - 2026-11-12
+
+**Release date:** 2026-11-12
+
+### Changed
+
+- **NetSendo MTA starts with every installation and works for GOLD.** The MTA container (`nmi-mta`) used to start only with `docker compose --profile nmi`, was built on the server from files `install.sh` never downloads, and the provider was hidden unless `NMI_ENABLED=true`, which no installation had. Now the MTA is part of `docker-compose.yml` like the other services, from a published image (`ghcr.io/netsendo/netsendo:mta-<version>`, built by the same workflow as the app), and the **NetSendo MTA** provider is offered in *Settings → Mailboxes* wherever it answers. Without GOLD the provider shows its GOLD badge; the MTA relays nothing until a GOLD installation saves a mailbox with this provider, because it only accepts sessions that log in with a login NetSendo issued.
+  - **`NMI_DISABLED=true`** in `.env` hides the provider and stops NMI's scheduled jobs. **`NMI_ENABLED` is no longer read**: `.env` files made from the example before this version say `NMI_ENABLED=false` without anyone having chosen it.
+  - The MTA publishes no port on the server (several installations on one host no longer collide on 2525/2587), and its configuration and plugins are in the image, so nothing is mounted from the installation's folder. The app reaches it by the service name, `nmi-mta` (`NMI_MTA_HOST`; `netsendo-mta` keeps working while the container has that name).
+- **The SPF record of a domain that sends through NetSendo MTA must name the address the mail leaves from.** Deliverability used to ask for `include:_spf.<installation's host>`, a record nobody publishes. It now checks for the server's public address (or the mailbox's dedicated IP) as `ip4:`/`ip6:`, with ranges, warns when it is missing, and the generated record adds it.
+
+### Added
+
+- **"Can this server send mail"** in the NetSendo MTA part of the mailbox form and on *Settings → Mail Infrastructure*. The MTA checks it by itself, at start and every few hours, the way a receiver sees it: it greets a Gmail MX on port 25 (sending nothing) and reads the address the MX names. The box shows:
+  - **outbound port 25**: open, or blocked by the server's provider (then mail would stay in the queue), with what to do;
+  - **the server's public address and its PTR record**, and whether the PTR name resolves back to the address;
+  - **the SPF entry** (`ip4:…`) to add to the sending domain's record, with a copy button.
+- **The MTA introduces itself by the server's PTR name.** Mail without a dedicated IP used the container's host name in HELO, which no receiver can resolve. When the PTR of the server's public address names a host that resolves back to it, the MTA now uses that name; `NMI_HELO_HOST` still overrides it. `NMI_EGRESS_PROBE=false` turns the check off.
+- **Step-by-step guide: port 25, PTR and SPF** (`docs/NMI.md`, linked from the panel): what each provider (Google Cloud, AWS, Azure, DigitalOcean, Hetzner, Vultr, Linode, OVHcloud, Contabo) does with port 25, where to set the PTR at each of them, and how to add the address to an existing SPF record.
+
+### Upgrading
+
+- Take the new `docker-compose.yml` (it adds the `nmi-mta` service and the `nmi-*` volumes) and run `docker compose pull && docker compose up -d`. An installation that keeps its old compose file goes on working; the mailbox form then says the MTA does not answer.
+- Installations that ran the MTA with `--profile nmi` and `--build`: the new service uses the published image, so drop `--profile nmi` and `--build`. Remove `NMI_ENABLED` from `.env`.
+- Covered by `tests/Feature/NmiDefaultOnTest.php` and `docker/haraka/test/egress.test.js` (`node --test`).
+
+## [2.10.0] – AI connector: connect Claude and other AI apps by sign-in, faster first load - 2026-11-11
+
+**Release date:** 2026-11-11
+
+### Added
+
+- **AI connector: connect Claude, Hermes and other AI apps by address and sign-in.** Every installation now serves a remote MCP endpoint at `https://<your-domain>/mcp`. You paste that address into the AI app, the app sends you to NetSendo, you sign in and choose what it may do, and it works with your account through the same 140 tools as the npm MCP client. No API key to create or paste, and no Node.js on your computer.
+  - **Settings → AI connector** shows the address of your installation, the apps that are connected (with *Disconnect*, which takes effect on the next request) and step-by-step instructions for Claude, Claude Code, Hermes Agent, ChatGPT, Cursor, VS Code, Gemini CLI and hosts that only run local commands, in Polish, English, German and Spanish.
+  - **The sign-in screen** names the app, says whether its identity is confirmed (Claude's published identity is), self-declared, or published on one site while returning to another (a warning), shows which NetSendo account is signed in, and lists the requested permissions with checkboxes, so you can grant fewer. The permissions are the same ones API keys have (`lists:read`, `subscribers:write`, `messages:write`, …).
+  - **A connected app acts as the user who approved it.** It sees that user's data only: an app connected by a team member does not get the account owner's access. The account owner sees and can disconnect the apps of team members.
+  - **Sign-in follows what MCP hosts expect**: OAuth authorization code with PKCE, Client ID Metadata Documents and dynamic client registration, refresh tokens that are replaced on every use, token revocation, and the discovery documents under `/.well-known/`. Access tokens live one hour; an app that is not used for 90 days has to sign in again. Only hashes of tokens are stored.
+  - **One app cannot occupy the installation**: an app may send 120 requests a minute and run two tool calls at the same time, all apps together three; a call over the limit answers "busy, call again", which the assistant does by itself. The limits can be changed in `.env`.
+  - **A host that cannot sign in** can call `/mcp` with a NetSendo API key in the `Authorization: Bearer` header.
+  - **For self-hosting:** cloud apps such as Claude connect from their provider's servers, so the installation needs a public HTTPS address; the bundled nginx configuration needs no change and there is no new container. `MCP_CONNECTOR_ENABLED=false` in `.env` turns the connector off. Requirements, reverse proxy notes, settings and troubleshooting: `docs/MCP_CONNECTOR.md`.
+  - API keys, the REST API and the local MCP client (`@netsendo/mcp-client`) work as before.
+
+### Changed
+
+- **The application image contains the MCP tools** (`/opt/netsendo-mcp`, built from `mcp/`): the connector runs them with the Node.js that is already in the image. Custom image builds need the new step in `docker/php/Dockerfile`.
+- The built files of the MCP client kept in the repository (`mcp/dist`) are rebuilt from the current source, which they had fallen behind: `send_sms` passes the SMS text under the name the API expects (fixed in the source in 2.7.2). The connector uses this build. The npm package `@netsendo/mcp-client` 1.6.0 was published before that fix and is not changed by this release.
+- The migration adds the tables `connector_clients`, `connector_connections`, `connector_tokens` and `connector_auth_codes`. A daily task (`connector:prune`) removes expired sign-in codes, tokens and connections.
+- **`docker/nginx/default.conf`:** compression is on for pages, API answers and text assets, also for requests that arrive through a proxy speaking HTTP/1.0, and files under `/build/assets/` (their names carry a hash) are cached for a year as immutable. The file is mounted from the installation's folder, so an existing installation gets this by taking the new file and restarting the `webserver` container.
+- After a language switch the page's `lang` attribute follows the new language.
+
+### Performance
+
+- **The first load is about a quarter of what it was.** Every page, the sign-in page included, downloaded all four interface languages inside the start-up script (1.85 MB). Now only the language in use is downloaded, as a file of its own that the browser fetches together with the script: 0.42 MB of script and about 0.36 MB of texts. English, the fallback for a missing text, is fetched only when a text really is missing; switching the language downloads the new one first.
+- **Guests no longer download the whole panel in the background.** After every full page load the browser fetched the scripts of all pages (286 files, 7.7 MB) so that later navigation is instant. That now happens only for a signed-in user. On the sign-in page a visit went from about 250 requests and 9 MB to 15 requests and 1.2 MB.
+- **Built scripts and styles are compressed in the image.** Each has a ready `.gz` file next to it, which the bundled nginx serves as is. Until now they travelled uncompressed unless a proxy in front compressed them, and nginx's default compresses HTML only.
+
+### Upgrading
+
+- **Docker:** update as usual (`docker compose pull && docker compose up -d`). The migration adds the connector's four tables.
+- **The AI connector is on after the update.** It answers at `/mcp`, `/oauth/*` and `/.well-known/oauth-*` and does nothing until someone signs in and approves an app. To turn it off, set `MCP_CONNECTOR_ENABLED=false` in `.env` and restart the containers. Cloud AI apps reach it only on an installation with a public HTTPS address.
+- **Compressed assets, optional:** take the new `docker/nginx/default.conf` and restart the `webserver` container. Without it the panel works as before; with a proxy in front that speaks HTTP/1.0 to NetSendo's nginx, scripts and styles keep travelling uncompressed until the file is replaced or the proxy compresses them itself.
+- **Custom image builds** need the two new steps in `docker/php/Dockerfile` (the MCP tools under `/opt/netsendo-mcp` and the `.gz` files of the built assets).
+
+## [2.9.0] – New panel look, NetSendo MTA mailboxes, unsubscribing that never subscribes - 2026-11-11
+
+**Release date:** 2026-11-11
+
+The panel is being rebuilt page by page. This release covers the sign-in pages, the dashboard, messages, contacts and lists, statistics, the lists of forms, templates, automations and funnels, and most of the settings. The builders, CRM, Brain, the Marketplace pages and a few settings pages (products, licence, profile, the NetSendo MTA pages) still have the previous look and follow in later releases.
+
+### Added
+
+- **"Unsubscribe me from everything" on the preferences page**: one button, at the top, that unsubscribes the address from every list of the account, private lists too.
+- **`[[unsubscribe_now]]`**, an unsubscribe link without the preferences page: it opens a page with one *Unsubscribe me* button that unsubscribes at once, with no confirmation email. In a message from one list it leaves that list, as it does in a message to several lists when the person is on one of them; otherwise it leaves every list, like the `List-Unsubscribe` header. Opening the link alone unsubscribes nobody, so mail scanners cannot. It is in the editor under *Inserts → Links*.
+- **"NetSendo MTA" is a working mailbox provider (GOLD).** *Settings → Mailboxes → Add mailbox* offers NetSendo MTA (NMI) again, this time where it can send: on installations with `NMI_ENABLED=true`, while the MTA container answers. Instead of a server login you choose one of your **verified domains** (Deliverability) and, optionally, a **dedicated IP** from your pools. The sender address must be in that domain.
+  - **The login is issued for you.** Saving the first NMI mailbox of a domain creates the domain's SMTP login to the MTA (48 random characters, stored encrypted, never sent to the browser) and writes it, as a SHA-256 hash, to the MTA's login file `storage/app/nmi-mta/auth.json`. The MTA reads the file from the shared `nmi-auth` volume through the new Haraka plugin `docker/haraka/plugins/netsendo_auth.js`, and reads it again whenever it changes, so new and rotated logins work without a restart. Removing a domain removes its login; `php artisan nmi:sync-mta-auth` (scheduled every ten minutes) rewrites the file from the database.
+  - **The MTA relays only for logged-in sessions.** Its plugin list had no authentication at all and forwarded relayed mail to a server that does not exist (`queue/smtp_forward`), so it could not deliver anything. Now a session must log in with a domain's login, everything else is refused at `RCPT TO`, and relayed mail goes to Haraka's own outbound delivery. The placeholder login in `auth_flat_file.ini` is gone, and `log.ini` makes sessions and delivery attempts visible in `docker logs netsendo-mta`.
+  - **Dedicated IP: the mail leaves from it.** A free IP is assigned to the mailbox's domain when you save, and its warming limit and counters apply to the mailbox. Every message tells the MTA which address to send from and which HELO name belongs to it (the IP's host name); the new Haraka plugin `docker/haraka/plugins/netsendo_outbound.js` binds the outbound connection to that address and removes the internal headers before delivery. The MTA can only send from an address it owns: in the default setup that is none of the server's addresses, so the override file `docker-compose.nmi-host.yml` runs the MTA on the server's network (listening only on the Docker network's gateway), and `NMI_BIND_MAP` covers providers that translate public addresses to private ones. The MTA reports the addresses it can send from, so the form says under the IP picker whether mail really leaves from the chosen IP, and *Test connection* says so too; mail for an address the MTA does not own still goes out, from the default address, with a warning in the MTA log. `NMI_HELO_HOST` sets the HELO name of mail without a dedicated IP. An IP with a mailbox cannot be deleted.
+  - **DKIM for every NMI mailbox.** Saving an NMI mailbox creates a DKIM key for its domain. The form shows the TXT record with *Copy* and *Verify record*; mail is signed with the key once the record has been found in DNS, never before (a signature nobody can look up only fails at the receiver), and signing stops if the record disappears. Until then the key of the dedicated IP signs, when the IP has one for this domain. The headers the MTA removes are left out of the signature, so it still verifies at the receiver. The Deliverability check looks for these selectors first. Replacing a key needs GOLD; reading and verifying the record does not.
+  - **GOLD**, in line with the rest of NMI: adding an NMI mailbox, switching a mailbox to NMI and changing its domain or IP need the licence; a mailbox set up earlier stays editable and keeps sending without it. On SILVER the provider button carries the GOLD badge and opens the upgrade dialog.
+  - **The form says what is missing**: the MTA's status with a *Check again* link (the provider cannot be chosen while the MTA is down), a link to Deliverability when no domain is verified yet, and messages for an unverified domain, a sender address outside the domain, an IP of another domain, and a login file that cannot be written (nothing is saved then). *Test connection* on a mailbox whose domain was removed says so.
+  - **Updating an installation that runs the MTA:** `docker compose --profile nmi up -d --build`. The migrations add `mailboxes.domain_configuration_id`, `mailboxes.dedicated_ip_id` and the `nmi_dkim_*` columns of `domain_configurations`. Details and troubleshooting: `docs/NMI.md`.
+  - **What the server has to provide:** outbound port 25, which many cloud providers block (the MTA then accepts mail and cannot deliver it), and for dedicated IPs the addresses themselves, configured on the server with PTR records. Not every host can carry several addresses (a Google Cloud VM has one external address per network interface).
+  - Covered by `tests/Feature/NmiMailboxTest.php`. Two of its tests run against a real MTA and a receiving mail server and are skipped in the normal suite: `docker/haraka/test/e2e.sh` starts both and checks login and acceptance, the source address, the HELO name, and that the DKIM signature verifies at the receiver.
+
+- **Dedicated IPs: order them from Vultr and Linode, with instructions for every route (GOLD).** *Settings → Mail Infrastructure → Configure Providers* now explains, per provider and in the panel's language, how to connect and what the provider expects: where the API key is created and which permission it needs, that the NetSendo server has to be a server at that same company (an address cannot be used anywhere else), the provider's rule on outbound port 25, and what an address costs. A fourth card describes the manual route for any other company (Hetzner, OVH, your own data centre).
+  - **Connecting checks the key.** The key is sent to the provider first and stored (encrypted) only when the provider accepts it; a refusal is shown with the provider's own reason instead of a silent failure.
+  - **Ordering an address does the whole job the API can do.** *Provision IP* asks for the server NetSendo runs on (listed from your account; on Linode, servers with restricted outbound SMTP are marked) and for the host name of the new address. Vultr: an address is reserved in the server's region, attached to the server, and its reverse DNS set. Linode: an address is allocated to the Linode. If an address cannot be attached it is given back at once, so nothing is billed for an address that cannot be used.
+  - **What the API cannot do is listed afterwards**, with your address and host name filled in: the A record, configuring the address on the server (Vultr: by hand; Linode: a reboot), setting reverse DNS once the A record resolves (Linode refuses it before), running the MTA on the server's network.
+  - **Reverse DNS on the address's page.** It shows what the address should name and what it names now, *Check* looks it up (the record must name the host and the host must point back), and *Set reverse DNS* writes it at the provider for ordered addresses.
+  - **Deleting an address gives it back to the provider first**, so it is no longer billed; if the provider refuses, the address stays with the reason and can be removed from NetSendo only. Addresses could not be deleted from the panel at all before.
+  - **DigitalOcean is no longer offered.** Its Reserved IPs cannot send mail (SMTP ports are blocked on them and they cannot have reverse DNS, by DigitalOcean's own documentation); an address reserved by an earlier version is released when it is deleted.
+  - Provider keys are connected per account in the panel; the unused `NMI_VULTR_*`, `NMI_LINODE_*` and `NMI_DO_*` variables are gone from `.env.example` and `config/nmi.php`.
+  - The clients follow the providers' published API references and are covered by `tests/Feature/NmiIpProviderTest.php` with faked responses. No address was ordered from a real account while building this.
+
+### Changed
+
+- **The dashboard is rebuilt around three questions: does anything need my reaction, how is sending going, what should I do next.** It works in the light and the dark theme and on a phone.
+  - **Needs attention.** One strip at the top replaces the licence badge, the setup bar and the CRON widget. It appears only when something is wrong (inactive licence, CRON that never ran or stopped, failed CRON runs, no mailbox, no AI integration, critical audit findings), and each item links to where it is fixed. CRON that last ran more than 15 minutes ago is now reported as stopped; before, the widget said "CRON active" as long as it had run once, ever.
+  - **Period.** A 7 / 30 / 90 day switch (remembered in the browser) drives the figures and the chart. Each figure is compared with the same number of days before and has a trend line. The comparison used to be labelled "vs last week" while it compared calendar months, and the open and click rates had no comparison at all.
+  - **Figures.** Rate changes are shown in percentage points. The subscriber tile says how many joined in the period and in the one before, instead of a percentage of new sign-ups printed under the total.
+  - **Activity chart.** Sent mail as bars with unique opens, unique clicks and new subscribers as lines that can be switched on and off, one value per day of the chosen period, in the user's timezone.
+  - **Brain.** One panel instead of three widgets: the plans and goal proposals that wait for a decision, with Approve and Reject on the spot, and a field to ask a question.
+  - **Recent campaigns** is a table (lists, status, sent, open rate, click rate, date) placed next to **Scheduled**, a new list of the next broadcasts with their send time and recipient count, and the campaign health score.
+  - **Create.** The six quick-action tiles became one "Create" button in the dashboard header.
+  - The live clock is gone; today's date is under the greeting and the timezone is in the status line at the bottom, with the last CRON run, the queue length, the mailbox count and the version.
+- **The rebuilt lists fit a phone without scrolling sideways.** Below 640 px the tables of messages, SMS campaigns, forms, funnels, automations, e-mail and SMS lists and the dashboard's recent campaigns keep the name, the status under it and the action menu; the other columns return on a wider screen, and the link that sat beside the menu (statistics, get the code, run history, edit) becomes its first entry. Page numbers shrink to the arrows and the current page; header buttons wrap under the title.
+- **The message editor's action bar is two rows on a phone** (test, deliverability and schedule as icons beside "Save draft", then the main action across the width). It used to wrap into four rows that covered almost half of the screen. The sign-in pages give the brand strip the height of the logo on a phone, not a quarter of the screen.
+- **On a phone the page title has its own row under the top-bar buttons** on every page; it used to be squeezed to a few letters. The account name and e-mail next to the avatar show from 1280 px up (they are still in the account menu).
+- **The side menu has nine sections instead of thirteen entries with 71 links.** Messages, Contacts, Automation, CRM, NetSendo Brain, Sales, Analytics, Library and Settings, under the dashboard. Every page is still there, once.
+  - Pages that were listed twice (subscribers, statistics, field management, API keys) are listed once.
+  - "Add e-mail message", "Add SMS message" and "Add subscriber" left the menu: the menu leads to the lists, and each list has its own add button.
+  - Settings are grouped into Account, Sending, Integrations and System. Marketplace moved to Integrations, the licence to Account. Webinars, products and the affiliate programme are under Sales; templates, inserts, media and brands under Library; global statistics, campaign statistics, the campaign auditor, tracked links and the activity log under Analytics.
+  - The section that holds the current page opens by itself and the current page is scrolled into view. Collapsed, the menu is a rail of icons and each icon shows its pages in a panel beside it.
+  - The menu is flat and dark in both themes, 256 px wide (was 288). Sub-pages have no icons; the decorative "AI" tags are gone, the GOLD badges stay.
+- **The top bar is shorter.** The language switcher and the two-factor indicator moved into the account menu. On pages whose header holds a button (Messages, Subscribers) the button no longer runs into the search box at 1280 px, and on a phone the title and the buttons wrap instead of pushing the page wider than the screen.
+- **The e-mail message list is rebuilt.**
+  - Tabs above the list answer the first question, what kind of message: All, Drafts, Scheduled, Sent, Queues, each with its count.
+  - Search and the list filter are always visible; group, tag and campaign are behind "Filters", which shows how many of them are set.
+  - One row says what it used to take seven columns to say: subject with the ID, type and attachments under it; the lists and recipients (queues show sent, planned, queued, failed and missed); the status; and one date, the one that matters for the state (sent, sending or created).
+  - The seven unlabelled icons at the end of a row became a "Statistics" link and a menu with named actions (edit, duplicate, send again, queue statistics, switch the queue on or off, delete).
+  - Sortable columns show their direction; the page size moved to the foot of the list, next to "1–30 of 43".
+- **The message editor is organised by the three questions of a campaign: what, to whom, when.** The "Settings" tab, which held recipients, exclusions, the mailbox, tags, the schedule and the timezone in one grid, is now two tabs.
+  - **Content**: subject, preheader, the editor, the plain-text version, attachments and translations, with the template, AI, inserts and preview tools beside them. The subject is the first field.
+  - **Audience**: the estimated number of recipients on top, then two columns, "Send to" (lists, narrowing by custom fields, CRM contacts) and "Do not send to" (excluded lists with their own narrowing, excluded CRM contacts).
+  - **Delivery**: "When" (one-off or queue, the schedule or the queue day and hour, the timezone) and "Sender and tracking" (mailbox, campaign tags, click and open tracking, tracked links). The message type moved here from the top of Content, next to the schedule it decides.
+  - A missing recipient list opens Audience, "Schedule" opens Delivery; errors from the server open the tab of their field.
+- **The message editor and the SMS editor keep their actions in reach.** In the e-mail editor Test, Check deliverability, Save draft, Schedule and Send are a bar stuck to the bottom of the window: the form is two screens long and they used to be at its end. The tabs lost their emoji, text fields and menus have a visible border again, the tick boxes and radio buttons take the panel's accent, the AI button is the same indigo as every other primary button, and messages from the editor appear above the action bar. What the editors do is unchanged.
+- **Message statistics are rebuilt.** The four key figures sit in one strip; the funnel (sent, unique opens, unique clicks, each as a share of what was sent) is drawn as three bars and replaces the two charts that showed the same numbers; the queue is one bar in five parts with its counts and the "send again to failed" button; recipients, opens and clicks are tables with a visible sort direction, the same paging as the lists, and the bulk "add to list" bar right above the rows. A failed "send again" is reported on the page, not in a browser alert.
+- **The subscriber list is rebuilt on the same pattern.** Status tabs (everyone, active, inactive, bounced, unsubscribed) replace the status menu; search, list type, list and the column settings sit in one row; the status is a labelled pill; the four icons at the end of a row became a menu of named actions (card, edit, add to CRM, delete); ticked rows are highlighted and the bulk actions appear right above the table. Column choice and order, the page size and every bulk action work as before.
+- **"E-mail lists" and "SMS lists" are one page in two flavours.** A table by default (name with description, visibility, group and tags, subscribers, created), cards as the other view; the choice is remembered. The subscriber count leads to the subscribers of that list, the five icons of a row are a menu of named actions, and the page size can be chosen (it was fixed at 12). "Clear filters" also clears the visibility filter, which it used to leave set.
+- **The SMS campaign list follows the e-mail list**: the same tabs with counts, one row per campaign with the text people will receive under its name, a menu of named actions, and a page size the reader chooses (it was fixed at 10).
+- **The lists of forms, funnels, automations and templates are rebuilt on the pattern of the other lists.**
+  - **Forms, funnels, automations**: status tabs with counts, search and one filter in a row, a table with the status as a labelled pill, one visible link per row (get the code, statistics, run history) and a menu of named actions in place of rows of unlabelled icons. The page size is the reader's choice (it was fixed at 15 or 20).
+  - **Automations**: on/off is a switch in the row; the trigger names are translated into English, German and Spanish (they were Polish in every language) and lost their pictograms; the row shows when the automation last ran. "Restore defaults" moved into a menu next to "New automation".
+  - **Templates**: the gallery keeps its previews, now drawn to the width of the card whatever the screen; categories are chips with a colour dot; search works as you type (it waited for Enter); the starter templates sit under your own and can be folded away, which the browser remembers.
+  - Deleting asks in a dialog that names the thing being deleted, in place of the browser's own prompt; duplicating no longer asks, the copy simply opens.
+- **Mailboxes are rebuilt.** The cards became a table: the mailbox with its sender address and service, the connection status (a failed test shows the server's answer one click away), the domain's reputation, what the mailbox sends, today's count against the daily limit, an on/off switch and a menu of named actions (test the connection, check the reputation, set as default, delete) in place of four unlabelled icons.
+  - **The settings dialog is cut into sections**: Sending, Bounces, Replies and Headers. It was one narrow column about nine screens long. The dialog is wider, its Save and Cancel stay in view, and a refused save opens the section with the first refused field and says so next to the buttons.
+  - Results of actions taken inside the dialog (connection tests, a copied webhook address, a new token) are shown in its footer.
+- **SMS providers and AI integrations follow the mailbox page.** Both are a table: the connection or the service, its status (with the date of the last test, or the server's answer when the test failed), an on/off switch and a menu of named actions. Their settings dialogs keep Save and Cancel in view, list every reason of a refused save above the buttons and show the result of an action in their footer.
+  - **SMS providers**: today's count against the daily limit is always shown; the service of an existing connection can no longer be switched in the dialog (the choice was offered, but the server never saved it and the form dropped the logins).
+  - **AI integrations**: all six services are listed whether set up or not, with "Configure" on those that are not; the default model is in the list; the page where each service hands out its API keys is linked under the key field. Saving, deleting and switching an integration now say that they happened.
+- **Users and API keys are rebuilt on the same pattern.**
+  - **Users**: one row per team member with the lists they may open (and where they may edit), a "Permissions" button and a menu; invitations nobody has accepted yet sit in a list below. When adding a member, each list can be given "view" or "view and edit" straight away (it was "view" only, to be changed afterwards). Removing a member and withdrawing an invitation ask in a dialog that names the person, in place of the browser's own prompt, and every action says that it happened.
+  - **API keys**: the list shows what a key may do in words ("Full access", or the first permissions and how many more), not a row of sixteen tags. The permission list in the dialogs has "Select all" / "Clear all". The new key is shown in a dialog of its own with Show, Copy and a reminder that it will not be shown again. Errors while creating a key appear in the dialog, in place of browser alerts.
+- **CRON settings, the name database and backups are rebuilt.**
+  - **CRON settings**: the sending status sits in the header as a labelled pill; the four sections are plain tabs; the weekly schedule is one row per day with its hours and the three presets; the last 24 hours are a strip of figures; the run history is a table with a status pill per run; the commands in the installation guide are quiet blocks that follow the theme, and the webhook address and token have Copy and Show buttons that say when something was copied.
+  - **Name database**: figures on top, then one list with search, three filters, "Clear filters" and a page size the reader chooses (it was fixed at 50); the built-in names are read-only, one's own have a menu. Gender matching and the explanation of the grammar syntax are panels below the list. Adding, importing, the matching preview and its result use the shared dialogs.
+  - **Backups**: the running operation and the result of the last one are a notice above the list; each backup has Download and a menu with Restore and Delete; the dialogs name the file they are about.
+- **The Stripe, Polar and Tpay settings and the WooCommerce shops are rebuilt.**
+  - **Payment settings**: whether the service is set up is a labelled pill in the header, with one line on what to do next. Keys and secrets are fields that hide what is typed and have a Show button; the webhook address has a Copy button that says "Copied"; the answer of "Test connection" is a notice in the form. Saving says that it happened (Polar and Tpay showed nothing).
+  - **Stripe**: the two ways to connect are tabs. Connecting through Stripe Connect is four numbered steps in the order they have to be done; disconnecting asks in a dialog that names the account.
+  - **WooCommerce**: the shops are a table (name, address, currency and version, connection status, plugin version with a note when an update is due) with a menu of named actions in place of five unlabelled icons. Messages from the server (shop added, updated, deleted, and above all why a save was refused) are shown; they used to be sent to the browser and never displayed.
+- **The pixel, updates, telemetry and Google integration pages are rebuilt.**
+  - **NetSendo Pixel**: four figures on top; live visitors as a plain list (page, device and browser, how long ago) next to a seven-day chart with the count over every bar; the embed code and every example in the events guide are blocks with a Copy button that says "Copied".
+  - **Updates**: whether the installation is current is a pill in the header; each release is a panel with its size, date and notes; the update commands are blocks to copy, and the "specific version" example names the newest version instead of 1.1.0.
+  - **Telemetry**: the opt-in is one switch in a framed row with its state in words; the installation id, the last report and the exact report that would be sent are below.
+  - **Google integration**: connections are a list with their state and a "Connect with Google" button; the redirect address has a Copy button; deleting asks in a dialog that names the connection, in place of the browser's own prompt.
+- **Calendly settings rebuilt.** The page was English in every language; it is now translated (pl, en, de, es). Each connected account is a panel with its event types and recent bookings; what a booking does (CRM, lists and tags, exceptions per event type, automations) is one dialog with tabs. An account whose authorisation at Calendly was never finished is shown as such, with the way out, instead of as an inactive account with buttons that could only fail.
+- **Zoom and Google Calendar settings rebuilt.** The Zoom page was English in every language; it is now translated (pl, en, de, es), shows the connected account with the permissions it was granted, and asks before disconnecting in the panel's own dialog. The Google Calendar page is laid out as panels (connection and sync, bulk sync, push notifications, task colours, the OAuth redirect address) and works in the light theme and on a phone.
+- **Buttons, text fields and dialogs share one look.** The primary button is the indigo of the rest of the panel (it was dark grey in capitals), text fields have a visible border again (the colour classes alone drew none since Tailwind 4), dialogs have the panel's rounded card.
+- **The sign-in screens are rebuilt**: sign in, first administrator, forgotten and new password, password confirmation, e-mail verification, two-factor code and team invitation.
+  - Two panes: the brand on a dark ground, and the form in the visitor's theme, light or dark. On a phone the brand pane is a strip with the logo.
+  - Behind the brand pane messages leave one bright point ("your own server") in arcs and land on recipients, who light up. It is drawn on a canvas by the page itself (no library, nothing loaded from another host), stands still for visitors who ask for reduced motion and pauses in a background tab.
+  - On an installation without any account the sign-in page says so and offers to create the administrator account, in place of a dialog that covered a form nobody could use yet.
+  - Password fields can show what was typed. Errors are tied to their fields for screen readers.
+  - The invitation page is translated (it was Polish in every language).
+
+### Fixed
+
+- **Unsubscribe links that lead to the preferences page work again on a sleeping NetSendo Cloud instance.** A sleeping instance (`NETSENDO_DORMANT=true`) let only `/unsubscribe/...` through, but `[[unsubscribe]]` in a message sent to several lists, and `[[manage]]`, lead to `/preferences/{subscriber}`, which answered 503 "instance asleep". So people could not unsubscribe with those links, although unsubscribe links in messages sent before are meant to keep working. Now a validly signed preferences link on a sleeping instance shows the unsubscribe page; its button sends the RFC 8058 one-click request to the subscriber's account-wide unsubscribe link and removes them from every list, with no email sent. An unsigned or altered link gets the "This link is not valid" page (403). Saving preferences, confirming changes and the data deletion request stay asleep.
+- **Saving the preferences page could subscribe a person to every public list.** `[[unsubscribe]]` in a message to several lists, and `[[manage]]`, open the preferences page. It listed every public list of the account (new lists are public by default) and applied the selection as soon as the link of its confirmation email was opened. On one instance three people who clicked "unsubscribe" were put on all 40 lists within about a minute: the autoresponders of those lists started, and the owner got about 40 "New subscriber" notifications per person. An empty selection was not the cause (it unsubscribes from every list on the page): the form came back with every box ticked and its confirmation link was opened at once, which is how the link scanners of some mail providers behave. Now:
+  - The page lists only the public lists the person is on or has left. Lists they never joined are not offered, and a form that names them changes nothing.
+  - Unticking a list unsubscribes at once, with no confirmation email, and drops what was still planned for the person on that list.
+  - Going back to a list the person left still needs the confirmation email, but its link opens a page with a *Confirm* button. Opening the link alone changes nothing.
+  - Confirmation links emailed before this version still work and follow the same rules: they never add a list the person was not on.
+- **The preferences page speaks the subscriber's language.** It was English only. It now uses the contact's *Language*, else the panel language of the account, else the browser's: Polish, English, German or Spanish. The pages shown after saving are the account's *System pages* and keep their own text.
+- **After signing in, the page could stay on the login form under an empty dialog.** A tab left open after the session expired keeps polling (Brain monitor, notifications, meeting reminders); Laravel remembered the last of those addresses as "where the user was going", and the next sign-in was sent to a JSON endpoint. Only a page load or an Inertia visit sets that address now.
+- **The e-mail message list showed SMS messages too**, with an "edit" link into the e-mail editor. It lists e-mail only; SMS messages are on their own list.
+- **Opening the message list without any filter put `sort=function sort() { [native code] }` in the address** after the first filter change: the empty filter set arrived as a JSON list, and a list has a `sort` of its own. The list then fell back to another order than the one shown.
+- **Page 2 of a filtered automation list forgot the filter**, and the list never showed which automations are the built-in ones (the "Default" badge depended on a field the page did not get).
+- **"Restore defaults" promised to reset the existing default automations to factory settings.** It never did: it adds the ones that are missing and switches them on. The dialog now says that, and when nothing is missing the page says so (the answer was sent to the browser but never shown).
+- **A funnel that cannot be started said nothing.** Activating a funnel with a gap in it (no steps, no trigger list) is refused by the server; the list now shows the reason.
+- **On a phone the message, SMS and subscriber lists were wider than the screen**: the whole page slid sideways and mobile browsers zoomed out to fit it. The cause was the screen-reader-only "Actions" column heading, which escaped the scrolling frame of its table; the same heading sits in every rebuilt table and is now kept inside. On the subscriber list the three header buttons and a long row of page numbers also ran past the edge.
+- **Switching a mailbox off or on from the list deleted its custom SMTP headers.** The switch saves the mailbox without the headers in the request, and a request without them cleared them. What a request does not mention now stays as it was.
+- **The daily limit of an SMS provider could not be removed, and its sender name or number could not be cleared.** An emptied field was treated like a field that was not sent, and the old value stayed.
+- **A team member's last list could not be taken away.** Saving their permissions with no list ticked was refused (the set of lists was required to be non-empty), and the page showed nothing, so the member silently kept the access.
+- **Two API permissions were shown by their internal names** (`lists:write`, `notifications:write`): they had no label in any language.
+- **In the CRON schedule the end of a full day was an empty time field.** A day that sends around the clock ends at 24:00, which a time field cannot show; it now reads 23:59 and stays "until midnight" unless it is changed.
+- The name import button read `common.importing` while a file was being sent (the text did not exist).
+- **A WooCommerce shop that could not be saved closed its dialog without a word.** When the shop did not answer or its address was already taken, the dialog closed, the entries were gone and no reason was shown. The dialog now stays open with the reason next to its buttons.
+- **The Updates page was written for the dark theme only.** In the light theme its title was white on the light page, and the release notes were light grey on a half-transparent grey card. It now follows the theme.
+- Calendly: lists and tags chosen for a single event type were never used. They were looked up by the event type's address with dot notation, which split the address into pieces, so every booking got the default lists; an event type switched back to the defaults also kept its own lists. On an account that had no exceptions yet, the ones added in the dialog were not saved at all.
+- Calendly: a refused refresh of event types or webhook check showed "success" next to the error, and cancelling the settings dialog left the unsaved changes in it.
+- After switching the language, dates and "x hours ago" texts stayed in the previous language until the page was reloaded (the date helpers read the language of the page that was open before the switch). The language now changes before the page is rebuilt, and follows what the server answers with.
+- A failed save on the Google Calendar settings page showed a missing translation key instead of an error message.
+- The password confirmation label on the "new password" page showed nothing (it pointed at a group of texts, not a text).
+
+- **NetSendo Mail Infrastructure could not be set up at all.** Found while finishing the NetSendo MTA provider:
+  - The dashboard (*Settings → Mail Infrastructure*) showed the "setup required" banner whatever `NMI_ENABLED` said: it read a configuration key that never existed.
+  - Adding an IP address to a pool by hand failed: the IP version was saved as `4`/`6` into a column that accepts `ipv4`/`ipv6`, and the response divided by zero on an IP that had not sent yet. The same value was written when an IP was provisioned at Vultr or DigitalOcean.
+  - Ordering an address from a provider reserved a paid address and left it unusable: nothing attached it to the server or set its reverse DNS, Linode was not implemented, and deleting an address never released it at the provider.
+  - *Start warming* was never offered: the address's page looked for a status no address ever has.
+  - An address that had been deleted could not be added again (the removed record still held its place in a unique index).
+  - Several buttons on the Mail Infrastructure pages showed raw keys while busy (`common.connect`, `common.adding`, `common.creating`, `common.checking`, `common.generating`, `common.starting`).
+  - *Generate DKIM* on an IP ended in a server error: the key was generated with a library NetSendo never shipped. Keys are now generated with PHP's OpenSSL extension (`NMI_DKIM_KEY_SIZE` is honoured). It also needed the IP to be assigned to a domain, which nothing did; saving an NMI mailbox with the IP does.
+
+- **A mailbox with the "NetSendo MTA" provider could never be saved.** *Settings → Mailboxes → Add mailbox* offered NetSendo MTA (NMI) next to SMTP, SendGrid and Gmail, but the server accepts only those three, and an NMI mailbox could not send anyway: a mailbox has no link to a domain or a dedicated IP, and nothing issues the domain's NMI SMTP login. Saving always failed, and the modal showed only a toast with the raw key `common.notifications.error`. The form now offers only the three providers it can save (`Mailbox::PANEL_PROVIDERS`). Use SMTP for your own mail server.
+- **The mailbox form says why a save failed.** Errors of fields without a message of their own (server login details, custom headers, limits) were not shown anywhere, and the ones that were sat at the top of a long, scrolled modal. All validation messages are now listed above the *Save* button, with readable field names ("server login details" instead of "credentials"; en, pl, de, es). A custom header row left empty is skipped instead of failing the save, and errors of a previous attempt no longer show when the form is opened again.
+- **Error toasts show text instead of `common.notifications.error`** on the Mailboxes, AI integrations, Custom fields, SMS providers and External pages settings: the key never existed. They now say "An error occurred. Please try again." (or "Error: " followed by the reason), and a failed mailbox save says "Please check your input and try again." Disconnecting Gmail showed `mailboxes.notifications.disconnected` for the same reason.
+- **`netsendo:check-updates failed with exit code [1]` every hour.** The sidebar asked the GitHub API for releases on every page view and the scheduler once an hour. GitHub allows 60 requests an hour per IP address without a token, so on a server shared by many installations the limit ran out: the command failed with an error in the log, and the update notice could not load. The release list is now fetched once and cached for 12 to 18 hours (different for every fetch, so installations drift apart), shared by the sidebar, the *Updates* page and the scheduled command, and a failed request pauses further attempts (until GitHub's reset after hitting the rate limit, 3 hours otherwise). The cache holds the release list, not the result, so the status is right straight after an update. GitHub being out of reach is no longer an error: the command prints a warning, logs one, and exits 0. The refresh buttons still ask GitHub at once (`UpdateCheckService`).
+  - Covered by `tests/Feature/MailboxFormTest.php` and `tests/Feature/UpdateCheckTest.php`.
+
 ### Security
+
+- **The sort direction of the e-mail and the SMS message list went into SQL as the request wrote it** (`?sort=effective_date&direction=…` was pasted into `ORDER BY`). A signed-in user, a team member included, could run their own SQL through it. The direction is now one of two literals, `asc` or `desc`.
+
+- **SMS campaigns were open to every account of the installation.** The SMS pages read campaigns without asking whose they are: a team member could list, open, change and delete the administrator's campaigns, and pick any contact list of the installation for their own. A campaign now belongs to the account that wrote it, as an e-mail message does, and the list choice is limited to the lists the account may use (its own and the ones shared with it). An administrator no longer sees team members' SMS campaigns on the list, as with their e-mail messages.
+
+### API
+
+- `GET /api/dashboard/stats` takes `period=7|30|90` (default 30; it used to be the current calendar month) and also returns `period`, `previous` values for every figure, `queue_pending`, `scheduled`, and one `activity_chart` row per day with `date`, `emails`, `subscribers`, `opens` and `clicks`. `recent_campaigns` carries `channel`, `lists`, `sent`, `open_rate` and `click_rate`; its `opens` and `clicks` now count each recipient once.
+
+### Performance
+
+- The list pages counted the active subscribers of every row with a query of its own, although the page had already counted them all in one. The second count is gone.
+- `cron_job_logs` has an index on `started_at`. The dashboard sums sent mail by day, and without it every sum read the whole table, which grows by several thousand rows a day.
+
+### Upgrading
+
+- **Docker:** update as usual (`docker compose pull && docker compose up -d`). The database migrations run when the containers start.
+- **Installations that run the NetSendo MTA (`--profile nmi`):** take the new `docker-compose.yml` (it adds the `nmi-auth` volume and the MTA's plugins) and rebuild the MTA image: `docker compose --profile nmi up -d --build`. Installations that do not use the MTA need no change to their compose file.
+- **Message templates:** `[[unsubscribe]]` and `[[manage]]` keep working as before. `[[unsubscribe_now]]` is new and optional.
+
+## [2.8.7] – Installations on Podman update again - 2026-11-10
+
+**Release date:** 2026-11-10
+
+### Fixed
+
+- **Installations running on Podman could not update since 2.8.0.** The `reverb` ports line in `docker-compose.yml` used a nested default, `${REVERB_HOST_PORT:-${REVERB_PORT:-8085}}`. Docker Compose expands it, but podman-compose does not: `podman-compose up -d` stopped with "invalid port format", the update was rolled back, and the installation stayed on 2.7.x, without the security fixes of 2.8.5 and 2.8.6. The default is now one level deep, `${REVERB_HOST_PORT:-8085}`. Docker installations publish Reverb exactly as before (`0.0.0.0:8085`), and `REVERB_HOST_PORT` and `REVERB_BIND_ADDRESS` work on both.
+  - If you changed Reverb's host port with `REVERB_PORT`, set `REVERB_HOST_PORT` instead, as *Port 8085 Already in Use* in `DOCKER_INSTALL.md` describes. `REVERB_PORT` must stay 8085, because the app reaches Reverb on that port inside the network.
+
+## [2.8.6] – Brain's Telegram bot accepts only Telegram's updates - 2026-11-09
+
+**Release date:** 2026-11-09
+
+### Security
+
+- **The Telegram webhook accepts only updates from Telegram.** `POST /api/telegram/webhook` is public and took any JSON as an update from Telegram. Anyone who knew the Telegram chat ID of a linked account could send messages and commands as that chat (`/mode autonomous`, `/knowledge`, `/disconnect`, chat requests to Brain), and press its approval buttons. NetSendo now gives Telegram a secret token in `setWebhook` (an HMAC of the bot token with the `APP_KEY`), and the webhook refuses with 403 every update that does not carry it in `X-Telegram-Bot-Api-Secret-Token`. A linked chat must come through the bot of its own account, so the owner of one bot cannot use its token for the chat of another account. A chat that is not linked yet (`/start`, `/connect`) may come through any bot configured on the instance. Reported by [realtasty](https://github.com/realtasty).
+- **A Telegram approval button decides only a plan of its own account.** The *Approve* and *Reject* buttons found the approval by its number alone, so a chat could reject (cancel) or approve another account's plan. A button now decides only a plan of the account linked to the chat that is still waiting for a decision; any other answers "This plan is no longer waiting for your approval". Pressing *Approve* twice no longer queues the plan twice.
+- **The shared Telegram bot can no longer be pointed elsewhere by one account.** *Setup Webhook* sent Telegram whatever address the request gave, so any account using the bot from `TELEGRAM_BOT_TOKEN` could move its webhook to a server of its own and receive the updates of every other account. The shared bot's webhook now always points at `APP_URL/api/telegram/webhook`. An account's own bot still goes where its owner says.
+
+### Upgrading
+
+- Bots whose webhook points at this instance get the secret token within five minutes of the update, from the scheduler (`brain:secure-telegram-webhooks`). Telegram keeps the updates it sends in the meantime and retries them. If the scheduler does not run, click *Brain → Settings → Telegram → Setup Webhook* (or run `php artisan brain:secure-telegram-webhooks`). A webhook set to an address on another host (not the `APP_URL` host) is left as it is: set it again from the panel.
+- Covered by `tests/Feature/TelegramWebhookSecurityTest.php`. Translations: en, pl, de, es.
+
+## [2.8.5] – The Brain API respects API key permissions - 2026-11-09
+
+**Release date:** 2026-11-09
+
+### Security
+
+- **The Brain API now respects API key permissions.** `/api/v1/brain/*` accepted any valid API key, whatever permissions it was given: a key limited to, say, `subscribers:read` could read Brain's settings, with the Telegram bot token and the Perplexity and SerpAPI keys in plain text, and change settings, the knowledge base and plans. Brain now has its own permissions, `brain:read` and `brain:write` (Settings → API Keys). Reported privately by [realtasty](https://github.com/realtasty).
+  - Existing keys with full access get both permissions automatically, so their integrations keep working. A narrower key loses Brain access until you add the Brain permissions to it.
+  - Saved secrets no longer leave the server in JSON, not in the API and not in the panel page. Instead, `secret_hints` gives the last four characters of each. Testing the Perplexity or SerpAPI connection without typing a key now tests the saved one on the server.
+  - The queued CSV export of a list (`POST /api/v1/lists/{list}/export`) now needs `subscribers:read`, like the inline export.
+
+## [2.8.4] – Brain's token limit is per task, not per day - 2026-11-09
+
+**Release date:** 2026-11-09
+
+### Changed
+
+- **Brain's token limit belongs to one task, not to the whole day.** Brain stopped every task for the rest of the day once 100,000 tokens were used: about four campaigns on a large model, so an account with many lists and tasks stopped working by noon. The limit could not be changed anywhere in the panel, although the message said "increase the limit in settings". A task is now one chat message, the run of a plan, one goal step or one cron task, and each has its own budget. A task that goes over it makes no further AI call: the message or the plan report says how many tokens it used and where to change the limit, the next steps of the plan are marked as skipped, nothing is sent after them, and a goal step stopped this way is not retried. Other tasks keep working. A plan run inside a chat message counts towards that message.
+  - Set the limit in *Brain → Settings → Token limit per task* (default 100,000; 0 = no limit). Today's usage is shown next to it and in the Monitor, as a statistic that blocks nothing. Telegram's `/status` shows both.
+  - The API setting is `task_token_limit` (`PUT /brain/api/settings`); `daily_token_limit` is no longer used.
+
+### Fixed
+
+- The approval summary in the Monitor and on Telegram showed `****Steps to execute:****` with doubled bold markers.
+- A dry run of an immediate send said the campaign would go out "at now" (in Polish "o teraz", in German "um jetzt", in Spanish "a las ahora"). It now says it would go out now, and a scheduled one says when it is scheduled for.
+
+## [2.8.3] – Brain sends the message its plan made, goals from the chat keep going - 2026-11-09
+
+**Release date:** 2026-11-09
+
+Found in a second live review of Brain on a GOLD instance, in all three modes.
+
+### Fixed
+
+- **A Brain send could mail and rewire an older message.** Planners fill `message_id` of the send step with the number of the step that creates the message (`"message_id": 3`), and the send step read it as a database ID: it attached the plan's list to whichever older message had that ID, turned it into a broadcast and sent it. The same happened in dry-run mode, which also set that message back to draft. A send or A/B step now always uses the message created earlier in its own plan; a given ID is used only by plans that create no message, and a dry run changes nothing. The same applies to A/B test IDs, and starting a test or sending its winner no longer falls back to "the latest test".
+- **A failed content step no longer leaves a placeholder to send.** When the content step failed (or the model answered without a body), the message step saved `<p>Message content</p>` and the send step would have mailed it. The message step now fails without content, a send step does not run after any failed step of its plan, and a message with an empty body or that placeholder is never sent.
+- **Failed steps count as failed.** A step that reported failure ("message not found", a send blocked by the safety checks) was stored as completed, and its plan as completed and successful although nothing was sent. Such a step is now failed and logged as an error, and a plan fails when a step that changes or sends something failed, or when every step failed. A failed read-only step does not fail a report whose other steps worked.
+- **Goals from the chat.**
+  - In advisory mode Brain opens no goals: a request with several steps gets advice like any other.
+  - In semi-automatic and autonomous mode the first step starts at once: a plan to approve (the chat said "approve each step" with nothing to approve), or a run. When a step's plan finishes, the next step starts on the queue; this used to happen only with the hourly Brain cron enabled, while the chat said it had started. A failed step is retried once, and a step that failed twice waits for the user.
+  - Progress counts the planned steps: a five-step goal was 100% complete, and closed, after its first plan. Step dependencies are compared as step numbers, and nothing new starts while a step of the goal waits for approval or runs (the chat, the queue and the cron each opened the same step).
+  - Goals untouched for 30 days are no longer mentioned in answers.
+- **The chat can approve its own plans.** A plan card in the chat had no buttons, because the plan never reached the page, and after approving in the Monitor the chat never learned the result. Plans now belong to their conversation: the chat shows *Approve* and *Reject* (also after a reload), and the result of an approved plan is posted into the conversation.
+- **A model without quota no longer stops Brain.** When the model assigned to a task fails (a free Gemini key has no quota for Gemini 2.5 Pro, a key was revoked), the call is retried once on the Brain model.
+- **Fewer needless questions.** A campaign request that names the subject, the content or the list is planned instead of being answered with the full questionnaire and every list of the account. When questions are needed, the lists are shown only if the request named none (at most 15).
+- A question about your own offer ("what plans do we have and what does the cheapest cost?") is answered in the conversation from the knowledge base instead of going to the research agent, unless it asks for a web search.
+- Mode names instead of keys: the plan card in the chat and Telegram's `/mode` and `/status` showed `brain.mode.semi_auto_label`. The *Web research* row of the advanced model settings showed `brain.task.research`, and the Monitor showed raw event names such as `plan_execution_finished`.
+- The *Plans today* tile in the Monitor showed all-time completed and failed counts under today's number.
+- Brain reports compare the campaigns of the report's period: a report "for the last 30 days" named an August campaign the best of the period. Opens in the trends step count each subscriber once, like the campaign statistics next to them.
+- Advice, questions and plan cards in the chat record the tokens they used.
+- The campaign plan report was in English in every language ("Completed steps"), and a suggested task said "Zbadaj 1 firm".
+- **The `latest` Docker image comes from the newest commit of main.** A merge and the release commit right after it were built in parallel, and whichever build finished last published `:latest`. On 2026-11-08 the merge commit's image, which still said 2.8.1, finished last, so installations updated to `latest` showed 2.8.1 although they ran the 2.8.2 code. A newer build of main now cancels the older one.
+
+## [2.8.2] – Brain understands chat commands, the mode you see is the mode it works in - 2026-11-08
+
+**Release date:** 2026-11-08
+
+### Changed
+
+- **A global Brain mode applies to every agent.** Choosing Manual, Semi-automatic or Autonomous in *Brain → Settings* (or `/mode` in Telegram) now clears the per-agent modes, and saving the agent modes stores only the agents that differ from the global mode. Saving the agent modes used to store a mode for every agent, freezing the global mode of that moment, so after a later switch the agents kept the old one: on a reviewed instance every agent stayed autonomous while the chat header said semi-automatic. The chat header, the Monitor and the dashboard widget show the mode the agents really work in, or *Mixed*. An agent set to *Advisory* now only advises, also when the global mode is semi-automatic (it used to get plans to approve). See *Upgrading* for the migration.
+- **Every Brain service uses the model chosen for Brain:** the model assigned to the task in *Advanced model settings*, else the Brain model (*Settings → AI model*), else the first usable integration. Goal detection and decomposition, situation analysis, the weekly digest, playbooks, the campaign calendar, campaign lessons, style extraction and agents without an assigned task used whichever integration came first in the database. *Orchestration (intent classification)* and *General conversation* in the advanced settings were never read; they now choose the model for intent classification and for chat answers.
+- Plans made from the chat no longer count towards whichever goal happens to be active; only plans made for a goal do.
+
+### Fixed
+
+- **Brain understands chat commands again.** Intent classification (is a message a question or a task, and for which agent) ran on the first AI integration in the database, not on the model chosen for Brain, and on the reviewed instance it never succeeded. Brain then fell back to keyword matching that sent the agent the word `keyword_match` instead of the request: a question about returns went to the CRM agent ("CRM Agent could not create a plan for: keyword_match"), and a request for a campaign to a test list in manual mode came back as a guide about hot leads taken from an old goal. Classification now uses the *Orchestration* model (or the Brain model) and also reads JSON wrapped in a sentence. When it fails, questions stay in the conversation and an agent is chosen only for a command naming its area. Agents always get the user's own words next to the classified intent, and active goals reach the prompts as background, not as the topic. The revenue, funnel and deliverability agents could never be chosen from the chat, because the classifier listed only the first seven agents. A web-chat message is classified once, not twice. Covered by `BrainReviewFixesTest`.
+- **OpenAI GPT-5 and o-series models work.** The OpenAI provider always sent `max_tokens` and a temperature, and reasoning models reject both. They now get `max_completion_tokens` with room for their hidden reasoning (at least 4,096) and the default temperature. A token limit is sent only when one is set: the old default of 65,536 was more than gpt-4o allows.
+- **Gemini 2.5 no longer answers short tasks with nothing.** Thinking counts against `maxOutputTokens`, so a small limit left no room for the answer. Flash models now skip thinking for answers of up to 4,096 tokens; the other thinking models get 8,192 tokens of room on top of the limit. Thinking tokens are counted in the token usage.
+- **Monitor.**
+  - A plan left "executing" kept the "Brain is working…" bar on for good: one had been at step 2 of 4 since March. A run with no progress for 2 hours is no longer shown as current work, and the hourly `brain:close-stale-plans` marks it failed. The same command fails approved plans that were never run within a day, and cancels drafts and waiting plans older than 7 days that have no open approval. Nothing is deleted.
+  - *Last activity* showed 96 days while Brain had answered minutes before, because the chat did not update the stored time.
+  - A request the agent could not plan counted as a success (100% for the CRM agent).
+  - The plan counters disagreed: 7 active on the tile, 0 in the list.
+  - The activity list showed raw event names and statuses (`brain_start`, `cron_task`). It now shows translated names and, for a failed scheduled task, its reason, which is now stored.
+  - Suggested tasks were in English in every language.
+- Research that found nothing is no longer saved to the knowledge base. Entries such as "the research data is empty" came back in every prompt.
+- A request handled by an agent from the web chat left an empty "Untitled" conversation in the list, because the stream attempt opened one and the fallback opened another. Conversations without messages are not listed.
+- The dashboard open and click rates count each recipient of a message once and never exceed 100%. A live instance showed 114.3%.
+
+### Upgrading (Docker)
+
+- `docker compose pull && docker compose up -d`. One migration normalises the per-agent Brain modes: where the global mode is Manual they are cleared (in the chat they had no effect there), elsewhere the entries equal to the global mode are dropped. Check *Brain → Settings → Agent modes* after the update.
+- Knowledge base entries saved earlier from failed research stay. Delete them in *Brain → Settings → Knowledge base* if you have any.
+
+## [2.8.1] – Brain answers again after a day over its token limit - 2026-11-08
+
+**Release date:** 2026-11-08
+
+### Fixed
+
+- **Brain answers again the day after its token limit was reached.** The daily token counter was reset only when tokens were charged, but over the limit no AI call was made, so nothing was charged and the count from the last active day stayed: the chat (web and Telegram) kept answering "Daily AI token limit reached. Try again tomorrow" for good, even with no tokens used that day, and there is no field in the panel to raise the limit. A count from an earlier day no longer counts (`AiBrainSettings::tokensUsedToday()`), and the Telegram `/status` and the Monitor show today's count. Covered by `BrainTokenLimitTest`.
+
+### Upgrading (Docker)
+
+- `docker compose pull && docker compose up -d`. No configuration file changes and no migrations since 2.8.0.
+
+## [2.8.0] – Translated messages and validation, buyers reach the thank-you page, GOLD for contributors - 2026-11-08
+
+**Release date:** 2026-11-08
+
+### Added
+
+- **GOLD for contributors.** Merged contributions earn points, and points earn a free NetSendo GOLD licence: 12 months for the first point, 12 more months for the second, no end date from the third. Maintainers label a merged pull request `reward` (1 point) or `reward-large` (3 points); a confirmed vulnerability reported through SECURITY.md counts as 3 points. The rules, what counts and how to claim the licence are in CONTRIBUTING.md; contributions merged before the programme count too. A claim emailed to contact@netsendo.com is answered within minutes with a one-time code that the author posts as a comment to confirm the GitHub account, then the key; further points extend the licence automatically.
+- A pull request template with the checklist from CONTRIBUTING and the author's confirmation that they understand the change and license it to NetSendo.
+- **Reply detection explains Gmail.** When the mailbox is a Gmail mailbox, or the reply inbox host or user is on gmail.com, the "Reply detection" section shows the settings Gmail needs (`imap.gmail.com`, port 993, SSL, the full address as the user) and says that Gmail accepts an app password there, not the Google account password. On a Gmail mailbox it also says that connecting Gmail with Google (OAuth) covers sending only. A "Fill in Gmail settings" button enters the host, port and encryption, and the connected Gmail address when the user field is empty.
+- The `Contributor reward` workflow comments on a merged pull request with a `reward` or `reward-large` label: it confirms the points and tells the author how to claim the licence. It runs on `pull_request_target` without checking out the pull request's code.
+- **DKIM selector for a domain** (*Deliverability Shield → domain*). Amazon SES (Easy DKIM) and some other relays sign with per-domain token selectors that cannot be guessed; enter one of them (or paste the whole `token._domainkey.example.com` name from the provider's console) and the check looks it up first. The card also shows which selectors were tried or which one was found.
+- `PUT`/`PATCH /api/v1/ab-tests/{id}` changes a draft A/B test (name, test type, winning metric, sample share, duration, auto-select and confidence threshold, validated as on creation). A running or finished test answers 409. The route was registered and documented before, but there was no method behind it, so every call ended in a 500.
+
+### Changed
+
+- **EULA §5.7 "Complimentary GOLD Licence"** (new), with the definitions "Complimentary GOLD Licence" and "Contributor Programme" and matching wording in the definition of "GOLD Licence", §4.2, §5.3 and §18.2: NetSendo may grant GOLD free of charge, for a period or without an end date. Such a licence covers one installation of the official software, is personal and has no cash value, is a thank-you and not payment for a contribution (§8.5 applies either way), comes without the GOLD support of §12.3 unless the grant says otherwise, and ends on a breach of the EULA or a misrepresentation. Later changes to the programme do not affect licences already granted.
+- **Times in messages follow the order the message form describes: Message > List > Group > User Account.** A queue message's *Pick a time* was read in UTC unless *Send in subscriber's timezone* was ticked, and a scheduled broadcast's date in the message's or the account's timezone, never the list's or group's, although the Timezone field says "Default (according to list/group/account settings)" and the CRON (send in subscriber's timezone) and the API's schedule endpoint already used that order. Both now use the same rule (`Message::resolveTimezone()`; with several lists the one with the lowest ID decides), and the edit form shows a scheduled date in the timezone it was entered in. See *Upgrading* for what changes on existing installations.
+- **The DMARC generator starts with `p=none`** (monitoring, nothing blocked) and offers `quarantine` and then `reject` as the next steps, starting one step after the policy the domain already publishes. Its records use relaxed alignment (the DMARC default) and no `ruf`; strict `adkim=s; aspf=s` failed mail sent from subdomains or through relays that sign with a parent domain. An existing `rua` address is kept.
+- **The SPF generator keeps the current record** and only adds the includes the domain's sending providers need. It used to replace the record with the provider includes (dropping other senders such as the mail host or a CRM, and the IP addresses it meant to keep), and for SMTP mailboxes it proposed `include:_spf.<NetSendo host> -all`, an include that does not exist for SMTP sending. SMTP relays are now recognised by their host (Amazon SES, SendGrid, Google Workspace, Microsoft 365, Mailgun); for an unknown SMTP server with no SPF record the generator asks for the provider's include instead of guessing one.
+- Texts of the panel that were Polish in every language are translated (en, pl, de, es): message save and queue messages, list messages, SMS provider names and credential labels, the form builder's style and redirect settings, the "no mailbox" errors on the queue screen (in the account owner's language) and the prefix of copied messages, forms and automations (`[COPY]` in English, `[KOPIA]` in Polish; over the API, which runs in the app locale, copies are now named `[COPY] …` by default).
+
+### Fixed
+
+- **Validation and login errors follow the panel language** ([#74](https://github.com/NetSendo/NetSendo/issues/74)). Laravel ships these texts in English only, so a Polish, German or Spanish user saw "The name field is required.", "These credentials do not match our records." or "We have emailed your password reset link." `lang/{pl,de,es}/` now has `validation.php` (every rule of Laravel 13, with names for common fields such as `email`, `first_name` or `subject`), `passwords.php` and `pagination.php`, and `auth.php` has `failed` and `throttle`. The API keeps answering in English. Covered by `ValidationTranslationsTest`.
+- **Success and error messages show text instead of raw keys** ([#72](https://github.com/NetSendo/NetSendo/issues/72)). About 140 messages returned by the backend were keys such as `polar.settings_saved`, `nmi.ip_added` or `calendar.connected`, because their language files did not exist. Added in en, pl, de and es: `ab_tests`, `brands`, `calendar`, `campaign_auditor`, `cron`, `logs`, `names`, `nmi`, `polar`, `settings` (WooCommerce), `sms_lists`, `stripe`, `template_builder` and `tpay`, plus the insert save messages and the CRM texts that were missing everywhere: the emails about a contact's reply, a won, lost or moved deal and an overdue task, the activity entries for a sent email and a completed task, the company lookup errors and the Card Intel settings message. `BackendTranslationKeysTest` checks that every literal key used in `app/` has a text in all four languages (German and Spanish may still fall back to English).
+- **Default lead scoring rules have names** ([#67](https://github.com/NetSendo/NetSendo/issues/67)). Every new account got its 14 default rules (*CRM → Settings → Lead Scoring*) named and described with raw keys such as `crm.scoring.defaults.email_opened.name`, because `crm.php` had no `scoring.defaults` section in any language. The texts are added in en, pl, de and es, new rules are written in the account owner's language, and a migration renames stored rules that still carry a raw key (in the owner's language, English when none is set). Rules a user renamed keep their name. Covered by `LeadScoringDefaultRulesTest`.
+- **Buyers reach the thank-you page after paying in a sales funnel** ([#66](https://github.com/NetSendo/NetSendo/issues/66)). Stripe, Polar and Tpay send the buyer back to `/checkout/success/{funnel}`, but the checkout route `/checkout/{type}/{product}` was registered first and took that address, so the buyer saw a 404 and the funnel's thank-you URL or page was never used. The checkout route now accepts only `stripe`, `polar` and `tpay`. The default thank-you page showed raw keys such as `sales_funnels.thank_you_heading`, and saving a funnel answered `sales_funnels.created`: `lang/{pl,en,de,es}/sales_funnels.php` did not exist and is added. Covered by `SalesFunnelThankYouPageTest`.
+- **A licence key can be entered while a licence is active.** The licence page showed the key field only when there was no licence, so with SILVER on there was nowhere to paste a GOLD key from an email (bought on netsendo.com or granted free of charge). The licence card now has *Already have a GOLD key, e.g. from an email? Enter it here* (*Have a new licence key?* with GOLD); the key is checked with the licence server before it replaces the current one.
+- **Upgrade to GOLD no longer stays locked after the order tab was closed.** For 72 hours after a purchase was started, every visit to the licence page waited for the payment for up to 15 minutes with the button disabled. The button now always opens the order again, the wait can be cancelled (*Cancel purchase*, `POST /license/cancel-gold`), and a started purchase ends as soon as GOLD is on by any route (a key entered, a key sent to the installation, a store purchase). Covered by tests in `GoldPurchaseTest`.
+- **The public activation endpoint `POST /api/license/webhook` no longer replaces an active GOLD licence with a lower plan.** Any valid SILVER key posted there switched a GOLD installation to SILVER; such a request now answers 409. The endpoint also stores the installation's address with the key, like the other activation routes. The netsendo.com admin panel uses it to hand a GOLD key granted there to the installation, so the licence switches without pasting anything.
+- **A GOLD licence that loses its end date on the licence server no longer ends locally on the old date.** The daily `license:verify` copied a new expiry date from the server but kept the old one when the server answered GOLD without a date, so a GOLD granted for 12 months and later changed to no end date (same key) would have turned into SILVER on the old date. An answer whose `expires_at` is null now removes the local date; an answer without the field still leaves it alone. Covered by two tests in `GoldPurchaseTest`.
+- **Deliverability Shield badges never turned green.** The dashboard and the domain page compared the SPF, DKIM and DMARC statuses with `pass`, a value the check never stores (it stores `valid`, `warning`, `critical` or `pending`), so every badge stayed red and the overall pill grey. Warnings are now amber and checks still to run grey. The status texts of the domain page showed raw keys such as `deliverability.spf.valid`, and three groups of the lang file (`domain`, `score`, `folder`) were overwritten by plain strings of the same name further down, so their texts were never found either; the dashboard's stats and the simulation history showed raw keys too.
+- **The published DMARC policy was never stored**, so a domain with `p=reject` was shown, scored and advised as `p=none`. The daily DMARC upgrade check read the wrong status value and history fields and never got past its first condition.
+- DKIM records published without the optional `v=DKIM1` tag (Amazon SES, many hosting panels) were not recognised, and an SMTP mailbox was looked up only under the selectors `default`, `mail` and `dkim`. The common selectors of Microsoft 365, Google, Mailchimp and SendGrid are tried as well.
+- **The mailbox chosen when creating a list was ignored**: only the edit page saved it as the list's default mailbox. Choosing "none" on the edit page did not clear it either. The create page showed the raw key `mailing_lists.mailbox_defaults_label`. Both pages now accept only a mailbox of the account; sending loads the list's default mailbox by its ID alone, so before this an ID of another account's mailbox could be saved.
+- **Webhooks with a URL longer than 255 characters ended in a 500** on MySQL: the API accepts 2,048 characters, the column was `VARCHAR(255)` (now `VARCHAR(2048)`). Switching a webhook back on, also one NetSendo switched off after 10 failed deliveries, resets its failure count, so the next failure does not switch it off again.
+- `DOCKER_INSTALL.md`: the database backup commands ran `mysqldump` with a terminal (`docker compose exec` without `-T`), which writes the password warning into the dump and turns its line endings into CRLF, used the database name `netsendo` instead of `DB_DATABASE` (`netsendo_prod`) and gave `docker compose cp` the container name instead of the service; the steps that rebuilt the frontend with `npm run build` cannot run in the image, and the advice to change `REVERB_PORT` to 8086 stopped broadcasting. `README.md` said `install.sh` starts on port 8080; it uses 5029.
+- **Reverb** (Live Visitors) can be kept off the public interface and moved to another host port without breaking broadcasting: `REVERB_BIND_ADDRESS` (default `0.0.0.0`, as before) and `REVERB_HOST_PORT` (default `REVERB_PORT`, as before) in `docker-compose.yml`. `install.sh` gives every new installation a random `REVERB_APP_KEY` and `REVERB_APP_SECRET` instead of the example values, which are public and sign access to the private channels.
+
+### Upgrading (Docker)
+
+- `docker compose pull && docker compose up -d`. Three migrations: `domain_configurations.dkim_selector` (new, nullable), `webhooks.url` widened to 2,048 characters, and the default lead scoring rules that still carry a raw key as their name or description get the text in the owner's language.
+- **Send times of queue messages with *Pick a time*:** for subscribers who sign up after the update, the hour is read in the message's timezone (Message > List > Group > User Account) instead of UTC. With an account in Europe/Warsaw and no list or message timezone, 09:00 now means 09:00 Warsaw time, one hour earlier (two in summer) than before. Entries already planned keep their time. If you had set the hour in UTC on purpose, set it again in your timezone or give the message the timezone UTC.
+- **Scheduled broadcasts** of a list or group with its own timezone go out at the entered time in that timezone. Broadcasts already scheduled keep their stored time; when you open and save one, its date is read in the new timezone.
+- **Reverb, optional:** take the new `docker-compose.yml` to use `REVERB_BIND_ADDRESS` and `REVERB_HOST_PORT`. Installations from 2.7.2 or older still use the example `REVERB_APP_KEY` and `REVERB_APP_SECRET`: replace both in `.env` with random values (`openssl rand -hex 16`) and run `docker compose up -d`. Behind a reverse proxy that forwards `/app/` to Reverb, also set `REVERB_BIND_ADDRESS=127.0.0.1`. Nothing changes for an installation that keeps its files.
+
+### Tests
+
+- `DeliverabilityShieldTest`, `ListDefaultMailboxTest`, `MessageTimezoneTest`, `PanelTranslationsTest`, `SalesFunnelThankYouPageTest`, `LeadScoringDefaultRulesTest`, `BackendTranslationKeysTest`, `ValidationTranslationsTest`, `Api/AbTestUpdateApiTest` and three new cases in `Api/WebhookApiTest` (full suite: 729 passed). The 255-character limit of `webhooks.url` cannot be seen on SQLite; the migration was checked on MySQL 8.4 (a 332-character URL failed with error 1406 before it and was stored whole after it).
+
+## [2.7.2] – SMS campaigns send again, the WordPress plugin subscribes, accounts stay apart - 2026-11-08
+
+**Release date:** 2026-11-08
+
+### Fixed
+
+- **SMS campaigns from the panel were never sent.** "Send now" stored the campaign with status `sent`, but the SMS cron only processes `scheduled` campaigns, so nothing went out. "Schedule" wrote the chosen date to `send_at`, while the cron reads `scheduled_at`, so a scheduled SMS went out at the next cron run instead of at the chosen time. Queue (autoresponder) SMS saved as active stayed `sent` and never ran either. The panel now stores SMS campaigns like email ones: `scheduled` with `scheduled_at` set to now, or to the chosen time entered in the user's timezone and stored in UTC; queue SMS are `scheduled` and active. The edit form shows a scheduled time in the user's timezone.
+- **"Send test SMS" always failed.** The panel called the SMS providers with a parameter they do not have (`message:` instead of `content:`), so PHP threw an error that the `catch (\Exception)` block did not catch. A test SMS the provider rejects is now reported with the provider's error instead of "Test SMS sent".
+- **The send_sms MCP tool and `POST /api/v1/sms/send`.** The MCP client sends the text as `content`, the endpoint required `message`, so every call from an AI assistant ended in 422. The endpoint now accepts both names, a `subscriber_id` alone is enough (the SMS goes to the subscriber's number), a subscriber of another account answers 404, and a number no contact has answers 422 instead of 500 (a contact without an email address cannot be created). The MCP client now sends `message`.
+- **The WordPress plugin (1.1.2) could not add anyone to a list.** It sent the list as `list_id`, the API requires `contact_list_id`, so every signup and every content-gate unlock ended in "Subscription failed". Its "subscribers only" gates never recognised a subscriber either: the check read the single subscriber the API returns as if it were a list. Both are fixed; *Marketplace → WordPress → Download Plugin* serves 1.1.2, and installed plugins are offered the update.
+
+### Security
+
+- **The fallback mailbox and SMS provider could belong to another user of the instance.** When the default mailbox (or SMS provider) could not be used, NetSendo looked for any other active one under its daily limit with `whereRaw('daily_limit IS NULL OR sent_today < daily_limit')`; without parentheses the `OR` escaped the user condition, so a campaign could go out through another user's mailbox or SMS account. The condition is now grouped.
+- **`POST /api/v1/subscribers` accepted tag IDs of another account** and returned them with the contact. Tags must now belong to the API key's account (as lists already had to).
+- **`POST /api/webhooks/purchase` picked a contact with the given email from any account.** It now looks only in the API key's account.
+
+### Tests
+
+- `SmsCampaignSchedulingTest`, `Api/SmsSendApiTest`, `ProviderFallbackOwnerScopeTest` and `Api/ApiAccountScopeTest`.
+
+### Upgrading (Docker)
+
+- `docker compose pull && docker compose up -d`. No configuration file changes and no migrations since 2.7.1. SMS campaigns saved with status `sent` before this release are not re-sent: save them again (or click **Send** again) to queue them.
+
+## [2.7.1] – Live Visitors connects to the configured Reverb address - 2026-11-08
+
+**Release date:** 2026-11-08
+
+### Fixed
+
+- **Live Visitors connected every browser to `ws://localhost:8085` in Docker installs.** The page read `VITE_REVERB_HOST`, `VITE_REVERB_PORT` and `VITE_REVERB_SCHEME` with `env()` in its controller. The Docker entrypoint runs `php artisan config:cache`, and with a cached configuration `env()` returns nothing outside the config files, so the page ignored `.env` and fell back to `localhost`, `8085` and `http`: on any instance opened from another computer the real-time visitor list never connected. The values now live in `config/broadcasting.php` (`browser`) and reach the page through `config()`. After changing them, `docker compose up -d` applies them; no frontend rebuild is needed, and `npm run build` cannot run in the production container anyway. Checked in the 2.7.0 image with a cached configuration: the old code gave the browser `localhost`, the new one the `.env` address.
+- **`MCP_API_KEY` from `.env` was never found** by the MCP status in the panel and by `php artisan mcp:test-connection` for the same reason, and the `services.mcp.api_key` setting they looked at first did not exist. It does now (`config/services.php`).
+- `tests/Feature/RuntimeConfigTest.php` checks the Live Visitors page against the configured address and fails when app code, routes or views call `env()` directly.
+
+### Upgrading (Docker)
+
+- `docker compose pull && docker compose up -d`. No configuration file changes since 2.7.0.
+
+## [2.7.0] – Semantic Brain knowledge base, rich-text blocks, one container migrates - 2026-11-08
+
+**Release date:** 2026-11-08
+
+### Upgrading (Docker)
+
+- `docker compose pull && docker compose up -d` is enough to get 2.7.0: the image also guards `migrate` and `db:seed` with a database lock, so an install that keeps its current configuration files no longer runs the migrations in four containers at once.
+- For the whole fix, also take the new `docker-compose.yml` and `docker/php/docker-entrypoint.sh` (in a git checkout: `git pull`; otherwise download them from `v2.7.0`, see *Updates* in README or DOCKER_INSTALL). The compose file mounts the installation's own copy of the entrypoint over the one in the image, so the image cannot replace it. With both files, only `app` migrates and seeds, and `scheduler`, `queue` and `reverb` start after it.
+- No new container, port or `.env` setting is required. Three migrations add the semantic knowledge base (`knowledge_chunks`, two columns in `ai_brain_settings`, `knowledge_entries.content` as `MEDIUMTEXT`). Back up the database before updating, as with every release that migrates.
+
+### Added
+
+- **Semantic Brain knowledge base (GOLD).** Until now Brain put the five best-rated entries of a few fixed categories into every prompt, whatever the task was about, so in a large knowledge base most of what it knew never reached it. With GOLD every entry is split into chunks of about 1,200 characters, each chunk is turned into an embedding vector, and for every task Brain gets the chunks that match it: the user's message in the chat, the topic of an e-mail or campaign, a goal, a playbook brief or a cron task. The brand voice and company entries stay in writing tasks as before, and an entry can now have up to 100,000 characters (10,000 on SILVER).
+  - **Embeddings** come from an AI integration the installation already has: OpenAI (`text-embedding-3-small` by default), Google Gemini (`gemini-embedding-001`), OpenRouter or a local Ollama model (`bge-m3`). Anthropic and Grok have no embedding endpoint. *Brain → Settings → Knowledge base → Semantic search* picks the integration and model (automatic by default), tries the model before saving it, shows how many entries are indexed and can re-index. A new model embeds the whole knowledge base again in the background; vectors of different models are never mixed.
+  - **No new service.** MySQL Community cannot search vectors (the `VECTOR` type of MySQL 9 has no distance function outside HeatWave), so vectors are stored as packed float32 in the new `knowledge_chunks` table (768 dimensions where the model can shorten them) and compared in PHP, about 60 ms for 5,000 chunks. Words found by the existing full-text index, the task's categories and verified entries add a small bonus, and matches far weaker than the best one are left out.
+  - **Kept in step:** an added or changed entry is embedded by a queued job (`IndexKnowledgeEntry`), changed text drops its old vectors on any plan, and `brain:index-knowledge` (hourly, GOLD only; `--sync`, `--user=`) embeds whatever is missing, e.g. entries saved while the provider was down or before GOLD. Saving an entry never fails because of the provider.
+  - **Without GOLD**, without an embedding provider, or when the provider does not answer, Brain reads the knowledge base by category as before. Vectors made under GOLD are kept.
+  - The knowledge base search of the API (`GET /api/v1/brain/knowledge?search=`) also searches by meaning with GOLD.
+  - Code: `app/Services/Brain/Knowledge/{KnowledgeChunker,KnowledgeEmbedder,KnowledgeIndexer,SemanticKnowledgeSearch,EmbeddingTarget}.php`, `EmbeddingProviderInterface` for the OpenAI, Gemini, OpenRouter and Ollama providers, `SemanticKnowledgeController`, `Feature::SemanticKnowledge`; texts in en, pl, de, es. Covered by `tests/Feature/SemanticKnowledgeTest.php` and `tests/Unit/KnowledgeChunkerTest.php`.
+### Changed
+
+- **The text block in the email template builder is edited in a rich-text editor.** Its content field was a plain text box that showed the block without its HTML tags and saved any edit back as one plain paragraph, so changing one word of AI-generated or library content dropped its links, bold text, line breaks, paragraphs, headings and colours. It is now an editor (TipTap) with bold, italic, underline, link, bulleted and numbered lists, line break (also Shift+Enter), undo and redo, and an edit keeps the block's formatting and its inline styles exactly as written (`#64748b` stays hex, `mso-*` properties stay).
+  - **Nothing is saved until you change the text.** Clicking into the editor, selecting and leaving it keep the block's HTML byte for byte, and undoing every change brings the original HTML back exactly.
+  - **Insert variable** inserts at the cursor (replacing a selection) instead of at the end of the text; without a cursor in the editor, at the end. Variables go in as text, snippets and signatures as HTML, tables and images included.
+  - **AI:** Generate, Improve and the AI assistant panel replace the block's content as before; the editor shows the new text with a fresh undo history. Improve receives the block's HTML with its formatting.
+  - **Email-safe HTML.** The editor knows paragraphs, line breaks, bold, italic, underline, strikethrough, links, lists, headings, quotes, rules, styled `span` and `div`, images and tables. Anything else in a block (`script`, `iframe`, forms, `<font>`, CSS classes) is dropped the first time the block is edited. Links open in a new tab; `javascript:` addresses are refused, placeholders such as `[[unsubscribe]]` work as addresses, `netsendo.com` becomes `https://netsendo.com` and `jan@firma.pl` a `mailto:` link. List items and table cells are stored without an inner `<p>` (`<li>text</li>`), so email clients do not add paragraph margins inside lists and signatures. Pasted text keeps bold, links and lists but not the fonts and colours of where it came from.
+  - Code: `Components/TemplateBuilder/TextBlockEditor.vue` (new) and `BlockEditor.vue`; toolbar texts in en, pl, de, es.
+
+### Fixed
+
+- **The quick install script (`install.sh`) starts a working installation.** It downloaded only `docker-compose.yml` and the nginx config, so Docker created folders in place of `docker/php/docker-entrypoint.sh` and `docker/php/uploads.ini` and the app container never started; its `.env` also had no `APP_KEY` (the containers mount `.env` read-only and cannot write one) and pointed the app at database port 33006. The script now downloads every file the compose file mounts, from the same release as the image (`VERSION=2.6.0` takes the `v2.6.0` files and the `2.6.0` image), builds `.env` from `.env.example` with a new `APP_KEY` and a random database password, refuses to overwrite an existing installation's `.env`, and waits until the app answers. Checked with a clean install in Docker: all containers up, `/` redirects to `/login`, no pending migrations.
+- **The help menu no longer links to `forum.netsendo.com`**, which does not exist.
+- **Web research entries reach Brain again.** Research saved entries under categories the AI made up (e.g. `marketing`, `marketing_strategy`); Brain reads the knowledge base by category, so it never used them, and the edit form refused them. They move to *Insights* (the old category is kept as a tag), and new entries with an unknown category are stored the same way.
+- Adding a knowledge base entry without choosing a category failed silently: the form started with a category that does not exist. It starts with *Company* now.
+- An Ollama integration behind a proxy now sends its optional API key as a bearer token; it was never sent.
+- **Only one container migrates and seeds the database.** app, scheduler, queue and reverb run the same entrypoint and `docker compose up -d` starts them together, so on a fresh install and on every update that ships migrations all four ran the migrations and the seeders at once. The logs showed `SQLSTATE[42S01] Table 'users' already exists`, "148 migration(s) still pending after 3 attempts" and seeding that failed with `Table 'names' doesn't exist`; the database ended up complete only because another container finished the work, and since MySQL cannot roll back DDL a migration could be left half-applied. `docker/php/docker-entrypoint.sh` now runs the migrations, the seeding and the startup upkeep (default automations, lead scoring rules, stale queue jobs) under a MySQL named lock (`GET_LOCK`) that one container holds while it prepares the database; the others wait and start when it is done. The lock lives on the database server, so it works with any `docker-compose.yml` and whether or not the containers share a volume, and MySQL drops it when its holder disconnects: a container that dies cannot leave it behind.
+- `docker-compose.yml` and `docker-compose.dev.yml` set `NETSENDO_RUN_MIGRATIONS=false` for scheduler, queue and reverb: they leave migrating and seeding to the app and wait until the schema is up to date. Without the variable (a compose file from before this change) the containers take the lock in turn: the first one migrates and seeds, the others find nothing left to do. `NETSENDO_MIGRATIONS_WAIT_TIMEOUT` (seconds, default 1800) caps the wait; after it a container starts without preparing the database.
+- **`php artisan migrate` and `php artisan db:seed` wait for each other, with any entrypoint.** `docker-compose.yml` mounts the installation's own copy of `./docker/php/docker-entrypoint.sh` over the one in the image, so `docker compose pull` alone does not bring the new entrypoint. The image therefore also guards the two commands themselves (`App\Console\MigrationLock`, a second MySQL named lock taken on a connection of its own when either command starts and released when it ends): with an older entrypoint the four containers still each start `migrate`, but one migrates while the others wait and then find nothing to migrate, and the seeders run one after another instead of into half-created tables. This also covers *Run migrations* in the admin panel. The wait is capped by the same `NETSENDO_MIGRATIONS_WAIT_TIMEOUT` (the command then fails rather than starting a second migration); other database drivers, and errors while taking the lock, leave the commands as they were.
+- To get the full fix (only the app migrates and seeds, the other containers start once it is done), update `docker/php/docker-entrypoint.sh` and `docker-compose.yml` as well: `git pull`, or download both from this release.
+- Checked in Docker with the 2.6.0 image: a clean install with `install.sh` (252 migrations in one batch, starter templates, system messages and names seeded once) and an update with a pending, deliberately slow migration, with the new and with the old `docker-compose.yml`: the migration ran once, in one container, with no "already exists" error, while the others waited. The previous entrypoint in the same update ran it in all four containers and failed in three with `Table ... already exists`. With the previous entrypoint and compose file and the guarded commands, a clean install ran all 253 migrations in one container in one batch while the other three waited, with no error, and seeded templates, system messages and names without duplicates; the new entrypoint and the guarded commands together do not block each other. `tests/Feature/MigrationLockTest.php` covers waiting, giving up after the timeout, running without the lock on errors and on sqlite, nested commands, and that `migrate` started with `php artisan` or `Artisan::call()` reaches the lock.
+- **The Delete key removed the whole selected block in the template builder while typing.** The builder's keyboard shortcut deleted the selected block on every press of Delete anywhere on the page, so forward delete (Delete on Windows and Linux, fn+Delete on a Mac) in a block's text, a button label, a URL, alt text or the AI prompt removed the block instead of one character, with no confirmation and no undo. Delete and Escape are now ignored while the cursor is in a text field, a select or editable content, and while the AI assistant, the mobile panel or the insert or product picker is open; Delete also does nothing during preview, where the canvas is hidden. With the block selected on the canvas, Delete still removes it and Escape still deselects it and closes the preview; Ctrl/Cmd+S saves from anywhere as before (`Pages/Template/Builder.vue`).
+- **Clicking into a text block's content field no longer strips its formatting** (email template builder). The field showed the block's text without its HTML tags and saved that text back every time it lost focus, so clicking into it and out again turned links, bold text, line breaks and paragraphs into one plain paragraph. It now saves only after you change the text, and it reloads after AI Generate, Improve or the AI assistant panel change the block, so old text can no longer overwrite the AI result. Editing keeps the formatting too: see the rich-text editor under *Changed*.
+
+- **Release titles with build metadata.** *Settings → Updates* removes the version from a GitHub release name to show its title. The version went into a regular expression with only its dots escaped, so a version such as `2.4.1+build.7` was not recognised and the whole name showed as the title. All regular-expression characters are now escaped (CodeQL `js/incomplete-sanitization`).
+- **HTML is turned into text with the browser's parser instead of a tag regex** (new `utils/htmlText.js`, `htmlToText()`), in two places that show or copy text: the text preview of blocks inside a columns block in the template builder, and *Copy* with *Plain text without formatting* in the message AI assistant. Entities are now decoded (`Tom &amp; Jerry` shows and copies as `Tom & Jerry`, not with the entity) and `<script>`/`<style>` content is left out. Neither place puts the result into HTML, so this was not exploitable (CodeQL `js/incomplete-multi-character-sanitization`).
+
+### Documentation
+
+- README, CONTRIBUTING and DOCKER_INSTALL match the current stack: Laravel 13, Inertia 3, MySQL 8.4 LTS, Node.js 24, the real ports of both stacks, `CACHE_STORE` instead of `CACHE_DRIVER`, AI keys set in *Settings → AI Integrations* instead of `.env`, the licence activation as the licence page does it, and version examples for 2.6.0. The links to `docs.netsendo.com`, `forum.netsendo.com`, `support.netsendo.com` and `netsendo.com/courses` (none of them exists) point to the documentation and guides on netsendo.com, GitHub Issues and the official Telegram channel. README has a short privacy section (no third-party assets in the panel, telemetry off by default, what the licence check sends).
+- DOCKER_INSTALL no longer appends a second `APP_KEY` line to `.env`: with the empty `APP_KEY=` line left in place the entrypoint tried to write a key into the read-only file and stopped. The key now replaces that line.
+- SECURITY.md lists 2.6.x as the supported version; CONTRIBUTING shows how to run the tests and no longer claims that CHANGELOG lists every contributor.
+
+## [2.6.0] – Opt-in, anonymous telemetry - 2026-11-08
+
+**Release date:** 2026-11-08
+
+### Added
+
+- **Opt-in, anonymous usage report — off by default.** An installation can send NetSendo PSA one report a day with its version, plan, kind of deployment and which features are in use, so we know which versions are still running and what to fix and build first. **Nothing is sent until the administrator switches it on** under *Settings → Telemetry* (new, administrator only), and it can be switched off at any time. 2.5.1 removed the hard-coded Google Analytics; this is its consented, documented replacement and sends nothing to Google or any other third party.
+  - **What is sent** (`POST https://netsendo.com/api/telemetry`, JSON): a random installation id created when telemetry is switched on (not derived from the domain, licence key, email or any account), the NetSendo version, plan (`silver`/`gold`/`none`), deployment (`docker`/`cloud`/`other`), panel language, PHP, database and queue driver versions; counts **as ranges only** (`0`, `1-10`, `11-100`, `101-1k`, `1k-10k`, `10k-100k`, `100k-1m`, `1m+`) of contacts, lists, users, campaigns and emails/SMS sent in the last 30 days, active funnels and automations, webinars, forms and mailboxes; true/false flags for SMS, AI, Brain, MCP, API keys, webhooks, CRM, webinars, A/B tests and the WooCommerce, WordPress, n8n, Shopify, Stripe, Polar, Calendly, Google Calendar and Zoom integrations; and provider *types* (e.g. `smtp`, `twilio`, `openai`). **Never sent:** contacts or their data, email addresses, names, subjects or content of messages, list/form/campaign names, the domain, host names, keys, logs. Every field is listed in [`docs/TELEMETRY.md`](docs/TELEMETRY.md) and at <https://netsendo.com/en/docs/telemetry>; netsendo.com stores only those fields and no IP address.
+  - **See before you agree:** the settings page shows the exact report generated from the installation, the installation id and when the last report was sent. `php artisan netsendo:telemetry --show` prints it on the command line.
+  - **Switching off** stops the reports and asks netsendo.com to delete every report of that installation id (`DELETE /api/telemetry/{id}`); a later opt-in gets a new id.
+  - **Asked once:** the dashboard shows the administrator a short question (*Turn on* / *See what is sent* / *No, thanks*); either answer is kept and the question does not come back.
+  - **Environment:** `NETSENDO_TELEMETRY=true|false` overrides the panel and locks the switch (unset: the panel decides, default off). `NETSENDO_DEPLOYMENT=docker|cloud|other` sets the reported deployment (unset: `docker` when `/.dockerenv` exists, else `other`); NetSendo Cloud sets `cloud`. `NETSENDO_TELEMETRY_URL` changes the endpoint.
+  - **Schedule:** `netsendo:telemetry` runs hourly (minute 17) and sends once a day in an hour derived from the installation id, or at once when the last report is more than two days old. A failed send is logged and never affects the installation. Sleeping (dormant) Cloud instances send nothing, like every other scheduled job.
+  - Code: `app/Services/Telemetry/{TelemetryService,TelemetryReport,TelemetryClient}.php`, `app/Console/Commands/SendTelemetry.php`, `TelemetrySettingsController`, `Pages/Settings/Telemetry/Index.vue`, `Components/Dashboard/TelemetryNotice.vue`; texts in en, pl, de, es. Covered by `tests/Feature/TelemetryTest.php` (off by default, only documented fields and nothing identifying, ranges, sending and deletion, administrator only, environment override, asked once).
+
+## [2.5.2] – The panel and webinar pages load nothing from other hosts - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Changed
+
+- **The panel loads its logos, favicon and fonts from your installation.** Until now every page of the panel, its sign-in page and the affiliate partner portal fetched the NetSendo logos and favicon from `gregciupek.com` and the Figtree and Inter fonts from `fonts.bunny.net`, so each page view gave those hosts the IP address and browser of the person using it. The images now ship in `public/images/brand` (the n8n logo in `public/images/integrations`), the fonts are bundled by Vite from the `@fontsource/figtree` and `@fontsource/inter` packages (SIL Open Font License), and the share image (`og:image`, `twitter:image`) points at your installation. The panel looks the same.
+- **Public webinar pages no longer load the Tailwind Play CDN.** The registration, post-registration, thank-you, watch and replay pages fetched `cdn.tailwindcss.com` on every visit: a request to another host from your subscribers' browsers, made with a script Tailwind does not support in production. They now use a stylesheet built with the app (`resources/css/webinar.css`, about 6 KB gzipped) and look the same. The watch and replay pages also stop loading the panel's JavaScript bundle, which they did not use (it only threw an error in the browser console there).
+- What a webinar's owner adds still loads from where they chose: YouTube, Vimeo and Calendly embeds, and a Google Font picked in the page builder.
+- `tests/Feature/NoThirdPartyAssetsTest.php` checks that the sign-in page, the panel and the five webinar pages load scripts, styles, icons and images only from the installation, that the former hosts are gone from the frontend sources, and that every `@vite()` entry a view asks for is built.
+
+### Fixed
+
+- The countdown, "not started yet" and "session ended" screens of the webinar watch page show their gradient again (gray, indigo, purple) instead of fading to black at the edges. The panel stylesheet and the Tailwind CDN, both loaded there, cancelled each other's gradient colours.
+
+## [2.5.1] – Installations no longer contact Google Analytics - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Removed
+
+- **NetSendo no longer sends page views from your installation to Google Analytics.** Until now every installation, self-hosted and NetSendo Cloud alike, loaded Google's `gtag.js` with NetSendo's own measurement ID `G-96J7WQ3SMT` on every page rendered by `app.blade.php`: the panel, its sign-in page and the affiliate partner portal (`/portal/...`). Each page view (its address, such as `/messages/36/stats`, the page title, and the browser and IP address of the person using it) went to Google and to NetSendo's analytics, without a consent banner and without the installation's operator being told. The partial `resources/views/partials/google-analytics.blade.php` and its include are removed. The panel and the partner portal now load no analytics or tracking script, from NetSendo or anyone else.
+- Installations on 2.5.0 or earlier keep sending these page views until they are updated, so update. Nothing has to be configured. The tracking you set up yourself is not affected: open and click tracking, the NetSendo pixel and Live Visitors send their data only to your own installation.
+- `tests/Feature/NoThirdPartyAnalyticsTest.php` checks that the sign-in page and the panel load no Google Analytics or Google Tag Manager script.
+
+## [2.5.0] – The SILVER/GOLD split is complete - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Changed
+
+- **The SILVER/GOLD split is complete.** Besides the features enforced since 2.4.0, these now need an active GOLD licence (refused on the server, in the panel, the public API and MCP; 402 with `code: gold_required` for API calls):
+  - **NetSendo Brain autonomy** (`brain_autonomy`): the semi-automatic and autonomous modes, the autonomous cron (`brain:run-cron` is skipped), goals, the weekly digest, the Telegram bot, web research (Perplexity, SerpAPI) and voice input. **The Brain chat in manual mode stays in SILVER.** Without GOLD `AiBrainSettings::work_mode` and `getAgentMode()` read `manual` whatever is stored (the stored choice applies again with GOLD), goals are not detected in chat, research reports itself unavailable, the prompt no longer mentions the cron or Telegram, and the Telegram webhook answers 200 with a short GOLD notice without running anything.
+  - **AI Campaign Auditor** (`campaign_auditor`): running audits, applying and measuring recommendations, advisor settings, the daily `audit:run --all`, and the AI analysis in campaign statistics. Past audits and the statistics stay readable.
+  - **Deliverability Shield** (`deliverability_shield`): adding and checking domains, alerts, DNS record generators, InboxPassport (also the "Check Deliverability" button in the message editor) and the scheduled DNS checks and DMARC upgrades. Its dashboard shows the offer; domains and simulations stay readable and removable.
+  - **NetSendo Mail Infrastructure** (`mail_infrastructure`): adding pools and IPs, provisioning, warming, DKIM, blacklist checks and their scheduled jobs. Sending through an NMI set up earlier keeps working.
+  - **Segmentation dashboard** (`segmentation_dashboard`, AutoTag Pro). Audience filters in campaigns stay in SILVER.
+  - **Split A/B steps in funnels** (`funnel_ab_split`): adding one in the builder, over the API or from a template, and copying a funnel that has one. Funnels stay in SILVER, and split steps a funnel already has can be kept and edited.
+  - **Team members** (`unlimited_team_members`): SILVER has room for one team member besides the owner (a pending invitation counts); GOLD has no limit. Existing members keep their access.
+- **One list of what each plan includes:** `config/netsendo.php` `plans` now holds the SILVER and GOLD sections, and the Licence page builds its plan cards from it (new `license.plan_features.*` and `license.plan_sections.*` texts in en, pl, de, es). It used to list the public API, funnels and team members as GOLD, which contradicted netsendo.com. A test checks that every `App\Licensing\Feature` is listed under GOLD and none under SILVER. The unused plan lists in `lang/*/license.php` are removed.
+- **Sidebar:** Deliverability Shield, NMI, the segmentation dashboard and Campaign Auditor carry a GOLD badge, with a padlock while the licence lacks them (the static "PRO" and "AI" badges are gone).
+- **README** describes the plans as enforced, and no longer claims NetSendo needs a licence to run.
+
+### Fixed
+
+- **Campaign Architect's plan comparison** named GPT-4, Claude and Gemini as GOLD; they work on SILVER. It now names OpenRouter and Ollama.
+
+## [2.4.0] – GOLD features require the GOLD licence - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Changed
+
+- **The GOLD plan sold on netsendo.com is now enforced in the application.** Until now only the Campaign Architect limit (3 plans on SILVER) was checked; A/B tests, auto and hybrid webinars and OpenRouter/Ollama worked on every installation, even without a licence. Without an active GOLD licence (no key, SILVER, or GOLD past its expiry) these are now refused on the server, in the panel, the public API, MCP and NetSendo Brain alike:
+  - **A/B tests:** creating, editing, adding variants, starting and resuming (`ab-tests.*`, `POST/PUT /api/v1/ab-tests`, `.../variants`, `.../start`), a message saved with an A/B test (editor and `POST/PUT /api/v1/messages` with `ab_test_config`, refused before anything is saved), and Brain's `create_ab_test` / `start_ab_test` steps. When a message with a draft test starts sending without GOLD, the test is cancelled and the message goes out as written (`AbTestService::cancelDraftWithoutLicence`).
+  - **Auto and hybrid webinars:** creating and copying them, saving the auto-webinar schedule and chat (`webinars.auto.schedule|import-chat|generate-chat|convert`), and adding, editing or generating chat scripts in the scenario builder. Without GOLD such a webinar takes no new registrations (`Webinar::canRegister()`).
+  - **OpenRouter and Ollama:** adding them in AI settings, and every call through them (`AiService::getProvider`). Wherever the app picks an integration (default integration, AI model list, Brain's preferred and per-task model, Campaign Auditor, CardIntel, template AI) it now uses `AiIntegration::usable()`, which leaves them out without GOLD, so AI falls back to OpenAI, Anthropic, Gemini or Grok.
+- **What keeps working after a GOLD licence ends** (EULA §5.5, nothing is deleted): tests that are already running finish and send the winner; results, pausing, picking the winner and deleting tests stay available; people already registered for an auto-webinar still get their session; auto-webinar settings stay readable; a message whose test already ran can still be edited; an existing OpenRouter/Ollama integration can be edited or removed.
+
+### Added
+
+- **One place for GOLD checks:** `App\Licensing\Feature` lists the GOLD features (`unlimited_ai_campaigns`, `advanced_ai`, `ab_tests`, `auto_webinars`, `hybrid_webinars`); `LicenseService::allows()`, `ensureAllows()` and `features()` check them, and the route middleware `licensed:<feature>` guards routes. A refused feature throws `App\Licensing\FeatureRequiresGold`: the public API and JSON calls get **402 Payment Required** with `code: gold_required`, `feature`, `required_plan` and `upgrade_url` (MCP shows its `message`), Inertia visits go back with a `gold_required` error and flash.
+- **GOLD in the interface:** every page gets `license.features` (shared Inertia prop). New `useLicense()` composable (`can('ab_tests')`, `requireGold()`), `GoldBadge`, `GoldNotice` and an upgrade dialog (`Components/License/UpgradeModal.vue`, mounted in the main layout) that opens on a refused feature, including axios calls answered with 402. Locked controls and notices in the message editor's A/B panel, the webinar type choice, the auto-webinar configuration and scenario builder pages, and the OpenRouter/Ollama cards in AI settings. Texts in en, pl, de, es.
+- `tests/Feature/GoldFeatureGatingTest.php` (24 tests) covers SILVER, GOLD and expired GOLD for each feature.
+
+### Fixed
+
+- **Campaign Architect limit messages showed raw text:** the limit dialog printed `:limit` literally and the plan counter showed the key `campaign_architect.campaigns_label`; the 403 answer returned the key `campaign_architect.campaign_limit_reached`. All three are translated now (en, pl, de, es).
+- **The default AI integration could pick an inactive Ollama integration** (`AiService::getDefaultIntegration` combined `orWhere('provider', 'ollama')` without grouping).
+- The licence plan is read in one database query instead of four per check (`LicenseService`).
+
+## [2.3.2] – Welcome email for NetSendo Cloud, sign-up shown only when possible - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Changed
+
+- **A new NetSendo Cloud instance welcomes its administrator instead of sending a "password reset":** `netsendo:bootstrap` tells the password relay that the email is a welcome (`reason: welcome`) and in which language (`--locale`, the language of the order). Before, the first email a Cloud customer got read "We received a request to reset the password", in English.
+- **The password relay gets this installation's sign-in address** (`login_url`, from `APP_URL`) with every request, plus the language and the administrator's name. The relay builds the link in the email from it, so "Forgot password" emails link to your own NetSendo. Before, the link could point to the relay's own host.
+
+### Fixed
+
+- **The sign-in page offers registration only while it is possible:** "Don't have an account? Sign up" shows only before the first account exists. Registration creates the administrator. After that (on a self-hosted installation after the first sign-up, on a Cloud instance right after installation) it is closed, and the administrator adds further users. Self-hosted installations work as before: the first person to open a fresh installation registers as its administrator.
+- **"Registration is closed" is translated** (en, pl, de, es; it was Polish only) and says why: the installation already has an administrator. Covered by `tests/Feature/RegistrationClosedTest.php` and `tests/Feature/BootstrapCommandTest.php`.
+
+## [2.3.1] – NetSendo Cloud gets new versions right away - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Changed
+
+- **New versions reach NetSendo Cloud right after the release:** once the Docker image of a version (`vX.Y.Z`) is published, `.github/workflows/docker-publish.yml` tells Aderlo, which hosts NetSendo Cloud, through a signed call to its catalog. Before, hosted instances waited for the hosting provider's nightly registry check. The instances are updated one group at a time, at night. A release whose notes have a `### Security` section is installed at once, so use that section only for vulnerability fixes. The key (`ADERLO_RELEASE_KEY`) can only refresh the catalog. Self-hosted installations are not affected.
+
+## [2.3.0] – Buy GOLD in the app, sleeping Cloud instances - 2026-11-07
+
+**Release date:** 2026-11-07
+
+### Added
+
+- **Sleeping mode for hosted (Cloud) instances** (`NETSENDO_DORMANT=true`, config `netsendo.dormant`). When a NetSendo Cloud subscription ends, the hosting provider puts the instance to sleep instead of deleting it; the owner can resume it with all data. While asleep (`App\Http\Middleware\DormantMode`):
+  - Unsubscribe links in messages sent before keep working. A GET of a list link shows a confirmation page that POSTs the same signed URL as an RFC 8058 one-click request, because the usual confirmation email cannot be sent. One-click POSTs, the confirmation links and the account-wide unsubscribe work as before.
+  - Nothing is sent: the unsubscribe fires no automations, webhooks or emails (`SubscriberUnsubscribed` listeners are dropped), mail goes to the `array` mailer, queued jobs are discarded, scheduled tasks are skipped and a running queue worker pauses.
+  - Every other page, sign-in and the API answer 503 with an "instance asleep" page (JSON `{"error":"instance_asleep"}` for the API), `noindex`, in en, pl, de and es. `/up` still answers.
+  - Covered by `tests/Feature/DormantModeTest.php`.
+- **`php artisan netsendo:bootstrap`** sets up a hosted installation without the first-run screen, so the first visitor can no longer register the administrator: `--admin-email` (required), `--admin-name`, `--locale`, `--license` (verified with the licence server for the host of `APP_URL` or `--domain`) and `--no-password-mail`. The administrator gets a password by email through the same relay as "Forgot password" (now `App\Services\PasswordRelayService`). Safe to run again; refuses an installation that already has users. Covered by `tests/Feature/BootstrapCommandTest.php`.
+- **Buy GOLD from the licence page.** The "Upgrade to GOLD", plan card and "Renew GOLD" buttons (until now "coming soon") open the NetSendo store at netsendo.com with the installation's domain and admin email filled in. After payment GOLD switches on in the installation by itself, without copying the key:
+  - `POST /license/buy-gold` creates a random secret, stores it encrypted (setting `license_claim_secret`) and returns the store URL with `claim` = SHA-256 of the secret. Only the hash passes through the browser.
+  - `POST /license/claim-gold` sends the secret to the store (`POST {store}/api/billing/claim`, server to server), gets the key, verifies it with the licence server and activates it. The licence page polls it while the customer pays; the new command `license:claim-gold` (every 5 minutes) finishes purchases when the page was closed. A purchase is waited for 72 hours.
+  - New config `netsendo.store_url` (`NETSENDO_STORE_URL`, default `https://netsendo.com`; empty hides the purchase) replaces `stripe_gold_payment_link`.
+  - Translations: en, pl, de, es. Covered by `tests/Feature/GoldPurchaseTest.php`.
+
+### Security
+
+- **The licence activation webhook stores only confirmed keys:** `POST /api/license/webhook` was public and saved any key and plan it received, so anyone could switch an instance to GOLD. It now stores a key only after the licence server confirms it, and takes the plan and expiry from that answer.
 
 - **Bounce webhooks are authenticated:** `/webhooks/bounce/{sendgrid,postmark,mailgun,generic}` were public and checked no signature, token or source. Anyone who knew an instance URL could POST a fake bounce and mark any subscriber address as bounced. Each mailbox now has its own URL, `/webhooks/bounce/{provider}/{mailbox}`, and every request is checked with the provider's own mechanism:
   - **SendGrid:** Signed Event Webhook. The ECDSA signature of the timestamp and the raw body (`X-Twilio-Email-Event-Webhook-Signature` / `-Timestamp`) is verified with the account's verification key.
@@ -23,6 +703,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - Setup per provider is described in `docs/BOUNCE_WEBHOOKS.md`. Covered by `tests/Feature/BounceWebhookAuthenticationTest.php` (valid, invalid and missing credentials per provider, stale timestamps, replays, old URLs, account isolation) and `tests/Feature/MailboxBounceWebhookSettingsTest.php`.
 
 ### Fixed
+
+- **A renewed GOLD no longer shows as expired:** the daily licence check (`license:verify`) now copies the plan and expiry from the licence server, so the monthly renewal moves the local expiry date too.
+- **GOLD works only with a valid GOLD licence; everything else is SILVER:** `LicenseService::getCurrentPlan()` is now the one rule for GOLD and SILVER: GOLD only while a GOLD key is stored and its expiry has not passed. No licence, a GOLD plan without a key, or an expired GOLD works as SILVER (campaign limit, GOLD-only features). The shared `license.plan` prop (sidebar, dashboard, Campaign Architect), the `CheckInstallation` attribute and `/api/license/status` (`effective_plan`) use it. Before, they read the stored plan and ignored expiry, so GOLD stayed unlocked after it ended until the daily check removed it.
+- **Deliverability showed GOLD features to nobody:** it checked `$user->license?->plan`, a relation the user model does not have. It now uses the installation's licence.
+- **An ended GOLD falls back to SILVER:** when the licence server reports a GOLD licence inactive, the installation requests its free SILVER licence (with the licence email) instead of removing the licence, as EULA 5.5 describes. Without a licence email it uses the account owner's email; if no SILVER key comes back the licence is removed and the app works as SILVER.
 
 - **The bounce mailbox and custom headers sections of the mailbox form showed translation keys** (`mailboxes.bounce.section_title`, `mailboxes.custom_headers.add` …) instead of text. The keys existed only in the PHP language files, so they are now in the panel's locale files too (en, pl, de, es).
 - **Bounces from the bounce mailbox (IMAP) and from SMTP errors could hit another account's subscriber:** both looked the address up across all accounts of the instance and took the first match. They now only touch the account that sent the mail: the mailbox owner for IMAP, and the subscriber's own account for SMTP errors. Covered by `tests/Feature/BounceOwnerScopeTest.php`.

@@ -41,6 +41,21 @@ class ApiSubscriberTest extends TestCase
         ]);
     }
 
+    /**
+     * Subscribers belong to a user and join lists through the
+     * contact_list_subscriber pivot (there is no subscribers.contact_list_id).
+     */
+    private function subscriberOnList(array $attributes): Subscriber
+    {
+        $subscriber = Subscriber::create($attributes + [
+            'user_id' => $this->user->id,
+            'status' => 'active',
+        ]);
+        $subscriber->contactLists()->attach($this->list->id, ['status' => 'active', 'subscribed_at' => now()]);
+
+        return $subscriber;
+    }
+
     public function test_api_requires_authentication()
     {
         $response = $this->getJson('/api/v1/subscribers');
@@ -56,10 +71,8 @@ class ApiSubscriberTest extends TestCase
 
     public function test_can_list_subscribers()
     {
-        Subscriber::create([
+        $this->subscriberOnList([
             'email' => 'test@example.com',
-            'contact_list_id' => $this->list->id,
-            'status' => 'active',
         ]);
 
         $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->apiKey])
@@ -90,16 +103,18 @@ class ApiSubscriberTest extends TestCase
 
         $this->assertDatabaseHas('subscribers', [
             'email' => 'new@example.com',
-            'contact_list_id' => $this->list->id
+            'user_id' => $this->user->id,
+        ]);
+        $this->assertDatabaseHas('contact_list_subscriber', [
+            'contact_list_id' => $this->list->id,
+            'subscriber_id' => Subscriber::where('email', 'new@example.com')->value('id'),
         ]);
     }
 
-    public function test_cannot_create_duplicate_subscriber_in_same_list()
+    public function test_posting_an_existing_email_updates_instead_of_duplicating()
     {
-        Subscriber::create([
+        $this->subscriberOnList([
             'email' => 'test@example.com',
-            'contact_list_id' => $this->list->id,
-            'status' => 'active',
         ]);
 
         $payload = [
@@ -110,16 +125,18 @@ class ApiSubscriberTest extends TestCase
         $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->apiKey])
             ->postJson('/api/v1/subscribers', $payload);
 
-        $response->assertStatus(409);
+        // docs/API_DOCUMENTATION.md: an existing address is added to the list or
+        // reactivated instead of duplicated, and the answer is 200 instead of 201.
+        $response->assertStatus(200)
+            ->assertJsonPath('data.email', 'test@example.com');
+        $this->assertSame(1, Subscriber::where('email', 'test@example.com')->count());
     }
 
     public function test_can_update_subscriber()
     {
-        $subscriber = Subscriber::create([
+        $subscriber = $this->subscriberOnList([
             'email' => 'update@example.com',
-            'contact_list_id' => $this->list->id,
             'first_name' => 'OldName',
-            'status' => 'active',
         ]);
 
         $payload = [
@@ -137,10 +154,8 @@ class ApiSubscriberTest extends TestCase
 
     public function test_can_delete_subscriber()
     {
-        $subscriber = Subscriber::create([
+        $subscriber = $this->subscriberOnList([
             'email' => 'delete@example.com',
-            'contact_list_id' => $this->list->id,
-            'status' => 'active',
         ]);
 
         $response = $this->withHeaders(['Authorization' => 'Bearer ' . $this->apiKey])
@@ -170,10 +185,8 @@ class ApiSubscriberTest extends TestCase
 
     public function test_can_sync_tags()
     {
-        $subscriber = Subscriber::create([
+        $subscriber = $this->subscriberOnList([
             'email' => 'tags@example.com',
-            'contact_list_id' => $this->list->id,
-            'status' => 'active',
         ]);
 
         $tag1 = Tag::create(['name' => 'Tag 1', 'user_id' => $this->user->id]);
@@ -189,8 +202,8 @@ class ApiSubscriberTest extends TestCase
         $response->assertStatus(200);
         
         $subscriber->refresh();
-        $this->assertCount(2, $subscriber->tags);
-        $this->assertTrue($subscriber->tags->contains($tag1->id));
-        $this->assertTrue($subscriber->tags->contains($tag2->id));
+        $this->assertSame(2, $subscriber->tags()->count());
+        $this->assertTrue($subscriber->tags()->get()->contains($tag1->id));
+        $this->assertTrue($subscriber->tags()->get()->contains($tag2->id));
     }
 }

@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -14,6 +15,8 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
+        // NetSendo connector (remote MCP + OAuth): its own file, outside the web and api groups
+        then: fn () => Route::group([], __DIR__.'/../routes/connector.php'),
     )
     // Listeners are mapped explicitly in App\Providers\EventServiceProvider.
     // Discovery would register every typed handle*() in app/Listeners again.
@@ -25,7 +28,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Add CORS middleware globally for cross-origin pixel tracking
         $middleware->prepend(\Illuminate\Http\Middleware\HandleCors::class);
 
+        // Sleeping Cloud instance (NETSENDO_DORMANT): only unsubscribe links work. Appended,
+        // so it runs after TrustProxies and sees the https URL the links were signed with.
+        $middleware->append(\App\Http\Middleware\DormantMode::class);
+
         $middleware->web(append: [
+            \App\Http\Middleware\RememberIntendedUrlForNavigationsOnly::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             // Capped: the message editor preloads ~27 chunks, and the full Link header
@@ -36,11 +44,20 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\CheckInstallation::class,
         ]);
 
+        // Laravel sorts "auth" ahead of the middleware appended above. This one has to wrap it:
+        // it undoes what a refused background request remembered as the intended URL.
+        $middleware->prependToPriorityList(
+            before: \Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests::class,
+            prepend: \App\Http\Middleware\RememberIntendedUrlForNavigationsOnly::class,
+        );
+
         // Register middleware aliases
         $middleware->alias([
             'api.key' => \App\Http\Middleware\ApiKeyAuth::class,
             '2fa' => \App\Http\Middleware\EnsureTwoFactorVerified::class,
             'affiliate.auth' => \App\Http\Middleware\AffiliateAuth::class,
+            // GOLD features: ->middleware('licensed:ab_tests') (values of App\Licensing\Feature)
+            'licensed' => \App\Http\Middleware\RequireLicensedFeature::class,
         ]);
 
         // Exclude routes from CSRF verification
@@ -71,6 +88,28 @@ return Application::configure(basePath: dirname(__DIR__))
             $identifier = $apiKey?->id ?? $request->ip();
 
             return Limit::perMinute(3000)->by($identifier);
+        });
+
+        // Connector (/mcp): per connected app or API key
+        RateLimiter::for('connector', function (Request $request) {
+            $connection = $request->attributes->get(\App\Http\Middleware\AuthenticateConnector::CONNECTION_ATTRIBUTE);
+            $identity = $request->attributes->get(\App\Http\Middleware\AuthenticateConnector::IDENTITY_ATTRIBUTE);
+            $identifier = $connection ? 'connection:'.$connection->id : ($identity?->id ? 'key:'.$identity->id : $request->ip());
+
+            return Limit::perMinute((int) config('connector.rate_limit', 120))->by($identifier);
+        });
+
+        // Webinar room chat: the page polls every few seconds, so limit per
+        // registration token (viewers behind one office IP do not share a budget)
+        RateLimiter::for('webinar-chat', function (Request $request) {
+            return Limit::perMinute(60)->by('room:'.$request->route('token'));
+        });
+
+        RateLimiter::for('webinar-chat-send', function (Request $request) {
+            return [
+                Limit::perMinute(12)->by('room-send:'.$request->route('token')),
+                Limit::perMinute(60)->by('room-send-ip:'.$request->ip()),
+            ];
         });
 
         // Configure Pixel rate limiting (protect against event flooding)

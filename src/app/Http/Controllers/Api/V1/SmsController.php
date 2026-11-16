@@ -40,8 +40,13 @@ class SmsController extends Controller
             ], 403);
         }
 
+        // The NetSendo MCP client up to 1.6.x sends the text as `content`; accept both names
+        if (!$request->filled('message') && $request->filled('content')) {
+            $request->merge(['message' => $request->input('content')]);
+        }
+
         $validated = $request->validate([
-            'phone' => 'required|string|max:50',
+            'phone' => 'required_without:subscriber_id|nullable|string|max:50',
             'message' => 'required|string|max:1600',
             'provider_id' => 'nullable|integer|exists:sms_providers,id',
             'subscriber_id' => 'nullable|integer',
@@ -73,21 +78,37 @@ class SmsController extends Controller
         $subscriber = null;
         if (!empty($validated['subscriber_id'])) {
             $subscriber = Subscriber::where('user_id', $user->id)->find($validated['subscriber_id']);
+
+            if (!$subscriber) {
+                return response()->json([
+                    'error' => 'Not Found',
+                    'message' => 'Subscriber not found',
+                ], 404);
+            }
+
+            // A subscriber ID alone is enough: send to the subscriber's own number
+            if (empty($validated['phone'])) {
+                if (empty($subscriber->phone)) {
+                    return response()->json([
+                        'error' => 'Validation Error',
+                        'message' => 'The subscriber has no phone number',
+                    ], 422);
+                }
+                $validated['phone'] = $subscriber->phone;
+            }
         }
 
         if (!$subscriber) {
-            // Create temporary subscriber
-            $subscriber = Subscriber::firstOrCreate(
-                [
-                    'phone' => $validated['phone'],
-                    'user_id' => $user->id,
-                ],
-                [
-                    'email' => null,
-                    'source' => 'api_sms',
-                    'is_active_global' => true,
-                ]
-            );
+            // A contact with this number. A new contact cannot be created here: contacts need
+            // an email address (subscribers.email is NOT NULL), so creating one failed with 500.
+            $subscriber = Subscriber::where('user_id', $user->id)->where('phone', $validated['phone'])->first();
+
+            if (!$subscriber) {
+                return response()->json([
+                    'error' => 'Validation Error',
+                    'message' => 'No contact has this phone number. Add the contact first (POST /api/v1/subscribers), or pass subscriber_id.',
+                ], 422);
+            }
         }
 
         // Create message record

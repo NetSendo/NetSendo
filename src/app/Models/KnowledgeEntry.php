@@ -2,11 +2,64 @@
 
 namespace App\Models;
 
+use App\Jobs\IndexKnowledgeEntry;
+use App\Licensing\Feature;
+use App\Services\LicenseService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Log;
 
 class KnowledgeEntry extends Model
 {
+    /** Longest content of an entry on SILVER, where Brain puts whole entries into prompts. */
+    public const CONTENT_LIMIT = 10000;
+
+    /** Longest content with the semantic knowledge base (GOLD), where Brain reads matching chunks. */
+    public const CONTENT_LIMIT_SEMANTIC = 100000;
+
+    protected static function booted(): void
+    {
+        // Chunks follow the entry: changed text drops the old vectors (on any plan, so nothing
+        // stale is ever searched), and with GOLD the entry is embedded again in the background
+        static::saved(function (KnowledgeEntry $entry) {
+            if (!$entry->wasRecentlyCreated && !$entry->wasChanged(['title', 'content'])) {
+                return;
+            }
+
+            if (!$entry->wasRecentlyCreated) {
+                $entry->chunks()->delete();
+            }
+
+            if (app(LicenseService::class)->allows(Feature::SemanticKnowledge)) {
+                // Saving never fails because of the AI provider (with QUEUE_CONNECTION=sync the
+                // job runs right here); the hourly brain:index-knowledge sweep retries
+                try {
+                    IndexKnowledgeEntry::dispatch($entry->id)->afterCommit();
+                } catch (\Throwable $e) {
+                    Log::warning('Knowledge entry saved without embedding', [
+                        'entry_id' => $entry->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+        });
+    }
+
+    /** The longest content the licence in effect allows. */
+    public static function contentLimit(): int
+    {
+        return app(LicenseService::class)->allows(Feature::SemanticKnowledge)
+            ? self::CONTENT_LIMIT_SEMANTIC
+            : self::CONTENT_LIMIT;
+    }
+
+    /** A known category; anything else (e.g. one an AI made up) becomes "insights". */
+    public static function normalizeCategory(?string $category): string
+    {
+        return array_key_exists((string) $category, self::CATEGORIES) ? $category : 'insights';
+    }
+
     protected $fillable = [
         'user_id',
         'category',
@@ -52,6 +105,17 @@ class KnowledgeEntry extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function chunks(): HasMany
+    {
+        return $this->hasMany(KnowledgeChunk::class);
+    }
+
+    /** Fingerprint of the text the chunks are made from. */
+    public function contentHash(): string
+    {
+        return hash('sha256', $this->title . "\n" . $this->content);
     }
 
     /**

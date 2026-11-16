@@ -8,15 +8,12 @@
         <meta name="author" content="NetSendo">
         <meta name="keywords" content="email marketing, automation, newsletter, campaign, netsendo">
 
-        <!-- Google Analytics -->
-        @include('partials.google-analytics')
-
         <!-- Open Graph / Facebook -->
         <meta property="og:type" content="website">
         <meta property="og:url" content="{{ url()->current() }}">
         <meta property="og:title" content="NetSendo">
         <meta property="og:description" content="NetSendo - Professional Email Marketing Platform">
-        <meta property="og:image" content="https://gregciupek.com/wp-content/uploads/2025/12/netsendo.png">
+        <meta property="og:image" content="{{ asset('images/brand/netsendo-og.png') }}">
         <meta property="og:site_name" content="NetSendo">
 
         <!-- Twitter -->
@@ -24,18 +21,29 @@
         <meta property="twitter:url" content="{{ url()->current() }}">
         <meta property="twitter:title" content="NetSendo">
         <meta property="twitter:description" content="NetSendo - Professional Email Marketing Platform">
-        <meta property="twitter:image" content="https://gregciupek.com/wp-content/uploads/2025/12/netsendo.png">
+        <meta property="twitter:image" content="{{ asset('images/brand/netsendo-og.png') }}">
 
         <title data-inertia>NetSendo</title>
 
-        <!-- Favicon -->
-        <link rel="icon" type="image/png" href="https://gregciupek.com/wp-content/uploads/2025/12/Logo-NetSendo-1.png">
-        <link rel="apple-touch-icon" href="https://gregciupek.com/wp-content/uploads/2025/12/Logo-NetSendo-1.png">
+        <!-- Favicon (images and fonts ship with the app: the panel loads nothing from another host) -->
+        <link rel="icon" type="image/png" href="{{ asset('images/brand/netsendo-icon.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('images/brand/netsendo-icon.png') }}">
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
-        <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
+        @php
+            // The texts of the page's language are a file of their own. Named here, the browser
+            // fetches it together with the scripts instead of after they have started.
+            $localeChunk = null;
+            try {
+                if (! \Illuminate\Support\Facades\Vite::isRunningHot()) {
+                    $localeChunk = \Illuminate\Support\Facades\Vite::asset('resources/js/locales/'.app()->getLocale().'.json');
+                }
+            } catch (\Throwable $e) {
+                // No build manifest (tests) or a language without a file: the page still loads it itself
+            }
+        @endphp
+        @if ($localeChunk)
+            <link rel="modulepreload" href="{{ $localeChunk }}">
+        @endif
 
         <!-- Scripts -->
         @routes

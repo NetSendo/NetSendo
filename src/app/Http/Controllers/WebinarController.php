@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Webinar;
 use App\Models\ContactList;
+use App\Services\LicenseService;
 use App\Services\Webinar\WebinarService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -46,7 +49,8 @@ class WebinarController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'type' => 'required|in:live,auto,hybrid',
-            'scheduled_at' => 'nullable|date|after:now',
+            'scheduled_at' => 'nullable|date',
+            'timezone' => 'nullable|string|timezone',
             'target_list_id' => 'nullable|exists:contact_lists,id',
             'clicked_list_id' => 'nullable|exists:contact_lists,id',
             'attended_list_id' => 'nullable|exists:contact_lists,id',
@@ -81,6 +85,25 @@ class WebinarController extends Controller
             'video_provider' => 'nullable|in:youtube,vimeo,upload',
         ]);
 
+        // Auto and hybrid webinars are GOLD
+        if ($feature = Webinar::featureForType($validated['type'])) {
+            app(LicenseService::class)->ensureAllows($feature);
+        }
+
+        if (array_key_exists('scheduled_at', $validated)) {
+            $validated['scheduled_at'] = $this->scheduledAtInUtc(
+                $validated['scheduled_at'],
+                $validated['timezone'] ?? auth()->user()->timezone ?? 'UTC',
+            );
+
+            // Checked after the conversion: at 19:00 UTC (20:00 Warsaw) a
+            // 19:30 typed for Warsaw is already past, though 19:30 UTC is not.
+            Validator::make(
+                ['scheduled_at' => $validated['scheduled_at']?->toDateTimeString()],
+                ['scheduled_at' => 'nullable|after:now'],
+            )->validate();
+        }
+
         $webinar = $this->webinarService->create($validated, auth()->id());
 
         return redirect()->route('webinars.edit', $webinar)
@@ -106,6 +129,9 @@ class WebinarController extends Controller
         $webinarData['purchase_thank_you_url'] = $webinar->purchase_thank_you_url;
         $webinarData['effective_timezone'] = $webinar->effective_timezone;
         $webinarData['user_timezone'] = auth()->user()->timezone;
+        // The datetime-local input shows wall-clock time in the webinar's zone.
+        $webinarData['scheduled_at_local'] = $webinar->scheduled_at
+            ?->copy()->setTimezone($webinar->effective_timezone)->format('Y-m-d\TH:i');
 
         return Inertia::render('Webinars/Edit', [
             'webinar' => $webinarData,
@@ -203,9 +229,34 @@ class WebinarController extends Controller
             'thumbnail_url' => 'nullable|url',
         ]);
 
+        if (array_key_exists('scheduled_at', $validated)) {
+            // The timezone may change in the same request; an empty one
+            // inherits the owner's, as Webinar::effective_timezone does.
+            $timezone = array_key_exists('timezone', $validated)
+                ? ($validated['timezone'] ?? $webinar->user?->timezone ?? 'UTC')
+                : $webinar->effective_timezone;
+
+            $validated['scheduled_at'] = $this->scheduledAtInUtc($validated['scheduled_at'], $timezone);
+        }
+
         $this->webinarService->update($webinar, $validated);
 
         return back()->with('success', __('webinars.updated'));
+    }
+
+    /**
+     * The panel sends the start time from a datetime-local input: wall-clock
+     * digits without an offset ("2026-11-20T19:00"). They mean that time in
+     * the webinar's timezone, so they are read there and stored as UTC (the
+     * app timezone). A value that carries its own offset keeps it.
+     */
+    protected function scheduledAtInUtc(?string $value, string $timezone): ?Carbon
+    {
+        if ($value === null || trim($value) === '') {
+            return null;
+        }
+
+        return Carbon::parse($value, $timezone)->setTimezone(config('app.timezone'));
     }
 
     public function destroy(Webinar $webinar)
@@ -221,6 +272,11 @@ class WebinarController extends Controller
     public function duplicate(Webinar $webinar)
     {
         $this->authorize('view', $webinar);
+
+        // A copy of an auto or hybrid webinar is a new GOLD webinar
+        if ($feature = Webinar::featureForType($webinar->type)) {
+            app(LicenseService::class)->ensureAllows($feature);
+        }
 
         $newWebinar = $this->webinarService->duplicate($webinar);
 

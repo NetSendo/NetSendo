@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
  * Tracked AI call helper for Brain services (Brain 2.0, D5).
  *
  * Wraps AiService::generateContentWithUsage so that EVERY Brain LLM call:
- * - charges the user's daily token budget (AiBrainSettings::addTokensUsed)
+ * - charges today's token statistics and the running task's budget (AiBrainSettings::addTokensUsed)
  * - is logged to ai_execution_logs with real token counts and model,
  *   which feeds the Monitor's token/cost aggregation
  */
@@ -32,10 +32,36 @@ class BrainAi
         array $options = [],
         string $agentType = 'brain',
     ): string {
+        // A task that used its token limit makes no further AI call
+        TaskTokenBudget::ensureAvailable($user->id);
+
         $aiService = app(AiService::class);
         $startTime = microtime(true);
 
-        $result = $aiService->generateContentWithUsage($prompt, $integration, $options);
+        try {
+            $result = $aiService->generateContentWithUsage($prompt, $integration, $options);
+        } catch (\Exception $e) {
+            // The model assigned to the task failed: retry once on the Brain model
+            $fallback = AiBrainSettings::getForUser($user->id)->fallbackAi($integration, $options['model'] ?? null);
+            if (!$fallback) {
+                throw $e;
+            }
+
+            Log::warning('BrainAi: task model failed, retrying on the Brain model', [
+                'action' => $action,
+                'integration_id' => $integration->id,
+                'model' => $options['model'] ?? $integration->default_model,
+                'error' => mb_substr($e->getMessage(), 0, 300),
+            ]);
+
+            [$integration, $fallbackModel] = $fallback;
+            unset($options['model']);
+            if ($fallbackModel) {
+                $options['model'] = $fallbackModel;
+            }
+
+            $result = $aiService->generateContentWithUsage($prompt, $integration, $options);
+        }
 
         $tokensIn = $result['tokens_input'];
         $tokensOut = $result['tokens_output'];

@@ -10,6 +10,7 @@ return [
     'login_to_account' => 'Zaloguj się na swoje konto',
     'forgot_password_link' => 'Zapomniałeś hasła?',
     'no_account' => 'Nie masz jeszcze konta?',
+    'registration_closed' => 'Rejestracja jest zamknięta: to NetSendo ma już administratora. Zaloguj się albo poproś administratora o dodanie konta.',
     'register' => [
         'title' => 'Rejestracja',
         'admin_title' => 'Utwórz konto administratora',
@@ -74,4 +75,8 @@ return [
         'success' => 'Instrukcje resetowania hasła zostały przekazane do systemu.',
         'button' => 'Zresetuj hasło',
     ],
+
+    // Login errors (Laravel's lang/en/auth.php; 'password' above stays a field label)
+    'failed' => 'Podane dane logowania są nieprawidłowe.',
+    'throttle' => 'Zbyt wiele prób logowania. Spróbuj ponownie za :seconds s.',
 ];

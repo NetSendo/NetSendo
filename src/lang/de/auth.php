@@ -10,6 +10,7 @@ return [
     'login_to_account' => 'Melden Sie sich bei Ihrem Konto an',
     'forgot_password_link' => 'Passwort vergessen?',
     'no_account' => 'Noch kein Konto?',
+    'registration_closed' => 'Die Registrierung ist geschlossen: Dieses NetSendo hat bereits einen Administrator. Melde dich an oder bitte den Administrator, dich hinzuzufügen.',
     'register' => [
         'title' => 'Registrierung',
         'admin_title' => 'Administrator-Konto erstellen',
@@ -46,4 +47,8 @@ return [
     'enable_2fa' => '2FA aktivieren',
     'disable_2fa' => '2FA deaktivieren',
     'verify_code' => 'Code bestätigen',
+
+    // Login errors (Laravel's lang/en/auth.php; 'password' above stays a field label)
+    'failed' => 'Diese Anmeldedaten stimmen nicht mit unseren Daten überein.',
+    'throttle' => 'Zu viele Anmeldeversuche. Bitte versuchen Sie es in :seconds Sekunden erneut.',
 ];

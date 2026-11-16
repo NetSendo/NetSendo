@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue';
 import { useI18n } from 'vue-i18n';
 import draggable from 'vuedraggable';
+import { htmlToText } from '@/utils/htmlText';
 
 const { t } = useI18n();
 
@@ -104,11 +105,8 @@ const removeNestedBlock = (parentBlockId, columnIndex, nestedBlockId) => {
     emit('remove-nested-block', parentBlockId, columnIndex, nestedBlockId);
 };
 
-// Strip HTML tags from text
-const stripHtml = (html) => {
-    if (!html) return '';
-    return html.replace(/<[^>]*>/g, '').substring(0, 50);
-};
+// Short text preview of a nested text block
+const stripHtml = (html) => htmlToText(html).substring(0, 50);
 </script>
 
 <template>

@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, useForm, usePage, router } from "@inertiajs/vue3";
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
 import { useDateTime } from "@/Composables/useDateTime";
@@ -18,7 +18,9 @@ const props = defineProps({
     licenseDomain: String,
     appVersion: String,
     plans: Object,
-    stripeGoldPaymentLink: String,
+    // GOLD is bought in the NetSendo store and activated here automatically
+    goldPurchaseAvailable: Boolean,
+    goldPurchasePending: Boolean,
 });
 
 const page = usePage();
@@ -31,6 +33,8 @@ const errorMessage = ref("");
 const successMessage = ref("");
 const showComingSoonModal = ref(false);
 const showLicenseKey = ref(false);
+// Key entry while a licence is active (a GOLD key from an email replaces SILVER)
+const showKeyEntry = ref(false);
 
 // Polling state
 const isPolling = ref(false);
@@ -126,7 +130,15 @@ const activateForm = useForm({
     license_key: "",
 });
 
-// Plan cards data
+// Plan cards: what each plan includes comes from config('netsendo.plans') (the `plans`
+// prop), so this page, the GOLD checks (App\Licensing\Feature) and the pricing on
+// netsendo.com list the same things
+const planSections = (plan) =>
+    Object.entries(props.plans?.[plan]?.sections || {}).map(([section, items]) => ({
+        title: t(`license.plan_sections.${plan.toLowerCase()}.${section}`),
+        items: items.map((item) => t(`license.plan_features.${item}`)),
+    }));
+
 const planCards = computed(() => [
     {
         key: "SILVER",
@@ -136,49 +148,7 @@ const planCards = computed(() => [
         description: t("license.plans.silver.description"),
         color: "from-slate-400 to-slate-600",
         badgeColor: "bg-slate-500",
-        sections: [
-            {
-                title: t("license.plans.silver.sections.core"),
-                items: [
-                    t("license.plans.silver.features.unlimited_lists"),
-                    t("license.plans.silver.features.multimailing"),
-                    t("license.plans.silver.features.queue"),
-                    t("license.plans.silver.features.system_msgs"),
-                    t("license.plans.silver.features.cron"),
-                    t("license.plans.silver.features.triggers"),
-                ],
-            },
-            {
-                title: t("license.plans.silver.sections.ai"),
-                items: [
-                    t("license.plans.silver.features.ai_titles"),
-                    t("license.plans.silver.features.ai_content"),
-                    t("license.plans.silver.features.dynamic_fields"),
-                ],
-            },
-            {
-                title: t("license.plans.silver.sections.forms"),
-                items: [
-                    t("license.plans.silver.features.forms_gen"),
-                    t("license.plans.silver.features.templates_gen"),
-                    t("license.plans.silver.features.segmentation"),
-                    t("license.plans.silver.features.stats"),
-                    t("license.plans.silver.features.import"),
-                ],
-            },
-            {
-                title: t("license.plans.silver.sections.integrations"),
-                items: [
-                    t("license.plans.silver.features.smtp"),
-                    t("license.plans.silver.features.gmail"),
-                    t("license.plans.silver.features.sendgrid"),
-                    t("license.plans.silver.features.openai"),
-                    t("license.plans.silver.features.anthropic"),
-                    t("license.plans.silver.features.grok"),
-                    t("license.plans.silver.features.gemini"),
-                ],
-            },
-        ],
+        sections: planSections("SILVER"),
         summary: [
             t("license.plans.silver.summary_1"),
             t("license.plans.silver.summary_2"),
@@ -195,34 +165,10 @@ const planCards = computed(() => [
         color: "from-yellow-400 to-amber-600",
         badgeColor: "bg-gradient-to-r from-yellow-400 to-amber-500",
         popular: true,
-        coming_soon: !props.stripeGoldPaymentLink,
-        sections: [
-            {
-                title: t("license.plans.gold.sections.everything"),
-                items: [t("license.plans.gold.features.core_access")],
-            },
-            {
-                title: t("license.plans.gold.sections.automation"),
-                items: [
-                    t("license.plans.gold.features.funnels"),
-                    t("license.plans.gold.features.advanced_auto"),
-                ],
-            },
-            {
-                title: t("license.plans.gold.sections.integrations"),
-                items: [
-                    t("license.plans.gold.features.public_api"),
-                    t("license.plans.gold.features.openrouter"),
-                    t("license.plans.gold.features.ollama"),
-                ],
-            },
-            {
-                title: t("license.plans.gold.sections.users"),
-                items: [t("license.plans.gold.features.team")],
-            },
-        ],
+        coming_soon: !props.goldPurchaseAvailable,
+        sections: planSections("GOLD"),
         summary: [t("license.plans.gold.summary")],
-        buttonText: props.stripeGoldPaymentLink
+        buttonText: props.goldPurchaseAvailable
             ? t("license.plans.gold.select")
             : t("license.coming_soon"),
         buttonAction: "stripe",
@@ -272,10 +218,8 @@ const handlePlanAction = (plan) => {
     if (plan.buttonAction === "request") {
         requestSilverLicense();
     } else if (plan.buttonAction === "stripe") {
-        if (props.stripeGoldPaymentLink) {
-            window.open(props.stripeGoldPaymentLink, "_blank");
-            // Show manual input for entering license after purchase
-            showManualInput.value = true;
+        if (props.goldPurchaseAvailable) {
+            buyGold();
         } else {
             // Coming soon - show message
             successMessage.value = t("license.gold_coming_soon_msg");
@@ -283,13 +227,113 @@ const handlePlanAction = (plan) => {
     }
 };
 
+// GOLD purchase in the NetSendo store. The order page opens in a new tab; this page asks
+// the server every few seconds whether the payment went through and GOLD is active.
+// Waiting never locks the button: a closed tab can be reopened by clicking again, and the
+// wait can be cancelled.
+const goldWaiting = ref(false);
+const goldStarting = ref(false);
+let goldTimer = null;
+let goldDeadline = 0;
+
+const stopGoldPolling = () => {
+    if (goldTimer) clearTimeout(goldTimer);
+    goldTimer = null;
+    goldWaiting.value = false;
+};
+
+const pollGoldPurchase = async () => {
+    try {
+        const { data } = await axios.post(route("license.claim-gold"));
+        if (data.status === "activated") {
+            stopGoldPolling();
+            errorMessage.value = "";
+            successMessage.value = t("license.gold_activated");
+            setTimeout(() => router.visit(route("license.index")), 1500);
+            return;
+        }
+        if (data.status === "inactive" || data.status === "none") {
+            stopGoldPolling();
+            if (data.status === "inactive") {
+                errorMessage.value = t("license.gold_purchase_inactive");
+            } else {
+                // The purchase was closed another way (GOLD entered or sent to this
+                // installation, or cancelled): fresh props show the licence as it is now
+                successMessage.value = "";
+                router.reload({ preserveScroll: true });
+            }
+            return;
+        }
+    } catch (error) {
+        // temporary problem: keep trying until the deadline
+    }
+    if (Date.now() < goldDeadline) {
+        goldTimer = setTimeout(pollGoldPurchase, 5000);
+    } else {
+        stopGoldPolling();
+        successMessage.value = t("license.gold_purchase_later");
+    }
+};
+
+const startGoldPolling = (message = "license.gold_purchase_waiting") => {
+    stopGoldPolling();
+    goldWaiting.value = true;
+    errorMessage.value = "";
+    successMessage.value = t(message);
+    goldDeadline = Date.now() + 15 * 60 * 1000;
+    goldTimer = setTimeout(pollGoldPurchase, 3000);
+};
+
+const buyGold = async () => {
+    if (goldStarting.value) return;
+    goldStarting.value = true;
+    // Open the tab during the click, so pop-up blockers allow it
+    const tab = window.open("", "_blank");
+    try {
+        const { data } = await axios.post(route("license.buy-gold"));
+        if (tab) {
+            tab.location = data.url;
+        } else {
+            window.location.href = data.url;
+            return;
+        }
+        startGoldPolling();
+    } catch (error) {
+        if (tab) tab.close();
+        errorMessage.value = t("license.gold_purchase_error");
+    } finally {
+        goldStarting.value = false;
+    }
+};
+
+// The order tab was closed without paying: stop waiting (a purchase can be started again)
+const cancelGold = async () => {
+    stopGoldPolling();
+    errorMessage.value = "";
+    try {
+        await axios.post(route("license.cancel-gold"));
+        successMessage.value = t("license.gold_purchase_cancelled");
+    } catch (error) {
+        successMessage.value = "";
+    }
+};
+
+onMounted(() => {
+    const returned = new URLSearchParams(window.location.search).get("purchase") === "return";
+    if (returned) startGoldPolling();
+    // A purchase started earlier (maybe in a tab that is closed now)
+    else if (props.goldPurchasePending) startGoldPolling("license.gold_purchase_pending");
+});
+onBeforeUnmount(stopGoldPolling);
+
 // Submit manual license activation
 const submitActivation = () => {
     errorMessage.value = "";
     activateForm.post(route("license.activate"), {
         preserveScroll: true,
         onError: (errors) => {
-            if (errors.license_key) {
+            // With an active licence the error shows under the key field
+            if (errors.license_key && !props.licenseActive) {
                 errorMessage.value = errors.license_key;
             }
         },
@@ -370,6 +414,33 @@ const checkLicenseStatus = async () => {
 
         <div class="py-12">
             <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
+                <!-- GOLD purchase status for an active (SILVER) licence -->
+                <div
+                    v-if="licenseActive && !isGoldExpired && (goldWaiting || successMessage || errorMessage)"
+                    class="mb-6 flex items-start gap-3 rounded-xl border px-4 py-3 text-sm"
+                    :class="
+                        errorMessage
+                            ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300'
+                            : 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/20 dark:text-amber-200'
+                    "
+                    role="status"
+                    aria-live="polite"
+                >
+                    <svg v-if="goldWaiting" class="mt-0.5 h-4 w-4 shrink-0 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    <span class="flex-1">{{ errorMessage || successMessage }}</span>
+                    <button
+                        v-if="goldWaiting"
+                        type="button"
+                        @click="cancelGold"
+                        class="shrink-0 font-medium underline hover:no-underline"
+                    >
+                        {{ $t("license.gold_purchase_cancel") }}
+                    </button>
+                </div>
+
                 <!-- Already activated - Active License Status -->
                 <div
                     v-if="licenseActive && !isGoldExpired"
@@ -642,7 +713,100 @@ const checkLicenseStatus = async () => {
                             </a>
                         </div>
 
-                        <!-- Upgrade to GOLD option for SILVER users -->
+                        <!-- Key entry with an active licence: a GOLD key from an email
+                             (bought on netsendo.com or granted) replaces the current one -->
+                        <div class="mb-4">
+                            <button
+                                v-if="!showKeyEntry"
+                                type="button"
+                                @click="showKeyEntry = true"
+                                class="inline-flex items-center gap-2 text-sm font-medium text-indigo-600 hover:text-indigo-500 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
+                            >
+                                <svg
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"
+                                    />
+                                </svg>
+                                {{
+                                    licensePlan === "GOLD"
+                                        ? $t("license.replace_key")
+                                        : $t("license.have_gold_key")
+                                }}
+                            </button>
+                            <form
+                                v-else
+                                @submit.prevent="submitActivation"
+                                class="rounded-xl border border-gray-200 p-4 dark:border-gray-700"
+                            >
+                                <label
+                                    for="license-key-entry"
+                                    class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                                >
+                                    {{ $t("license.license_key_label") }}
+                                </label>
+                                <p
+                                    class="mb-2 mt-1 text-xs text-gray-500 dark:text-gray-400"
+                                >
+                                    {{
+                                        $t("license.key_entry_desc", {
+                                            plan: licensePlan,
+                                        })
+                                    }}
+                                </p>
+                                <textarea
+                                    id="license-key-entry"
+                                    v-model="activateForm.license_key"
+                                    required
+                                    rows="2"
+                                    class="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                                    :placeholder="
+                                        $t('license.license_key_placeholder')
+                                    "
+                                ></textarea>
+                                <p
+                                    v-if="activateForm.errors.license_key"
+                                    class="mt-2 text-sm text-red-500"
+                                >
+                                    {{ activateForm.errors.license_key }}
+                                </p>
+                                <div class="mt-3 flex flex-wrap items-center gap-3">
+                                    <button
+                                        type="submit"
+                                        :disabled="
+                                            activateForm.processing ||
+                                            !activateForm.license_key
+                                        "
+                                        class="rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 px-5 py-2 text-sm font-semibold text-white shadow transition-all hover:shadow-lg disabled:opacity-50"
+                                    >
+                                        {{
+                                            activateForm.processing
+                                                ? $t("license.activating")
+                                                : $t("license.activate_button")
+                                        }}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        @click="
+                                            showKeyEntry = false;
+                                            activateForm.reset();
+                                            activateForm.clearErrors();
+                                        "
+                                        class="text-sm text-gray-500 hover:underline dark:text-gray-400"
+                                    >
+                                        {{ $t("common.cancel") }}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
                         <!-- Upgrade to GOLD option for SILVER users -->
                         <div
                             v-if="licensePlan === 'SILVER'"
@@ -773,13 +937,11 @@ const checkLicenseStatus = async () => {
                                     </div>
                                     <button
                                         @click="
-                                            stripeGoldPaymentLink
-                                                ? window.open(
-                                                      stripeGoldPaymentLink,
-                                                      '_blank',
-                                                  )
+                                            goldPurchaseAvailable
+                                                ? buyGold()
                                                 : (showComingSoonModal = true)
                                         "
+                                        :disabled="goldStarting"
                                         class="group relative flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 px-8 py-4 text-lg font-bold text-white shadow-lg transition-all hover:scale-105 hover:shadow-xl md:w-auto"
                                     >
                                         {{ $t("license.upgrade_to_gold") }}
@@ -842,8 +1004,9 @@ const checkLicenseStatus = async () => {
                         </div>
                     </div>
                     <button
-                        v-if="stripeGoldPaymentLink"
-                        @click="window.open(stripeGoldPaymentLink, '_blank')"
+                        v-if="goldPurchaseAvailable"
+                        @click="buyGold()"
+                        :disabled="goldStarting"
                         class="mt-4 rounded-lg bg-gradient-to-r from-yellow-400 to-amber-500 px-6 py-3 font-semibold text-white shadow-lg transition-all hover:shadow-xl"
                     >
                         {{ $t("license.renew_gold") }}
@@ -883,7 +1046,15 @@ const checkLicenseStatus = async () => {
                                     clip-rule="evenodd"
                                 />
                             </svg>
-                            {{ successMessage }}
+                            <span class="flex-1">{{ successMessage }}</span>
+                            <button
+                                v-if="goldWaiting"
+                                type="button"
+                                @click="cancelGold"
+                                class="shrink-0 font-medium underline hover:no-underline"
+                            >
+                                {{ $t("license.gold_purchase_cancel") }}
+                            </button>
                         </div>
                     </div>
 

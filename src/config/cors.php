@@ -23,6 +23,13 @@ return [
         't/heartbeat',
         't/read-end',
         't/link-visitor',
+        // NetSendo connector: browser-based MCP hosts (e.g. MCP Inspector) call these cross-origin
+        'mcp',
+        'oauth/token',
+        'oauth/register',
+        'oauth/revoke',
+        '.well-known/oauth-*',
+        '.well-known/openid-configuration',
     ],
 
     'allowed_methods' => ['*'],
@@ -33,7 +40,8 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    // WWW-Authenticate: a browser-based MCP host reads the sign-in challenge of /mcp from it
+    'exposed_headers' => ['WWW-Authenticate'],
 
     'max_age' => 0,
 

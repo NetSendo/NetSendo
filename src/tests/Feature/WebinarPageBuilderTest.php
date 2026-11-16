@@ -120,9 +120,11 @@ class WebinarPageBuilderTest extends TestCase
 
     public function test_page_falls_back_to_the_legacy_template_when_not_built(): void
     {
+        // The legacy template's form (the builder's is wb-registration-form)
         $this->get('/webinar/jak-test')
             ->assertOk()
-            ->assertSee('cdn.tailwindcss.com', false);
+            ->assertSee('id="registration-form"', false)
+            ->assertDontSee('wb-registration-form', false);
     }
 
     public function test_disabled_definition_is_ignored_by_the_public_page(): void

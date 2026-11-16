@@ -3,8 +3,31 @@ import { ref, computed, watch } from "vue";
 import { Head, useForm, router } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
+import Modal from "@/Components/Modal.vue";
+import PrimaryButton from "@/Components/PrimaryButton.vue";
+import SecondaryButton from "@/Components/SecondaryButton.vue";
+import ActionMenu from "@/Components/Ui/ActionMenu.vue";
+import ActionMenuItem from "@/Components/Ui/ActionMenuItem.vue";
+import CreateLink from "@/Components/Ui/CreateLink.vue";
+import EmptyState from "@/Components/Ui/EmptyState.vue";
+import FormDialog from "@/Components/Ui/FormDialog.vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
+import Pagination from "@/Components/Ui/Pagination.vue";
+import Panel from "@/Components/Ui/Panel.vue";
+import SearchField from "@/Components/Ui/SearchField.vue";
+import SelectField from "@/Components/Ui/SelectField.vue";
+import StatTiles from "@/Components/Ui/StatTiles.vue";
+import StatusPill from "@/Components/Ui/StatusPill.vue";
+import Toast from "@/Components/Ui/Toast.vue";
+import { errorClass, fieldClass, hintClass, labelClass } from "@/Components/Ui/fieldClass";
+import { useToast } from "@/Composables/useToast";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+// The server words every outcome in the user's language (names.created, …): shown as it comes
+const { toast, dismiss } = useToast({ flash: true });
+
+const number = (value) => new Intl.NumberFormat(locale.value).format(value ?? 0);
 
 const props = defineProps({
     names: Object,
@@ -18,6 +41,7 @@ const search = ref(props.filters?.search || "");
 const countryFilter = ref(props.filters?.country || "");
 const genderFilter = ref(props.filters?.gender || "");
 const sourceFilter = ref(props.filters?.source || "");
+const perPage = ref(props.filters?.per_page || "50");
 
 // Modal states
 const showAddModal = ref(false);
@@ -49,10 +73,38 @@ const applyFilters = () => {
             country: countryFilter.value || undefined,
             gender: genderFilter.value || undefined,
             source: sourceFilter.value || undefined,
+            per_page: String(perPage.value) !== "50" ? perPage.value : undefined,
         },
-        { preserveState: true }
+        { preserveState: true, preserveScroll: true, replace: true }
     );
 };
+
+watch([countryFilter, genderFilter, sourceFilter, perPage], () => applyFilters());
+
+const hasFilters = computed(() =>
+    Boolean(search.value || countryFilter.value || genderFilter.value || sourceFilter.value),
+);
+
+// The watchers send the cleared set
+const resetFilters = () => {
+    countryFilter.value = "";
+    genderFilter.value = "";
+    sourceFilter.value = "";
+    search.value = "";
+};
+
+const messagesOf = (target) => [...new Set(Object.values(target.errors).filter(Boolean))];
+
+const statTiles = computed(() => [
+    { key: "total", label: t("names.stats_total"), value: number(props.stats?.total) },
+    { key: "system", label: t("names.stats_system"), value: number(props.stats?.system) },
+    { key: "user", label: t("names.stats_user"), value: number(props.stats?.user) },
+    {
+        key: "countries",
+        label: t("names.stats_countries"),
+        value: number(Object.keys(props.stats?.by_country || {}).length),
+    },
+]);
 
 // Debounced search
 let searchTimeout = null;
@@ -65,6 +117,7 @@ watch(search, () => {
 const openAddModal = () => {
     editingName.value = null;
     form.reset();
+    form.clearErrors();
     form.country = countryFilter.value || "PL";
     showAddModal.value = true;
 };
@@ -72,6 +125,7 @@ const openAddModal = () => {
 // Open edit modal
 const openEditModal = (name) => {
     editingName.value = name;
+    form.clearErrors();
     form.name = name.name;
     form.vocative = name.vocative || "";
     form.gender = name.gender;
@@ -149,16 +203,6 @@ const genderLabel = (gender) => {
     return labels[gender] || gender;
 };
 
-// Gender badge class
-const genderBadgeClass = (gender) => {
-    const classes = {
-        male: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
-        female: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300",
-        neutral: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300",
-    };
-    return classes[gender] || classes.neutral;
-};
-
 // ========== Gender Matching Section ==========
 const showGenderMatchingSection = ref(false);
 const genderMatchingStats = ref(null);
@@ -169,6 +213,25 @@ const genderMatchingResults = ref(null);
 const showMatchingResultsModal = ref(false);
 const showMatchingPreviewModal = ref(false);
 const matchingCountry = ref("PL");
+
+const matchingTiles = computed(() => {
+    const stats = genderMatchingStats.value;
+    return [
+        { key: "total", label: t("names.gender_matching.stat_total"), value: number(stats?.subscriber_stats?.total) },
+        { key: "without", label: t("names.gender_matching.stat_without_gender"), value: number(stats?.preview?.total_without_gender) },
+        { key: "matchable", label: t("names.gender_matching.stat_matchable"), value: number(stats?.preview?.matchable_count) },
+        { key: "unmatchable", label: t("names.gender_matching.stat_unmatchable"), value: number(stats?.preview?.unmatchable_count) },
+    ];
+});
+
+const matchingResultFigures = computed(() => {
+    const results = genderMatchingResults.value || {};
+    return [
+        { key: "matched", label: t("names.gender_matching.matched"), value: number(results.matched || results.matched_count) },
+        { key: "unmatched", label: t("names.gender_matching.unmatched"), value: number(results.unmatched || results.unmatched_count) },
+        { key: "errors", label: t("common.errors"), value: number(results.errors || results.error_count) },
+    ];
+});
 
 // Fetch gender matching stats
 const fetchGenderMatchingStats = async () => {
@@ -294,665 +357,419 @@ const clearProgress = async () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white">
-                        {{ t("names.title") }}
-                    </h1>
-                    <p class="text-sm text-slate-500 dark:text-slate-400">
-                        {{ t("names.subtitle") }}
-                    </p>
-                </div>
-                <div class="flex gap-2">
-                    <button
-                        @click="showImportModal = true"
-                        class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                    >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
-                        {{ t("names.import") }}
-                    </button>
-                    <button
-                        @click="exportNames('all')"
-                        class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
-                    >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        {{ t("names.export") }}
-                    </button>
-                    <button
-                        @click="openAddModal"
-                        class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-2 text-sm font-medium text-white shadow-lg transition hover:from-emerald-600 hover:to-teal-600"
-                    >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                        {{ t("names.add_name") }}
-                    </button>
-                </div>
-            </div>
+            <PageHeader :title="t('names.title')" :subtitle="t('names.subtitle')">
+                <SecondaryButton type="button" @click="showImportModal = true">{{ t("names.import") }}</SecondaryButton>
+                <SecondaryButton type="button" @click="exportNames('all')">{{ t("names.export") }}</SecondaryButton>
+                <CreateLink @click="openAddModal">{{ t("names.add_name") }}</CreateLink>
+            </PageHeader>
         </template>
 
-        <div class="space-y-6">
-            <!-- Help Section -->
-            <div class="rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 p-6 dark:from-blue-500/5 dark:to-purple-500/5">
-                <div class="flex items-start gap-4">
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-500">
-                        <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                            {{ t("names.help_title") }}
-                        </h3>
-                        <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                            {{ t("names.help_desc") }}
-                        </p>
-                        <div class="mt-4 rounded-lg bg-slate-900/5 p-4 dark:bg-slate-800/50">
-                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ t("names.syntax_title") }}:</p>
-                            <code class="mt-2 block text-sm text-emerald-600 dark:text-emerald-400">
-                                <span v-pre>{{chciałbym|chciałabym}}</span> → {{ t("names.syntax_result") }}
-                            </code>
-                            <p class="mt-2 text-xs text-slate-500">
-                                {{ t("names.syntax_desc") }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="mx-auto flex max-w-screen-2xl flex-col gap-4">
+            <StatTiles :items="statTiles" :label="t('names.title')" />
 
-            <!-- Stats Cards -->
-            <div class="grid gap-4 sm:grid-cols-4">
-                <div class="rounded-xl bg-white p-4 shadow-sm dark:bg-slate-800">
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white">
-                        {{ stats?.total?.toLocaleString() || 0 }}
-                    </div>
-                    <div class="text-sm text-slate-500">{{ t("names.stats_total") }}</div>
-                </div>
-                <div class="rounded-xl bg-white p-4 shadow-sm dark:bg-slate-800">
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white">
-                        {{ stats?.system?.toLocaleString() || 0 }}
-                    </div>
-                    <div class="text-sm text-slate-500">{{ t("names.stats_system") }}</div>
-                </div>
-                <div class="rounded-xl bg-white p-4 shadow-sm dark:bg-slate-800">
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white">
-                        {{ stats?.user?.toLocaleString() || 0 }}
-                    </div>
-                    <div class="text-sm text-slate-500">{{ t("names.stats_user") }}</div>
-                </div>
-                <div class="rounded-xl bg-white p-4 shadow-sm dark:bg-slate-800">
-                    <div class="text-2xl font-bold text-slate-900 dark:text-white">
-                        {{ Object.keys(stats?.by_country || {}).length }}
-                    </div>
-                    <div class="text-sm text-slate-500">{{ t("names.stats_countries") }}</div>
-                </div>
-            </div>
-
-            <!-- Gender Matching Section -->
-            <div class="rounded-xl bg-gradient-to-r from-purple-500/10 to-pink-500/10 p-6 shadow-sm dark:from-purple-500/5 dark:to-pink-500/5">
-                <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-4">
-                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-500">
-                            <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                                {{ t("names.gender_matching.title") }}
-                            </h3>
-                            <p class="text-sm text-slate-600 dark:text-slate-400">
-                                {{ t("names.gender_matching.description") }}
-                            </p>
-                        </div>
-                    </div>
+            <Panel flush>
+                <div class="flex flex-wrap items-center gap-3 px-5 pb-4 pt-2">
+                    <SearchField v-model="search" :placeholder="t('names.search_placeholder')" />
+                    <SelectField v-model="countryFilter" :label="t('names.column_country')">
+                        <option value="">{{ t("names.all_countries") }}</option>
+                        <option v-for="(label, code) in countries" :key="code" :value="code">{{ label }}</option>
+                    </SelectField>
+                    <SelectField v-model="genderFilter" :label="t('names.column_gender')">
+                        <option value="">{{ t("names.all_genders") }}</option>
+                        <option value="male">{{ t("names.gender_male") }}</option>
+                        <option value="female">{{ t("names.gender_female") }}</option>
+                        <option value="neutral">{{ t("names.gender_neutral") }}</option>
+                    </SelectField>
+                    <SelectField v-model="sourceFilter" :label="t('names.column_source')">
+                        <option value="">{{ t("names.all_sources") }}</option>
+                        <option value="system">{{ t("names.source_system") }}</option>
+                        <option value="user">{{ t("names.source_user") }}</option>
+                    </SelectField>
                     <button
-                        @click="toggleGenderMatchingSection"
-                        class="inline-flex items-center gap-2 rounded-lg bg-purple-500 px-4 py-2 text-sm font-medium text-white shadow transition hover:bg-purple-600"
+                        v-if="hasFilters"
+                        type="button"
+                        class="min-h-10 px-1 text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        @click="resetFilters"
                     >
-                        <svg v-if="!showGenderMatchingSection" class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                        </svg>
-                        <svg v-else class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                        </svg>
-                        {{ showGenderMatchingSection ? t("common.hide") : t("common.show") }}
+                        {{ t("messages.filters.clear") }}
                     </button>
                 </div>
 
-                <!-- Expanded section -->
-                <div v-if="showGenderMatchingSection" class="mt-6 space-y-4">
-                    <!-- Loading state -->
-                    <div v-if="genderMatchingLoading" class="flex items-center justify-center py-8">
-                        <svg class="h-8 w-8 animate-spin text-purple-500" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </div>
+                <EmptyState v-if="!names?.data?.length" :title="t('names.no_names')">
+                    <button
+                        v-if="hasFilters"
+                        type="button"
+                        class="text-sm font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        @click="resetFilters"
+                    >
+                        {{ t("messages.filters.clear") }}
+                    </button>
+                </EmptyState>
 
-                    <!-- Stats loaded -->
-                    <template v-else-if="genderMatchingStats">
-                        <!-- Country selector -->
-                        <div class="flex items-center gap-4">
-                            <label class="text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {{ t("names.gender_matching.country_label") }}:
-                            </label>
-                            <select
-                                v-model="matchingCountry"
-                                @change="fetchGenderMatchingStats"
-                                class="rounded-lg border-slate-200 bg-slate-50 text-sm focus:border-purple-500 focus:ring-purple-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                <div v-else class="relative overflow-x-auto border-t border-slate-200 dark:border-slate-700/60">
+                    <table class="w-full text-sm sm:min-w-[760px]">
+                        <thead>
+                            <tr
+                                class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
                             >
-                                <option v-for="(label, code) in countries" :key="code" :value="code">
-                                    {{ label }}
-                                </option>
-                            </select>
-                        </div>
+                                <th scope="col" class="px-5 py-2.5 font-medium">{{ t("names.column_name") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">{{ t("names.column_vocative") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium">{{ t("names.column_gender") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">{{ t("names.column_country") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium max-sm:hidden">{{ t("names.column_source") }}</th>
+                                <th scope="col" class="py-2.5 pl-3 pr-5 text-right font-medium">
+                                    <span class="sr-only">{{ t("names.column_actions") }}</span>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="name in names.data"
+                                :key="name.id"
+                                class="border-b border-slate-100 transition-colors last:border-0 hover:bg-slate-50 dark:border-slate-700/40 dark:hover:bg-slate-700/20"
+                            >
+                                <td class="px-5 py-2.5 font-medium text-slate-900 dark:text-white">
+                                    {{ name.name }}
+                                    <!-- On a phone the vocative has no column of its own -->
+                                    <p v-if="name.vocative" class="text-xs font-normal text-slate-600 sm:hidden dark:text-slate-400">
+                                        {{ name.vocative }}
+                                    </p>
+                                </td>
+                                <td class="px-3 py-2.5 text-slate-900 max-sm:hidden dark:text-slate-100">
+                                    {{ name.vocative || "—" }}
+                                </td>
+                                <td class="px-3 py-2.5 text-slate-900 dark:text-slate-100">{{ genderLabel(name.gender) }}</td>
+                                <td class="px-3 py-2.5 text-slate-600 max-sm:hidden dark:text-slate-400">
+                                    {{ countries[name.country] || name.country }}
+                                </td>
+                                <td class="px-3 py-2.5 max-sm:hidden">
+                                    <StatusPill :tone="name.source === 'system' ? 'neutral' : 'info'">
+                                        {{ name.source === "system" ? t("names.source_system") : t("names.source_user") }}
+                                    </StatusPill>
+                                </td>
+                                <td class="py-1.5 pl-3 pr-5">
+                                    <!-- The built-in names are read-only; one's own can be changed -->
+                                    <div v-if="name.source === 'user'" class="flex items-center justify-end">
+                                        <ActionMenu :label="t('names.actions_for', { name: name.name })">
+                                            <ActionMenuItem @click="openEditModal(name)">{{ t("common.edit") }}</ActionMenuItem>
+                                            <ActionMenuItem danger @click="confirmDelete(name)">{{ t("common.delete") }}</ActionMenuItem>
+                                        </ActionMenu>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
-                        <!-- Stats cards -->
-                        <div class="grid gap-4 sm:grid-cols-4">
-                            <div class="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
-                                <div class="text-2xl font-bold text-slate-900 dark:text-white">
-                                    {{ genderMatchingStats.subscriber_stats?.total?.toLocaleString() || 0 }}
-                                </div>
-                                <div class="text-sm text-slate-500">{{ t("names.gender_matching.stat_total") }}</div>
-                            </div>
-                            <div class="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
-                                <div class="text-2xl font-bold text-amber-600">
-                                    {{ genderMatchingStats.preview?.total_without_gender?.toLocaleString() || 0 }}
-                                </div>
-                                <div class="text-sm text-slate-500">{{ t("names.gender_matching.stat_without_gender") }}</div>
-                            </div>
-                            <div class="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
-                                <div class="text-2xl font-bold text-emerald-600">
-                                    {{ genderMatchingStats.preview?.matchable_count?.toLocaleString() || 0 }}
-                                </div>
-                                <div class="text-sm text-slate-500">{{ t("names.gender_matching.stat_matchable") }}</div>
-                            </div>
-                            <div class="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
-                                <div class="text-2xl font-bold text-red-600">
-                                    {{ genderMatchingStats.preview?.unmatchable_count?.toLocaleString() || 0 }}
-                                </div>
-                                <div class="text-sm text-slate-500">{{ t("names.gender_matching.stat_unmatchable") }}</div>
-                            </div>
-                        </div>
+                <Pagination
+                    v-if="names?.total > 0"
+                    v-model:per-page="perPage"
+                    :paginator="names"
+                    :per-page-options="[25, 50, 100, 200]"
+                />
+            </Panel>
 
-                        <!-- By gender breakdown -->
-                        <div v-if="genderMatchingStats.preview?.by_gender" class="flex items-center gap-4 text-sm">
-                            <span class="text-slate-500">{{ t("names.gender_matching.breakdown") }}:</span>
-                            <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-1 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                                </svg>
-                                {{ genderMatchingStats.preview.by_gender.male || 0 }} {{ t("names.gender_male") }}
-                            </span>
-                            <span class="inline-flex items-center gap-1 rounded-full bg-pink-100 px-2 py-1 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300">
-                                <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" />
-                                </svg>
-                                {{ genderMatchingStats.preview.by_gender.female || 0 }} {{ t("names.gender_female") }}
-                            </span>
-                        </div>
+            <!-- Fill in the gender of subscribers who have none, from their first names -->
+            <Panel :title="t('names.gender_matching.title')">
+                <template #actions>
+                    <button
+                        type="button"
+                        :aria-expanded="showGenderMatchingSection"
+                        class="font-semibold text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                        @click="toggleGenderMatchingSection"
+                    >
+                        {{ showGenderMatchingSection ? t("common.hide") : t("common.show") }}
+                    </button>
+                </template>
 
-                        <!-- Job progress bar -->
-                        <div v-if="genderMatchingRunning && genderMatchingProgress" class="rounded-lg bg-white p-4 shadow-sm dark:bg-slate-800">
+                <p class="-mt-3 text-sm text-slate-600 dark:text-slate-400">{{ t("names.gender_matching.description") }}</p>
+
+                <div v-if="showGenderMatchingSection" class="mt-4 flex flex-col gap-4">
+                    <p v-if="genderMatchingLoading" role="status" class="text-sm text-slate-600 dark:text-slate-400">
+                        {{ t("common.loading") }}
+                    </p>
+
+                    <template v-else-if="genderMatchingStats">
+                        <label class="flex flex-wrap items-center gap-3 text-sm text-slate-800 dark:text-slate-200">
+                            {{ t("names.gender_matching.country_label") }}
+                            <SelectField
+                                v-model="matchingCountry"
+                                :label="t('names.gender_matching.country_label')"
+                                @update:model-value="fetchGenderMatchingStats"
+                            >
+                                <option v-for="(label, code) in countries" :key="code" :value="code">{{ label }}</option>
+                            </SelectField>
+                        </label>
+
+                        <StatTiles :items="matchingTiles" :label="t('names.gender_matching.title')" />
+
+                        <p
+                            v-if="genderMatchingStats.preview?.by_gender"
+                            class="text-sm tabular-nums text-slate-600 dark:text-slate-400"
+                        >
+                            {{ t("names.gender_matching.breakdown") }}:
+                            {{ number(genderMatchingStats.preview.by_gender.male) }} {{ t("names.gender_male") }},
+                            {{ number(genderMatchingStats.preview.by_gender.female) }} {{ t("names.gender_female") }}
+                        </p>
+
+                        <!-- The job runs in the background: how far it is -->
+                        <div v-if="genderMatchingRunning && genderMatchingProgress" role="status" class="flex flex-col gap-1.5">
                             <div class="flex items-center justify-between text-sm">
-                                <span class="font-medium text-slate-700 dark:text-slate-300">
-                                    {{ t("names.gender_matching.processing") }}...
+                                <span class="font-medium text-slate-900 dark:text-white">
+                                    {{ t("names.gender_matching.processing") }}…
                                 </span>
-                                <span class="text-slate-500">
-                                    {{ genderMatchingProgress.processed || 0 }} / {{ genderMatchingProgress.total || 0 }}
+                                <span class="tabular-nums text-slate-600 dark:text-slate-400">
+                                    {{ number(genderMatchingProgress.processed) }} / {{ number(genderMatchingProgress.total) }}
                                 </span>
                             </div>
-                            <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
+                            <div class="h-2 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                                 <div
-                                    class="h-full bg-gradient-to-r from-purple-500 to-pink-500 transition-all duration-300"
+                                    class="h-full rounded-full bg-indigo-600 transition-[width] dark:bg-indigo-400"
                                     :style="{ width: `${genderMatchingProgress.progress || 0}%` }"
                                 ></div>
                             </div>
-                            <div class="mt-2 flex items-center gap-4 text-xs text-slate-500">
-                                <span>{{ t("names.gender_matching.matched") }}: {{ genderMatchingProgress.matched || 0 }}</span>
-                                <span>{{ t("names.gender_matching.unmatched") }}: {{ genderMatchingProgress.unmatched || 0 }}</span>
-                            </div>
+                            <p class="text-xs tabular-nums text-slate-600 dark:text-slate-400">
+                                {{ t("names.gender_matching.matched") }}: {{ number(genderMatchingProgress.matched) }}
+                                <span aria-hidden="true">·</span>
+                                {{ t("names.gender_matching.unmatched") }}: {{ number(genderMatchingProgress.unmatched) }}
+                            </p>
                         </div>
 
-                        <!-- Actions -->
-                        <div class="flex items-center gap-4">
-                            <button
-                                v-if="genderMatchingStats.preview?.matchable_count > 0 && !genderMatchingRunning"
-                                @click="runGenderMatching(true)"
-                                class="inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 text-sm font-medium text-white shadow-lg transition hover:from-purple-600 hover:to-pink-600"
+                        <div class="flex flex-wrap items-center gap-3">
+                            <template v-if="genderMatchingStats.preview?.matchable_count > 0 && !genderMatchingRunning">
+                                <PrimaryButton type="button" @click="runGenderMatching(true)">
+                                    {{ t("names.gender_matching.run_matching") }}
+                                </PrimaryButton>
+                                <SecondaryButton type="button" @click="showMatchingPreviewModal = true">
+                                    {{ t("names.gender_matching.preview") }}
+                                </SecondaryButton>
+                            </template>
+                            <p
+                                v-if="genderMatchingStats.preview?.matchable_count === 0"
+                                class="text-sm text-slate-600 dark:text-slate-400"
                             >
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                </svg>
-                                {{ t("names.gender_matching.run_matching") }}
-                            </button>
-                            <button
-                                v-if="genderMatchingStats.preview?.matchable_count > 0 && !genderMatchingRunning"
-                                @click="showMatchingPreviewModal = true"
-                                class="inline-flex items-center gap-2 rounded-lg border border-purple-300 px-4 py-2 text-sm font-medium text-purple-700 transition hover:bg-purple-50 dark:border-purple-700 dark:text-purple-300 dark:hover:bg-purple-900/20"
-                            >
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                </svg>
-                                {{ t("names.gender_matching.preview") }}
-                            </button>
-                            <span v-if="genderMatchingStats.preview?.matchable_count === 0" class="text-sm text-slate-500">
                                 {{ t("names.gender_matching.no_subscribers") }}
-                            </span>
+                            </p>
                         </div>
                     </template>
                 </div>
-            </div>
+            </Panel>
 
-            <!-- Filters -->
-            <div class="flex flex-wrap gap-4 rounded-xl bg-white p-4 shadow-sm dark:bg-slate-800">
-                <div class="flex-1 min-w-[200px]">
-                    <input
-                        v-model="search"
-                        type="text"
-                        :placeholder="t('names.search_placeholder')"
-                        class="w-full rounded-lg border-slate-200 bg-slate-50 text-sm placeholder-slate-400 focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:placeholder-slate-500"
-                    />
-                </div>
-                <select
-                    v-model="countryFilter"
-                    @change="applyFilters"
-                    class="rounded-lg border-slate-200 bg-slate-50 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                >
-                    <option value="">{{ t("names.all_countries") }}</option>
-                    <option v-for="(label, code) in countries" :key="code" :value="code">
-                        {{ label }}
-                    </option>
-                </select>
-                <select
-                    v-model="genderFilter"
-                    @change="applyFilters"
-                    class="rounded-lg border-slate-200 bg-slate-50 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                >
-                    <option value="">{{ t("names.all_genders") }}</option>
-                    <option value="male">{{ t("names.gender_male") }}</option>
-                    <option value="female">{{ t("names.gender_female") }}</option>
-                    <option value="neutral">{{ t("names.gender_neutral") }}</option>
-                </select>
-                <select
-                    v-model="sourceFilter"
-                    @change="applyFilters"
-                    class="rounded-lg border-slate-200 bg-slate-50 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                >
-                    <option value="">{{ t("names.all_sources") }}</option>
-                    <option value="system">{{ t("names.source_system") }}</option>
-                    <option value="user">{{ t("names.source_user") }}</option>
-                </select>
-            </div>
-
-            <!-- Names Table -->
-            <div class="overflow-hidden rounded-xl bg-white shadow-sm dark:bg-slate-800">
-                <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                    <thead class="bg-slate-50 dark:bg-slate-700/50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                {{ t("names.column_name") }}
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                {{ t("names.column_vocative") }}
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                {{ t("names.column_gender") }}
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                {{ t("names.column_country") }}
-                            </th>
-                            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                {{ t("names.column_source") }}
-                            </th>
-                            <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                {{ t("names.column_actions") }}
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                        <tr v-for="name in names?.data" :key="name.id" class="hover:bg-slate-50 dark:hover:bg-slate-700/50">
-                            <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-slate-900 dark:text-white capitalize">
-                                {{ name.name }}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500 dark:text-slate-400 capitalize">
-                                {{ name.vocative || '—' }}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm">
-                                <span :class="['inline-flex rounded-full px-2 py-1 text-xs font-medium', genderBadgeClass(name.gender)]">
-                                    {{ genderLabel(name.gender) }}
-                                </span>
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                                {{ countries[name.country] || name.country }}
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                                <span v-if="name.source === 'system'" class="text-slate-400">
-                                    {{ t("names.source_system") }}
-                                </span>
-                                <span v-else class="text-emerald-600 dark:text-emerald-400">
-                                    {{ t("names.source_user") }}
-                                </span>
-                            </td>
-                            <td class="whitespace-nowrap px-6 py-4 text-right text-sm">
-                                <template v-if="name.source === 'user'">
-                                    <button
-                                        @click="openEditModal(name)"
-                                        class="mr-2 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                                    >
-                                        {{ t("common.edit") }}
-                                    </button>
-                                    <button
-                                        @click="confirmDelete(name)"
-                                        class="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                                    >
-                                        {{ t("common.delete") }}
-                                    </button>
-                                </template>
-                                <span v-else class="text-slate-400">—</span>
-                            </td>
-                        </tr>
-                        <tr v-if="!names?.data?.length">
-                            <td colspan="6" class="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-                                {{ t("names.no_names") }}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <!-- Pagination -->
-                <div v-if="names?.links?.length > 3" class="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-700 dark:bg-slate-700/50">
-                    <div class="text-sm text-slate-500">
-                        {{ t("common.showing") }} {{ names.from }} - {{ names.to }} {{ t("common.of") }} {{ names.total }}
-                    </div>
-                    <div class="flex gap-1">
-                        <button
-                            v-for="link in names.links"
-                            :key="link.label"
-                            @click="link.url && router.get(link.url, {}, { preserveState: true })"
-                            :disabled="!link.url"
-                            :class="[
-                                'px-3 py-1 text-sm rounded',
-                                link.active ? 'bg-emerald-500 text-white' : 'text-slate-600 hover:bg-slate-200 dark:text-slate-400 dark:hover:bg-slate-600',
-                                !link.url ? 'opacity-50 cursor-not-allowed' : ''
-                            ]"
-                            v-html="link.label"
-                        />
-                    </div>
-                </div>
-            </div>
+            <!-- What the names are for -->
+            <Panel :title="t('names.help_title')">
+                <p class="text-sm text-slate-600 dark:text-slate-400">{{ t("names.help_desc") }}</p>
+                <p class="mt-4 text-sm font-medium text-slate-900 dark:text-white">{{ t("names.syntax_title") }}</p>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                    <code
+                        class="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs text-slate-900 dark:bg-slate-700/60 dark:text-slate-100"
+                        v-pre
+                        >{{chciałbym|chciałabym}}</code
+                    >
+                    → {{ t("names.syntax_result") }}
+                </p>
+                <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">{{ t("names.syntax_desc") }}</p>
+            </Panel>
         </div>
 
-        <!-- Add/Edit Modal -->
-        <Teleport to="body">
-            <div v-if="showAddModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800">
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                        {{ editingName ? t("names.edit_name") : t("names.add_name") }}
-                    </h3>
-                    <form @submit.prevent="submitForm" class="mt-4 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {{ t("names.field_name") }}
-                            </label>
-                            <input
-                                v-model="form.name"
-                                type="text"
-                                required
-                                class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                            />
-                            <p v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {{ t("names.field_vocative") }}
-                            </label>
-                            <input
-                                v-model="form.vocative"
-                                type="text"
-                                :placeholder="t('names.vocative_placeholder')"
-                                class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                            />
-                            <p class="mt-1 text-xs text-slate-500">{{ t("names.vocative_help") }}</p>
-                            <p v-if="form.errors.vocative" class="mt-1 text-sm text-red-500">{{ form.errors.vocative }}</p>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {{ t("names.field_gender") }}
-                            </label>
-                            <select
-                                v-model="form.gender"
-                                class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                            >
-                                <option value="male">{{ t("names.gender_male") }}</option>
-                                <option value="female">{{ t("names.gender_female") }}</option>
-                                <option value="neutral">{{ t("names.gender_neutral") }}</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {{ t("names.field_country") }}
-                            </label>
-                            <select
-                                v-model="form.country"
-                                class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                            >
-                                <option v-for="(label, code) in countries" :key="code" :value="code">
-                                    {{ label }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4">
-                            <button
-                                type="button"
-                                @click="showAddModal = false"
-                                class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-                            >
-                                {{ t("common.cancel") }}
-                            </button>
-                            <button
-                                type="submit"
-                                :disabled="form.processing"
-                                class="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-600 disabled:opacity-50"
-                            >
-                                {{ form.processing ? t("common.saving") : t("common.save") }}
-                            </button>
-                        </div>
-                    </form>
+        <!-- A name of one's own: the name, how to address the person, the gender, the country -->
+        <FormDialog
+            :show="showAddModal"
+            :title="editingName ? t('names.edit_name') : t('names.add_name')"
+            :processing="form.processing"
+            :errors="messagesOf(form)"
+            @close="showAddModal = false"
+            @submit="submitForm"
+        >
+            <div class="space-y-4">
+                <div>
+                    <label for="name-name" :class="labelClass">{{ t("names.field_name") }}</label>
+                    <input
+                        id="name-name"
+                        v-model="form.name"
+                        type="text"
+                        required
+                        class="mt-1"
+                        :class="[fieldClass, { '!border-rose-500': form.errors.name }]"
+                    />
+                    <p v-if="form.errors.name" :class="errorClass">{{ form.errors.name }}</p>
                 </div>
-            </div>
-        </Teleport>
-
-        <!-- Import Modal -->
-        <Teleport to="body">
-            <div v-if="showImportModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800">
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                        {{ t("names.import_title") }}
-                    </h3>
-                    <p class="mt-1 text-sm text-slate-500">{{ t("names.import_desc") }}</p>
-                    <form @submit.prevent="submitImport" class="mt-4 space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {{ t("names.field_file") }}
-                            </label>
-                            <input
-                                type="file"
-                                accept=".csv,.txt"
-                                @change="handleFileChange"
-                                required
-                                class="mt-1 w-full text-sm text-slate-500 file:mr-4 file:rounded-lg file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-emerald-700 hover:file:bg-emerald-100 dark:text-slate-400 dark:file:bg-emerald-900/30 dark:file:text-emerald-400"
-                            />
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                                {{ t("names.field_country") }}
-                            </label>
-                            <select
-                                v-model="importForm.country"
-                                class="mt-1 w-full rounded-lg border-slate-200 bg-slate-50 text-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
-                            >
-                                <option v-for="(label, code) in countries" :key="code" :value="code">
-                                    {{ label }}
-                                </option>
-                            </select>
-                        </div>
-                        <div class="flex justify-end gap-3 pt-4">
-                            <button
-                                type="button"
-                                @click="showImportModal = false"
-                                class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-                            >
-                                {{ t("common.cancel") }}
-                            </button>
-                            <button
-                                type="submit"
-                                :disabled="importForm.processing"
-                                class="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-600 disabled:opacity-50"
-                            >
-                                {{ importForm.processing ? t("common.importing") : t("names.import") }}
-                            </button>
-                        </div>
-                    </form>
+                <div>
+                    <label for="name-vocative" :class="labelClass">{{ t("names.field_vocative") }}</label>
+                    <input
+                        id="name-vocative"
+                        v-model="form.vocative"
+                        type="text"
+                        :placeholder="t('names.vocative_placeholder')"
+                        class="mt-1"
+                        :class="[fieldClass, { '!border-rose-500': form.errors.vocative }]"
+                    />
+                    <p v-if="form.errors.vocative" :class="errorClass">{{ form.errors.vocative }}</p>
+                    <p v-else :class="hintClass">{{ t("names.vocative_help") }}</p>
                 </div>
-            </div>
-        </Teleport>
-
-        <!-- Delete Confirmation Modal -->
-        <Teleport to="body">
-            <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800">
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                        {{ t("names.delete_title") }}
-                    </h3>
-                    <p class="mt-2 text-sm text-slate-500">
-                        {{ t("names.delete_confirm", { name: deletingName?.name }) }}
-                    </p>
-                    <div class="mt-6 flex justify-end gap-3">
-                        <button
-                            @click="showDeleteModal = false"
-                            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-                        >
-                            {{ t("common.cancel") }}
-                        </button>
-                        <button
-                            @click="deleteName"
-                            class="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-600"
-                        >
-                            {{ t("common.delete") }}
-                        </button>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="name-gender" :class="labelClass">{{ t("names.field_gender") }}</label>
+                        <select id="name-gender" v-model="form.gender" class="mt-1" :class="fieldClass">
+                            <option value="male">{{ t("names.gender_male") }}</option>
+                            <option value="female">{{ t("names.gender_female") }}</option>
+                            <option value="neutral">{{ t("names.gender_neutral") }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="name-country" :class="labelClass">{{ t("names.field_country") }}</label>
+                        <select id="name-country" v-model="form.country" class="mt-1" :class="fieldClass">
+                            <option v-for="(label, code) in countries" :key="code" :value="code">{{ label }}</option>
+                        </select>
                     </div>
                 </div>
             </div>
-        </Teleport>
+        </FormDialog>
 
-        <!-- Gender Matching Preview Modal -->
-        <Teleport to="body">
-            <div v-if="showMatchingPreviewModal && genderMatchingStats?.preview" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                <div class="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800 max-h-[80vh] overflow-hidden flex flex-col">
-                    <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
+        <FormDialog
+            :show="showImportModal"
+            :title="t('names.import_title')"
+            :processing="importForm.processing"
+            :submit-label="t('names.import')"
+            :errors="messagesOf(importForm)"
+            @close="showImportModal = false"
+            @submit="submitImport"
+        >
+            <div class="space-y-4">
+                <p class="text-sm text-slate-600 dark:text-slate-400">{{ t("names.import_desc") }}</p>
+                <div>
+                    <label for="names-file" :class="labelClass">{{ t("names.field_file") }}</label>
+                    <input
+                        id="names-file"
+                        type="file"
+                        accept=".csv,.txt"
+                        required
+                        class="mt-1 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-100 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-slate-800 dark:file:bg-slate-700 dark:file:text-slate-100"
+                        :class="fieldClass"
+                        @change="handleFileChange"
+                    />
+                </div>
+                <div>
+                    <label for="names-import-country" :class="labelClass">{{ t("names.field_country") }}</label>
+                    <select id="names-import-country" v-model="importForm.country" class="mt-1" :class="fieldClass">
+                        <option v-for="(label, code) in countries" :key="code" :value="code">{{ label }}</option>
+                    </select>
+                </div>
+            </div>
+        </FormDialog>
+
+        <ConfirmModal
+            :show="showDeleteModal"
+            type="danger"
+            :title="t('names.delete_title')"
+            :message="t('names.delete_confirm', { name: deletingName?.name })"
+            :confirm-text="t('common.delete')"
+            @close="showDeleteModal = false"
+            @confirm="deleteName"
+        />
+
+        <!-- Who would get which gender, before anything is changed -->
+        <Modal :show="showMatchingPreviewModal && !!genderMatchingStats?.preview" max-width="2xl" @close="showMatchingPreviewModal = false">
+            <div class="flex max-h-[calc(100vh-3rem)] flex-col">
+                <div class="px-6 pb-3 pt-6">
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
                         {{ t("names.gender_matching.preview_title") }}
-                    </h3>
-                    <p class="mt-1 text-sm text-slate-500">
-                        {{ t("names.gender_matching.preview_desc", { count: genderMatchingStats.preview.matchable_count }) }}
+                    </h2>
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                        {{ t("names.gender_matching.preview_desc", { count: genderMatchingStats?.preview?.matchable_count }) }}
                     </p>
-
-                    <div class="mt-4 flex-1 overflow-auto">
-                        <table class="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
-                            <thead class="bg-slate-50 dark:bg-slate-700/50 sticky top-0">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase text-slate-500">{{ t("common.email") }}</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase text-slate-500">{{ t("subscribers.fields.first_name") }}</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase text-slate-500">{{ t("names.gender_matching.detected_gender") }}</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-200 dark:divide-slate-700">
-                                <tr v-for="sub in genderMatchingStats.preview.matchable" :key="sub.id">
-                                    <td class="px-4 py-2 text-sm text-slate-600 dark:text-slate-400">{{ sub.email }}</td>
-                                    <td class="px-4 py-2 text-sm text-slate-900 dark:text-white capitalize">{{ sub.first_name }}</td>
-                                    <td class="px-4 py-2">
-                                        <span :class="['inline-flex rounded-full px-2 py-1 text-xs font-medium', genderBadgeClass(sub.detected_gender)]">
-                                            {{ genderLabel(sub.detected_gender) }}
-                                        </span>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <p v-if="genderMatchingStats.preview.matchable_count > 50" class="mt-2 text-center text-xs text-slate-400">
+                </div>
+                <div class="relative min-h-0 flex-1 overflow-auto border-y border-slate-200 dark:border-slate-700/60">
+                    <table class="w-full min-w-[480px] text-sm">
+                        <thead>
+                            <tr
+                                class="border-b border-slate-200 text-left text-xs text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
+                            >
+                                <th scope="col" class="px-6 py-2.5 font-medium">{{ t("common.email") }}</th>
+                                <th scope="col" class="px-3 py-2.5 font-medium">{{ t("subscribers.fields.first_name") }}</th>
+                                <th scope="col" class="px-6 py-2.5 font-medium">
+                                    {{ t("names.gender_matching.detected_gender") }}
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr
+                                v-for="sub in genderMatchingStats?.preview?.matchable"
+                                :key="sub.id"
+                                class="border-b border-slate-100 last:border-0 dark:border-slate-700/40"
+                            >
+                                <td class="px-6 py-2 text-slate-900 dark:text-white">{{ sub.email }}</td>
+                                <td class="px-3 py-2 text-slate-900 dark:text-slate-100">{{ sub.first_name }}</td>
+                                <td class="px-6 py-2 text-slate-900 dark:text-slate-100">{{ genderLabel(sub.detected_gender) }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="flex flex-wrap items-center justify-between gap-3 px-6 py-4">
+                    <p class="text-sm text-slate-600 dark:text-slate-400">
+                        <template v-if="genderMatchingStats?.preview?.matchable_count > 50">
                             {{ t("names.gender_matching.showing_first_50") }}
-                        </p>
-                    </div>
-
-                    <div class="mt-4 flex justify-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700">
-                        <button
-                            @click="showMatchingPreviewModal = false"
-                            class="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
-                        >
+                        </template>
+                    </p>
+                    <div class="flex items-center gap-3">
+                        <SecondaryButton type="button" @click="showMatchingPreviewModal = false">
                             {{ t("common.close") }}
-                        </button>
-                        <button
-                            @click="showMatchingPreviewModal = false; runGenderMatching(true)"
-                            class="rounded-lg bg-gradient-to-r from-purple-500 to-pink-500 px-4 py-2 text-sm font-medium text-white transition hover:from-purple-600 hover:to-pink-600"
+                        </SecondaryButton>
+                        <PrimaryButton
+                            type="button"
+                            @click="
+                                showMatchingPreviewModal = false;
+                                runGenderMatching(true);
+                            "
                         >
                             {{ t("names.gender_matching.run_matching") }}
-                        </button>
+                        </PrimaryButton>
                     </div>
                 </div>
             </div>
-        </Teleport>
+        </Modal>
 
-        <!-- Gender Matching Results Modal -->
-        <Teleport to="body">
-            <div v-if="showMatchingResultsModal && genderMatchingResults" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-                <div class="w-full max-w-lg rounded-xl bg-white p-6 shadow-xl dark:bg-slate-800">
-                    <div class="flex items-center gap-4">
-                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-                            <svg class="h-6 w-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="text-lg font-semibold text-slate-900 dark:text-white">
-                                {{ t("names.gender_matching.results_title") }}
-                            </h3>
-                            <p class="text-sm text-slate-500">
-                                {{ t("names.gender_matching.results_desc") }}
-                            </p>
-                        </div>
+        <!-- How the matching ended -->
+        <Modal
+            :show="showMatchingResultsModal && !!genderMatchingResults"
+            max-width="lg"
+            @close="
+                showMatchingResultsModal = false;
+                clearProgress();
+            "
+        >
+            <div class="flex flex-col gap-4 p-6">
+                <div>
+                    <h2 class="text-lg font-semibold text-slate-900 dark:text-white">
+                        {{ t("names.gender_matching.results_title") }}
+                    </h2>
+                    <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                        {{ t("names.gender_matching.results_desc") }}
+                    </p>
+                </div>
+                <dl class="grid grid-cols-3 gap-3 text-center">
+                    <div
+                        v-for="figure in matchingResultFigures"
+                        :key="figure.key"
+                        class="rounded-xl border border-slate-200 px-3 py-3 dark:border-slate-700/60"
+                    >
+                        <dd class="text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">{{ figure.value }}</dd>
+                        <dt class="mt-1 text-xs text-slate-600 dark:text-slate-400">{{ figure.label }}</dt>
                     </div>
-
-                    <div class="mt-6 grid grid-cols-3 gap-4">
-                        <div class="rounded-lg bg-emerald-50 p-4 text-center dark:bg-emerald-900/20">
-                            <div class="text-2xl font-bold text-emerald-600">{{ genderMatchingResults.matched || genderMatchingResults.matched_count || 0 }}</div>
-                            <div class="text-sm text-slate-500">{{ t("names.gender_matching.matched") }}</div>
-                        </div>
-                        <div class="rounded-lg bg-amber-50 p-4 text-center dark:bg-amber-900/20">
-                            <div class="text-2xl font-bold text-amber-600">{{ genderMatchingResults.unmatched || genderMatchingResults.unmatched_count || 0 }}</div>
-                            <div class="text-sm text-slate-500">{{ t("names.gender_matching.unmatched") }}</div>
-                        </div>
-                        <div class="rounded-lg bg-red-50 p-4 text-center dark:bg-red-900/20">
-                            <div class="text-2xl font-bold text-red-600">{{ genderMatchingResults.errors || genderMatchingResults.error_count || 0 }}</div>
-                            <div class="text-sm text-slate-500">{{ t("common.errors") }}</div>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 flex justify-end">
-                        <button
-                            @click="showMatchingResultsModal = false; clearProgress()"
-                            class="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-emerald-600"
-                        >
-                            {{ t("common.close") }}
-                        </button>
-                    </div>
+                </dl>
+                <div class="flex justify-end">
+                    <PrimaryButton
+                        type="button"
+                        @click="
+                            showMatchingResultsModal = false;
+                            clearProgress();
+                        "
+                    >
+                        {{ t("common.close") }}
+                    </PrimaryButton>
                 </div>
             </div>
-        </Teleport>
+        </Modal>
+
+        <Toast :toast="toast" @close="dismiss" />
     </AuthenticatedLayout>
 </template>
-

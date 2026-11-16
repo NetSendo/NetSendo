@@ -211,8 +211,11 @@ class UserCalendarConnection extends Model
     {
         return $query->active()
             ->where(function ($q) {
+                // calendar:refresh-channels runs every three hours; a one-hour
+                // window let a channel expiring in 1-3 hours lapse before the next
+                // run, and push notifications stopped until it was recreated.
                 $q->whereNull('channel_expires_at')
-                    ->orWhere('channel_expires_at', '<', now()->addHours(1));
+                    ->orWhere('channel_expires_at', '<', now()->addHours(24));
             });
     }
 

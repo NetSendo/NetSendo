@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,47 +13,57 @@ return new class extends Migration
     public function up(): void
     {
         // Add 'crm_contact_replied' to the trigger event enum
+        $events = [
+            'subscriber_signup',
+            'subscriber_activated',
+            'list_join',
+            'email_opened',
+            'email_clicked',
+            'subscriber_unsubscribed',
+            'email_bounced',
+            'form_submitted',
+            'tag_added',
+            'tag_removed',
+            'field_updated',
+            'page_visited',
+            'specific_link_clicked',
+            'date_reached',
+            'read_time_threshold',
+            'subscriber_birthday',
+            'subscription_anniversary',
+            'subscriber_inactive',
+            'purchase',
+            'pixel_page_visited',
+            'pixel_product_viewed',
+            'pixel_add_to_cart',
+            'pixel_checkout_started',
+            'pixel_cart_abandoned',
+            'pixel_return_visit',
+            'crm_deal_stage_changed',
+            'crm_deal_won',
+            'crm_deal_lost',
+            'crm_deal_created',
+            'crm_deal_idle',
+            'crm_task_overdue',
+            'crm_score_changed',
+            'crm_contact_created',
+            'crm_task_completed',
+            'crm_contact_status_changed',
+            'crm_score_threshold',
+            'crm_activity_logged',
+            'crm_contact_replied',
+        ];
+
         if (DB::getDriverName() === 'mysql') {
-            DB::statement("ALTER TABLE automation_rules MODIFY COLUMN trigger_event ENUM(
-                'subscriber_signup',
-                'subscriber_activated',
-                'list_join',
-                'email_opened',
-                'email_clicked',
-                'subscriber_unsubscribed',
-                'email_bounced',
-                'form_submitted',
-                'tag_added',
-                'tag_removed',
-                'field_updated',
-                'page_visited',
-                'specific_link_clicked',
-                'date_reached',
-                'read_time_threshold',
-                'subscriber_birthday',
-                'subscription_anniversary',
-                'subscriber_inactive',
-                'purchase',
-                'pixel_page_visited',
-                'pixel_product_viewed',
-                'pixel_add_to_cart',
-                'pixel_checkout_started',
-                'pixel_cart_abandoned',
-                'pixel_return_visit',
-                'crm_deal_stage_changed',
-                'crm_deal_won',
-                'crm_deal_lost',
-                'crm_deal_created',
-                'crm_deal_idle',
-                'crm_task_overdue',
-                'crm_score_changed',
-                'crm_contact_created',
-                'crm_task_completed',
-                'crm_contact_status_changed',
-                'crm_score_threshold',
-                'crm_activity_logged',
-                'crm_contact_replied'
-            )");
+            $list = implode(', ', array_map(fn ($event) => "'{$event}'", $events));
+            DB::statement("ALTER TABLE automation_rules MODIFY COLUMN trigger_event ENUM({$list})");
+        } elseif (DB::getDriverName() === 'sqlite') {
+            // The earlier trigger migrations only widen the enum on MySQL, so on
+            // SQLite (the test database) the CHECK constraint from the create
+            // migration rejected every newer event. Rebuild it with the full list.
+            Schema::table('automation_rules', function (Blueprint $table) use ($events) {
+                $table->enum('trigger_event', $events)->change();
+            });
         }
     }
 

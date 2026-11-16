@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Licensing\Feature;
 use App\Models\AiActionPlan;
 use App\Models\AiActionPlanStep;
 use App\Models\AiBrainActivityLog;
@@ -17,10 +18,12 @@ use App\Services\Brain\ModeController;
 use App\Services\Brain\SituationAnalyzer;
 use App\Services\Brain\PerformanceTracker;
 use App\Services\Brain\TaskScorer;
+use App\Services\Brain\TaskTokenBudget;
 use App\Services\Brain\CampaignCalendarService;
 use App\Services\Brain\WeeklyDigestService;
 use App\Services\Brain\Skills\MarketingSalesSkill;
 use App\Services\Brain\Telegram\TelegramBotService;
+use App\Services\LicenseService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 
@@ -32,6 +35,12 @@ class RunBrainCronCommand extends Command
 
     public function handle(AgentOrchestrator $orchestrator): int
     {
+        // Brain working on its own is GOLD (the schedule skips it too; this covers a manual run)
+        if (!app(LicenseService::class)->allows(Feature::BrainAutonomy)) {
+            $this->info('[Brain CRON] Skipped: autonomous Brain needs the GOLD licence.');
+            return self::SUCCESS;
+        }
+
         $this->info('[Brain CRON] Starting orchestration cycle...');
 
         // Find all users with cron enabled
@@ -285,16 +294,18 @@ class RunBrainCronCommand extends Command
                     $status = ($result['type'] ?? '') === 'error' ? 'error' : 'success';
                     $cronResults['tasks_executed'][$i] = $status;
 
+                    // A failed task keeps its reason, so the Monitor shows why it failed
                     AiBrainActivityLog::logEvent(
                         $user->id,
                         'cron_task',
                         $status,
                         null,
-                        [
+                        array_filter([
                             'task_title' => $task['title'] ?? '',
                             'agent' => $agentType,
                             'mode' => 'autonomous',
-                        ]
+                            'error' => $status === 'error' ? mb_substr((string) ($result['message'] ?? ''), 0, 300) : null,
+                        ], fn ($value) => $value !== null)
                     );
                 } catch (\Exception $e) {
                     $cronResults['tasks_executed'][$i] = 'error';
@@ -302,6 +313,13 @@ class RunBrainCronCommand extends Command
                         'user_id' => $user->id,
                         'task' => $task['title'] ?? '',
                         'error' => $e->getMessage(),
+                    ]);
+
+                    AiBrainActivityLog::logEvent($user->id, 'cron_task', 'error', null, [
+                        'task_title' => $task['title'] ?? '',
+                        'agent' => $agentType,
+                        'mode' => 'autonomous',
+                        'error' => mb_substr($e->getMessage(), 0, 300),
                     ]);
                 }
             } elseif ($agentMode === ModeController::MODE_SEMI_AUTO) {
@@ -333,8 +351,12 @@ class RunBrainCronCommand extends Command
                         ),
                     ];
 
-                    $knowledgeContext = app(KnowledgeBaseService::class)->getContext($user, $agentName);
-                    $plan = $agent->plan($intent, $user, $knowledgeContext);
+                    // Planning a cron task is one task with its own token limit
+                    $plan = TaskTokenBudget::run($user, fn () => $agent->plan(
+                        $intent,
+                        $user,
+                        app(KnowledgeBaseService::class)->getContext($user, $agentName, query: $intent['intent'] ?? null),
+                    ));
 
                     if (!$plan) {
                         $this->warn("[Brain CRON]   ✗ Plan creation failed for: {$task['title']}");
@@ -786,6 +808,7 @@ class RunBrainCronCommand extends Command
                     'parameters' => [
                         'goal_id' => $goal->id,
                         'goal_title' => $goal->title,
+                        'goal_step' => $nextAction['order'] ?? null,
                     ],
                 ];
 
@@ -818,13 +841,18 @@ class RunBrainCronCommand extends Command
                             ),
                         ];
 
-                        $knowledgeContext = app(KnowledgeBaseService::class)->getContext($user, $agentName);
-                        $plan = $agent->plan($intent, $user, $knowledgeContext);
+                        // Planning a cron task is one task with its own token limit
+                        $plan = TaskTokenBudget::run($user, fn () => $agent->plan(
+                            $intent,
+                            $user,
+                            app(KnowledgeBaseService::class)->getContext($user, $agentName, query: $intent['intent'] ?? null),
+                        ));
 
                         if ($plan) {
                             $plan->update([
                                 'status' => 'pending_approval',
                                 'ai_goal_id' => $goal->id,
+                                'plan_data' => array_merge($plan->plan_data ?? [], ['goal_step' => (int) ($nextAction['order'] ?? 0)]),
                             ]);
 
                             $approval = AiPendingApproval::create([

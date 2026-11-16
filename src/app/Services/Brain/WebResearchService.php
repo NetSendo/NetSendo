@@ -29,6 +29,11 @@ class WebResearchService
     {
         $settings = AiBrainSettings::getForUser($user->id);
 
+        // Web research is part of Brain autonomy (GOLD)
+        if (!$settings->autonomyLicensed()) {
+            return ['results' => [], 'error' => 'Web research requires the GOLD licence'];
+        }
+
         if (!$settings->serpapi_api_key) {
             return ['results' => [], 'error' => 'SerpAPI key not configured'];
         }
@@ -86,6 +91,11 @@ class WebResearchService
     public function deepResearch(string $query, User $user, string $context = ''): array
     {
         $settings = AiBrainSettings::getForUser($user->id);
+
+        // Web research is part of Brain autonomy (GOLD)
+        if (!$settings->autonomyLicensed()) {
+            return ['answer' => '', 'citations' => [], 'error' => 'Web research requires the GOLD licence'];
+        }
 
         if (!$settings->perplexity_api_key) {
             return ['answer' => '', 'citations' => [], 'error' => 'Perplexity API key not configured'];
@@ -299,11 +309,13 @@ class WebResearchService
     public function isAvailable(User $user): array
     {
         $settings = AiBrainSettings::getForUser($user->id);
+        // Web research is part of Brain autonomy (GOLD)
+        $licensed = $settings->autonomyLicensed();
 
         return [
-            'perplexity' => !empty($settings->perplexity_api_key),
-            'serpapi' => !empty($settings->serpapi_api_key),
-            'any' => !empty($settings->perplexity_api_key) || !empty($settings->serpapi_api_key),
+            'perplexity' => $licensed && !empty($settings->perplexity_api_key),
+            'serpapi' => $licensed && !empty($settings->serpapi_api_key),
+            'any' => $licensed && (!empty($settings->perplexity_api_key) || !empty($settings->serpapi_api_key)),
         ];
     }
 

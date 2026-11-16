@@ -17,9 +17,15 @@ export class NetSendoApiError extends Error {
 export class NetSendoApiClient {
     client;
     debug;
-    constructor(config) {
+    /**
+     * @param options.adapter Replaces the HTTP transport. The in-app connector
+     *   bridge (bridge.ts) uses it to hand API calls to the NetSendo application
+     *   that started it instead of opening a network connection.
+     */
+    constructor(config, options = {}) {
         this.debug = config.debug;
         this.client = axios.create({
+            ...(options.adapter ? { adapter: options.adapter } : {}),
             baseURL: `${config.apiUrl}/api/v1`,
             headers: {
                 'Authorization': `Bearer ${config.apiKey}`,

@@ -4,17 +4,25 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
+import { useLicense } from "@/Composables/useLicense";
 import { createSafeMarkdown } from "@/utils/safeMarkdown";
 
 // Replies can echo untrusted content (emails, web research, subscriber data)
 const renderMarkdown = createSafeMarkdown({ breaks: true, images: false });
 
 const { t } = useI18n();
+// Voice input is part of Brain autonomy (GOLD); the chat itself is SILVER
+const { can: licenceAllows, requireGold } = useLicense();
 
 const props = defineProps({
     conversations: Array,
     settings: Object,
 });
+
+// The mode the agents really work in (per-agent modes win over the global one)
+const effectiveMode = computed(
+    () => props.settings?.effective_mode || props.settings?.work_mode || "semi_auto",
+);
 
 // --- State ---
 const conversationList = ref(props.conversations || []);
@@ -85,6 +93,10 @@ watch(messages, scrollToBottom, { deep: true });
 
 // --- Voice Recording Methods ---
 const startRecording = async () => {
+    if (!licenceAllows("brain_autonomy")) {
+        requireGold("brain_autonomy");
+        return;
+    }
     try {
         audioStream = await navigator.mediaDevices.getUserMedia({
             audio: true,
@@ -488,31 +500,54 @@ const handleKeyDown = (e) => {
 };
 
 // --- Plan Actions ---
-const approvePlan = async (planId) => {
+// The buttons go away once a decision is sent, and the chat says what happens next. The
+// plan's result is posted into this conversation when the run finishes.
+const decidePlan = async (msg, approved) => {
+    const planId = msg.plan?.id;
+    if (!planId) return;
+    msg.plan = null;
     try {
-        await axios.post(`/brain/api/plans/${planId}/approve`, {
-            approved: true,
+        const response = await axios.post(`/brain/api/plans/${planId}/approve`, {
+            approved,
+            reason: approved ? undefined : "User rejected from UI",
         });
-        // Refresh current conversation
-        if (activeConversationId.value) {
-            await loadConversation(activeConversationId.value);
+        messages.value.push({
+            id: Date.now(),
+            role: "system",
+            content: approved
+                ? response.data?.message ||
+                  t("brain.plan.queued", "Plan zatwierdzony — wykonuję w tle.")
+                : t("brain.plan.rejected", "Plan odrzucony."),
+            created_at: new Date().toISOString(),
+        });
+        if (approved && activeConversationId.value) {
+            // Pick up the result message the run posts into this conversation
+            const conversationId = activeConversationId.value;
+            setTimeout(() => refreshActiveConversation(conversationId), 15000);
         }
     } catch (error) {
-        // Error handling
+        messages.value.push({
+            id: Date.now(),
+            role: "system",
+            content:
+                error.response?.data?.error ||
+                t("brain.plan.decision_failed", "Nie udało się zapisać decyzji."),
+            created_at: new Date().toISOString(),
+        });
     }
 };
 
-const rejectPlan = async (planId) => {
+const refreshActiveConversation = async (conversationId) => {
+    if (conversationId !== activeConversationId.value) return;
     try {
-        await axios.post(`/brain/api/plans/${planId}/approve`, {
-            approved: false,
-            reason: "User rejected from UI",
-        });
-        if (activeConversationId.value) {
-            await loadConversation(activeConversationId.value);
+        const response = await axios.get(
+            `/brain/api/conversations/${conversationId}`,
+        );
+        if (conversationId === activeConversationId.value) {
+            messages.value = response.data.messages || [];
         }
     } catch (error) {
-        // Error handling
+        // keep the current messages
     }
 };
 
@@ -594,19 +629,28 @@ const getLastMessage = (conversation) => {
                         class="rounded-full px-3 py-1 text-xs font-medium"
                         :class="{
                             'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400':
-                                settings?.work_mode === 'autonomous',
+                                effectiveMode === 'autonomous',
                             'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400':
-                                settings?.work_mode === 'semi_auto',
+                                effectiveMode === 'semi_auto',
                             'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300':
-                                settings?.work_mode === 'manual',
+                                effectiveMode === 'manual',
+                            'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300':
+                                effectiveMode === 'mixed',
                         }"
+                        :title="
+                            effectiveMode === 'mixed'
+                                ? t('brain.mode.mixed_hint', 'Agenci pracują w różnych trybach — zobacz Ustawienia → Tryby agentów')
+                                : ''
+                        "
                     >
                         {{
-                            settings?.work_mode === "autonomous"
+                            effectiveMode === "autonomous"
                                 ? t("brain.mode.autonomous", "Autonomiczny")
-                                : settings?.work_mode === "semi_auto"
+                                : effectiveMode === "semi_auto"
                                   ? t("brain.mode.semi_auto", "Półautomatyczny")
-                                  : t("brain.mode.manual", "Doradczy")
+                                  : effectiveMode === "mixed"
+                                    ? t("brain.mode.mixed", "Mieszany")
+                                    : t("brain.mode.manual", "Doradczy")
                         }}
                     </span>
                     <!-- Mobile toggle -->
@@ -998,7 +1042,7 @@ const getLastMessage = (conversation) => {
                                     </div>
                                     <div class="mt-3 flex gap-2">
                                         <button
-                                            @click="approvePlan(msg.plan.id)"
+                                            @click="decidePlan(msg, true)"
                                             class="rounded-lg bg-green-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-green-600"
                                         >
                                             ✓
@@ -1010,7 +1054,7 @@ const getLastMessage = (conversation) => {
                                             }}
                                         </button>
                                         <button
-                                            @click="rejectPlan(msg.plan.id)"
+                                            @click="decidePlan(msg, false)"
                                             class="rounded-lg bg-red-500 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-red-600"
                                         >
                                             ✕

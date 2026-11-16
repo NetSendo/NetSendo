@@ -46,7 +46,7 @@ const deletePage = () => {
             showToast(t("external_pages.messages.deleted"));
         },
         onError: () => {
-            showToast(t("common.notifications.error"), false);
+            showToast(t("common.notifications.error_occurred"), false);
         },
     });
 };
@@ -59,7 +59,7 @@ const copyLink = (id) => {
             showToast(t("external_pages.messages.link_copied"));
         })
         .catch(() => {
-            showToast(t("common.notifications.error"), false);
+            showToast(t("common.notifications.error_occurred"), false);
         });
 };
 </script>

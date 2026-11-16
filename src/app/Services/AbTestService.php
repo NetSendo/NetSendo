@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Licensing\Feature;
 use App\Models\AbTest;
 use App\Models\AbTestVariant;
 use App\Models\Message;
@@ -101,6 +102,9 @@ class AbTestService
      */
     public function startTest(AbTest $test): void
     {
+        // A/B tests are GOLD
+        app(LicenseService::class)->ensureAllows(Feature::AbTests);
+
         if ($test->status !== AbTest::STATUS_DRAFT) {
             throw new \InvalidArgumentException('Only draft tests can be started');
         }
@@ -138,11 +142,37 @@ class AbTestService
      */
     public function resumeTest(AbTest $test): void
     {
+        // A/B tests are GOLD
+        app(LicenseService::class)->ensureAllows(Feature::AbTests);
+
         if ($test->status !== AbTest::STATUS_PAUSED) {
             throw new \InvalidArgumentException('Only paused tests can be resumed');
         }
 
         $test->update(['status' => AbTest::STATUS_RUNNING]);
+    }
+
+    /**
+     * A message with a draft test starts sending on an installation without GOLD: the test is
+     * not started but cancelled, so the message goes out as written (no variants). Tests that
+     * were already running when a GOLD licence ended finish normally.
+     *
+     * @return bool whether the test was cancelled
+     */
+    public function cancelDraftWithoutLicence(AbTest $test): bool
+    {
+        if ($test->status !== AbTest::STATUS_DRAFT || app(LicenseService::class)->allows(Feature::AbTests)) {
+            return false;
+        }
+
+        $this->cancelTest($test);
+
+        Log::info('A/B test not started: it requires the GOLD licence', [
+            'test_id' => $test->id,
+            'message_id' => $test->message_id,
+        ]);
+
+        return true;
     }
 
     /**

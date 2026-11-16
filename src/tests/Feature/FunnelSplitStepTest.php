@@ -16,6 +16,7 @@ use App\Services\Funnels\FunnelTemplateService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Queue;
+use Tests\Feature\Concerns\ActivatesGold;
 use Tests\Feature\Concerns\BuildsFunnels;
 use Tests\TestCase;
 
@@ -27,6 +28,7 @@ class FunnelSplitStepTest extends TestCase
 {
     use RefreshDatabase;
     use BuildsFunnels;
+    use ActivatesGold;
 
     protected function setUp(): void
     {
@@ -36,6 +38,9 @@ class FunnelSplitStepTest extends TestCase
         Queue::fake();
 
         $this->setUpFunnelOwner();
+
+        // Split A/B steps are GOLD (GoldFeatureGatingTest covers SILVER)
+        $this->activateGold();
     }
 
     private function node(string $id, string $type, array $data = []): array

@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { useI18n } from 'vue-i18n';
 import axios from 'axios';
 import { useSpeechRecognition, getSpeechLang } from '@/Composables/useSpeechRecognition';
+import { htmlToText } from '@/utils/htmlText';
 
 const { t, locale } = useI18n();
 
@@ -222,7 +223,7 @@ const copyToClipboard = async () => {
         // Copy as plain text or HTML based on formatting preference
         const textToCopy = withFormatting.value
             ? generatedContent.value.html
-            : generatedContent.value.html.replace(/<[^>]*>/g, '');
+            : htmlToText(generatedContent.value.html);
 
         await navigator.clipboard.writeText(textToCopy);
         copySuccess.value = true;

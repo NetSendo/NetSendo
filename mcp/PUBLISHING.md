@@ -54,6 +54,12 @@ Numer: nowe narzędzia lub parametry → `minor`, same poprawki → `patch`.
    ```bash
    npm run build
    ```
+   `dist/bridge.js` (ze źródła `src/bridge.ts`) to wejście dla **konektora w aplikacji**
+   (`src/app/Services/Connector/NodeToolEngine.php`): aplikacja uruchamia przez nie te
+   same narzędzia pod adresem `/mcp`. Trafia też do paczki npm, ale tam nic go nie używa.
+   Obraz Dockera buduje go sam z `mcp/` (`docker/php/Dockerfile`), więc nowe narzędzie
+   pojawia się w konektorze z kolejnym obrazem, bez wydania paczki. Po zmianie narzędzi
+   uruchom testy `src/tests/Feature/Connector` (korzystają z `mcp/dist`).
 6. **Dokumentacja**, jeśli zmieniły się narzędzia: `mcp/README.md`, `docs/mcp-server.md`,
    `docs/MCP_INTEGRATION.md`, lista na stronie `src/resources/js/Pages/Marketplace/MCP.vue`
    (opisy `mcp.tools.*`) i lista narzędzi w podpowiadanym prompcie (`MCP.vue` oraz

@@ -52,6 +52,25 @@ RUN cd /var/www && composer install --no-dev --optimize-autoloader --no-interact
 # Build frontend assets
 RUN cd /var/www && npm ci && npm run build && rm -rf node_modules
 
+# Scripts, styles and the other text assets also get a .gz twin. The bundled nginx serves it
+# as is (gzip_static), so they travel compressed even where no proxy compresses them.
+RUN find /var/www/public/build -type f \( -name '*.js' -o -name '*.css' -o -name '*.json' -o -name '*.svg' \) -size +1k -exec gzip -9 -k {} +
+
+# =============================================================================
+# CONNECTOR TOOL ENGINE
+# =============================================================================
+# The connector (remote MCP endpoint, /mcp) runs the tools of the MCP client
+# package with Node.js: App\Services\Connector\NodeToolEngine starts
+# /opt/netsendo-mcp/dist/bridge.js for each tool call. Built from mcp/ so the
+# image always carries the tools of its own commit; only runtime dependencies stay.
+COPY mcp/package.json mcp/package-lock.json mcp/tsconfig.json /opt/netsendo-mcp/
+COPY mcp/src /opt/netsendo-mcp/src
+RUN cd /opt/netsendo-mcp \
+    && npm ci \
+    && npm run build \
+    && npm prune --omit=dev \
+    && rm -rf src tsconfig.json /root/.npm
+
 # =============================================================================
 # CREATE BACKUP OF PUBLIC DIRECTORY FOR PRODUCTION SYNC
 # =============================================================================
@@ -77,6 +96,13 @@ RUN chown -R dev:www-data /var/www \
 RUN mkdir -p /var/www/storage/app/backup-temp \
     && chown dev:www-data /var/www/storage/app/backup-temp \
     && chmod 775 /var/www/storage/app/backup-temp
+
+# NMI: the logins of the NetSendo MTA are written here, on a volume shared with the
+# nmi-mta container (docker-compose.yml: nmi-auth). The directory must exist in the image
+# so that the new volume takes over its ownership.
+RUN mkdir -p /var/www/storage/app/nmi-mta \
+    && chown dev:www-data /var/www/storage/app/nmi-mta \
+    && chmod 755 /var/www/storage/app/nmi-mta
 
 USER dev
 

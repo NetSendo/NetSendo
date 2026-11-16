@@ -21,4 +21,7 @@ return [
         'error' => 'Wystąpił błąd podczas operacji.',
         'saved' => 'Zapisano pomyślnie.',
     ],
+    'copy' => [
+        'prefix' => '[KOPIA]',
+    ],
 ];

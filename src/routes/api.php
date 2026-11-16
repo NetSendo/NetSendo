@@ -244,16 +244,19 @@ Route::prefix('v1')->middleware(['api.key', 'throttle:api', \App\Http\Middleware
             'destroy' => 'api.v1.campaigns.destroy',
         ]);
 
-    // A/B Tests
+    // A/B Tests (GOLD): creating, editing and starting need the licence (402 otherwise)
     Route::post('ab-tests/{ab_test}/variants', [AbTestController::class, 'addVariant'])
+        ->middleware('licensed:ab_tests')
         ->name('api.v1.ab-tests.variants');
     Route::post('ab-tests/{ab_test}/start', [AbTestController::class, 'start'])
+        ->middleware('licensed:ab_tests')
         ->name('api.v1.ab-tests.start');
     Route::post('ab-tests/{ab_test}/end', [AbTestController::class, 'end'])
         ->name('api.v1.ab-tests.end');
     Route::get('ab-tests/{ab_test}/results', [AbTestController::class, 'results'])
         ->name('api.v1.ab-tests.results');
     Route::apiResource('ab-tests', AbTestController::class)
+        ->middlewareFor(['store', 'update'], 'licensed:ab_tests')
         ->names([
             'index' => 'api.v1.ab-tests.index',
             'store' => 'api.v1.ab-tests.store',
@@ -469,7 +472,7 @@ Route::post('webhooks/purchase', \App\Http\Controllers\Api\PurchaseWebhookContro
     ->name('api.webhooks.purchase');
 
 // ============================================================================
-// Telegram Bot Webhook (Public, No Auth - verified by Telegram)
+// Telegram Bot Webhook (Public, No Auth - TelegramController checks Telegram's secret token)
 // ============================================================================
 Route::post('telegram/webhook', [\App\Http\Controllers\TelegramController::class, 'webhook'])
     ->name('api.telegram.webhook');
@@ -477,11 +480,10 @@ Route::post('telegram/webhook', [\App\Http\Controllers\TelegramController::class
 // ============================================================================
 // NetSendo Brain API (Authenticated)
 // ============================================================================
-Route::prefix('v1/brain')->middleware(['api.key', 'throttle:api'])->group(function () {
-
-    // Chat
-    Route::post('chat', [\App\Http\Controllers\BrainController::class, 'chat'])
-        ->name('api.v1.brain.chat');
+// Every route needs a Brain scope on the key: brain:read for
+// reading, brain:write (which includes brain:read) for anything that changes Brain or
+// makes it act. A key scoped to, say, subscribers:read gets 403 here.
+Route::prefix('v1/brain')->middleware(['api.key:brain:read', 'throttle:api'])->group(function () {
 
     // Conversations
     Route::get('conversations', [\App\Http\Controllers\BrainController::class, 'conversations'])
@@ -492,6 +494,25 @@ Route::prefix('v1/brain')->middleware(['api.key', 'throttle:api'])->group(functi
     // Knowledge Base
     Route::get('knowledge', [\App\Http\Controllers\BrainController::class, 'knowledge'])
         ->name('api.v1.brain.knowledge.index');
+
+    // Action Plans
+    Route::get('plans', [\App\Http\Controllers\BrainController::class, 'plans'])
+        ->name('api.v1.brain.plans.index');
+    Route::get('plans/{id}', [\App\Http\Controllers\BrainController::class, 'plan'])
+        ->name('api.v1.brain.plans.show');
+
+    // Settings (the stored Telegram token and research keys are never returned)
+    Route::get('settings', [\App\Http\Controllers\BrainController::class, 'settings'])
+        ->name('api.v1.brain.settings');
+});
+
+Route::prefix('v1/brain')->middleware(['api.key:brain:write', 'throttle:api'])->group(function () {
+
+    // Chat
+    Route::post('chat', [\App\Http\Controllers\BrainController::class, 'chat'])
+        ->name('api.v1.brain.chat');
+
+    // Knowledge Base
     Route::post('knowledge', [\App\Http\Controllers\BrainController::class, 'storeKnowledge'])
         ->name('api.v1.brain.knowledge.store');
     Route::put('knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'updateKnowledge'])
@@ -500,27 +521,24 @@ Route::prefix('v1/brain')->middleware(['api.key', 'throttle:api'])->group(functi
         ->name('api.v1.brain.knowledge.destroy');
 
     // Action Plans
-    Route::get('plans', [\App\Http\Controllers\BrainController::class, 'plans'])
-        ->name('api.v1.brain.plans.index');
-    Route::get('plans/{id}', [\App\Http\Controllers\BrainController::class, 'plan'])
-        ->name('api.v1.brain.plans.show');
     Route::post('plans/{id}/approve', [\App\Http\Controllers\BrainController::class, 'approvePlan'])
         ->name('api.v1.brain.plans.approve');
 
     // Settings
-    Route::get('settings', [\App\Http\Controllers\BrainController::class, 'settings'])
-        ->name('api.v1.brain.settings');
     Route::put('settings', [\App\Http\Controllers\BrainController::class, 'updateSettings'])
         ->name('api.v1.brain.settings.update');
 
-    // Telegram Integration
+    // Telegram Integration (GOLD, Brain autonomy; disconnecting stays open)
     Route::post('telegram/link-code', [\App\Http\Controllers\BrainController::class, 'generateTelegramLinkCode'])
+        ->middleware('licensed:brain_autonomy')
         ->name('api.v1.brain.telegram.link-code');
     Route::post('telegram/disconnect', [\App\Http\Controllers\BrainController::class, 'disconnectTelegram'])
         ->name('api.v1.brain.telegram.disconnect');
     Route::post('telegram/test', [\App\Http\Controllers\BrainController::class, 'testTelegramBot'])
+        ->middleware('licensed:brain_autonomy')
         ->name('api.v1.brain.telegram.test');
     Route::post('telegram/set-webhook', [\App\Http\Controllers\TelegramController::class, 'setWebhook'])
+        ->middleware('licensed:brain_autonomy')
         ->name('api.v1.brain.telegram.set-webhook');
 });
 

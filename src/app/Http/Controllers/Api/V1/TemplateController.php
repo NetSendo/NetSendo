@@ -315,6 +315,7 @@ class TemplateController extends Controller
                 'unsubscribe_url' => '#preview-unsubscribe',
                 'unsubscribe' => '#preview-unsubscribe',
                 'unsubscribe_global' => '#preview-unsubscribe-global',
+                'unsubscribe_now' => '#preview-unsubscribe-now',
                 'manage' => '#preview-manage',
                 'manage_url' => '#preview-manage',
             ];

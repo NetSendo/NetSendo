@@ -19,32 +19,23 @@ return [
     | Connection details for the Haraka MTA server.
     |
     */
-    'mta_host' => env('NMI_MTA_HOST', 'netsendo-mta'),
+    // The compose service name: it resolves whatever the container is called
+    'mta_host' => env('NMI_MTA_HOST', 'nmi-mta'),
     'mta_port' => env('NMI_MTA_PORT', 25),
     'mta_encryption' => env('NMI_MTA_ENCRYPTION', 'none'),
 
     /*
     |--------------------------------------------------------------------------
-    | IP Provider Settings
+    | MTA Login File
     |--------------------------------------------------------------------------
     |
-    | Configuration for automatic IP provisioning via cloud providers.
+    | NetSendo issues one SMTP login per sending domain and writes them (as
+    | password hashes) to this file. The MTA container reads it from the same
+    | volume: see docker-compose.yml (nmi-auth) and
+    | docker/haraka/plugins/netsendo_auth.js.
     |
     */
-    'ip_providers' => [
-        'vultr' => [
-            'enabled' => env('NMI_VULTR_ENABLED', false),
-            'api_key' => env('NMI_VULTR_API_KEY'),
-        ],
-        'linode' => [
-            'enabled' => env('NMI_LINODE_ENABLED', false),
-            'api_key' => env('NMI_LINODE_API_KEY'),
-        ],
-        'digitalocean' => [
-            'enabled' => env('NMI_DO_ENABLED', false),
-            'api_key' => env('NMI_DO_API_KEY'),
-        ],
-    ],
+    'mta_auth_file' => env('NMI_MTA_AUTH_FILE', storage_path('app/nmi-mta/auth.json')),
 
     /*
     |--------------------------------------------------------------------------
@@ -131,8 +122,11 @@ return [
     |
     */
     'features' => [
-        // Master switch for NMI
-        'enabled' => env('NMI_ENABLED', false),
+        // Master switch for NMI: on unless NMI_DISABLED=true. Since 2.11.0 the MTA runs in
+        // every installation (docker-compose.yml) and works for GOLD. NMI_ENABLED is not
+        // read any more: .env files made from the example before 2.11.0 say
+        // NMI_ENABLED=false without anyone having chosen it.
+        'enabled' => ! (bool) env('NMI_DISABLED', false),
 
         // Allow new NMI mailbox creation
         'allow_new_mailboxes' => env('NMI_ALLOW_NEW', true),

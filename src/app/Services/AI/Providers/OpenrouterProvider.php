@@ -3,9 +3,24 @@
 namespace App\Services\AI\Providers;
 
 use App\Services\AI\BaseProvider;
+use App\Services\AI\Concerns\OpenAiCompatibleEmbeddings;
+use App\Services\AI\EmbeddingProviderInterface;
 
-class OpenrouterProvider extends BaseProvider
+class OpenrouterProvider extends BaseProvider implements EmbeddingProviderInterface
 {
+    use OpenAiCompatibleEmbeddings;
+
+    public function embeddingModels(): array
+    {
+        return [
+            'openai/text-embedding-3-small',
+            'openai/text-embedding-3-large',
+            'google/gemini-embedding-001',
+            'baai/bge-m3',
+            'qwen/qwen3-embedding-8b',
+        ];
+    }
+
     protected function getDefaultModel(): string
     {
         return 'openai/gpt-5.2';

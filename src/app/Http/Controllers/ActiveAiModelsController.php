@@ -14,7 +14,7 @@ class ActiveAiModelsController extends Controller
     public function index(): JsonResponse
     {
         $integrations = AiIntegration::with('models')
-            ->active()
+            ->usable()
             ->where(function ($query) {
                 $query->whereNotNull('api_key')
                     ->orWhere('provider', 'ollama');

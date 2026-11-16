@@ -83,7 +83,7 @@ class CardIntelOcrService
         // Prefer GPT-4o or Gemini for vision
         $visionProviders = ['openai', 'gemini'];
 
-        return AiIntegration::active()
+        return AiIntegration::usable()
             ->whereIn('provider', $visionProviders)
             ->whereNotNull('api_key')
             ->first();

@@ -53,6 +53,8 @@ services:
       - ./src:/var/www
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     environment:
+      # Only the app migrates and seeds; this container waits for the schema
+      - NETSENDO_RUN_MIGRATIONS=false
       - DB_HOST=db
       - REDIS_HOST=redis
       - MAIL_HOST=mailpit
@@ -80,6 +82,8 @@ services:
       - ./src:/var/www
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
     environment:
+      # Only the app migrates and seeds; this container waits for the schema
+      - NETSENDO_RUN_MIGRATIONS=false
       - DB_HOST=db
       - REDIS_HOST=redis
       - MAIL_HOST=mailpit
@@ -106,6 +110,8 @@ services:
     ports:
       - "8085:8085"
     environment:
+      # Only the app migrates and seeds; this container waits for the schema
+      - NETSENDO_RUN_MIGRATIONS=false
       - DB_HOST=db
       - REDIS_HOST=redis
       - REVERB_SERVER_HOST=0.0.0.0
@@ -130,7 +136,10 @@ services:
     networks:
       - netsendo-network
     depends_on:
-      - app
+      app:
+        condition: service_started
+        # Restarted with the app, so nginx picks up its new address (docker-compose.yml)
+        restart: true
 
   db:
     image: mysql:8.4
@@ -188,10 +197,18 @@ services:
       - "127.0.0.1:${NMI_SUBMISSION_PORT:-2587}:587"
     volumes:
       - ./docker/haraka/config:/opt/haraka/config
+      # NetSendo's own Haraka plugins (SMTP AUTH against the logins NetSendo issues)
+      - ./docker/haraka/plugins:/opt/haraka/plugins:ro
+      # The app's storage (bind-mounted ./src): the MTA reads the login file from it
+      - ./src/storage/app:/opt/haraka/netsendo-storage:ro
       - nmi-queue:/opt/haraka/queue
       - nmi-logs:/opt/haraka/logs
     environment:
       - NODE_ENV=development
+      - NMI_AUTH_FILE=/opt/haraka/netsendo-storage/nmi-mta/auth.json
+      - NMI_HELO_HOST=${NMI_HELO_HOST:-}
+      - NMI_BIND_MAP=${NMI_BIND_MAP:-}
+      - NMI_EGRESS_PROBE=${NMI_EGRESS_PROBE:-true}
     networks:
       - netsendo-network
     healthcheck:

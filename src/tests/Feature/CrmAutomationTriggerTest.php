@@ -19,6 +19,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class CrmAutomationTriggerTest extends TestCase
 {
@@ -62,7 +63,7 @@ class CrmAutomationTriggerTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_triggers_automation_on_deal_stage_changed()
     {
         Event::fake([CrmDealStageChanged::class]);
@@ -100,7 +101,7 @@ class CrmAutomationTriggerTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_triggers_automation_on_deal_won()
     {
         Event::fake([CrmDealStageChanged::class]);
@@ -134,7 +135,7 @@ class CrmAutomationTriggerTest extends TestCase
         $this->assertEquals('won', $deal->fresh()->status);
     }
 
-    /** @test */
+    #[Test]
     public function it_triggers_automation_on_deal_created()
     {
         Event::fake([CrmDealCreated::class]);
@@ -168,7 +169,7 @@ class CrmAutomationTriggerTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_triggers_automation_on_task_completed()
     {
         Event::fake([CrmTaskCompleted::class]);
@@ -204,7 +205,7 @@ class CrmAutomationTriggerTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_triggers_automation_on_contact_created()
     {
         Event::fake([CrmContactCreated::class]);
@@ -235,7 +236,7 @@ class CrmAutomationTriggerTest extends TestCase
         });
     }
 
-    /** @test */
+    #[Test]
     public function it_filters_triggers_by_pipeline()
     {
         $otherPipeline = CrmPipeline::create([
@@ -280,12 +281,12 @@ class CrmAutomationTriggerTest extends TestCase
 
         // Verify that trigger config matching would fail
         $service = app(\App\Services\Automation\AutomationService::class);
-        $matchingRules = $service->findActiveRulesForTrigger('crm_deal_created', $context);
+        $matchingRules = $service->findMatchingRules('crm_deal_created', $context);
 
         $this->assertCount(0, $matchingRules);
     }
 
-    /** @test */
+    #[Test]
     public function it_filters_triggers_by_deal_value()
     {
         $rule = AutomationRule::create([
@@ -308,7 +309,7 @@ class CrmAutomationTriggerTest extends TestCase
         ];
 
         $service = app(\App\Services\Automation\AutomationService::class);
-        $matchingRules = $service->findActiveRulesForTrigger('crm_deal_created', $lowValueContext);
+        $matchingRules = $service->findMatchingRules('crm_deal_created', $lowValueContext);
 
         $this->assertCount(0, $matchingRules);
 
@@ -318,12 +319,12 @@ class CrmAutomationTriggerTest extends TestCase
             'deal_value' => 10000,
         ];
 
-        $matchingRules = $service->findActiveRulesForTrigger('crm_deal_created', $highValueContext);
+        $matchingRules = $service->findMatchingRules('crm_deal_created', $highValueContext);
 
         $this->assertCount(1, $matchingRules);
     }
 
-    /** @test */
+    #[Test]
     public function crm_actions_execute_correctly()
     {
         $subscriber = Subscriber::factory()->create(['user_id' => $this->user->id]);
@@ -335,6 +336,10 @@ class CrmAutomationTriggerTest extends TestCase
             'score' => 10,
         ]);
 
+        // Lead scoring may add points for the new contact on creation, so the
+        // starting score is read back instead of assumed.
+        $startScore = $contact->fresh()->score;
+
         $executor = app(\App\Services\Automation\AutomationActionExecutor::class);
 
         // Test crm_update_score action
@@ -344,8 +349,8 @@ class CrmAutomationTriggerTest extends TestCase
             ['user_id' => $this->user->id, 'contact_id' => $contact->id]
         );
 
-        $this->assertEquals(10, $result['old_score']);
-        $this->assertEquals(25, $result['new_score']);
+        $this->assertEquals($startScore, $result['old_score']);
+        $this->assertEquals($startScore + 15, $result['new_score']);
 
         // Test crm_create_task action
         $result = $executor->execute(

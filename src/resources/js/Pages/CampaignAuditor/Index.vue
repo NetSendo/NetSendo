@@ -5,6 +5,11 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import Modal from "@/Components/Modal.vue";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
+import GoldNotice from "@/Components/License/GoldNotice.vue";
+import { useLicense } from "@/Composables/useLicense";
+
+// Campaign Auditor is GOLD: past audits stay readable, running one needs the licence
+const { can, requireGold } = useLicense();
 
 const { t } = useI18n();
 
@@ -84,6 +89,10 @@ const isRateLimitError = ref(false);
 
 // Run a new audit
 const runAudit = async (type = "full") => {
+    if (!can("campaign_auditor")) {
+        requireGold("campaign_auditor");
+        return;
+    }
     isLoading.value = true;
     try {
         const response = await axios.post(route("campaign-auditor.run"), {
@@ -383,6 +392,13 @@ const saveAdvisorSettings = async () => {
 
         <div class="py-6">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <GoldNotice
+                    v-if="!can('campaign_auditor')"
+                    class="mb-6"
+                    feature="campaign_auditor"
+                    :message="$t('license.gating.auditor_locked')"
+                />
+
                 <!-- No Audit State -->
                 <div
                     v-if="!currentAudit"

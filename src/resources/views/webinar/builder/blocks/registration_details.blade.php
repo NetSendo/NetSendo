@@ -2,7 +2,7 @@
      buttons. Renders nothing outside the post-registration screen. --}}
 @php
     $registration = $ctx['registration'] ?? null;
-    $timezone = $ctx['displayTimezone'] ?? $webinar->timezone ?? 'UTC';
+    $timezone = $ctx['displayTimezone'] ?? $registration?->displayTimezone() ?? $webinar->effective_timezone;
     $start = $registration?->scheduledStart();
     $display = $start ? $start->copy()->setTimezone($timezone) : null;
 @endphp

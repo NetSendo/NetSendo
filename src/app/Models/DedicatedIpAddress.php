@@ -19,7 +19,9 @@ class DedicatedIpAddress extends Model
         'ip_version',
         'provider',
         'provider_id',
+        'provider_server_id',
         'provider_region',
+        'bind_address',
         'ptr_record',
         'ptr_verified',
         'ptr_verified_at',
@@ -117,6 +119,15 @@ class DedicatedIpAddress extends Model
     }
 
     /**
+     * Removed addresses are kept (soft-deleted) while `ip_address` is unique in the table:
+     * before an address is added again, its removed record has to go for good.
+     */
+    public static function forgetRemoved(string $address): void
+    {
+        static::onlyTrashed()->where('ip_address', $address)->forceDelete();
+    }
+
+    /**
      * Set DKIM private key (auto-encrypt)
      */
     public function setDkimPrivateKeyAttribute($value): void
@@ -145,7 +156,7 @@ class DedicatedIpAddress extends Model
      */
     public function getDeliveryRate(): float
     {
-        if ($this->total_sent === 0) {
+        if (! $this->total_sent) {
             return 100.0;
         }
 
@@ -157,7 +168,7 @@ class DedicatedIpAddress extends Model
      */
     public function getBounceRate(): float
     {
-        if ($this->total_sent === 0) {
+        if (! $this->total_sent) {
             return 0.0;
         }
 
@@ -169,7 +180,7 @@ class DedicatedIpAddress extends Model
      */
     public function getComplaintRate(): float
     {
-        if ($this->total_sent === 0) {
+        if (! $this->total_sent) {
             return 0.0;
         }
 

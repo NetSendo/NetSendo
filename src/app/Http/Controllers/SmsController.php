@@ -12,11 +12,28 @@ use Illuminate\Support\Facades\Redirect;
 class SmsController extends Controller
 {
     /**
+     * SMS campaigns of the signed-in user. Like e-mail messages, a campaign belongs to the
+     * account that wrote it: nobody else lists, opens, changes or deletes it.
+     */
+    private function ownSms()
+    {
+        return auth()->user()->messages()->sms();
+    }
+
+    /**
+     * The list picked for a campaign has to be one the user may use (their own, or shared with them).
+     */
+    private function listIsAccessible(?int $listId): bool
+    {
+        return $listId === null || auth()->user()->accessibleLists()->whereKey($listId)->exists();
+    }
+
+    /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $messages = Message::sms()
+        $messages = $this->ownSms()
             ->with(['contactLists'])
             ->when($request->search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
@@ -32,6 +49,10 @@ class SmsController extends Controller
             ->when($request->type, function ($query, $type) {
                 $query->where('type', $type);
             })
+            // The tabs of the list: drafts, scheduled, sent
+            ->when(in_array($request->input('status'), ['draft', 'scheduled', 'sent'], true), function ($query) use ($request) {
+                $query->where('status', $request->input('status'));
+            })
             ->when($request->campaign_plan_id, function ($query, $campaignPlanId) {
                 $query->where('campaign_plan_id', $campaignPlanId);
             });
@@ -40,7 +61,8 @@ class SmsController extends Controller
         // Default: use scheduled_at/send_at for sent/scheduled messages, created_at for drafts
         // For autoresponders (queues), always use created_at
         $sortField = $request->sort ?? 'effective_date';
-        $sortDirection = $request->direction ?? 'desc';
+        // The direction goes into raw SQL below, so it is one of two literals, never the request's text
+        $sortDirection = strtolower((string) $request->input('direction', 'desc')) === 'asc' ? 'asc' : 'desc';
         $allowedSortFields = ['id', 'subject', 'status', 'created_at', 'type', 'day'];
 
         if (in_array($sortField, $allowedSortFields)) {
@@ -62,8 +84,10 @@ class SmsController extends Controller
             $messages = $messages->latest();
         }
 
+        $perPage = max(1, min((int) $request->input('per_page', 30), 100));
+
         $messages = $messages
-            ->paginate(10)
+            ->paginate($perPage)
             ->withQueryString()
             ->through(fn ($message) => [
                 'id' => $message->id,
@@ -78,11 +102,12 @@ class SmsController extends Controller
                     : null,
                 'created_at' => DateHelper::formatForUser($message->created_at),
                 'list_name' => $message->contactLists->first()->name ?? '-',
+                'list_names' => $message->contactLists->pluck('name')->values()->all(),
                 'recipients_count' => $message->contactLists->first()?->subscribers()->count() ?? 0,
             ]);
 
-        // Get all lists (both email and SMS) for SMS campaigns
-        $lists = ContactList::query()->get(['id', 'name', 'type']);
+        // Lists the user may send to (both email and SMS lists can carry phone numbers)
+        $lists = auth()->user()->accessibleLists()->orderBy('name')->get(['id', 'name', 'type']);
 
         // Assuming groups are not used for SMS yet or shared?
         // For now, only passing lists as per Create view. Index view had group_id filter but we can hide it or implement it similarly if needed.
@@ -91,7 +116,9 @@ class SmsController extends Controller
 
         return Inertia::render('Sms/Index', [
             'messages' => $messages,
-            'filters' => $request->only(['search', 'type', 'list_id', 'campaign_plan_id', 'sort', 'direction']),
+            // An object even when empty: as an empty JSON list its "sort" would be Array.prototype.sort
+            'filters' => (object) $request->only(['search', 'type', 'status', 'list_id', 'campaign_plan_id', 'sort', 'direction', 'per_page']),
+            'counts' => $this->indexCounts(),
             'lists' => $lists,
             'groups' => [], // Placeholder if we want to add group support later
             'campaignPlans' => \App\Models\CampaignPlan::forUser(auth()->id())
@@ -103,12 +130,33 @@ class SmsController extends Controller
     }
 
     /**
+     * How many SMS messages each tab of the list holds: all, and broadcasts by status / queues.
+     */
+    private function indexCounts(): array
+    {
+        $rows = $this->ownSms()
+            ->selectRaw('type, status, COUNT(*) as total')
+            ->groupBy('type', 'status')
+            ->get();
+
+        $broadcasts = $rows->where('type', 'broadcast');
+
+        return [
+            'all' => (int) $rows->sum('total'),
+            'draft' => (int) $broadcasts->where('status', 'draft')->sum('total'),
+            'scheduled' => (int) $broadcasts->where('status', 'scheduled')->sum('total'),
+            'sent' => (int) $broadcasts->where('status', 'sent')->sum('total'),
+            'autoresponder' => (int) $rows->where('type', 'autoresponder')->sum('total'),
+        ];
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create(Request $request)
     {
         // Get all lists (both email and SMS) for SMS campaigns
-        $lists = ContactList::query()->with('defaultSmsProvider')->get(['id', 'name', 'type', 'default_sms_provider_id']);
+        $lists = auth()->user()->accessibleLists()->with('defaultSmsProvider')->get(['id', 'name', 'type', 'default_sms_provider_id']);
 
         // Get optional pre-selected list ID from query parameter
         $preselectedListId = $request->query('list_id') ? (int) $request->query('list_id') : null;
@@ -142,25 +190,19 @@ class SmsController extends Controller
             'status' => 'required|in:draft,scheduled,sent',
         ]);
 
+        if (! $this->listIsAccessible($request->integer('list_id') ?: null)) {
+            return back()->withErrors(['list_id' => __('messages.campaign.invalid_lists')]);
+        }
+
         $message = new Message($validated);
         $message->user_id = auth()->id();
         $message->channel = 'sms';
 
-        // Handle scheduling
         if ($request->time) {
             $message->time_of_day = $request->time;
         }
 
-        if ($request->schedule_date) {
-            $message->send_at = $request->schedule_date;
-            // If scheduling, ensure status is scheduled
-             if ($validated['status'] === 'sent') { // If user clicked "Send/Schedule"
-                $message->status = 'scheduled';
-            }
-        } elseif ($validated['status'] === 'sent') {
-             $message->send_at = now();
-             // In real app, we might dispatch a job here immediately if "Send Now"
-        }
+        $this->applySchedule($message, $validated['status'], $validated['type'], $request->schedule_date);
 
         $message->save();
 
@@ -184,7 +226,7 @@ class SmsController extends Controller
      */
     public function edit(string $id)
     {
-        $message = Message::sms()->with('contactLists')->findOrFail($id);
+        $message = $this->ownSms()->with('contactLists')->findOrFail($id);
 
         // Transform for view
         $smsData = [
@@ -196,12 +238,14 @@ class SmsController extends Controller
             'type' => $message->type,
             'day' => $message->day,
             'time' => $message->time_of_day,
-            'scheduled_at' => $message->send_at ? $message->send_at->format('Y-m-d\TH:i') : null,
+            'scheduled_at' => $message->send_at
+                ? $message->send_at->copy()->setTimezone(DateHelper::getUserTimezone())->format('Y-m-d\TH:i')
+                : null,
             'status' => $message->status,
         ];
 
         // Get all lists (both email and SMS) for SMS campaigns
-        $lists = ContactList::query()->with('defaultSmsProvider')->get(['id', 'name', 'type', 'default_sms_provider_id']);
+        $lists = auth()->user()->accessibleLists()->with('defaultSmsProvider')->get(['id', 'name', 'type', 'default_sms_provider_id']);
 
         // Get SMS providers for selection
         $smsProviders = \App\Models\SmsProvider::forUser(auth()->id())->active()->get(['id', 'name', 'from_name', 'from_number', 'is_default']);
@@ -220,7 +264,7 @@ class SmsController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $message = Message::sms()->findOrFail($id);
+        $message = $this->ownSms()->findOrFail($id);
 
         $validated = $request->validate([
             'subject' => 'required|string|max:255',
@@ -234,21 +278,17 @@ class SmsController extends Controller
             'status' => 'required|in:draft,scheduled,sent',
         ]);
 
+        if (! $this->listIsAccessible($request->integer('list_id') ?: null)) {
+            return back()->withErrors(['list_id' => __('messages.campaign.invalid_lists')]);
+        }
+
         $message->fill($validated);
 
-        // Map time to time_of_day if needed
-         if ($request->has('time')) {
+        if ($request->has('time')) {
             $message->time_of_day = $request->time;
         }
 
-        if ($request->schedule_date) {
-            $message->send_at = $request->schedule_date;
-             if ($validated['status'] === 'sent') {
-                $message->status = 'scheduled';
-            }
-        } elseif ($validated['status'] === 'sent' && !$message->send_at) {
-             $message->send_at = now();
-        }
+        $this->applySchedule($message, $validated['status'], $validated['type'], $request->schedule_date);
 
         $message->save();
 
@@ -260,11 +300,48 @@ class SmsController extends Controller
     }
 
     /**
+     * Status and send time of an SMS campaign saved from the panel.
+     *
+     * The form posts 'draft' or 'sent' ("Send now", "Schedule", "Activate"). The SMS cron
+     * (CronScheduleService) only processes status 'scheduled' whose scheduled_at is empty or
+     * due, so a campaign to send must be stored as 'scheduled' with scheduled_at set: now for
+     * "Send now", the chosen moment (entered in the user's timezone, stored in UTC) for
+     * "Schedule". Queue (autoresponder) messages have no campaign-wide start time; they are
+     * active until switched off. Mirrors MessageController for email.
+     */
+    private function applySchedule(Message $message, string $status, string $type, ?string $scheduleDate): void
+    {
+        if ($status === 'draft') {
+            $message->status = 'draft';
+            $message->is_active = false;
+
+            return;
+        }
+
+        $message->status = 'scheduled';
+        $message->is_active = true;
+
+        if ($type === 'autoresponder') {
+            $message->send_at = null;
+            $message->scheduled_at = null;
+
+            return;
+        }
+
+        $sendAt = $scheduleDate
+            ? \Carbon\Carbon::parse($scheduleDate, DateHelper::getUserTimezone())->setTimezone('UTC')
+            : now();
+
+        $message->send_at = $sendAt;
+        $message->scheduled_at = $sendAt;
+    }
+
+    /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
     {
-        $message = Message::sms()->findOrFail($id);
+        $message = $this->ownSms()->findOrFail($id);
         $message->delete();
 
         return Redirect::route('sms.index')->with('success', 'SMS Campaign deleted.');
@@ -275,11 +352,7 @@ class SmsController extends Controller
      */
     public function toggleActive(string $id)
     {
-        $message = Message::sms()->findOrFail($id);
-
-        if ($message->user_id !== auth()->id()) {
-            abort(403);
-        }
+        $message = $this->ownSms()->findOrFail($id);
 
         // Only allow toggling for autoresponder/queue type messages
         if (!$message->isQueueType()) {
@@ -462,13 +535,17 @@ class SmsController extends Controller
 
             $result = $provider->send(
                 to: $validated['phone'],
-                message: '[TEST] ' . $content
+                content: '[TEST] ' . $content
             );
 
             \Log::info('Test SMS result', ['result' => $result]);
 
+            if (!$result->success) {
+                return response()->json(['error' => $result->errorMessage ?: 'The SMS provider rejected the test SMS'], 422);
+            }
+
             return response()->json(['success' => true, 'message' => 'Test SMS sent']);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Test SMS failed: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }

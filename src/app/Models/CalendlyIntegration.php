@@ -222,17 +222,40 @@ class CalendlyIntegration extends Model
     }
 
     /**
+     * The settings saved for one event type, or null.
+     *
+     * Read as one key: the event type is identified by its address, which has dots in it, and
+     * dot notation would split it into pieces that match nothing.
+     */
+    public function eventTypeMapping(string $eventTypeUri): ?array
+    {
+        $mappings = $this->getSetting('event_type_mappings', []);
+        $mapping = is_array($mappings) ? ($mappings[$eventTypeUri] ?? null) : null;
+
+        return is_array($mapping) ? $mapping : null;
+    }
+
+    /**
+     * Whether the event type has its own lists and tags. A mapping saved without the switch
+     * (older format) counts as its own.
+     */
+    private function usesCustomMapping(?array $mapping): bool
+    {
+        return $mapping !== null && ($mapping['use_custom'] ?? true);
+    }
+
+    /**
      * Get list IDs for a specific event type.
      */
     public function getListIdsForEventType(string $eventTypeUri): array
     {
-        $mapping = $this->getSetting("event_type_mappings.{$eventTypeUri}");
+        $mapping = $this->eventTypeMapping($eventTypeUri);
 
-        if ($mapping && isset($mapping['list_ids'])) {
+        if ($this->usesCustomMapping($mapping) && isset($mapping['list_ids'])) {
             return $mapping['list_ids'];
         }
 
-        return $this->getSetting('mailing_lists.default_list_ids', []);
+        return $this->getSetting('mailing_lists.default_list_ids', []) ?? [];
     }
 
     /**
@@ -240,13 +263,13 @@ class CalendlyIntegration extends Model
      */
     public function getTagIdsForEventType(string $eventTypeUri): array
     {
-        $mapping = $this->getSetting("event_type_mappings.{$eventTypeUri}");
+        $mapping = $this->eventTypeMapping($eventTypeUri);
 
-        if ($mapping && isset($mapping['tag_ids'])) {
+        if ($this->usesCustomMapping($mapping) && isset($mapping['tag_ids'])) {
             return $mapping['tag_ids'];
         }
 
-        return $this->getSetting('mailing_lists.default_tag_ids', []);
+        return $this->getSetting('mailing_lists.default_tag_ids', []) ?? [];
     }
 
     /**
@@ -254,13 +277,13 @@ class CalendlyIntegration extends Model
      */
     public function isCrmEnabledForEventType(string $eventTypeUri): bool
     {
-        $mapping = $this->getSetting("event_type_mappings.{$eventTypeUri}");
+        $mapping = $this->eventTypeMapping($eventTypeUri);
 
         if ($mapping && isset($mapping['crm_enabled'])) {
-            return $mapping['crm_enabled'];
+            return (bool) $mapping['crm_enabled'];
         }
 
-        return $this->getSetting('crm.enabled', true);
+        return (bool) $this->getSetting('crm.enabled', true);
     }
 
     /**

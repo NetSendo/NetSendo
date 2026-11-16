@@ -1,0 +1,45 @@
+<?php
+
+// Páginas para suscriptores: preferencias de suscripción (SubscriberPreferencesController) y baja con un clic (UnsubscribeController::now)
+return [
+    'title' => 'Tus suscripciones',
+    'subtitle' => 'Decide qué correos quieres recibir de nosotros.',
+    'unsubscribe_all' => 'Darme de baja de todo',
+    'unsubscribe_all_note' => 'Un clic da de baja esta dirección de todas las listas. No recibirás más correos nuestros.',
+    'no_active_lists' => 'Esta dirección no está suscrita a ninguna lista.',
+    'or' => 'o',
+    'lists_title' => 'Elige qué listas conservar',
+    'lists_help' => 'Desmarca una lista para darte de baja de ella.',
+    'left_hint' => 'Dada de baja. Márcala para volver: lo confirmarás por correo.',
+    'no_lists' => 'No hay listas para elegir.',
+    'language_title' => 'Idioma de los correos',
+    'language_default' => '— Predeterminado —',
+    'language_help' => 'Elige el idioma en el que quieres recibir los correos.',
+    'save' => 'Guardar cambios',
+    'delete_text' => '¿Quieres eliminar todos tus datos?',
+    'delete_button' => 'Eliminar todos mis datos',
+    'delete_confirm' => '¿Seguro que quieres eliminar definitivamente todos tus datos? No se puede deshacer.',
+    'invalid_link' => 'Este enlace no es válido o ha caducado.',
+    'confirm_sent' => 'Te hemos enviado un correo de confirmación. Haz clic en el enlace para volver a las listas elegidas.',
+    'confirm' => [
+        'title' => 'Confirma los cambios',
+        'rejoin' => 'Volverás a estas listas:',
+        'leave' => 'Te darás de baja de estas listas:',
+        'button' => 'Confirmar',
+        'note' => 'Nada cambiará hasta que pulses el botón.',
+    ],
+    'email' => [
+        'subject' => 'Confirma los cambios en tus suscripciones',
+        'heading' => 'Confirma los cambios',
+        'body' => 'Haz clic en el enlace de abajo y confirma en la página que quieres volver a las listas elegidas.',
+        'link' => 'Confirmar cambios',
+        'ignore' => 'Si no has sido tú, ignora este correo.',
+    ],
+    'now' => [
+        'title' => 'Darse de baja',
+        'list' => '¿Dar de baja la dirección :email de la lista «:list»?',
+        'all' => '¿Dar de baja la dirección :email de todas las listas?',
+        'button' => 'Darme de baja',
+        'note' => 'Te daremos de baja al instante, sin ningún otro correo.',
+    ],
+];

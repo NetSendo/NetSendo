@@ -7,6 +7,7 @@ use App\Models\AiGoal;
 use App\Models\AiPerformanceSnapshot;
 use App\Models\User;
 use App\Services\Brain\PerformanceLearner;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -121,7 +122,10 @@ class TaskScorer
             return 20;
         }
 
-        $daysSince = now()->diffInDays($lastExecution);
+        // Carbon 3 diffs are signed floats: now()->diffInDays($past) is negative,
+        // which gave long-idle agents the lowest urgency instead of the highest.
+        // Whole days since the last run (the context holds the raw column value).
+        $daysSince = max(0, (int) floor(Carbon::parse($lastExecution)->diffInDays(now())));
 
         // Scale: 0 days = 5, 3 days = 12, 7 days = 18, 14+ days = 25
         $timeScore = min(25, 5 + (int) ($daysSince * 1.5));

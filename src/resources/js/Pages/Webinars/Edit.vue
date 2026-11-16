@@ -15,7 +15,9 @@ const props = defineProps({
 const form = useForm({
     name: props.webinar.name || '',
     description: props.webinar.description || '',
-    scheduled_at: props.webinar.scheduled_at ? props.webinar.scheduled_at.slice(0, 16) : '',
+    // Wall-clock time in the webinar's timezone (the server sends it ready for
+    // the datetime-local input and reads it back in that zone).
+    scheduled_at: props.webinar.scheduled_at_local || '',
     timezone: props.webinar.timezone || '',
     target_list_id: props.webinar.target_list_id || '',
     clicked_list_id: props.webinar.clicked_list_id || '',
@@ -317,6 +319,7 @@ const getStatusColor = (status) => {
                                     type="datetime-local"
                                     class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                                 />
+                                <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.content.scheduled_at_timezone', { timezone: form.timezone || webinar.user_timezone || 'UTC' }) }}</p>
                                 <p class="mt-1 text-xs text-gray-500">{{ $t('webinars.content.scheduled_at_help') }}</p>
                             </div>
                             <div v-else-if="webinar.type === 'auto'" class="md:col-span-2">

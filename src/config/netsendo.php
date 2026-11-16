@@ -12,7 +12,7 @@ return [
     |
     */
 
-    'version' => '2.2.1',
+    'version' => '2.11.4',
 
     /*
     |--------------------------------------------------------------------------
@@ -48,7 +48,32 @@ return [
     |
     */
 
-    'stripe_gold_payment_link' => null, // Coming soon
+    // NetSendo store: the licence page sells GOLD there and activates the bought key here
+    // automatically (App\Services\GoldPurchaseService). Empty value hides the purchase.
+    'store_url' => env('NETSENDO_STORE_URL', 'https://netsendo.com'),
+
+    // Sleeping NetSendo Cloud instance (its subscription has ended, the data is kept): only
+    // unsubscribe links work, nothing is sent and every other page shows "instance asleep".
+    // Set by the hosting provider; see App\Http\Middleware\DormantMode.
+    'dormant' => (bool) env('NETSENDO_DORMANT', false),
+
+    // How this installation runs: docker, cloud (NetSendo Cloud, set by the hosting provider)
+    // or other. Unset: docker when /.dockerenv exists, else other. Used only by telemetry.
+    'deployment' => env('NETSENDO_DEPLOYMENT'),
+
+    // How long `php artisan migrate` / `db:seed` wait for another process migrating or seeding
+    // the same database before giving up (App\Console\MigrationLock), in seconds. The Docker
+    // entrypoint reads the same variable for its own wait.
+    'migrations_wait_timeout' => (int) env('NETSENDO_MIGRATIONS_WAIT_TIMEOUT', 1800),
+
+    // Anonymous usage report sent once a day to NetSendo PSA, only when the administrator
+    // switches it on (Settings → Telemetry); see docs/TELEMETRY.md and
+    // https://netsendo.com/en/docs/telemetry. NETSENDO_TELEMETRY=true/false overrides the
+    // panel switch and hides it; unset leaves the choice to the panel (default: off).
+    'telemetry' => [
+        'enabled' => env('NETSENDO_TELEMETRY'),
+        'url' => env('NETSENDO_TELEMETRY_URL', 'https://netsendo.com/api/telemetry'),
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -60,32 +85,33 @@ return [
     */
 
     'plans' => [
+        // The single list of what each plan includes, shown on the Licence page
+        // (Pages/License/Activate.vue). Items are keys of license.plan_features.* and sections
+        // of license.plan_sections.<plan>.* in resources/js/locales. Every App\Licensing\Feature
+        // must be listed under GOLD (tests/Feature/GoldFeatureGatingTest checks it), and the
+        // pricing on netsendo.com must say the same.
         'SILVER' => [
             'name' => 'SILVER',
             'price' => 0,
-            'price_display' => 'Darmowa',
             'duration' => 'lifetime',
-            'features' => [
-                'Wszystkie podstawowe funkcje',
-                'Nieograniczone kontakty',
-                'Szablony email',
-                'Publiczne API',
-                'Serwer MCP',
-                'Wsparcie społeczności',
+            'sections' => [
+                'marketing' => ['email_sms', 'lists_forms_templates', 'automations_funnels', 'stats'],
+                'crm' => ['crm', 'live_webinars'],
+                'ai' => ['ai_assistants', 'brain_chat', 'ai_campaigns_3'],
+                'integrations' => ['all_integrations', 'api_mcp', 'affiliate'],
+                'team' => ['team_one', 'community_support'],
             ],
         ],
         'GOLD' => [
             'name' => 'GOLD',
             'price' => 97,
-            'price_display' => '$97/miesiąc',
             'duration' => 'monthly',
-            'features' => [
-                'Wszystko z SILVER',
-                'Nielimitowane kampanie AI',
-                'Zaawansowane AI (lokalne LLM)',
-                'Testy A/B w kampaniach',
-                'Auto-Webinary + Scenariusze',
-                'Priorytetowe wsparcie',
+            'sections' => [
+                'everything' => ['everything_silver'],
+                'ai' => ['unlimited_ai_campaigns', 'advanced_ai', 'brain_autonomy', 'semantic_knowledge', 'campaign_auditor'],
+                'growth' => ['ab_tests', 'funnel_ab_split', 'auto_webinars', 'hybrid_webinars', 'segmentation_dashboard'],
+                'deliverability' => ['deliverability_shield', 'mail_infrastructure'],
+                'team' => ['unlimited_team_members', 'priority_support'],
             ],
         ],
     ],
@@ -102,7 +128,7 @@ return [
 
     'plugins' => [
         'wordpress' => [
-            'version' => '1.1.0',
+            'version' => '1.1.2',
             'download_url' => '/plugins/wordpress/netsendo-wordpress.zip',
             'min_wp_version' => '5.8',
             'min_php_version' => '7.4',
@@ -122,7 +148,7 @@ return [
         | registry page (an absolute URL passes through url() untouched).
         */
         'n8n' => [
-            'version' => '1.3.3',
+            'version' => '1.3.4',
             'download_url' => 'https://www.npmjs.com/package/n8n-nodes-netsendo',
         ],
         'mcp' => [

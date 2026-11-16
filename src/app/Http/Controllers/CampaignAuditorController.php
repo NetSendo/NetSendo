@@ -63,7 +63,7 @@ class CampaignAuditorController extends Controller
         $effectiveness = $this->advisorService->getRecommendationEffectiveness($user);
 
         // Get available AI integrations
-        $aiIntegrations = \App\Models\AiIntegration::active()
+        $aiIntegrations = \App\Models\AiIntegration::usable()
             ->get(['id', 'provider', 'name', 'default_model'])
             ->map(function ($integration) {
                 return [

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Controllers\Api\V1\Concerns\ManagesContactLists;
 use App\Http\Controllers\Controller;
 use App\Models\ContactList;
 use App\Jobs\ExportSubscribersCsv;
@@ -11,11 +12,18 @@ use Illuminate\Support\Facades\Storage;
 
 class ExportController extends Controller
 {
+    use ManagesContactLists;
+
     /**
      * Trigger export of subscribers for a contact list
      */
     public function export(Request $request, int $listId): JsonResponse
     {
+        // The same scope as the inline export (GET lists/{list}/export)
+        if ($denied = $this->requirePermission($request, 'subscribers:read')) {
+            return $denied;
+        }
+
         $user = $request->user();
         
         // Find contact list ensuring it belongs to user

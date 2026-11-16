@@ -11,6 +11,10 @@
 #     with GITHUB_TOKEN cannot fire `release: published` here)
 #   - Release published by a person in the UI → same version tags
 #   - Manual trigger → optional extra tag from the `version` input
+#
+# After a version image (tag vX.Y.Z) is pushed, notify-aderlo tells Aderlo,
+# which hosts NetSendo Cloud, so the hosted instances get the new version
+# without waiting for Aderlo's nightly registry check (aderlo-notify.yml).
 # =============================================================================
 
 name: Build & Publish Docker Image
@@ -34,6 +38,19 @@ on:
         description: 'Extra image tag (e.g. 2.2.1). Leave empty to tag by git ref only.'
         required: false
         default: ''
+      security:
+        description: 'On a vX.Y.Z tag: a security release, NetSendo Cloud updates at once instead of overnight.'
+        type: boolean
+        required: false
+        default: false
+
+# Builds of main publish :latest. A merge followed by the release commit used to build in
+# parallel, and whichever finished last won: on 2026-11-08 the merge commit's image (still
+# saying 2.8.1) overwrote the 2.8.2 one, so updated installations kept showing 2.8.1. A newer
+# build of the same ref now cancels the older one; tags and dispatches have refs of their own.
+concurrency:
+  group: docker-publish-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
@@ -63,9 +80,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
+      - name: Extract metadata (tags, labels, annotations)
         id: meta
         uses: docker/metadata-action@v6
+        # The image is multi-platform, so ghcr.io reads the package page's
+        # description and licence from annotations on the image index, not from
+        # labels (with labels only it showed no description and licence "Other").
+        # Annotations go on each platform manifest and on the index.
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           # :latest comes only from the raw rule below (builds of main).
@@ -85,6 +108,15 @@ jobs:
             type=raw,value=${{ github.event.inputs.version }},enable=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version != '' }}
             # Short SHA for debugging
             type=sha,prefix=sha-
+          # Override the defaults taken from the repository (its description,
+          # and a licence GitHub cannot detect). Description max 512 characters.
+          labels: |
+            org.opencontainers.image.description=NetSendo - self-hosted email and SMS marketing automation (Laravel, Vue.js). Proprietary, source-available under the NetSendo EULA - not open source. Install guide: https://netsendo.com/en/docs/quickstart
+            org.opencontainers.image.licenses=LicenseRef-NetSendo-EULA
+            org.opencontainers.image.url=https://netsendo.com
+          annotations: |
+            org.opencontainers.image.description=NetSendo - self-hosted email and SMS marketing automation (Laravel, Vue.js). Proprietary, source-available under the NetSendo EULA - not open source. Install guide: https://netsendo.com/en/docs/quickstart
+            org.opencontainers.image.licenses=LicenseRef-NetSendo-EULA
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v7
@@ -95,10 +127,52 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
             APP_VERSION=${{ github.ref_name }}
+
+      # The NetSendo MTA (docker/haraka) is published as tags of the same public package,
+      # prefixed "mta-": mta-latest, mta-2.11.0, ... (docker-compose.yml: nmi-mta). One
+      # package keeps the MTA as public as the app, with no second package to configure.
+      - name: Extract MTA metadata
+        id: meta-mta
+        uses: docker/metadata-action@v6
+        env:
+          DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
+            prefix=mta-,onlatest=true
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=raw,value=${{ github.event.inputs.version }},enable=${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version != '' }}
+            type=sha,prefix=mta-sha-
+          labels: |
+            org.opencontainers.image.description=NetSendo MTA (Haraka) for the "NetSendo MTA" mailbox provider. Proprietary, source-available under the NetSendo EULA - not open source.
+            org.opencontainers.image.licenses=LicenseRef-NetSendo-EULA
+            org.opencontainers.image.url=https://netsendo.com
+          annotations: |
+            org.opencontainers.image.description=NetSendo MTA (Haraka) for the "NetSendo MTA" mailbox provider. Proprietary, source-available under the NetSendo EULA - not open source.
+            org.opencontainers.image.licenses=LicenseRef-NetSendo-EULA
+
+      - name: Build and push MTA image
+        uses: docker/build-push-action@v7
+        with:
+          context: ./docker/haraka
+          file: ./docker/haraka/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta-mta.outputs.tags }}
+          labels: ${{ steps.meta-mta.outputs.labels }}
+          annotations: ${{ steps.meta-mta.outputs.annotations }}
+          cache-from: type=gha,scope=mta
+          cache-to: type=gha,mode=max,scope=mta
 
       - name: Generate image summary
         run: |
@@ -116,3 +190,22 @@ jobs:
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### MTA tags:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.meta-mta.outputs.tags }}" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+  # Tells Aderlo (NetSendo Cloud hosting) about the new version right away
+  # (aderlo-notify.yml; also startable by hand to send it again for a tag).
+  notify-aderlo:
+    needs: build-and-push
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+    uses: ./.github/workflows/aderlo-notify.yml
+    with:
+      tag: ${{ github.ref_name }}
+      security: ${{ github.event.inputs.security == 'true' }}
+    secrets:
+      ADERLO_RELEASE_KEY: ${{ secrets.ADERLO_RELEASE_KEY }}

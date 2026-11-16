@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $webinar->name }}</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite('resources/css/webinar.css')
     <style>
         .gradient-bg {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -31,10 +31,12 @@
 
             <!-- Date Info -->
             @if($webinar->scheduled_at)
+                {{-- scheduled_at is stored in UTC; show it in the zone named below --}}
+                @php($startsAt = $webinar->scheduled_at->copy()->setTimezone($scheduleTimezone))
                 <div class="bg-white/10 backdrop-blur rounded-xl p-6 mb-8 text-center">
                     <p class="text-sm uppercase tracking-wide opacity-75 mb-2">{{ __('webinars.public.register.starts_at') }}</p>
-                    <p class="text-3xl font-bold">{{ $webinar->scheduled_at->format('d.m.Y') }}</p>
-                    <p class="text-2xl">{{ __('webinars.public.register.at_hour') }} {{ $webinar->scheduled_at->format('H:i') }}</p>
+                    <p class="text-3xl font-bold">{{ $startsAt->format('d.m.Y') }}</p>
+                    <p class="text-2xl">{{ __('webinars.public.register.at_hour') }} {{ $startsAt->format('H:i') }}</p>
                     <p class="text-sm opacity-60 mt-1">({{ $scheduleTimezone }})</p>
                 </div>
             @endif
@@ -47,7 +49,7 @@
                     <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
                         @foreach($nextSessions as $session)
                             <label class="cursor-pointer">
-                                <input type="radio" name="session_time" value="{{ $session->format('Y-m-d H:i:s') }}" form="registration-form" class="sr-only peer">
+                                <input type="radio" name="session_time" value="{{ $session->toIso8601String() }}" form="registration-form" class="sr-only peer">
                                 <div class="p-3 rounded-lg bg-white/5 border-2 border-transparent peer-checked:border-white peer-checked:bg-white/20 text-center transition-all hover:bg-white/10">
                                     <p class="font-medium">{{ $session->format('d.m') }}</p>
                                     <p class="text-sm opacity-75">{{ $session->format('H:i') }}</p>
@@ -75,7 +77,7 @@
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700 mb-1">{{ __('webinars.public.register.email') }} *</label>
                             <input type="email" name="email" id="email" required
-                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                class="w-full rounded-lg border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500"
                                 placeholder="jan@example.com">
                         </div>
 
@@ -83,13 +85,13 @@
                             <div>
                                 <label for="first_name" class="block text-sm font-medium text-gray-700 mb-1">{{ __('webinars.public.register.first_name') }}</label>
                                 <input type="text" name="first_name" id="first_name"
-                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="w-full rounded-lg border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500"
                                     placeholder="Jan">
                             </div>
                             <div>
                                 <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">{{ __('webinars.public.register.last_name') }}</label>
                                 <input type="text" name="last_name" id="last_name"
-                                    class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    class="w-full rounded-lg border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500"
                                     placeholder="Kowalski">
                             </div>
                         </div>
@@ -97,7 +99,7 @@
                         <div>
                             <label for="timezone" class="block text-sm font-medium text-gray-700 mb-1">{{ __('webinars.public.register.timezone') }}</label>
                             <select name="timezone" id="timezone"
-                                class="w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="w-full rounded-lg border-gray-300 shadow-xs focus:border-indigo-500 focus:ring-indigo-500">
                                 @foreach($timezones as $tz => $label)
                                     <option value="{{ $tz }}" {{ $tz === $defaultTimezone ? 'selected' : '' }}>{{ $label }}</option>
                                 @endforeach
@@ -114,7 +116,7 @@
                             {{ $webinar->pageContent('register_button', __('webinars.public.register.submit')) }}
                         </button>
 
-                        <p class="text-xs text-gray-500 text-center mt-4">
+                        <p class="text-xs text-gray-500 text-center">
                             {{ __('webinars.public.register.consent') }}
                         </p>
                     </form>

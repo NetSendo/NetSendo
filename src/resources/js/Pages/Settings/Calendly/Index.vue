@@ -1,1434 +1,681 @@
 <script setup>
+import { computed, onMounted, ref } from "vue";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/vue3";
+import { useI18n } from "vue-i18n";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
-import { Head, Link, useForm, usePage, router } from "@inertiajs/vue3";
-import { ref, computed } from "vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
+import ActionMenu from "@/Components/Ui/ActionMenu.vue";
+import ActionMenuItem from "@/Components/Ui/ActionMenuItem.vue";
+import CopyField from "@/Components/Ui/CopyField.vue";
+import CreateLink from "@/Components/Ui/CreateLink.vue";
+import EmptyState from "@/Components/Ui/EmptyState.vue";
+import FormDialog from "@/Components/Ui/FormDialog.vue";
+import Notice from "@/Components/Ui/Notice.vue";
+import PageHeader from "@/Components/Ui/PageHeader.vue";
+import Panel from "@/Components/Ui/Panel.vue";
+import SecretField from "@/Components/Ui/SecretField.vue";
+import SegmentedControl from "@/Components/Ui/SegmentedControl.vue";
+import StatusPill from "@/Components/Ui/StatusPill.vue";
+import Switch from "@/Components/Ui/Switch.vue";
+import Toast from "@/Components/Ui/Toast.vue";
+import CheckList from "./Partials/CheckList.vue";
+import { errorClass, fieldClass, hintClass, labelClass } from "@/Components/Ui/fieldClass";
+import { useToast } from "@/Composables/useToast";
 
 const props = defineProps({
-    integrations: Array,
-    mailingLists: Array,
-    tags: Array,
-    teamMembers: Array,
-    webhookUrl: String,
+    integrations: { type: Array, default: () => [] },
+    mailingLists: { type: Array, default: () => [] },
+    tags: { type: Array, default: () => [] },
+    teamMembers: { type: Array, default: () => [] },
+    webhookUrl: { type: String, default: "" },
 });
 
+const { t, te, locale } = useI18n();
 const page = usePage();
-const flash = computed(() => page.props.flash);
 
-// Expanded event types for per-event-type configuration
-const expandedEventTypes = ref({});
+// Failures come from the server with Calendly's own reason; successes are worded here, in the
+// user's language (the server's are English only)
+const { toast, showToast, dismiss } = useToast({ flash: "error" });
 
-// Get event type mapping or defaults to global settings
-function getEventTypeMapping(eventTypeUri) {
-    const mappings = settingsForm.settings.event_type_mappings || {};
-    if (mappings[eventTypeUri]) {
-        return mappings[eventTypeUri];
-    }
-    // Return default structure for new mapping
-    return {
-        use_custom: false,
-        list_ids: [],
-        tag_ids: [],
-    };
-}
-
-// Toggle event type expansion
-function toggleEventType(eventTypeUri) {
-    expandedEventTypes.value[eventTypeUri] =
-        !expandedEventTypes.value[eventTypeUri];
-}
-
-// Update event type mapping
-function updateEventTypeMapping(eventTypeUri, field, value) {
-    if (!settingsForm.settings.event_type_mappings) {
-        settingsForm.settings.event_type_mappings = {};
-    }
-    if (!settingsForm.settings.event_type_mappings[eventTypeUri]) {
-        settingsForm.settings.event_type_mappings[eventTypeUri] = {
-            use_custom: false,
-            list_ids: [],
-            tag_ids: [],
-        };
-    }
-    settingsForm.settings.event_type_mappings[eventTypeUri][field] = value;
-}
-
-// Filtered lists based on search
-const filteredMailingLists = computed(() => {
-    if (!mailingListSearch.value) return props.mailingLists;
-    const search = mailingListSearch.value.toLowerCase();
-    return props.mailingLists.filter((list) =>
-        list.name.toLowerCase().includes(search),
-    );
+// The only success that arrives with a full page load is the return from Calendly's consent
+// screen
+onMounted(() => {
+    if (page.props.flash?.success) showToast(t("calendly_settings.toast.connected"));
 });
 
-const filteredTags = computed(() => {
-    if (!tagSearch.value) return props.tags;
-    const search = tagSearch.value.toLowerCase();
-    return props.tags.filter((tag) => tag.name.toLowerCase().includes(search));
+// A refused action still ends in "success" for Inertia: the server redirects back with the
+// reason in the session
+const succeeded = () => !page.props.flash?.error;
+
+const activeCount = computed(() => props.integrations.filter((integration) => integration.is_active).length);
+
+const nameOf = (integration) =>
+    integration.calendly_user_name || integration.calendly_user_email || t("calendly_settings.account_fallback");
+
+const statusOf = (integration) => {
+    if (integration.is_pending) return { tone: "warning", label: t("calendly_settings.status.pending") };
+    return integration.is_active
+        ? { tone: "success", label: t("calendly_settings.status.active") }
+        : { tone: "neutral", label: t("calendly_settings.status.inactive") };
+};
+
+const BOOKING_TONES = { scheduled: "info", canceled: "danger", no_show: "warning", completed: "success" };
+
+const bookingStatus = (status) => ({
+    tone: BOOKING_TONES[status] || "neutral",
+    label: te(`calendly_settings.booking_status.${status}`) ? t(`calendly_settings.booking_status.${status}`) : status,
 });
 
-const activeIntegration = ref(props.integrations?.[0] || null);
-const showSettingsModal = ref(false);
-const showConnectModal = ref(false);
-const saving = ref(false);
-const syncing = ref(false);
-const testing = ref(false);
-const connecting = ref(false);
-const toastMessage = ref("");
-const showToast = ref(false);
+const formatDateTime = (value) =>
+    value ? new Date(value).toLocaleString(locale.value, { dateStyle: "medium", timeStyle: "short" }) : "—";
 
-// Search filters for lists
-const mailingListSearch = ref("");
-const tagSearch = ref("");
+/* Connecting an account ---------------------------------------------------------------- */
 
-// Connect form for API credentials
-const connectForm = useForm({
-    client_id: "",
-    client_secret: "",
-});
+const showConnect = ref(false);
+const connectForm = useForm({ client_id: "", client_secret: "" });
+const redirectUri = computed(() => route("settings.calendly.callback"));
 
-// Settings form
-const settingsForm = useForm({
-    settings: activeIntegration.value?.settings || {
-        crm: {
-            enabled: true,
-            default_status: "lead",
-            create_tasks: true,
-            default_owner_id: null,
-        },
-        mailing_lists: {
-            enabled: true,
-            default_list_ids: [],
-            default_tag_ids: [],
-        },
-        event_type_mappings: {},
-        automation: {
-            trigger_on_booking: true,
-            trigger_on_cancellation: true,
-            trigger_on_no_show: false,
-        },
-    },
-});
-
-function displayToast(message) {
-    toastMessage.value = message;
-    showToast.value = true;
-    setTimeout(() => {
-        showToast.value = false;
-    }, 3000);
-}
-
-function copyToClipboard(text) {
-    navigator.clipboard
-        .writeText(text)
-        .then(() => {
-            displayToast("Copied to clipboard!");
-        })
-        .catch(() => {
-            displayToast("Failed to copy");
-        });
-}
-
-function openConnectModal() {
+const openConnect = () => {
     connectForm.reset();
-    showConnectModal.value = true;
-}
+    connectForm.clearErrors();
+    showConnect.value = true;
+};
 
-function connect() {
-    connecting.value = true;
-    connectForm.post(route("settings.calendly.connect"), {
-        onError: (errors) => {
-            displayToast(
-                errors.client_id || errors.client_secret || "Failed to connect",
-            );
-        },
-        onFinish: () => {
-            connecting.value = false;
-        },
-    });
-}
+// On success the server answers with a full redirect to Calendly's consent screen
+const connect = () => connectForm.post(route("settings.calendly.connect"));
 
-function disconnect(integration) {
-    if (confirm("Are you sure you want to disconnect this Calendly account?")) {
-        router.post(
-            route("settings.calendly.disconnect", integration.id),
-            {},
-            {
-                onSuccess: () => {
-                    displayToast("Calendly disconnected successfully");
-                },
-            },
-        );
-    }
-}
+/* Actions on a connected account -------------------------------------------------------- */
 
-function openSettings(integration) {
-    activeIntegration.value = integration;
-    settingsForm.settings = { ...integration.settings };
-    showSettingsModal.value = true;
-}
+const busy = ref(null); // "sync-3", "test-3"
 
-function saveSettings() {
-    if (!activeIntegration.value) return;
-
-    saving.value = true;
-    settingsForm.put(
-        route("settings.calendly.settings", activeIntegration.value.id),
-        {
-            preserveScroll: true,
-            onSuccess: () => {
-                displayToast("Settings saved successfully");
-                showSettingsModal.value = false;
-            },
-            onError: () => {
-                displayToast("Failed to save settings");
-            },
-            onFinish: () => {
-                saving.value = false;
-            },
-        },
-    );
-}
-
-function syncEventTypes(integration) {
-    syncing.value = true;
+const syncEventTypes = (integration) => {
+    busy.value = `sync-${integration.id}`;
     router.post(
         route("settings.calendly.sync-event-types", integration.id),
         {},
         {
             preserveScroll: true,
-            onSuccess: () => {
-                displayToast("Event types synced successfully");
-            },
-            onError: () => {
-                displayToast("Failed to sync event types");
-            },
-            onFinish: () => {
-                syncing.value = false;
-            },
+            onSuccess: () => succeeded() && showToast(t("calendly_settings.toast.synced")),
+            onFinish: () => (busy.value = null),
         },
     );
-}
+};
 
-function testWebhook(integration) {
-    testing.value = true;
+const testWebhook = (integration) => {
+    busy.value = `test-${integration.id}`;
     router.post(
         route("settings.calendly.test-webhook", integration.id),
         {},
         {
             preserveScroll: true,
-            onSuccess: () => {
-                displayToast("Webhook is working correctly");
-            },
-            onError: () => {
-                displayToast("Webhook test failed");
-            },
+            onSuccess: () => succeeded() && showToast(t("calendly_settings.toast.webhook_ok")),
+            onFinish: () => (busy.value = null),
+        },
+    );
+};
+
+const toDisconnect = ref(null);
+const disconnecting = ref(false);
+
+const disconnect = () => {
+    disconnecting.value = true;
+    router.post(
+        route("settings.calendly.disconnect", toDisconnect.value.id),
+        {},
+        {
+            preserveScroll: true,
+            onSuccess: () => succeeded() && showToast(t("calendly_settings.toast.disconnected")),
             onFinish: () => {
-                testing.value = false;
+                disconnecting.value = false;
+                toDisconnect.value = null;
             },
         },
     );
-}
+};
 
-function getStatusBadgeClass(status) {
-    switch (status) {
-        case "scheduled":
-            return "bg-blue-100 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400";
-        case "canceled":
-            return "bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-400";
-        case "no_show":
-            return "bg-orange-100 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400";
-        case "completed":
-            return "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400";
-        default:
-            return "bg-gray-100 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400";
-    }
-}
+/* What a booking does: the settings dialog ---------------------------------------------- */
 
-function formatDateTime(dateString) {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleString();
-}
+const copy = (value) => JSON.parse(JSON.stringify(value ?? null));
+
+// A copy with every group present. Mappings are keyed by the event type's address: an empty
+// set comes from the server as a list, and keys written to a list are lost on the way back.
+const normalise = (settings) => {
+    const source = copy(settings) || {};
+    const mappings = source.event_type_mappings;
+
+    return {
+        crm: { enabled: true, default_status: "lead", create_tasks: true, default_owner_id: null, ...(source.crm || {}) },
+        mailing_lists: {
+            enabled: true,
+            ...(source.mailing_lists || {}),
+            default_list_ids: source.mailing_lists?.default_list_ids || [],
+            default_tag_ids: source.mailing_lists?.default_tag_ids || [],
+        },
+        event_type_mappings: mappings && !Array.isArray(mappings) ? mappings : {},
+        automation: {
+            trigger_on_booking: true,
+            trigger_on_cancellation: true,
+            trigger_on_no_show: false,
+            ...(source.automation || {}),
+        },
+    };
+};
+
+const configured = ref(null);
+const settingsTab = ref("crm");
+const settingsForm = useForm({ settings: normalise(null) });
+
+const settingsTabs = computed(() => [
+    { value: "crm", label: t("calendly_settings.tabs.crm") },
+    { value: "lists", label: t("calendly_settings.tabs.lists") },
+    { value: "event_types", label: t("calendly_settings.tabs.event_types") },
+    { value: "automation", label: t("calendly_settings.tabs.automation") },
+]);
+
+const openSettings = (integration) => {
+    configured.value = integration;
+    settingsTab.value = "crm";
+    settingsForm.clearErrors();
+    settingsForm.settings = normalise(integration.settings);
+};
+
+const closeSettings = () => (configured.value = null);
+
+const settingsErrors = computed(() => [...new Set(Object.values(settingsForm.errors))]);
+
+const saveSettings = () => {
+    settingsForm.put(route("settings.calendly.settings", configured.value.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            if (!succeeded()) return;
+            closeSettings();
+            showToast(t("calendly_settings.toast.saved"));
+        },
+    });
+};
+
+const mappingOf = (uri) =>
+    settingsForm.settings.event_type_mappings[uri] || { use_custom: false, list_ids: [], tag_ids: [] };
+
+const setMapping = (uri, field, value) => {
+    settingsForm.settings.event_type_mappings[uri] = { ...mappingOf(uri), [field]: value };
+};
+
+const tick = "h-4 w-4 shrink-0 accent-indigo-600";
+const optionRow = "flex min-h-10 cursor-pointer items-center gap-3 text-sm text-slate-900 dark:text-slate-100";
 </script>
 
 <template>
-    <Head title="Calendly Integration" />
+    <Head :title="t('calendly_settings.title')" />
 
     <AuthenticatedLayout>
-        <div class="py-8">
-            <div class="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-                <!-- Breadcrumb -->
-                <div
-                    class="mb-8 flex items-center gap-2 text-sm text-gray-500 dark:text-slate-400"
-                >
-                    <Link
-                        :href="route('dashboard')"
-                        class="hover:text-gray-700 dark:hover:text-white transition-colors"
-                    >
-                        Dashboard
-                    </Link>
-                    <span>/</span>
-                    <Link
-                        :href="route('marketplace.calendly')"
-                        class="hover:text-gray-700 dark:hover:text-white transition-colors"
-                    >
-                        Calendly
-                    </Link>
-                    <span>/</span>
-                    <span class="text-gray-900 dark:text-white">Settings</span>
-                </div>
+        <template #header>
+            <PageHeader :title="t('calendly_settings.title')" :subtitle="t('calendly_settings.subtitle')">
+                <StatusPill :tone="activeCount ? 'success' : 'neutral'">
+                    {{ activeCount ? t("calendly_settings.connected") : t("calendly_settings.not_connected") }}
+                </StatusPill>
+                <CreateLink v-if="integrations.length" @click="openConnect">
+                    {{ t("calendly_settings.connect_another") }}
+                </CreateLink>
+            </PageHeader>
+        </template>
 
-                <!-- Header -->
-                <div class="mb-8">
-                    <div class="flex items-center gap-4">
-                        <div
-                            class="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 shadow-lg"
+        <div class="mx-auto flex max-w-3xl flex-col gap-4">
+            <!-- Where this page sits -->
+            <nav
+                :aria-label="t('calendly_settings.title')"
+                class="flex flex-wrap items-center gap-x-2 text-sm text-slate-600 dark:text-slate-400"
+            >
+                <Link
+                    :href="route('marketplace.index')"
+                    class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                >
+                    {{ t("calendly_settings.marketplace") }}
+                </Link>
+                <span aria-hidden="true">/</span>
+                <Link
+                    :href="route('marketplace.calendly')"
+                    class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                >
+                    Calendly
+                </Link>
+                <span aria-hidden="true">/</span>
+                <span aria-current="page">{{ t("calendly_settings.breadcrumb_settings") }}</span>
+            </nav>
+
+            <!-- Nothing connected yet -->
+            <Panel v-if="integrations.length === 0" flush>
+                <EmptyState
+                    class="!border-t-0"
+                    :title="t('calendly_settings.empty.title')"
+                    :description="t('calendly_settings.empty.description')"
+                >
+                    <CreateLink @click="openConnect">{{ t("calendly_settings.connect_button") }}</CreateLink>
+                </EmptyState>
+            </Panel>
+
+            <!-- One panel per connected account -->
+            <Panel v-for="integration in integrations" :key="integration.id" flush>
+                <template #title>
+                    <span class="flex min-w-0 flex-col">
+                        <span class="break-words">{{ nameOf(integration) }}</span>
+                        <span
+                            v-if="integration.calendly_user_name && integration.calendly_user_email"
+                            class="break-all text-sm font-normal text-slate-600 dark:text-slate-400"
                         >
-                            <svg
-                                class="h-8 w-8 text-white"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                <path
-                                    stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    stroke-width="2"
-                                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                />
-                            </svg>
-                        </div>
-                        <div>
-                            <h2
-                                class="text-2xl font-bold text-gray-900 dark:text-white"
-                            >
-                                Calendly Integration
-                            </h2>
-                            <p class="text-gray-500 dark:text-slate-400">
-                                Connect Calendly to sync bookings with CRM and
-                                mailing lists
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                            {{ integration.calendly_user_email }}
+                        </span>
+                    </span>
+                </template>
 
-                <!-- Flash Messages -->
-                <div
-                    v-if="flash?.success"
-                    class="mb-6 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 p-4 text-emerald-700 dark:text-emerald-400 ring-1 ring-emerald-200 dark:ring-emerald-500/20"
-                >
-                    {{ flash.success }}
-                </div>
-                <div
-                    v-if="flash?.error"
-                    class="mb-6 rounded-xl bg-red-50 dark:bg-red-500/10 p-4 text-red-700 dark:text-red-400 ring-1 ring-red-200 dark:ring-red-500/20"
-                >
-                    {{ flash.error }}
-                </div>
+                <template #actions>
+                    <StatusPill :tone="statusOf(integration).tone">{{ statusOf(integration).label }}</StatusPill>
 
-                <div class="space-y-6">
-                    <!-- Connected Accounts -->
-                    <div v-if="integrations.length > 0" class="space-y-4">
-                        <div
-                            v-for="integration in integrations"
-                            :key="integration.id"
-                            class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
-                        >
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-4">
-                                    <div
-                                        class="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-500/10"
-                                    >
-                                        <svg
-                                            class="h-6 w-6 text-emerald-600 dark:text-emerald-400"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M5 13l4 4L19 7"
-                                            />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3
-                                            class="text-lg font-semibold text-gray-900 dark:text-white"
-                                        >
-                                            {{
-                                                integration.calendly_user_name ||
-                                                "Calendly Account"
-                                            }}
-                                        </h3>
-                                        <p
-                                            class="text-sm text-gray-500 dark:text-slate-400"
-                                        >
-                                            {{
-                                                integration.calendly_user_email
-                                            }}
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        v-if="integration.is_active"
-                                        class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 dark:bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-700 dark:text-emerald-400"
-                                    >
-                                        <span
-                                            class="h-2 w-2 rounded-full bg-emerald-500"
-                                        ></span>
-                                        Connected
-                                    </span>
-                                    <span
-                                        v-else
-                                        class="inline-flex items-center gap-1.5 rounded-full bg-red-100 dark:bg-red-500/10 px-3 py-1 text-sm font-medium text-red-700 dark:text-red-400"
-                                    >
-                                        <span
-                                            class="h-2 w-2 rounded-full bg-red-500"
-                                        ></span>
-                                        Inactive
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Actions -->
-                            <div class="flex flex-wrap items-center gap-3 mb-6">
-                                <button
-                                    @click="openSettings(integration)"
-                                    class="rounded-lg px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors ring-1 ring-blue-200 dark:ring-blue-500/30"
-                                >
-                                    Configure
-                                </button>
-                                <button
-                                    @click="syncEventTypes(integration)"
-                                    :disabled="syncing"
-                                    class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors ring-1 ring-gray-200 dark:ring-white/10"
-                                >
-                                    <span v-if="syncing">Syncing...</span>
-                                    <span v-else>Sync Event Types</span>
-                                </button>
-                                <button
-                                    @click="testWebhook(integration)"
-                                    :disabled="testing"
-                                    class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors ring-1 ring-gray-200 dark:ring-white/10"
-                                >
-                                    <span v-if="testing">Testing...</span>
-                                    <span v-else>Test Webhook</span>
-                                </button>
-                                <button
-                                    @click="disconnect(integration)"
-                                    class="rounded-lg px-4 py-2 text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
-                                >
-                                    Disconnect
-                                </button>
-                            </div>
-
-                            <!-- Event Types -->
-                            <div
-                                v-if="integration.event_types?.length > 0"
-                                class="mb-6"
-                            >
-                                <h4
-                                    class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
-                                >
-                                    Event Types
-                                </h4>
-                                <div class="flex flex-wrap gap-2">
-                                    <span
-                                        v-for="eventType in integration.event_types"
-                                        :key="eventType.uri"
-                                        class="inline-flex items-center rounded-lg bg-gray-100 dark:bg-white/5 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300"
-                                    >
-                                        {{ eventType.name }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- Recent Events -->
-                            <div v-if="integration.recent_events?.length > 0">
-                                <h4
-                                    class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3"
-                                >
-                                    Recent Bookings
-                                </h4>
-                                <div
-                                    class="overflow-hidden rounded-xl border border-gray-200 dark:border-white/10"
-                                >
-                                    <table
-                                        class="min-w-full divide-y divide-gray-200 dark:divide-white/10"
-                                    >
-                                        <thead
-                                            class="bg-gray-50 dark:bg-white/5"
-                                        >
-                                            <tr>
-                                                <th
-                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
-                                                >
-                                                    Event
-                                                </th>
-                                                <th
-                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
-                                                >
-                                                    Invitee
-                                                </th>
-                                                <th
-                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
-                                                >
-                                                    Date
-                                                </th>
-                                                <th
-                                                    class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase"
-                                                >
-                                                    Status
-                                                </th>
-                                            </tr>
-                                        </thead>
-                                        <tbody
-                                            class="divide-y divide-gray-200 dark:divide-white/10"
-                                        >
-                                            <tr
-                                                v-for="event in integration.recent_events"
-                                                :key="event.id"
-                                            >
-                                                <td
-                                                    class="px-4 py-3 text-sm text-gray-900 dark:text-white"
-                                                >
-                                                    {{ event.event_type_name }}
-                                                </td>
-                                                <td
-                                                    class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
-                                                >
-                                                    <div>
-                                                        {{ event.invitee_name }}
-                                                    </div>
-                                                    <div class="text-xs">
-                                                        {{
-                                                            event.invitee_email
-                                                        }}
-                                                    </div>
-                                                </td>
-                                                <td
-                                                    class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400"
-                                                >
-                                                    {{
-                                                        formatDateTime(
-                                                            event.start_time,
-                                                        )
-                                                    }}
-                                                </td>
-                                                <td class="px-4 py-3">
-                                                    <span
-                                                        :class="[
-                                                            'inline-flex rounded-full px-2 py-1 text-xs font-medium',
-                                                            getStatusBadgeClass(
-                                                                event.status,
-                                                            ),
-                                                        ]"
-                                                    >
-                                                        {{ event.status }}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Connect Button -->
-                    <div
-                        class="rounded-2xl bg-white dark:bg-slate-800 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10 shadow-sm"
+                    <button
+                        v-if="!integration.is_pending"
+                        type="button"
+                        class="min-h-9 rounded-lg px-2 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 max-sm:hidden dark:text-indigo-400 dark:hover:text-indigo-300"
+                        @click="openSettings(integration)"
                     >
-                        <div class="text-center">
-                            <div
-                                class="flex h-16 w-16 mx-auto items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-sky-600 shadow-lg mb-4"
-                            >
-                                <svg
-                                    class="h-8 w-8 text-white"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                                    />
-                                </svg>
-                            </div>
-                            <h3
-                                class="text-lg font-semibold text-gray-900 dark:text-white mb-2"
+                        {{ t("calendly_settings.actions.configure") }}
+                    </button>
+
+                    <ActionMenu :label="t('calendly_settings.actions.menu_for', { name: nameOf(integration) })">
+                        <template v-if="!integration.is_pending">
+                            <!-- On a phone the button beside the menu has no room: it is the first entry here -->
+                            <ActionMenuItem class="sm:hidden" @click="openSettings(integration)">
+                                {{ t("calendly_settings.actions.configure") }}
+                            </ActionMenuItem>
+                            <ActionMenuItem
+                                :disabled="busy === `sync-${integration.id}`"
+                                @click="syncEventTypes(integration)"
                             >
                                 {{
-                                    integrations.length > 0
-                                        ? "Connect Another Account"
-                                        : "Connect Your Calendly Account"
+                                    busy === `sync-${integration.id}`
+                                        ? t("calendly_settings.actions.syncing")
+                                        : t("calendly_settings.actions.sync")
                                 }}
-                            </h3>
-                            <p
-                                class="text-gray-500 dark:text-slate-400 mb-6 max-w-md mx-auto"
+                            </ActionMenuItem>
+                            <ActionMenuItem
+                                :disabled="busy === `test-${integration.id}`"
+                                @click="testWebhook(integration)"
                             >
-                                Automatically sync Calendly bookings with your
-                                CRM and add invitees to your mailing lists.
-                            </p>
-                            <button
-                                @click="openConnectModal"
-                                class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-sky-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-blue-700 hover:to-sky-700 transition-all"
+                                {{
+                                    busy === `test-${integration.id}`
+                                        ? t("common.testing")
+                                        : t("calendly_settings.actions.test")
+                                }}
+                            </ActionMenuItem>
+                        </template>
+                        <ActionMenuItem danger @click="toDisconnect = integration">
+                            {{
+                                integration.is_pending
+                                    ? t("common.delete")
+                                    : t("calendly_settings.actions.disconnect")
+                            }}
+                        </ActionMenuItem>
+                    </ActionMenu>
+                </template>
+
+                <!-- The app details were saved, the consent on Calendly's side was not given -->
+                <div v-if="integration.is_pending" class="px-5 pb-5 pt-2">
+                    <Notice tone="warning" :title="t('calendly_settings.pending.title')">
+                        {{ t("calendly_settings.pending.text") }}
+                    </Notice>
+                </div>
+
+                <template v-else>
+                    <div class="px-5 pb-5 pt-2">
+                        <h3 class="text-sm font-medium text-slate-900 dark:text-white">
+                            {{ t("calendly_settings.event_types") }}
+                        </h3>
+                        <ul v-if="integration.event_types?.length" class="mt-2 flex flex-wrap gap-1.5">
+                            <li
+                                v-for="eventType in integration.event_types"
+                                :key="eventType.uri"
+                                class="rounded-lg bg-slate-100 px-2 py-1 text-xs font-medium text-slate-900 dark:bg-slate-700/60 dark:text-slate-100"
                             >
-                                <svg
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"
-                                    />
-                                </svg>
-                                Connect with Calendly
-                            </button>
-                        </div>
+                                {{ eventType.name }}
+                            </li>
+                        </ul>
+                        <p v-else class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                            {{ t("calendly_settings.no_event_types") }}
+                        </p>
                     </div>
 
-                    <!-- Webhook URL Info -->
-                    <div
-                        class="rounded-2xl bg-gray-50 dark:bg-white/5 p-6 border border-gray-200 dark:border-transparent dark:ring-1 dark:ring-white/10"
-                    >
-                        <h4
-                            class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-                        >
-                            Webhook URL
-                        </h4>
+                    <div class="border-t border-slate-200 dark:border-slate-700/60">
+                        <h3 class="px-5 pt-4 text-sm font-medium text-slate-900 dark:text-white">
+                            {{ t("calendly_settings.recent.title") }}
+                        </h3>
+
                         <p
-                            class="text-sm text-gray-500 dark:text-gray-400 mb-3"
+                            v-if="!integration.recent_events?.length"
+                            class="px-5 pb-5 pt-1 text-sm text-slate-600 dark:text-slate-400"
                         >
-                            This URL is automatically configured when you
-                            connect your account.
+                            {{ t("calendly_settings.recent.empty") }}
                         </p>
-                        <div class="flex items-center gap-2">
-                            <code
-                                class="flex-1 rounded-lg bg-white dark:bg-slate-800 px-4 py-2 text-sm text-gray-900 dark:text-white ring-1 ring-gray-200 dark:ring-white/10 overflow-x-auto"
-                            >
-                                {{ webhookUrl }}
-                            </code>
-                            <button
-                                @click="copyToClipboard(webhookUrl)"
-                                class="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                                title="Copy to clipboard"
-                            >
-                                <svg
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
-                                    />
-                                </svg>
-                            </button>
+
+                        <div v-else class="relative mt-2 overflow-x-auto">
+                            <table class="w-full text-left text-sm sm:min-w-[560px]">
+                                <!-- One column is left on a phone: it needs no heading -->
+                                <thead class="max-sm:hidden">
+                                    <tr
+                                        class="border-b border-slate-200 text-xs font-medium text-slate-600 dark:border-slate-700/60 dark:text-slate-400"
+                                    >
+                                        <th scope="col" class="px-5 py-2 font-medium">
+                                            {{ t("calendly_settings.recent.invitee") }}
+                                        </th>
+                                        <th scope="col" class="px-3 py-2 font-medium max-sm:hidden">
+                                            {{ t("calendly_settings.recent.event") }}
+                                        </th>
+                                        <th scope="col" class="px-3 py-2 font-medium max-sm:hidden">
+                                            {{ t("calendly_settings.recent.date") }}
+                                        </th>
+                                        <th scope="col" class="py-2 pl-3 pr-5 font-medium max-sm:hidden">
+                                            {{ t("common.status") }}
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200 dark:divide-slate-700/60">
+                                    <tr v-for="event in integration.recent_events" :key="event.id">
+                                        <td class="max-w-0 px-5 py-3 max-sm:w-full sm:w-[38%]">
+                                            <p class="truncate font-medium text-slate-900 dark:text-white">
+                                                {{ event.invitee_name || event.invitee_email }}
+                                            </p>
+                                            <p
+                                                v-if="event.invitee_name"
+                                                class="truncate text-slate-600 dark:text-slate-400"
+                                            >
+                                                {{ event.invitee_email }}
+                                            </p>
+                                            <!-- On a phone the other columns are folded under the person -->
+                                            <div class="mt-1.5 flex flex-col items-start gap-1.5 sm:hidden">
+                                                <p class="text-xs tabular-nums text-slate-600 dark:text-slate-400">
+                                                    {{ event.event_type_name }} · {{ formatDateTime(event.start_time) }}
+                                                </p>
+                                                <StatusPill :tone="bookingStatus(event.status).tone">
+                                                    {{ bookingStatus(event.status).label }}
+                                                </StatusPill>
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-3 text-slate-900 max-sm:hidden dark:text-slate-100">
+                                            {{ event.event_type_name }}
+                                        </td>
+                                        <td
+                                            class="whitespace-nowrap px-3 py-3 tabular-nums text-slate-600 max-sm:hidden dark:text-slate-400"
+                                        >
+                                            {{ formatDateTime(event.start_time) }}
+                                        </td>
+                                        <td class="py-3 pl-3 pr-5 max-sm:hidden">
+                                            <StatusPill :tone="bookingStatus(event.status).tone">
+                                                {{ bookingStatus(event.status).label }}
+                                            </StatusPill>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                </div>
-            </div>
+                </template>
+            </Panel>
+
+            <Panel :title="t('calendly_settings.webhook.title')">
+                <CopyField class="-mt-2" :value="webhookUrl" :hint="t('calendly_settings.webhook.hint')" />
+            </Panel>
         </div>
 
-        <!-- Connect Modal -->
-        <Teleport to="body">
-            <div
-                v-if="showConnectModal"
-                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-            >
-                <div
-                    class="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-800 shadow-2xl"
-                >
-                    <div
-                        class="px-6 py-4 border-b border-gray-200 dark:border-white/10"
-                    >
-                        <div class="flex items-center justify-between">
-                            <h3
-                                class="text-lg font-semibold text-gray-900 dark:text-white"
-                            >
-                                Connect Calendly
-                            </h3>
-                            <button
-                                @click="showConnectModal = false"
-                                class="rounded-lg p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                            >
-                                <svg
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
+        <!-- Connect an account: the details of the user's own OAuth app at Calendly -->
+        <FormDialog
+            :show="showConnect"
+            :title="t('calendly_settings.connect.title')"
+            :processing="connectForm.processing"
+            :submit-label="connectForm.processing ? t('calendly_settings.connect.connecting') : t('calendly_settings.connect.submit')"
+            @close="showConnect = false"
+            @submit="connect"
+        >
+            <div class="space-y-4">
+                <div class="text-sm text-slate-600 dark:text-slate-400">
+                    <p>{{ t("calendly_settings.connect.intro") }}</p>
+                    <ol class="mt-2 list-decimal space-y-1 pl-5">
+                        <i18n-t keypath="calendly_settings.connect.step_open" tag="li">
+                            <template #link>
+                                <a
+                                    href="https://developer.calendly.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                    >developer.calendly.com</a
                                 >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <form @submit.prevent="connect" class="p-6 space-y-4">
-                        <div
-                            class="rounded-xl bg-blue-50 dark:bg-blue-500/10 p-4 text-sm text-blue-700 dark:text-blue-400"
-                        >
-                            <p class="mb-2">
-                                To connect Calendly, you need to create an OAuth
-                                application:
-                            </p>
-                            <ol class="list-decimal ml-4 space-y-1">
-                                <li>
-                                    Go to
-                                    <a
-                                        href="https://developer.calendly.com"
-                                        target="_blank"
-                                        class="underline hover:no-underline"
-                                        >developer.calendly.com</a
-                                    >
-                                </li>
-                                <li>Create a new OAuth application</li>
-                                <li>
-                                    Set Redirect URI to:
-                                    <code
-                                        class="bg-blue-100 dark:bg-blue-900/30 px-1 rounded text-xs"
-                                        >{{
-                                            webhookUrl.replace(
-                                                "/api/webhooks/calendly",
-                                                "/settings/calendly/callback",
-                                            )
-                                        }}</code
-                                    >
-                                </li>
-                                <li>Copy Client ID and Client Secret below</li>
-                            </ol>
-                        </div>
-
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                            >
-                                Client ID
-                            </label>
-                            <input
-                                v-model="connectForm.client_id"
-                                type="text"
-                                required
-                                placeholder="Enter your Calendly Client ID"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-slate-700 text-sm focus:ring-blue-500 focus:border-blue-500"
-                            />
-                            <p
-                                v-if="connectForm.errors.client_id"
-                                class="mt-1 text-sm text-red-600"
-                            >
-                                {{ connectForm.errors.client_id }}
-                            </p>
-                        </div>
-
-                        <div>
-                            <label
-                                class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
-                            >
-                                Client Secret
-                            </label>
-                            <input
-                                v-model="connectForm.client_secret"
-                                type="password"
-                                required
-                                placeholder="Enter your Calendly Client Secret"
-                                class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-slate-700 text-sm focus:ring-blue-500 focus:border-blue-500"
-                            />
-                            <p
-                                v-if="connectForm.errors.client_secret"
-                                class="mt-1 text-sm text-red-600"
-                            >
-                                {{ connectForm.errors.client_secret }}
-                            </p>
-                        </div>
-
-                        <div class="flex justify-end gap-3 pt-4">
-                            <button
-                                type="button"
-                                @click="showConnectModal = false"
-                                class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                            <button
-                                type="submit"
-                                :disabled="
-                                    connecting ||
-                                    !connectForm.client_id ||
-                                    !connectForm.client_secret
-                                "
-                                class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                            >
-                                <span v-if="connecting">Connecting...</span>
-                                <span v-else>Connect</span>
-                            </button>
-                        </div>
-                    </form>
+                            </template>
+                        </i18n-t>
+                        <li>{{ t("calendly_settings.connect.step_create") }}</li>
+                        <li>{{ t("calendly_settings.connect.step_redirect") }}</li>
+                        <li>{{ t("calendly_settings.connect.step_copy") }}</li>
+                    </ol>
                 </div>
+
+                <CopyField :label="t('calendly_settings.connect.redirect_uri')" :value="redirectUri" />
+
+                <div>
+                    <label for="calendly-client-id" :class="labelClass">{{ t("calendly_settings.connect.client_id") }}</label>
+                    <input
+                        id="calendly-client-id"
+                        v-model="connectForm.client_id"
+                        type="text"
+                        required
+                        autocomplete="off"
+                        spellcheck="false"
+                        class="mt-1 font-mono"
+                        :class="[fieldClass, { '!border-rose-500': connectForm.errors.client_id }]"
+                    />
+                    <p v-if="connectForm.errors.client_id" :class="errorClass">{{ connectForm.errors.client_id }}</p>
+                </div>
+
+                <SecretField
+                    id="calendly-client-secret"
+                    v-model="connectForm.client_secret"
+                    :label="t('calendly_settings.connect.client_secret')"
+                    :error="connectForm.errors.client_secret"
+                />
             </div>
-        </Teleport>
+        </FormDialog>
 
-        <!-- Settings Modal -->
-        <Teleport to="body">
-            <div
-                v-if="showSettingsModal"
-                class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-            >
-                <div
-                    class="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-800 shadow-2xl"
-                >
-                    <div
-                        class="sticky top-0 bg-white dark:bg-slate-800 px-6 py-4 border-b border-gray-200 dark:border-white/10"
-                    >
-                        <div class="flex items-center justify-between">
-                            <h3
-                                class="text-lg font-semibold text-gray-900 dark:text-white"
-                            >
-                                Integration Settings
-                            </h3>
-                            <button
-                                @click="showSettingsModal = false"
-                                class="rounded-lg p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
-                            >
-                                <svg
-                                    class="h-5 w-5"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                >
-                                    <path
-                                        stroke-linecap="round"
-                                        stroke-linejoin="round"
-                                        stroke-width="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
+        <!-- What a booking does in NetSendo -->
+        <FormDialog
+            :show="!!configured"
+            :title="t('calendly_settings.settings.title')"
+            max-width="2xl"
+            :processing="settingsForm.processing"
+            :submit-label="t('common.save')"
+            :errors="settingsErrors"
+            :toast="toast"
+            :note="configured ? nameOf(configured) : ''"
+            @close="closeSettings"
+            @submit="saveSettings"
+        >
+            <template #tabs>
+                <div class="overflow-x-auto">
+                    <SegmentedControl
+                        v-model="settingsTab"
+                        :options="settingsTabs"
+                        :label="t('calendly_settings.tabs.label')"
+                    />
+                </div>
+            </template>
+
+            <!-- The dialog keeps its height from tab to tab instead of jumping -->
+            <div class="sm:min-h-72">
+            <!-- CRM -->
+            <div v-show="settingsTab === 'crm'" class="space-y-4">
+                <div class="space-y-1">
+                    <label :class="optionRow">
+                        <input v-model="settingsForm.settings.crm.enabled" type="checkbox" :class="tick" />
+                        {{ t("calendly_settings.crm.enabled") }}
+                    </label>
+                    <label :class="optionRow">
+                        <input v-model="settingsForm.settings.crm.create_tasks" type="checkbox" :class="tick" />
+                        {{ t("calendly_settings.crm.create_tasks") }}
+                    </label>
+                </div>
+
+                <div class="grid gap-4 sm:grid-cols-2">
+                    <div>
+                        <label for="calendly-crm-status" :class="labelClass">
+                            {{ t("calendly_settings.crm.default_status") }}
+                        </label>
+                        <select
+                            id="calendly-crm-status"
+                            v-model="settingsForm.settings.crm.default_status"
+                            class="mt-1"
+                            :class="fieldClass"
+                        >
+                            <option value="lead">{{ t("crm.contacts.status.lead") }}</option>
+                            <option value="prospect">{{ t("crm.contacts.status.prospect") }}</option>
+                            <option value="customer">{{ t("crm.contacts.status.customer") }}</option>
+                        </select>
                     </div>
-
-                    <div class="p-6 space-y-6">
-                        <!-- CRM Settings -->
-                        <div>
-                            <h4
-                                class="text-sm font-medium text-gray-900 dark:text-white mb-4"
-                            >
-                                CRM Integration
-                            </h4>
-                            <div class="space-y-4">
-                                <label class="flex items-center gap-3">
-                                    <input
-                                        v-model="
-                                            settingsForm.settings.crm.enabled
-                                        "
-                                        type="checkbox"
-                                        class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span
-                                        class="text-sm text-gray-700 dark:text-gray-300"
-                                        >Create CRM contacts from bookings</span
-                                    >
-                                </label>
-                                <label class="flex items-center gap-3">
-                                    <input
-                                        v-model="
-                                            settingsForm.settings.crm
-                                                .create_tasks
-                                        "
-                                        type="checkbox"
-                                        class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span
-                                        class="text-sm text-gray-700 dark:text-gray-300"
-                                        >Create CRM tasks for meetings</span
-                                    >
-                                </label>
-                                <div>
-                                    <label
-                                        class="block text-sm text-gray-700 dark:text-gray-300 mb-1"
-                                        >Default Contact Status</label
-                                    >
-                                    <select
-                                        v-model="
-                                            settingsForm.settings.crm
-                                                .default_status
-                                        "
-                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-slate-700 text-sm focus:ring-blue-500"
-                                    >
-                                        <option value="lead">Lead</option>
-                                        <option value="prospect">
-                                            Prospect
-                                        </option>
-                                        <option value="customer">
-                                            Customer
-                                        </option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label
-                                        class="block text-sm text-gray-700 dark:text-gray-300 mb-1"
-                                        >Default Owner</label
-                                    >
-                                    <select
-                                        v-model="
-                                            settingsForm.settings.crm
-                                                .default_owner_id
-                                        "
-                                        class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-slate-700 text-sm focus:ring-blue-500"
-                                    >
-                                        <option :value="null">No owner</option>
-                                        <option
-                                            v-for="member in teamMembers"
-                                            :key="member.id"
-                                            :value="member.id"
-                                        >
-                                            {{ member.name }}
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Mailing List Settings -->
-                        <div>
-                            <h4
-                                class="text-sm font-medium text-gray-900 dark:text-white mb-4"
-                            >
-                                Mailing Lists
-                            </h4>
-                            <div class="space-y-4">
-                                <label class="flex items-center gap-3">
-                                    <input
-                                        v-model="
-                                            settingsForm.settings.mailing_lists
-                                                .enabled
-                                        "
-                                        type="checkbox"
-                                        class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span
-                                        class="text-sm text-gray-700 dark:text-gray-300"
-                                        >Add invitees to mailing lists</span
-                                    >
-                                </label>
-                                <div>
-                                    <label
-                                        class="block text-sm text-gray-700 dark:text-gray-300 mb-2"
-                                        >Default Mailing Lists</label
-                                    >
-                                    <!-- Search Input -->
-                                    <div class="relative mb-2">
-                                        <svg
-                                            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                            />
-                                        </svg>
-                                        <input
-                                            v-model="mailingListSearch"
-                                            type="text"
-                                            placeholder="Search lists..."
-                                            class="w-full pl-9 pr-4 py-2 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white text-sm focus:ring-blue-500 focus:border-blue-500"
-                                        />
-                                    </div>
-                                    <!-- Checkbox List -->
-                                    <div
-                                        class="max-h-48 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700"
-                                    >
-                                        <div
-                                            v-if="
-                                                filteredMailingLists.length ===
-                                                0
-                                            "
-                                            class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center"
-                                        >
-                                            No lists found
-                                        </div>
-                                        <label
-                                            v-for="list in filteredMailingLists"
-                                            :key="list.id"
-                                            class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-600 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
-                                        >
-                                            <input
-                                                :value="list.id"
-                                                v-model="
-                                                    settingsForm.settings
-                                                        .mailing_lists
-                                                        .default_list_ids
-                                                "
-                                                type="checkbox"
-                                                class="rounded border-gray-300 dark:border-gray-500 text-blue-600 focus:ring-blue-500"
-                                            />
-                                            <span
-                                                class="text-sm text-gray-900 dark:text-white"
-                                                >{{ list.name }}</span
-                                            >
-                                        </label>
-                                    </div>
-                                    <p
-                                        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
-                                    >
-                                        {{
-                                            settingsForm.settings.mailing_lists
-                                                .default_list_ids?.length || 0
-                                        }}
-                                        selected
-                                    </p>
-                                </div>
-                                <div>
-                                    <label
-                                        class="block text-sm text-gray-700 dark:text-gray-300 mb-2"
-                                        >Default Tags</label
-                                    >
-                                    <!-- Search Input -->
-                                    <div class="relative mb-2">
-                                        <svg
-                                            class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                            />
-                                        </svg>
-                                        <input
-                                            v-model="tagSearch"
-                                            type="text"
-                                            placeholder="Search tags..."
-                                            class="w-full pl-9 pr-4 py-2 rounded-lg border-gray-300 dark:border-gray-600 dark:bg-slate-700 dark:text-white text-sm focus:ring-blue-500 focus:border-blue-500"
-                                        />
-                                    </div>
-                                    <!-- Checkbox List -->
-                                    <div
-                                        class="max-h-48 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700"
-                                    >
-                                        <div
-                                            v-if="filteredTags.length === 0"
-                                            class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 text-center"
-                                        >
-                                            No tags found
-                                        </div>
-                                        <label
-                                            v-for="tag in filteredTags"
-                                            :key="tag.id"
-                                            class="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-600 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
-                                        >
-                                            <input
-                                                :value="tag.id"
-                                                v-model="
-                                                    settingsForm.settings
-                                                        .mailing_lists
-                                                        .default_tag_ids
-                                                "
-                                                type="checkbox"
-                                                class="rounded border-gray-300 dark:border-gray-500 text-blue-600 focus:ring-blue-500"
-                                            />
-                                            <span
-                                                class="text-sm text-gray-900 dark:text-white"
-                                                >{{ tag.name }}</span
-                                            >
-                                        </label>
-                                    </div>
-                                    <p
-                                        class="mt-1 text-xs text-gray-500 dark:text-gray-400"
-                                    >
-                                        {{
-                                            settingsForm.settings.mailing_lists
-                                                .default_tag_ids?.length || 0
-                                        }}
-                                        selected
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Event Type Specific Mappings -->
-                        <div
-                            v-if="
-                                activeIntegration?.event_types?.length > 0 &&
-                                settingsForm.settings.mailing_lists.enabled
-                            "
+                    <div>
+                        <label for="calendly-crm-owner" :class="labelClass">
+                            {{ t("calendly_settings.crm.default_owner") }}
+                        </label>
+                        <select
+                            id="calendly-crm-owner"
+                            v-model="settingsForm.settings.crm.default_owner_id"
+                            class="mt-1"
+                            :class="fieldClass"
                         >
-                            <h4
-                                class="text-sm font-medium text-gray-900 dark:text-white mb-2"
-                            >
-                                Per Event Type Settings
-                            </h4>
-                            <p
-                                class="text-xs text-gray-500 dark:text-gray-400 mb-4"
-                            >
-                                Override default mailing list settings for
-                                specific event types. If "Use custom settings"
-                                is disabled, the default settings above will be
-                                used.
-                            </p>
-                            <div class="space-y-3">
-                                <div
-                                    v-for="eventType in activeIntegration.event_types"
-                                    :key="eventType.uri"
-                                    class="rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden"
-                                >
-                                    <!-- Event Type Header -->
-                                    <button
-                                        @click="toggleEventType(eventType.uri)"
-                                        type="button"
-                                        class="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-slate-700 hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors text-left"
-                                    >
-                                        <div class="flex items-center gap-3">
-                                            <span
-                                                class="text-sm font-medium text-gray-900 dark:text-white"
-                                            >
-                                                {{ eventType.name }}
-                                            </span>
-                                            <span
-                                                v-if="
-                                                    getEventTypeMapping(
-                                                        eventType.uri,
-                                                    ).use_custom
-                                                "
-                                                class="inline-flex items-center rounded-full bg-blue-100 dark:bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400"
-                                            >
-                                                Custom
-                                            </span>
-                                        </div>
-                                        <svg
-                                            :class="[
-                                                'h-5 w-5 text-gray-400 transition-transform',
-                                                expandedEventTypes[
-                                                    eventType.uri
-                                                ]
-                                                    ? 'rotate-180'
-                                                    : '',
-                                            ]"
-                                            fill="none"
-                                            viewBox="0 0 24 24"
-                                            stroke="currentColor"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                stroke-width="2"
-                                                d="M19 9l-7 7-7-7"
-                                            />
-                                        </svg>
-                                    </button>
-
-                                    <!-- Event Type Settings (Expandable) -->
-                                    <div
-                                        v-if="expandedEventTypes[eventType.uri]"
-                                        class="p-4 space-y-4 bg-white dark:bg-slate-800"
-                                    >
-                                        <label class="flex items-center gap-3">
-                                            <input
-                                                :checked="
-                                                    getEventTypeMapping(
-                                                        eventType.uri,
-                                                    ).use_custom
-                                                "
-                                                @change="
-                                                    updateEventTypeMapping(
-                                                        eventType.uri,
-                                                        'use_custom',
-                                                        $event.target.checked,
-                                                    )
-                                                "
-                                                type="checkbox"
-                                                class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                                            />
-                                            <span
-                                                class="text-sm text-gray-700 dark:text-gray-300"
-                                            >
-                                                Use custom settings for this
-                                                event type
-                                            </span>
-                                        </label>
-
-                                        <div
-                                            v-if="
-                                                getEventTypeMapping(
-                                                    eventType.uri,
-                                                ).use_custom
-                                            "
-                                            class="pl-6 space-y-4"
-                                        >
-                                            <!-- Mailing Lists for this event type -->
-                                            <div>
-                                                <label
-                                                    class="block text-sm text-gray-700 dark:text-gray-300 mb-2"
-                                                >
-                                                    Mailing Lists
-                                                </label>
-                                                <div
-                                                    class="max-h-32 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700"
-                                                >
-                                                    <label
-                                                        v-for="list in mailingLists"
-                                                        :key="list.id"
-                                                        class="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-600 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
-                                                    >
-                                                        <input
-                                                            :value="list.id"
-                                                            :checked="
-                                                                getEventTypeMapping(
-                                                                    eventType.uri,
-                                                                ).list_ids?.includes(
-                                                                    list.id,
-                                                                )
-                                                            "
-                                                            @change="
-                                                                (e) => {
-                                                                    const mapping =
-                                                                        getEventTypeMapping(
-                                                                            eventType.uri,
-                                                                        );
-                                                                    let ids = [
-                                                                        ...(mapping.list_ids ||
-                                                                            []),
-                                                                    ];
-                                                                    if (
-                                                                        e.target
-                                                                            .checked
-                                                                    ) {
-                                                                        if (
-                                                                            !ids.includes(
-                                                                                list.id,
-                                                                            )
-                                                                        ) {
-                                                                            ids.push(
-                                                                                list.id,
-                                                                            );
-                                                                        }
-                                                                    } else {
-                                                                        ids =
-                                                                            ids.filter(
-                                                                                (
-                                                                                    id,
-                                                                                ) =>
-                                                                                    id !==
-                                                                                    list.id,
-                                                                            );
-                                                                    }
-                                                                    updateEventTypeMapping(
-                                                                        eventType.uri,
-                                                                        'list_ids',
-                                                                        ids,
-                                                                    );
-                                                                }
-                                                            "
-                                                            type="checkbox"
-                                                            class="rounded border-gray-300 dark:border-gray-500 text-blue-600 focus:ring-blue-500"
-                                                        />
-                                                        <span
-                                                            class="text-sm text-gray-900 dark:text-white"
-                                                        >
-                                                            {{ list.name }}
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            <!-- Tags for this event type -->
-                                            <div>
-                                                <label
-                                                    class="block text-sm text-gray-700 dark:text-gray-300 mb-2"
-                                                >
-                                                    Tags
-                                                </label>
-                                                <div
-                                                    class="max-h-32 overflow-y-auto rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-700"
-                                                >
-                                                    <label
-                                                        v-for="tag in tags"
-                                                        :key="tag.id"
-                                                        class="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 dark:hover:bg-slate-600 cursor-pointer transition-colors border-b border-gray-100 dark:border-gray-600 last:border-b-0"
-                                                    >
-                                                        <input
-                                                            :value="tag.id"
-                                                            :checked="
-                                                                getEventTypeMapping(
-                                                                    eventType.uri,
-                                                                ).tag_ids?.includes(
-                                                                    tag.id,
-                                                                )
-                                                            "
-                                                            @change="
-                                                                (e) => {
-                                                                    const mapping =
-                                                                        getEventTypeMapping(
-                                                                            eventType.uri,
-                                                                        );
-                                                                    let ids = [
-                                                                        ...(mapping.tag_ids ||
-                                                                            []),
-                                                                    ];
-                                                                    if (
-                                                                        e.target
-                                                                            .checked
-                                                                    ) {
-                                                                        if (
-                                                                            !ids.includes(
-                                                                                tag.id,
-                                                                            )
-                                                                        ) {
-                                                                            ids.push(
-                                                                                tag.id,
-                                                                            );
-                                                                        }
-                                                                    } else {
-                                                                        ids =
-                                                                            ids.filter(
-                                                                                (
-                                                                                    id,
-                                                                                ) =>
-                                                                                    id !==
-                                                                                    tag.id,
-                                                                            );
-                                                                    }
-                                                                    updateEventTypeMapping(
-                                                                        eventType.uri,
-                                                                        'tag_ids',
-                                                                        ids,
-                                                                    );
-                                                                }
-                                                            "
-                                                            type="checkbox"
-                                                            class="rounded border-gray-300 dark:border-gray-500 text-blue-600 focus:ring-blue-500"
-                                                        />
-                                                        <span
-                                                            class="text-sm text-gray-900 dark:text-white"
-                                                        >
-                                                            {{ tag.name }}
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Automation Settings -->
-                        <div>
-                            <h4
-                                class="text-sm font-medium text-gray-900 dark:text-white mb-4"
-                            >
-                                Automation Triggers
-                            </h4>
-                            <div class="space-y-3">
-                                <label class="flex items-center gap-3">
-                                    <input
-                                        v-model="
-                                            settingsForm.settings.automation
-                                                .trigger_on_booking
-                                        "
-                                        type="checkbox"
-                                        class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span
-                                        class="text-sm text-gray-700 dark:text-gray-300"
-                                        >Trigger on new booking</span
-                                    >
-                                </label>
-                                <label class="flex items-center gap-3">
-                                    <input
-                                        v-model="
-                                            settingsForm.settings.automation
-                                                .trigger_on_cancellation
-                                        "
-                                        type="checkbox"
-                                        class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span
-                                        class="text-sm text-gray-700 dark:text-gray-300"
-                                        >Trigger on cancellation</span
-                                    >
-                                </label>
-                                <label class="flex items-center gap-3">
-                                    <input
-                                        v-model="
-                                            settingsForm.settings.automation
-                                                .trigger_on_no_show
-                                        "
-                                        type="checkbox"
-                                        class="rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
-                                    />
-                                    <span
-                                        class="text-sm text-gray-700 dark:text-gray-300"
-                                        >Trigger on no-show</span
-                                    >
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div
-                        class="sticky bottom-0 bg-gray-50 dark:bg-slate-900 px-6 py-4 border-t border-gray-200 dark:border-white/10 flex justify-end gap-3"
-                    >
-                        <button
-                            @click="showSettingsModal = false"
-                            class="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/5 transition-colors"
-                        >
-                            Cancel
-                        </button>
-                        <button
-                            @click="saveSettings"
-                            :disabled="saving"
-                            class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                        >
-                            <span v-if="saving">Saving...</span>
-                            <span v-else>Save Settings</span>
-                        </button>
+                            <option :value="null">{{ t("calendly_settings.crm.no_owner") }}</option>
+                            <option v-for="member in teamMembers" :key="member.id" :value="member.id">
+                                {{ member.name }}
+                            </option>
+                        </select>
                     </div>
                 </div>
             </div>
-        </Teleport>
 
-        <!-- Toast -->
-        <Teleport to="body">
-            <Transition
-                enter-active-class="transition ease-out duration-300"
-                enter-from-class="transform translate-y-2 opacity-0"
-                enter-to-class="transform translate-y-0 opacity-100"
-                leave-active-class="transition ease-in duration-200"
-                leave-from-class="transform translate-y-0 opacity-100"
-                leave-to-class="transform translate-y-2 opacity-0"
-            >
-                <div
-                    v-if="showToast"
-                    class="fixed bottom-6 right-6 z-50 rounded-lg bg-gray-900 dark:bg-white px-4 py-3 text-sm text-white dark:text-gray-900 shadow-lg"
-                >
-                    {{ toastMessage }}
-                </div>
-            </Transition>
-        </Teleport>
+            <!-- Lists and tags every invitee gets -->
+            <div v-show="settingsTab === 'lists'" class="space-y-4">
+                <label :class="optionRow">
+                    <input v-model="settingsForm.settings.mailing_lists.enabled" type="checkbox" :class="tick" />
+                    {{ t("calendly_settings.lists.enabled") }}
+                </label>
+
+                <template v-if="settingsForm.settings.mailing_lists.enabled">
+                    <CheckList
+                        v-model="settingsForm.settings.mailing_lists.default_list_ids"
+                        :items="mailingLists"
+                        :label="t('calendly_settings.lists.default_lists')"
+                        :search-placeholder="t('calendly_settings.lists.search_lists')"
+                        :empty-text="t('calendly_settings.lists.no_lists')"
+                    />
+                    <CheckList
+                        v-model="settingsForm.settings.mailing_lists.default_tag_ids"
+                        :items="tags"
+                        :label="t('calendly_settings.lists.default_tags')"
+                        :search-placeholder="t('calendly_settings.lists.search_tags')"
+                        :empty-text="t('calendly_settings.lists.no_tags')"
+                    />
+                </template>
+            </div>
+
+            <!-- Other lists and tags for chosen event types -->
+            <div v-show="settingsTab === 'event_types'" class="space-y-4">
+                <Notice v-if="!settingsForm.settings.mailing_lists.enabled" tone="info">
+                    {{ t("calendly_settings.per_type.lists_off") }}
+                </Notice>
+                <p v-else-if="!configured?.event_types?.length" class="text-sm text-slate-600 dark:text-slate-400">
+                    {{ t("calendly_settings.per_type.none") }}
+                </p>
+                <template v-else>
+                    <p class="text-sm text-slate-600 dark:text-slate-400">{{ t("calendly_settings.per_type.intro") }}</p>
+
+                    <div
+                        v-for="eventType in configured.event_types"
+                        :key="eventType.uri"
+                        class="rounded-xl border border-slate-200 dark:border-slate-700/60"
+                    >
+                        <div class="flex items-center justify-between gap-3 px-4 py-3">
+                            <span class="min-w-0">
+                                <span class="block break-words text-sm font-medium text-slate-900 dark:text-white">
+                                    {{ eventType.name }}
+                                </span>
+                                <span :class="hintClass" class="!mt-0 block">
+                                    {{
+                                        mappingOf(eventType.uri).use_custom
+                                            ? t("calendly_settings.per_type.custom")
+                                            : t("calendly_settings.per_type.default")
+                                    }}
+                                </span>
+                            </span>
+                            <Switch
+                                :model-value="!!mappingOf(eventType.uri).use_custom"
+                                :label="t('calendly_settings.per_type.switch_label', { name: eventType.name })"
+                                @update:model-value="setMapping(eventType.uri, 'use_custom', $event)"
+                            />
+                        </div>
+
+                        <div
+                            v-if="mappingOf(eventType.uri).use_custom"
+                            class="space-y-4 border-t border-slate-200 px-4 py-4 dark:border-slate-700/60"
+                        >
+                            <CheckList
+                                :model-value="mappingOf(eventType.uri).list_ids || []"
+                                :items="mailingLists"
+                                :label="t('calendly_settings.per_type.lists')"
+                                :search-placeholder="t('calendly_settings.lists.search_lists')"
+                                :empty-text="t('calendly_settings.lists.no_lists')"
+                                @update:model-value="setMapping(eventType.uri, 'list_ids', $event)"
+                            />
+                            <CheckList
+                                :model-value="mappingOf(eventType.uri).tag_ids || []"
+                                :items="tags"
+                                :label="t('calendly_settings.per_type.tags')"
+                                :search-placeholder="t('calendly_settings.lists.search_tags')"
+                                :empty-text="t('calendly_settings.lists.no_tags')"
+                                @update:model-value="setMapping(eventType.uri, 'tag_ids', $event)"
+                            />
+                        </div>
+                    </div>
+                </template>
+            </div>
+
+            <!-- Which events start automations -->
+            <div v-show="settingsTab === 'automation'" class="space-y-1">
+                <p class="mb-3 text-sm text-slate-600 dark:text-slate-400">{{ t("calendly_settings.automation.intro") }}</p>
+                <label :class="optionRow">
+                    <input v-model="settingsForm.settings.automation.trigger_on_booking" type="checkbox" :class="tick" />
+                    {{ t("calendly_settings.automation.booking") }}
+                </label>
+                <label :class="optionRow">
+                    <input
+                        v-model="settingsForm.settings.automation.trigger_on_cancellation"
+                        type="checkbox"
+                        :class="tick"
+                    />
+                    {{ t("calendly_settings.automation.cancellation") }}
+                </label>
+                <label :class="optionRow">
+                    <input v-model="settingsForm.settings.automation.trigger_on_no_show" type="checkbox" :class="tick" />
+                    {{ t("calendly_settings.automation.no_show") }}
+                </label>
+            </div>
+            </div>
+        </FormDialog>
+
+        <ConfirmModal
+            :show="!!toDisconnect"
+            type="danger"
+            :title="t('calendly_settings.disconnect.title')"
+            :message="t('calendly_settings.disconnect.message')"
+            :confirm-text="toDisconnect?.is_pending ? t('common.delete') : t('calendly_settings.actions.disconnect')"
+            :processing="disconnecting"
+            @close="toDisconnect = null"
+            @confirm="disconnect"
+        >
+            {{ toDisconnect ? nameOf(toDisconnect) : "" }}
+        </ConfirmModal>
+
+        <!-- A dialog is in the top layer: while one is open the page's toast would sit under it -->
+        <Toast :toast="showConnect || configured ? null : toast" @close="dismiss" />
     </AuthenticatedLayout>
 </template>

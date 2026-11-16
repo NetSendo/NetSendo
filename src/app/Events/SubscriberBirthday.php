@@ -14,6 +14,8 @@ class SubscriberBirthday
     public int $subscriberId;
     public int $userId;
     public ?int $age;
+    /** @var int[] lists the subscriber is an active member of */
+    public array $listIds;
 
     /**
      * Create a new event instance.
@@ -21,11 +23,13 @@ class SubscriberBirthday
     public function __construct(
         int $subscriberId,
         int $userId,
-        ?int $age = null
+        ?int $age = null,
+        array $listIds = []
     ) {
         $this->subscriberId = $subscriberId;
         $this->userId = $userId;
         $this->age = $age;
+        $this->listIds = $listIds;
     }
 
     /**
@@ -37,6 +41,7 @@ class SubscriberBirthday
             'subscriber_id' => $this->subscriberId,
             'user_id' => $this->userId,
             'age' => $this->age,
+            'list_ids' => $this->listIds,
         ];
     }
 

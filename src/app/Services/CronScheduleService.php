@@ -416,6 +416,11 @@ class CronScheduleService
 
                     // A/B Test handling - check sample_percentage limit
                     $abTest = $message->abTest;
+                    // A/B tests are GOLD: without it a draft test is cancelled and the
+                    // message goes out as written
+                    if ($abTest && app(AbTestService::class)->cancelDraftWithoutLicence($abTest)) {
+                        $abTest = null;
+                    }
                     if ($abTest && in_array($abTest->status, [AbTest::STATUS_DRAFT, AbTest::STATUS_RUNNING])) {
                         // Calculate sample size
                         $totalRecipients = $message->planned_recipients_count ?: $message->getUniqueRecipients()->count();

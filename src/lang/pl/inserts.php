@@ -19,6 +19,8 @@ return [
         'links' => 'Linki',
         'unsubscribe_link' => 'Link wypisu',
         'unsubscribe_link_desc' => 'Link do wypisania się z listy (wymagany)',
+        'unsubscribe_now' => 'Wypis jednym kliknięciem',
+        'unsubscribe_now_desc' => 'Strona z jednym przyciskiem, który od razu wypisuje: z listy tej wiadomości albo ze wszystkich list. Bez e-maila z potwierdzeniem i bez strony ustawień',
         'manage_link' => 'Zarządzanie subskrypcją',
         'manage_link_desc' => 'Link do edycji danych subskrybenta',
         
@@ -46,4 +48,8 @@ return [
         'gender_form' => 'Odmiana przez płeć',
         'gender_form_desc' => 'Wstawia formę męską lub żeńską (np. zrobiłeś|zrobiłaś)',
     ],
+
+    'created' => 'Wstawka została utworzona',
+    'deleted' => 'Wstawka została usunięta',
+    'updated' => 'Wstawka została zaktualizowana',
 ];

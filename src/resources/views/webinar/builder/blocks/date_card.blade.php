@@ -1,6 +1,6 @@
 @php
     $start = $ctx['start_at'] ?? $webinar->scheduled_at;
-    $timezone = $ctx['displayTimezone'] ?? $ctx['scheduleTimezone'] ?? $webinar->timezone ?? 'UTC';
+    $timezone = $ctx['displayTimezone'] ?? $ctx['scheduleTimezone'] ?? $webinar->effective_timezone;
     $display = $start ? $start->copy()->setTimezone($timezone) : null;
     $title = trim($props['title']) !== '' ? $props['title'] : __('webinars.public.register.starts_at');
 @endphp

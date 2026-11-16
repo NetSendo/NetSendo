@@ -115,7 +115,7 @@ class AutomationCatalog
             'date_reached' => ['group' => 'dates', 'description' => 'Runs once on the given date (daily CRON) for every subscriber of the account', 'config' => [
                 'date' => self::field('date', true, 'The day to run, YYYY-MM-DD', '2026-12-24'),
             ]],
-            'subscriber_birthday' => ['group' => 'dates', 'description' => "Runs daily for subscribers whose birthday is today (needs the subscriber's birthday field)", 'config' => []],
+            'subscriber_birthday' => ['group' => 'dates', 'description' => "Runs daily for subscribers whose birthday is today (the birthday is a custom field of type date whose name or label contains 'urodzin' or 'birth')", 'config' => []],
             'subscription_anniversary' => ['group' => 'dates', 'description' => 'Runs daily for subscribers whose signup anniversary is today', 'config' => []],
             'purchase' => ['group' => 'ecommerce', 'description' => 'A purchase is reported to the purchase webhook (POST /api/webhooks/purchase)', 'config' => [
                 'product_id' => $productId,

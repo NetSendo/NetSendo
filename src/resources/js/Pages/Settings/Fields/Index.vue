@@ -66,7 +66,7 @@ const deleteField = () => {
             showToast(t('fields.notifications.deleted'));
         },
         onError: () => {
-            showToast(t('common.notifications.error'), false);
+            showToast(t('common.notifications.error_occurred'), false);
         },
     });
 };

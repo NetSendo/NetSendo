@@ -14,6 +14,7 @@
         "dedoc/scramble": "^0.13.8",
         "inertiajs/inertia-laravel": "^3.0",
         "laravel/framework": "^13.40",
+        "laravel/mcp": "^1.2",
         "laravel/reverb": "^1.7",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",

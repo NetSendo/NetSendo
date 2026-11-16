@@ -2,9 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Services\UpdateCheckService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class CheckForUpdates extends Command
@@ -14,7 +13,7 @@ class CheckForUpdates extends Command
      *
      * @var string
      */
-    protected $signature = 'netsendo:check-updates {--force : Bypass cache and force refresh}';
+    protected $signature = 'netsendo:check-updates {--force : Ask GitHub now instead of using the cached release list}';
 
     /**
      * The console command description.
@@ -24,146 +23,74 @@ class CheckForUpdates extends Command
     protected $description = 'Check for available NetSendo updates from GitHub';
 
     /**
-     * Execute the console command.
+     * Scheduled hourly: it refreshes the cached release list when it has expired, so the
+     * sidebar rarely has to ask GitHub itself. GitHub being out of reach (no outbound
+     * connection, the API rate limit of a shared IP) is not a failure of this installation:
+     * the command says so and exits 0, instead of an hourly "failed with exit code 1"
+     * error in the log.
      */
-    public function handle(): int
+    public function handle(UpdateCheckService $updates): int
     {
-        $currentVersion = config('netsendo.version');
-        $githubRepo = config('netsendo.github_repo');
+        $currentVersion = (string) config('netsendo.version');
 
-        if (empty($githubRepo)) {
+        if (empty(config('netsendo.github_repo'))) {
             $this->info('Version checking is disabled (no GitHub repo configured).');
             return self::SUCCESS;
         }
 
-        // Always fetch fresh data from GitHub (no cache)
-        // Cache was causing delays in update detection and stale data after updates
-
         $this->info("Checking for updates... (current: v{$currentVersion})");
 
-        try {
-            $response = Http::timeout(15)
-                ->withHeaders([
-                    'Accept' => 'application/vnd.github.v3+json',
-                    'User-Agent' => 'NetSendo-Version-Check',
-                ])
-                ->get("https://api.github.com/repos/{$githubRepo}/releases");
+        $status = $updates->status(fresh: (bool) $this->option('force'));
 
-            if (!$response->successful()) {
-                $this->error('Failed to connect to GitHub API.');
-                Log::warning('NetSendo update check failed: GitHub API error', [
-                    'status' => $response->status(),
-                ]);
-                return self::FAILURE;
-            }
-
-            $releases = $response->json();
-            
-            if (!is_array($releases) || empty($releases)) {
-                $this->info('No releases found on GitHub.');
-                return self::SUCCESS;
-            }
-
-            // Process releases
-            $newVersions = [];
-            foreach ($releases as $release) {
-                if ($release['prerelease'] ?? false) {
-                    continue;
-                }
-
-                $tagName = $release['tag_name'] ?? '';
-                $version = ltrim($tagName, 'v');
-
-                if ($this->isNewerVersion($version, $currentVersion)) {
-                    $newVersions[] = [
-                        'version' => $version,
-                        'tag' => $tagName,
-                        'name' => $release['name'] ?? $tagName,
-                        'published_at' => $release['published_at'] ?? null,
-                        'url' => $release['html_url'] ?? '',
-                    ];
-                }
-            }
-
-            // Sort by version descending
-            usort($newVersions, fn($a, $b) => version_compare($b['version'], $a['version']));
-
-            $latestVersion = !empty($newVersions) ? $newVersions[0]['version'] : $currentVersion;
-
-            $result = [
-                'current_version' => $currentVersion,
-                'latest_version' => $latestVersion,
-                'updates_available' => !empty($newVersions),
-                'update_count' => count($newVersions),
-                'new_versions' => array_slice($newVersions, 0, 5),
-                'checked_at' => now()->toIso8601String(),
-            ];
-
-            $this->displayResult($result, $currentVersion, false);
-
-            // Log if updates are available
-            if (!empty($newVersions)) {
-                Log::info('NetSendo updates available', [
-                    'current' => $currentVersion,
-                    'latest' => $latestVersion,
-                    'count' => count($newVersions),
-                ]);
+        if (isset($status['error'])) {
+            $this->warn('Could not check for updates: ' . $updates->lastError());
+            if ($updates->lastRateLimited()) {
+                $this->line('   The next check waits until GitHub resets the limit.');
             }
 
             return self::SUCCESS;
-
-        } catch (\Exception $e) {
-            $this->error('Error checking for updates: ' . $e->getMessage());
-            Log::error('NetSendo update check error', [
-                'error' => $e->getMessage(),
-            ]);
-            return self::FAILURE;
         }
+
+        $this->displayResult($status, $currentVersion);
+
+        if ($status['updates_available']) {
+            Log::info('NetSendo updates available', [
+                'current' => $currentVersion,
+                'latest' => $status['latest_version'],
+                'count' => $status['update_count'],
+            ]);
+        }
+
+        return self::SUCCESS;
     }
 
     /**
      * Display the result in console.
      */
-    private function displayResult(array $result, string $currentVersion, bool $fromCache): void
+    private function displayResult(array $result, string $currentVersion): void
     {
-        $source = $fromCache ? ' (cached)' : '';
+        if (! ($result['updates_available'] ?? false)) {
+            $this->info("✓ Up to date (v{$currentVersion})");
+            return;
+        }
 
-        if ($result['updates_available'] ?? false) {
-            $count = $result['update_count'] ?? 0;
-            $latest = $result['latest_version'] ?? $currentVersion;
-            
+        $count = $result['update_count'] ?? 0;
+        $latest = $result['latest_version'] ?? $currentVersion;
+
+        $this->newLine();
+        $this->warn("⚠️  {$count} update(s) available!");
+        $this->info("   Current: v{$currentVersion}");
+        $this->info("   Latest:  v{$latest}");
+
+        if (! empty($result['new_versions'])) {
             $this->newLine();
-            $this->warn("⚠️  {$count} update(s) available!{$source}");
-            $this->info("   Current: v{$currentVersion}");
-            $this->info("   Latest:  v{$latest}");
-            
-            if (!empty($result['new_versions'])) {
-                $this->newLine();
-                $this->line('   Available versions:');
-                foreach (array_slice($result['new_versions'], 0, 3) as $version) {
-                    $this->line("   - v{$version['version']} ({$version['name']})");
-                }
+            $this->line('   Available versions:');
+            foreach (array_slice($result['new_versions'], 0, 3) as $version) {
+                $this->line("   - v{$version['version']} ({$version['name']})");
             }
-            
-            $this->newLine();
-            $this->info('   Download: ' . config('netsendo.github_releases_url'));
-        } else {
-            $this->info("✓ Up to date (v{$currentVersion}){$source}");
-        }
-    }
-
-    /**
-     * Compare versions using semantic versioning.
-     */
-    private function isNewerVersion(string $version, string $currentVersion): bool
-    {
-        $version = preg_replace('/[^0-9.]/', '', $version);
-        $currentVersion = preg_replace('/[^0-9.]/', '', $currentVersion);
-
-        if (empty($version) || empty($currentVersion)) {
-            return false;
         }
 
-        return version_compare($version, $currentVersion, '>');
+        $this->newLine();
+        $this->info('   Download: ' . config('netsendo.github_releases_url'));
     }
 }

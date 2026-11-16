@@ -260,7 +260,7 @@ class AutomationRule extends Model
     public function duplicate(): self
     {
         $newRule = $this->replicate();
-        $newRule->name = '[KOPIA] ' . $this->name;
+        $newRule->name = __('common.copy.prefix') . ' ' . $this->name;
         $newRule->is_active = false;
         $newRule->execution_count = 0;
         $newRule->last_executed_at = null;

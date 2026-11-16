@@ -48,6 +48,10 @@ class ApiKey extends Model
         'messages:write',
         'funnels:read',
         'funnels:write',
+        // NetSendo Brain: read = conversations, knowledge, plans and settings (never the
+        // stored secrets); write = chat, knowledge and settings changes, plan approval, Telegram
+        'brain:read',
+        'brain:write',
     ];
 
     /**

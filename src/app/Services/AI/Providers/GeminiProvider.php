@@ -3,11 +3,57 @@
 namespace App\Services\AI\Providers;
 
 use App\Services\AI\BaseProvider;
+use App\Services\AI\EmbeddingProviderInterface;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-class GeminiProvider extends BaseProvider
+class GeminiProvider extends BaseProvider implements EmbeddingProviderInterface
 {
+    public function embeddingModels(): array
+    {
+        return ['gemini-embedding-001'];
+    }
+
+    public function embed(array $texts, ?string $model = null, array $options = []): array
+    {
+        if ($texts === []) {
+            return [];
+        }
+
+        $model = $model ?: $this->embeddingModels()[0];
+        $taskType = ($options['purpose'] ?? 'document') === 'query' ? 'RETRIEVAL_QUERY' : 'RETRIEVAL_DOCUMENT';
+
+        $requests = [];
+        foreach (array_values($texts) as $text) {
+            $request = [
+                'model' => "models/{$model}",
+                'content' => ['parts' => [['text' => $text]]],
+                'taskType' => $taskType,
+            ];
+            if (!empty($options['dimensions'])) {
+                $request['outputDimensionality'] = (int) $options['dimensions'];
+            }
+            $requests[] = $request;
+        }
+
+        // The key goes in a header, so it never lands in a logged URL
+        $response = Http::withHeaders(['x-goog-api-key' => (string) $this->getApiKey()])
+            ->timeout($options['timeout'] ?? 60)
+            ->post($this->getBaseUrl() . "/models/{$model}:batchEmbedContents", ['requests' => $requests]);
+
+        if (!$response->successful()) {
+            $error = $response->json('error.message') ?? mb_substr($response->body(), 0, 300);
+            throw new \RuntimeException("Embedding request failed ({$response->status()}): {$error}");
+        }
+
+        $embeddings = $response->json('embeddings');
+        if (!is_array($embeddings) || count($embeddings) !== count($texts)) {
+            throw new \RuntimeException('Embedding response has no vectors for every text.');
+        }
+
+        return array_map(fn ($item) => array_map('floatval', $item['values'] ?? []), $embeddings);
+    }
+
     protected function getDefaultModel(): string
     {
         return 'gemini-2.5-pro';
@@ -100,10 +146,7 @@ class GeminiProvider extends BaseProvider
                             ],
                         ],
                     ],
-                    'generationConfig' => [
-                        'maxOutputTokens' => $options['max_tokens'] ?? 65536,
-                        'temperature' => $options['temperature'] ?? 0.7,
-                    ],
+                    'generationConfig' => $this->generationConfig($modelId, $options, 65536),
                 ]);
 
             if (!$response->successful()) {
@@ -143,10 +186,7 @@ class GeminiProvider extends BaseProvider
                             ],
                         ],
                     ],
-                    'generationConfig' => [
-                        'maxOutputTokens' => $options['max_tokens'] ?? 65536,
-                        'temperature' => $options['temperature'] ?? 0.7,
-                    ],
+                    'generationConfig' => $this->generationConfig($modelId, $options, 65536),
                 ]);
 
             if (!$response->successful()) {
@@ -169,11 +209,39 @@ class GeminiProvider extends BaseProvider
             return [
                 'text' => $text,
                 'tokens_input' => (int) ($usage['promptTokenCount'] ?? 0),
-                'tokens_output' => (int) ($usage['candidatesTokenCount'] ?? 0),
+                // Thinking tokens are billed as output too
+                'tokens_output' => (int) ($usage['candidatesTokenCount'] ?? 0) + (int) ($usage['thoughtsTokenCount'] ?? 0),
             ];
         } catch (\Exception $e) {
             throw new \Exception('Gemini Error: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Generation settings for the model. Gemini 2.5 and later think before answering, and the
+     * thinking counts against maxOutputTokens: with a small limit the answer came back empty.
+     * Flash models skip thinking for short answers; the others get room for it on top of the limit.
+     */
+    protected function generationConfig(string $modelId, array $options, int $defaultMaxTokens, float $defaultTemperature = 0.7): array
+    {
+        $maxTokens = (int) ($options['max_tokens'] ?? $defaultMaxTokens);
+        $config = [
+            'maxOutputTokens' => $maxTokens,
+            'temperature' => $options['temperature'] ?? $defaultTemperature,
+        ];
+
+        $id = strtolower($modelId);
+        if (str_starts_with($id, 'gemini-2.5-flash')) {
+            if ($maxTokens <= 4096) {
+                $config['thinkingConfig'] = ['thinkingBudget' => 0];
+            }
+        } elseif (str_starts_with($id, 'gemini-2.5') || preg_match('/^gemini-[3-9]/', $id)) {
+            if ($maxTokens < 8192) {
+                $config['maxOutputTokens'] = $maxTokens + 8192;
+            }
+        }
+
+        return $config;
     }
 
     private function formatModelName(string $modelId): string
@@ -227,10 +295,7 @@ class GeminiProvider extends BaseProvider
                             ],
                         ],
                     ],
-                    'generationConfig' => [
-                        'maxOutputTokens' => $options['max_tokens'] ?? 2000,
-                        'temperature' => $options['temperature'] ?? 0.3,
-                    ],
+                    'generationConfig' => $this->generationConfig($modelId, $options, 2000, 0.3),
                 ]);
 
             if (!$response->successful()) {
@@ -274,10 +339,7 @@ class GeminiProvider extends BaseProvider
                     ],
                 ],
             ],
-            'generationConfig' => [
-                'maxOutputTokens' => $options['max_tokens'] ?? 65536,
-                'temperature' => $options['temperature'] ?? 0.7,
-            ],
+            'generationConfig' => $this->generationConfig($modelId, $options, 65536),
         ];
 
         // Gemini uses API key in URL, no Bearer auth needed

@@ -424,6 +424,9 @@ class MessageController extends Controller
             ],
         ] + $this->fieldFilterRules($user->id) + $this->editorRules($user->id));
 
+        // A/B tests are GOLD: 402 before anything is saved
+        $this->editor->ensureAbTestAllowed($validated['ab_test_config'] ?? []);
+
         // Create message
         $message = Message::create([
             'user_id' => $user->id,
@@ -536,6 +539,9 @@ class MessageController extends Controller
                 Rule::exists('contact_lists', 'id')->where('user_id', $user->id),
             ],
         ] + $this->fieldFilterRules($user->id) + $this->editorRules($user->id));
+
+        // A/B tests are GOLD: 402 before anything is saved
+        $this->editor->ensureAbTestAllowed($validated['ab_test_config'] ?? [], $message);
 
         // Related rows (lists, filters, tags, ...) live in their own tables
         $message->update(collect($validated)

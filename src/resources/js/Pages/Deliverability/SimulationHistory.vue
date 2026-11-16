@@ -104,22 +104,22 @@ const getScoreColor = (score) => {
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
                             >
-                                {{ $t("deliverability.subject") }}
+                                {{ $t("deliverability.table.subject") }}
                             </th>
                             <th
                                 class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
                             >
-                                {{ $t("deliverability.domain") }}
+                                {{ $t("deliverability.table.domain") }}
                             </th>
                             <th
                                 class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
                             >
-                                {{ $t("deliverability.score") }}
+                                {{ $t("deliverability.table.score") }}
                             </th>
                             <th
                                 class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
                             >
-                                {{ $t("deliverability.folder") }}
+                                {{ $t("deliverability.table.folder") }}
                             </th>
                             <th
                                 class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"

@@ -111,7 +111,8 @@ class CronJobLog extends Model
             return null;
         }
 
-        return $this->completed_at->diffInSeconds($this->started_at);
+        // Carbon 3 diffs are signed floats: completed->diffInSeconds(started) is negative
+        return (int) $this->started_at->diffInSeconds($this->completed_at);
     }
 
     /**

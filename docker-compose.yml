@@ -40,6 +40,8 @@ services:
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       # Persistent user data
       - netsendo-storage:/var/www/storage/app
+      # NMI: logins of the NetSendo MTA, written here and read by the nmi-mta container
+      - nmi-auth:/var/www/storage/app/nmi-mta
       - netsendo-logs:/var/www/storage/logs
       # Shared volume for nginx to serve static files
       - netsendo-public:/var/www/public
@@ -80,8 +82,11 @@ services:
       - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       - netsendo-storage:/var/www/storage/app
+      - nmi-auth:/var/www/storage/app/nmi-mta
       - netsendo-logs:/var/www/storage/logs
     environment:
+      # Only the app migrates and seeds; this container waits for the schema
+      - NETSENDO_RUN_MIGRATIONS=false
       - DB_HOST=db
       - REDIS_HOST=redis
       - MAIL_HOST=${MAIL_HOST:-mailpit}
@@ -116,8 +121,11 @@ services:
       - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
       - ./docker/php/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini:ro
       - netsendo-storage:/var/www/storage/app
+      - nmi-auth:/var/www/storage/app/nmi-mta
       - netsendo-logs:/var/www/storage/logs
     environment:
+      # Only the app migrates and seeds; this container waits for the schema
+      - NETSENDO_RUN_MIGRATIONS=false
       - DB_HOST=db
       - REDIS_HOST=redis
       - MAIL_HOST=${MAIL_HOST:-mailpit}
@@ -150,9 +158,17 @@ services:
       - ./docker/php/docker-entrypoint.sh:/usr/local/bin/docker-entrypoint.sh:ro
       - netsendo-storage:/var/www/storage/app
       - netsendo-logs:/var/www/storage/logs
+    # Browsers connect here for Live Visitors. REVERB_PORT is also the port the app
+    # containers use to reach Reverb inside the network (always 8085), so pick another
+    # host port with REVERB_HOST_PORT. Behind a reverse proxy that forwards /app/ to
+    # this port, set REVERB_BIND_ADDRESS=127.0.0.1 so it is not reachable from outside.
+    # Keep every default one level deep: podman-compose does not expand nested ones
+    # like ${A:-${B:-x}} and then refuses to start the stack ("invalid port format").
     ports:
-      - "${REVERB_PORT:-8085}:8085"
+      - "${REVERB_BIND_ADDRESS:-0.0.0.0}:${REVERB_HOST_PORT:-8085}:8085"
     environment:
+      # Only the app migrates and seeds; this container waits for the schema
+      - NETSENDO_RUN_MIGRATIONS=false
       - DB_HOST=db
       - REDIS_HOST=redis
       - REVERB_SERVER_HOST=0.0.0.0
@@ -189,8 +205,15 @@ services:
     depends_on:
       app:
         condition: service_healthy
+        # nginx looks the app's address up once, at start (fastcgi_pass app:9000). An
+        # update recreates the app container, which often gets a new address: without
+        # this restart every page answers 502 until the webserver is restarted by hand.
+        # Docker Compose 2.17+ restarts the webserver whenever it recreates the app.
+        restart: true
     healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost/"]
+      # 127.0.0.1, not localhost: in this image localhost resolves to ::1 first,
+      # where nginx (listen 80) does not listen, so the check always failed.
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1/"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -306,21 +329,24 @@ services:
   # =============================================================================
   # NMI - NetSendo Mail Infrastructure (Haraka MTA)
   # =============================================================================
-  # Built-in mail transfer agent for sending emails with dedicated IPs.
-  # Only enable if NMI feature is activated.
+  # NetSendo's own mail server, for mailboxes with the "NetSendo MTA" provider (GOLD).
+  # It starts with the rest of the stack and does nothing until a GOLD installation
+  # saves such a mailbox: it relays only mail that logs in with a login NetSendo
+  # issued. It also checks whether this server can send on port 25 and which public
+  # address and PTR name receivers see; Settings -> Mailboxes shows the result, with
+  # what to set up (PTR, SPF). NMI_ENABLED=false in .env hides the provider.
+  # Configuration and plugins are part of the image (docker/haraka).
   nmi-mta:
-    build:
-      context: ./docker/haraka
-      dockerfile: Dockerfile
+    image: ghcr.io/netsendo/netsendo:mta-${NETSENDO_VERSION:-latest}
     container_name: netsendo-mta
     restart: unless-stopped
-    profiles:
-      - nmi  # Only starts when explicitly enabled with --profile nmi
-    ports:
-      - "127.0.0.1:${NMI_SMTP_PORT:-2525}:25"
-      - "127.0.0.1:${NMI_SUBMISSION_PORT:-2587}:587"
+    # The app starts first, so the nmi-auth volume is created with the app's ownership
+    depends_on:
+      app:
+        condition: service_started
     volumes:
-      - ./docker/haraka/config:/opt/haraka/config:ro
+      # Logins of the sending domains, written by the app (storage/app/nmi-mta/auth.json)
+      - nmi-auth:/opt/haraka/netsendo:ro
       - nmi-queue:/opt/haraka/queue
       - nmi-logs:/opt/haraka/logs
       # DKIM keys - managed by application
@@ -329,6 +355,14 @@ services:
       - nmi-tls:/opt/haraka/config/tls
     environment:
       - NODE_ENV=production
+      # HELO name of mail without a dedicated IP. Empty: the PTR name of the server's
+      # public address, when it resolves back to the address
+      - NMI_HELO_HOST=${NMI_HELO_HOST:-}
+      # Dedicated IPs the provider translates to a private address on the server:
+      # "public=private,public=private" (see docker-compose.nmi-host.yml)
+      - NMI_BIND_MAP=${NMI_BIND_MAP:-}
+      # false: no port 25 check (the panel then cannot say whether mail can leave)
+      - NMI_EGRESS_PROBE=${NMI_EGRESS_PROBE:-true}
     networks:
       - netsendo-network
     healthcheck:
@@ -365,6 +399,8 @@ volumes:
   netsendo-public:
     driver: local
   # NMI (NetSendo Mail Infrastructure) volumes
+  nmi-auth:
+    driver: local
   nmi-queue:
     driver: local
   nmi-logs:

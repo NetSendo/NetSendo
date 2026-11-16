@@ -407,8 +407,10 @@ class GoogleCalendarService
         $payload['colorId'] = $this->hexToGoogleColorId($hexColor);
 
         // Add reminders
-        if ($task->reminder_at) {
-            $minutesBefore = max(0, $task->due_date->diffInMinutes($task->reminder_at));
+        if ($task->reminder_at && $task->due_date) {
+            // Carbon 3 diffs are signed floats: due->diffInMinutes(earlier reminder) is
+            // negative, so max() turned every reminder into "0 minutes before".
+            $minutesBefore = max(0, (int) round($task->reminder_at->diffInMinutes($task->due_date)));
             $payload['reminders'] = [
                 'useDefault' => false,
                 'overrides' => [

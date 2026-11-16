@@ -223,7 +223,7 @@ class PlaybookService
         $strategy = $settings->getStrategyForAgent('campaign');
         $tone = $strategy['tone'] ?? 'professional';
         $langName = AiBrainSettings::getLanguageName($settings->resolveLanguage($user));
-        $knowledgeContext = $this->knowledgeBase->getContext($user, 'message');
+        $knowledgeContext = $this->knowledgeBase->getContext($user, 'message', query: trim(($item['brief'] ?? '') . ' ' . ($options['topic'] ?? '')));
         $topic = $options['topic'] ?? '';
 
         $prompt = <<<PROMPT
@@ -245,12 +245,14 @@ Respond in JSON only:
 PROMPT;
 
         try {
-            $integration = app(\App\Services\AI\AiService::class)->getDefaultIntegration();
+            // The model assigned to this task in the Brain settings, else the Brain model
+            [$integration, $brainModel] = \App\Models\AiBrainSettings::getForUser($user->id)->aiFor('content_generation');
             if (!$integration) {
                 return null;
             }
 
             $response = BrainAi::generate($user, 'playbook_content', $prompt, $integration, [
+                'model' => $brainModel,
                 'max_tokens' => 4000,
                 'temperature' => 0.7,
             ]);

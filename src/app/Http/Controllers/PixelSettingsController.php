@@ -38,12 +38,7 @@ class PixelSettingsController extends Controller
             'userId' => $userId,
             'baseUrl' => config('app.url'),
             'liveVisitors' => $liveVisitors,
-            'reverbConfig' => [
-                'key' => env('VITE_REVERB_APP_KEY', config('broadcasting.connections.reverb.key')),
-                'host' => env('VITE_REVERB_HOST', 'localhost'),
-                'port' => (int) env('VITE_REVERB_PORT', 8085),
-                'scheme' => env('VITE_REVERB_SCHEME', 'http'),
-            ],
+            'reverbConfig' => config('broadcasting.browser'),
         ]);
     }
 

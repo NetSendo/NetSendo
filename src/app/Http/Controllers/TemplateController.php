@@ -60,7 +60,8 @@ class TemplateController extends Controller
         return Inertia::render('Template/Index', [
             'templates' => $query
                 ->with('templateCategory')
-                ->paginate(12)
+                ->paginate(max(1, min((int) $request->input('per_page', 12), 96)))
+                ->withQueryString()
                 ->through(fn ($template) => [
                     'id' => $template->id,
                     'name' => $template->name,
@@ -85,6 +86,7 @@ class TemplateController extends Controller
             'filters' => [
                 'search' => $request->search,
                 'category' => $request->category,
+                'per_page' => $request->per_page,
             ],
         ]);
     }

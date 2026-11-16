@@ -69,14 +69,27 @@ class AiGoal extends Model
     // ── Progress ──
 
     /**
-     * Recalculate progress based on linked plans.
+     * Recalculate progress.
+     *
+     * A decomposed goal is measured against its planned steps: counting only the plans already
+     * linked made a five-step goal 100% complete (and closed it) after its first plan.
      */
     public function updateProgress(): void
     {
         $plans = $this->plans()->get();
-        $total = $plans->count();
-        $completed = $plans->where('status', 'completed')->count();
+        $completedPlans = $plans->where('status', 'completed');
         $failed = $plans->where('status', 'failed')->count();
+        $decomposition = array_values((array) (($this->context ?? [])['decomposition'] ?? []));
+
+        if (!empty($decomposition)) {
+            $total = count($decomposition);
+            $completed = collect($decomposition)
+                ->filter(fn ($step) => $completedPlans->contains(fn ($plan) => self::planCoversStep($plan, (array) $step)))
+                ->count();
+        } else {
+            $total = $plans->count();
+            $completed = $completedPlans->count();
+        }
 
         $progress = $total > 0 ? (int) round(($completed / $total) * 100) : 0;
 
@@ -91,6 +104,24 @@ class AiGoal extends Model
         if ($total > 0 && $completed === $total) {
             $this->complete();
         }
+    }
+
+    /**
+     * Whether a plan carries out a step of this goal's decomposition: by the step number stored
+     * with the plan, or (plans made before that existed) by the step's intent text.
+     */
+    public static function planCoversStep(AiActionPlan $plan, array $step): bool
+    {
+        $planStep = ($plan->plan_data ?? [])['goal_step'] ?? null;
+        if ($planStep !== null && isset($step['order'])) {
+            return (int) $planStep === (int) $step['order'];
+        }
+
+        $planIntent = mb_strtolower((string) $plan->intent);
+        $stepIntent = mb_strtolower((string) ($step['intent'] ?? ''));
+
+        return $stepIntent !== '' && $planIntent !== ''
+            && (str_contains($planIntent, $stepIntent) || str_contains($stepIntent, $planIntent));
     }
 
     // ── Status Management ──

@@ -1,0 +1,45 @@
+<?php
+
+// Subscriber pages: subscription preferences (SubscriberPreferencesController) and one-click unsubscribe (UnsubscribeController::now)
+return [
+    'title' => 'Your subscriptions',
+    'subtitle' => 'Decide which emails you want to get from us.',
+    'unsubscribe_all' => 'Unsubscribe me from everything',
+    'unsubscribe_all_note' => 'One click unsubscribes this address from every list. You will get no more emails from us.',
+    'no_active_lists' => 'This address is not subscribed to any list.',
+    'or' => 'or',
+    'lists_title' => 'Choose which lists to keep',
+    'lists_help' => 'Untick a list to unsubscribe from it.',
+    'left_hint' => 'Unsubscribed. Tick it to come back: you will confirm that by email.',
+    'no_lists' => 'There are no lists to choose from.',
+    'language_title' => 'Email language',
+    'language_default' => '— Default —',
+    'language_help' => 'Choose the language you want to get emails in.',
+    'save' => 'Save changes',
+    'delete_text' => 'Want to remove all your data?',
+    'delete_button' => 'Delete all my data',
+    'delete_confirm' => 'Are you sure you want to permanently delete all your data? This cannot be undone.',
+    'invalid_link' => 'This link is invalid or has expired.',
+    'confirm_sent' => 'We have sent you a confirmation email. Click the link in it to come back to the lists you chose.',
+    'confirm' => [
+        'title' => 'Confirm your changes',
+        'rejoin' => 'You will come back to:',
+        'leave' => 'You will leave:',
+        'button' => 'Confirm',
+        'note' => 'Nothing changes until you press the button.',
+    ],
+    'email' => [
+        'subject' => 'Confirm the changes to your subscriptions',
+        'heading' => 'Confirm your changes',
+        'body' => 'Click the link below and confirm on the page that you want to come back to the lists you chose.',
+        'link' => 'Confirm changes',
+        'ignore' => 'If this was not you, ignore this email.',
+    ],
+    'now' => [
+        'title' => 'Unsubscribe',
+        'list' => 'Unsubscribe :email from “:list”?',
+        'all' => 'Unsubscribe :email from every list?',
+        'button' => 'Unsubscribe me',
+        'note' => 'You will be unsubscribed at once, with no further email.',
+    ],
+];

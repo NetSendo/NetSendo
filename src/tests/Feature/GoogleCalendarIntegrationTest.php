@@ -55,6 +55,7 @@ class GoogleCalendarIntegrationTest extends TestCase
             'user_id' => $this->user->id,
             'google_integration_id' => $this->integration->id,
             'access_token' => 'test_access_token',
+            'refresh_token' => 'test_refresh_token', // NOT NULL column
             'refresh_token' => 'test_refresh_token',
             'token_expires_at' => now()->addHour(),
             'connected_email' => 'test@gmail.com',
@@ -118,6 +119,7 @@ class GoogleCalendarIntegrationTest extends TestCase
             'user_id' => $this->user->id,
             'google_integration_id' => $this->integration->id,
             'access_token' => 'test_access_token',
+            'refresh_token' => 'test_refresh_token', // NOT NULL column
             'token_expires_at' => now()->addHour(),
             'connected_email' => 'test@gmail.com',
             'calendar_id' => 'primary',
@@ -143,6 +145,7 @@ class GoogleCalendarIntegrationTest extends TestCase
             'user_id' => $this->user->id,
             'google_integration_id' => $this->integration->id,
             'access_token' => 'test_access_token',
+            'refresh_token' => 'test_refresh_token', // NOT NULL column
             'token_expires_at' => now()->addHour(),
             'connected_email' => 'test@gmail.com',
             'calendar_id' => 'primary',

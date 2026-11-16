@@ -346,7 +346,7 @@ const folderInfo = computed(() => {
                 class="rounded-xl border bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800"
             >
                 <h3 class="font-semibold text-gray-900 dark:text-white mb-4">
-                    {{ $t("deliverability.recommendations") }}
+                    {{ $t("deliverability.recommendations_title") }}
                 </h3>
                 <div class="space-y-3">
                     <div

@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Licensing\Feature;
 use App\Models\Funnel;
 use App\Models\FunnelStep;
 use App\Models\FunnelSubscriber;
 use App\Models\Subscriber;
 use App\Services\Funnels\ABTestService;
 use App\Services\Funnels\FunnelExecutionService;
+use App\Services\LicenseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -230,6 +232,11 @@ class FunnelController extends Controller
 
         $validated = $request->validate($this->stepRules($request, $funnel, creating: true));
 
+        // Split A/B steps are GOLD (402 without the licence)
+        if (($validated['type'] ?? null) === FunnelStep::TYPE_SPLIT) {
+            app(LicenseService::class)->ensureAllows(Feature::FunnelAbSplit);
+        }
+
         $after = isset($validated['after_step_id'])
             ? $funnel->steps()->find($validated['after_step_id'])
             : null;
@@ -318,6 +325,11 @@ class FunnelController extends Controller
         }
 
         $validated = $request->validate($this->stepRules($request, $funnel, creating: false, step: $step));
+
+        // Turning a step into a split A/B step is GOLD; an existing split step stays editable
+        if (($validated['type'] ?? null) === FunnelStep::TYPE_SPLIT && $step->type !== FunnelStep::TYPE_SPLIT) {
+            app(LicenseService::class)->ensureAllows(Feature::FunnelAbSplit);
+        }
 
         if ($step->type === FunnelStep::TYPE_START && isset($validated['type']) && $validated['type'] !== FunnelStep::TYPE_START) {
             return response()->json(['error' => 'Unprocessable Entity', 'message' => 'The start step cannot change its type'], 422);

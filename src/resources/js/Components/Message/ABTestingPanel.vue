@@ -4,8 +4,12 @@ import { useI18n } from "vue-i18n";
 import InputLabel from "@/Components/InputLabel.vue";
 import TextInput from "@/Components/TextInput.vue";
 import SubjectAiAssistant from "@/Components/SubjectAiAssistant.vue";
+import GoldBadge from "@/Components/License/GoldBadge.vue";
+import GoldNotice from "@/Components/License/GoldNotice.vue";
+import { useLicense } from "@/Composables/useLicense";
 
 const { t } = useI18n();
+const { can, requireGold } = useLicense();
 
 const props = defineProps({
     modelValue: {
@@ -86,8 +90,30 @@ const ensureVariantA = () => {
     }
 };
 
+// A/B tests are GOLD. A test that already started (status other than draft) is not
+// changed by saving, so it stays shown; a new or draft test is locked without GOLD.
+const abTestsLicensed = computed(() => can("ab_tests"));
+const testStarted = computed(
+    () =>
+        localConfig.value.enabled &&
+        !!localConfig.value.status &&
+        localConfig.value.status !== "draft",
+);
+const lockedByLicence = computed(
+    () => !abTestsLicensed.value && !testStarted.value,
+);
+
 // Toggle enabled
-const toggleEnabled = () => {
+const toggleEnabled = (event) => {
+    // Turning a test on needs GOLD; turning it off is always allowed
+    if (!localConfig.value.enabled && lockedByLicence.value) {
+        if (event?.target) {
+            event.target.checked = false;
+        }
+        requireGold("ab_tests");
+        return;
+    }
+
     localConfig.value.enabled = !localConfig.value.enabled;
     if (localConfig.value.enabled) {
         ensureVariantA();
@@ -214,15 +240,28 @@ ensureVariantA();
                 />
                 <div>
                     <span
-                        class="text-base font-semibold text-slate-900 dark:text-white"
+                        class="inline-flex items-center gap-2 text-base font-semibold text-slate-900 dark:text-white"
                     >
                         {{ $t("ab_tests.enable_testing") }}
+                        <GoldBadge :locked="lockedByLicence" />
                     </span>
                     <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
                         {{ $t("ab_tests.enable_description") }}
                     </p>
                 </div>
             </label>
+
+            <!-- Without GOLD: explain, and offer the upgrade -->
+            <GoldNotice
+                v-if="lockedByLicence"
+                class="mt-3"
+                feature="ab_tests"
+                :message="
+                    localConfig.enabled
+                        ? $t('license.gating.ab_tests_draft_locked')
+                        : $t('license.gating.ab_tests_locked')
+                "
+            />
         </div>
 
         <!-- A/B Test Configuration (shown when enabled) -->

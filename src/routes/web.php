@@ -30,6 +30,9 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::post('/license/validate', [LicenseController::class, 'validateLicense'])->name('license.validate');
     Route::post('/license/activate', [LicenseController::class, 'activate'])->name('license.activate');
     Route::post('/license/check-status', [LicenseController::class, 'checkLicenseStatus'])->name('license.check-status');
+    Route::post('/license/buy-gold', [LicenseController::class, 'buyGold'])->name('license.buy-gold');
+    Route::post('/license/claim-gold', [LicenseController::class, 'claimGold'])->name('license.claim-gold');
+    Route::post('/license/cancel-gold', [LicenseController::class, 'cancelGold'])->name('license.cancel-gold');
 
     // Version check routes
     Route::get('/api/version/check', [VersionController::class, 'check'])->name('api.version.check');
@@ -246,15 +249,19 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::put('/api/monitor/cron', [\App\Http\Controllers\BrainController::class, 'updateCronSettings'])->name('api.monitor.cron');
 
         // Telegram Integration
-        Route::post('/api/telegram/link-code', [\App\Http\Controllers\BrainController::class, 'generateTelegramLinkCode'])->name('api.telegram.link-code');
+        Route::post('/api/telegram/link-code', [\App\Http\Controllers\BrainController::class, 'generateTelegramLinkCode'])->name('api.telegram.link-code')->middleware('licensed:brain_autonomy');
         Route::post('/api/telegram/disconnect', [\App\Http\Controllers\BrainController::class, 'disconnectTelegram'])->name('api.telegram.disconnect');
-        Route::post('/api/telegram/test', [\App\Http\Controllers\BrainController::class, 'testTelegramBot'])->name('api.telegram.test');
-        Route::post('/api/telegram/set-webhook', [\App\Http\Controllers\TelegramController::class, 'setWebhook'])->name('api.telegram.set-webhook');
+        Route::post('/api/telegram/test', [\App\Http\Controllers\BrainController::class, 'testTelegramBot'])->name('api.telegram.test')->middleware('licensed:brain_autonomy');
+        Route::post('/api/telegram/set-webhook', [\App\Http\Controllers\TelegramController::class, 'setWebhook'])->name('api.telegram.set-webhook')->middleware('licensed:brain_autonomy');
 
         // Research API
-        Route::post('/api/research/test', [\App\Http\Controllers\BrainController::class, 'testResearchApi'])->name('api.research.test');
+        Route::post('/api/research/test', [\App\Http\Controllers\BrainController::class, 'testResearchApi'])->name('api.research.test')->middleware('licensed:brain_autonomy');
 
         // Knowledge Base
+        // Semantic knowledge base (GOLD) — registered before /api/knowledge/{id}
+        Route::get('/api/knowledge/semantic', [\App\Http\Controllers\SemanticKnowledgeController::class, 'show'])->name('api.knowledge.semantic');
+        Route::put('/api/knowledge/semantic', [\App\Http\Controllers\SemanticKnowledgeController::class, 'update'])->name('api.knowledge.semantic.update')->middleware('licensed:semantic_knowledge');
+        Route::post('/api/knowledge/semantic/reindex', [\App\Http\Controllers\SemanticKnowledgeController::class, 'reindex'])->name('api.knowledge.semantic.reindex')->middleware('licensed:semantic_knowledge');
         Route::post('/api/knowledge', [\App\Http\Controllers\BrainController::class, 'storeKnowledge'])->name('api.knowledge.store');
         Route::put('/api/knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'updateKnowledge'])->name('api.knowledge.update');
         Route::delete('/api/knowledge/{id}', [\App\Http\Controllers\BrainController::class, 'deleteKnowledge'])->name('api.knowledge.destroy');
@@ -263,7 +270,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         // Chat API (session-authenticated, used by Index.vue)
         Route::post('/api/chat', [\App\Http\Controllers\BrainController::class, 'chat'])->name('api.chat');
         Route::post('/api/chat/stream', [\App\Http\Controllers\BrainController::class, 'chatStream'])->name('api.chat.stream');
-        Route::post('/api/chat/voice', [\App\Http\Controllers\BrainController::class, 'chatVoice'])->name('api.chat.voice');
+        Route::post('/api/chat/voice', [\App\Http\Controllers\BrainController::class, 'chatVoice'])->name('api.chat.voice')->middleware('licensed:brain_autonomy');
         Route::get('/api/conversations', [\App\Http\Controllers\BrainController::class, 'conversations'])->name('api.conversations');
         Route::get('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'conversation'])->name('api.conversations.show');
         Route::put('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'updateConversation'])->name('api.conversations.update');
@@ -279,20 +286,20 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
         // Goals
         Route::get('/api/goals', [\App\Http\Controllers\BrainController::class, 'goals'])->name('api.goals.index');
-        Route::post('/api/goals', [\App\Http\Controllers\BrainController::class, 'createGoal'])->name('api.goals.store');
-        Route::patch('/api/goals/{id}', [\App\Http\Controllers\BrainController::class, 'updateGoal'])->name('api.goals.update');
+        Route::post('/api/goals', [\App\Http\Controllers\BrainController::class, 'createGoal'])->name('api.goals.store')->middleware('licensed:brain_autonomy');
+        Route::patch('/api/goals/{id}', [\App\Http\Controllers\BrainController::class, 'updateGoal'])->name('api.goals.update')->middleware('licensed:brain_autonomy');
         Route::get('/api/goals/{id}/plans', [\App\Http\Controllers\BrainController::class, 'goalPlans'])->name('api.goals.plans');
 
         // Digest
-        Route::get('/api/digest', [\App\Http\Controllers\BrainController::class, 'digest'])->name('api.digest');
-        Route::post('/api/digest/send', [\App\Http\Controllers\BrainController::class, 'sendDigest'])->name('api.digest.send');
+        Route::get('/api/digest', [\App\Http\Controllers\BrainController::class, 'digest'])->name('api.digest')->middleware('licensed:brain_autonomy');
+        Route::post('/api/digest/send', [\App\Http\Controllers\BrainController::class, 'sendDigest'])->name('api.digest.send')->middleware('licensed:brain_autonomy');
 
         // KPI
         Route::get('/api/kpi', [\App\Http\Controllers\BrainController::class, 'kpi'])->name('api.kpi');
     });
 
-    // AutoTag Pro - Segmentation Dashboard
-    Route::get('segmentation', [\App\Http\Controllers\SegmentationController::class, 'index'])->name('segmentation.index');
+    // AutoTag Pro - Segmentation Dashboard (GOLD)
+    Route::get('segmentation', [\App\Http\Controllers\SegmentationController::class, 'index'])->name('segmentation.index')->middleware('licensed:segmentation_dashboard');
 
     // AI Campaign Architect
     Route::prefix('campaign-architect')->name('campaign-architect.')->group(function () {
@@ -311,22 +318,23 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/benchmarks', [\App\Http\Controllers\CampaignArchitectController::class, 'getBenchmarks'])->name('benchmarks');
     });
 
-    // AI Campaign Auditor
+    // AI Campaign Auditor (GOLD): running audits and applying recommendations need the
+    // licence; past audits stay readable
     Route::prefix('campaign-auditor')->name('campaign-auditor.')->group(function () {
         Route::get('/', [\App\Http\Controllers\CampaignAuditorController::class, 'index'])->name('index');
-        Route::post('/run', [\App\Http\Controllers\CampaignAuditorController::class, 'runAudit'])->name('run');
+        Route::post('/run', [\App\Http\Controllers\CampaignAuditorController::class, 'runAudit'])->name('run')->middleware('licensed:campaign_auditor');
         Route::get('/{audit}', [\App\Http\Controllers\CampaignAuditorController::class, 'show'])->name('show');
         Route::get('/{audit}/issues', [\App\Http\Controllers\CampaignAuditorController::class, 'issues'])->name('issues');
         Route::post('/issues/{issue}/mark-fixed', [\App\Http\Controllers\CampaignAuditorController::class, 'markFixed'])->name('mark-fixed');
 
         // Recommendations
         Route::get('/{audit}/recommendations', [\App\Http\Controllers\CampaignAuditorController::class, 'recommendations'])->name('recommendations');
-        Route::post('/recommendations/{recommendation}/apply', [\App\Http\Controllers\CampaignAuditorController::class, 'applyRecommendation'])->name('recommendations.apply');
-        Route::post('/recommendations/{recommendation}/measure', [\App\Http\Controllers\CampaignAuditorController::class, 'measureImpact'])->name('recommendations.measure');
+        Route::post('/recommendations/{recommendation}/apply', [\App\Http\Controllers\CampaignAuditorController::class, 'applyRecommendation'])->name('recommendations.apply')->middleware('licensed:campaign_auditor');
+        Route::post('/recommendations/{recommendation}/measure', [\App\Http\Controllers\CampaignAuditorController::class, 'measureImpact'])->name('recommendations.measure')->middleware('licensed:campaign_auditor');
 
         // Advisor Settings
         Route::get('/advisor/settings', [\App\Http\Controllers\CampaignAuditorController::class, 'getAdvisorSettings'])->name('advisor.settings');
-        Route::put('/advisor/settings', [\App\Http\Controllers\CampaignAuditorController::class, 'updateAdvisorSettings'])->name('advisor.settings.update');
+        Route::put('/advisor/settings', [\App\Http\Controllers\CampaignAuditorController::class, 'updateAdvisorSettings'])->name('advisor.settings.update')->middleware('licensed:campaign_auditor');
     });
 
     Route::prefix('api/campaign-auditor')->name('api.campaign-auditor.')->group(function () {
@@ -339,7 +347,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/', [\App\Http\Controllers\CampaignStatsController::class, 'index'])->name('index');
         Route::get('/{tag}', [\App\Http\Controllers\CampaignStatsController::class, 'show'])->name('show');
         Route::get('/{tag}/stats', [\App\Http\Controllers\CampaignStatsController::class, 'getTagStats'])->name('stats');
-        Route::post('/{tag}/ai-analysis', [\App\Http\Controllers\CampaignStatsController::class, 'generateAiAnalysis'])->name('ai-analysis');
+        Route::post('/{tag}/ai-analysis', [\App\Http\Controllers\CampaignStatsController::class, 'generateAiAnalysis'])->name('ai-analysis')->middleware('licensed:campaign_auditor');
         Route::get('/{tag}/export', [\App\Http\Controllers\CampaignStatsController::class, 'export'])->name('export');
     });
 
@@ -461,6 +469,12 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/', [\App\Http\Controllers\ApiKeyController::class, 'store'])->name('store');
         Route::put('/{apiKey}', [\App\Http\Controllers\ApiKeyController::class, 'update'])->name('update');
         Route::delete('/{apiKey}', [\App\Http\Controllers\ApiKeyController::class, 'destroy'])->name('destroy');
+    });
+
+    // Connector: the remote MCP endpoint (/mcp) — address, connected apps, instructions
+    Route::prefix('settings/connector')->name('settings.connector.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ConnectorSettingsController::class, 'index'])->name('index');
+        Route::delete('/connections/{connection}', [\App\Http\Controllers\ConnectorSettingsController::class, 'destroy'])->name('connections.destroy');
     });
 
     // Backup Management
@@ -681,6 +695,13 @@ Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/marketplace/tpay', fn() => Inertia::render('Marketplace/Tpay'))->name('marketplace.tpay');
 
     // Tpay Settings
+    // Opt-in, anonymous usage report (administrator only, docs/TELEMETRY.md)
+    Route::prefix('settings/telemetry')->name('settings.telemetry.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\TelemetrySettingsController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\TelemetrySettingsController::class, 'update'])->name('update');
+        Route::post('/dismiss', [\App\Http\Controllers\TelemetrySettingsController::class, 'dismiss'])->name('dismiss');
+    });
+
     Route::prefix('settings/tpay')->name('settings.tpay.')->group(function () {
         Route::get('/', [\App\Http\Controllers\TpaySettingsController::class, 'index'])->name('index');
         Route::post('/', [\App\Http\Controllers\TpaySettingsController::class, 'update'])->name('update');
@@ -770,15 +791,16 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/{webinar}/products/{product}/unpin', [\App\Http\Controllers\WebinarProductController::class, 'unpin'])->name('products.unpin');
         Route::post('/{webinar}/products/reorder', [\App\Http\Controllers\WebinarProductController::class, 'reorder'])->name('products.reorder');
 
-        // Auto-Webinar Configuration
+        // Auto-Webinar Configuration (GOLD): changing the schedule and chat needs the licence;
+        // the configuration stays readable after a GOLD ends
         Route::get('/{webinar}/auto-config', [\App\Http\Controllers\AutoWebinarController::class, 'config'])->name('auto.config');
-        Route::post('/{webinar}/auto-config/schedule', [\App\Http\Controllers\AutoWebinarController::class, 'saveSchedule'])->name('auto.schedule');
-        Route::post('/{webinar}/auto-config/import-chat', [\App\Http\Controllers\AutoWebinarController::class, 'importChat'])->name('auto.import-chat');
-        Route::post('/{webinar}/auto-config/generate-chat', [\App\Http\Controllers\AutoWebinarController::class, 'generateChat'])->name('auto.generate-chat');
+        Route::post('/{webinar}/auto-config/schedule', [\App\Http\Controllers\AutoWebinarController::class, 'saveSchedule'])->name('auto.schedule')->middleware('licensed:auto_webinars');
+        Route::post('/{webinar}/auto-config/import-chat', [\App\Http\Controllers\AutoWebinarController::class, 'importChat'])->name('auto.import-chat')->middleware('licensed:auto_webinars');
+        Route::post('/{webinar}/auto-config/generate-chat', [\App\Http\Controllers\AutoWebinarController::class, 'generateChat'])->name('auto.generate-chat')->middleware('licensed:auto_webinars');
         Route::delete('/{webinar}/auto-config/chat', [\App\Http\Controllers\AutoWebinarController::class, 'clearChat'])->name('auto.clear-chat');
         Route::get('/{webinar}/auto-config/timeline', [\App\Http\Controllers\AutoWebinarController::class, 'previewTimeline'])->name('auto.timeline');
         Route::get('/{webinar}/auto-config/sessions', [\App\Http\Controllers\AutoWebinarController::class, 'getNextSessions'])->name('auto.sessions');
-        Route::post('/{webinar}/auto-config/convert', [\App\Http\Controllers\AutoWebinarController::class, 'convert'])->name('auto.convert');
+        Route::post('/{webinar}/auto-config/convert', [\App\Http\Controllers\AutoWebinarController::class, 'convert'])->name('auto.convert')->middleware('licensed:auto_webinars');
 
         // Chat Reactions API
         Route::post('/{webinar}/reactions', [\App\Http\Controllers\WebinarChatController::class, 'addReaction'])->name('reactions.add');
@@ -794,7 +816,8 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::post('/{webinar}/host/bulk-approve', [\App\Http\Controllers\WebinarHostController::class, 'bulkApprove'])->name('host.bulk-approve');
         Route::post('/{webinar}/host/bulk-delete', [\App\Http\Controllers\WebinarHostController::class, 'bulkDelete'])->name('host.bulk-delete');
 
-        // Scenario Builder API
+        // Scenario Builder API (GOLD, routes below the page builder): adding, editing and
+        // generating chat scripts needs the licence; viewing and deleting stay open
         // Funnel page builder (registration / thank-you / waiting room / replay)
         Route::get('/{webinar}/pages/{page}', [\App\Http\Controllers\WebinarPageBuilderController::class, 'edit'])->name('pages.edit');
         Route::put('/{webinar}/pages/{page}', [\App\Http\Controllers\WebinarPageBuilderController::class, 'update'])->name('pages.update');
@@ -804,27 +827,28 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
         Route::get('/{webinar}/scripts', [\App\Http\Controllers\AutoWebinarScriptController::class, 'index'])->name('scripts.index');
         Route::get('/{webinar}/scripts/builder', [\App\Http\Controllers\AutoWebinarScriptController::class, 'builder'])->name('scripts.builder');
-        Route::post('/{webinar}/scripts', [\App\Http\Controllers\AutoWebinarScriptController::class, 'store'])->name('scripts.store');
-        Route::put('/{webinar}/scripts/{script}', [\App\Http\Controllers\AutoWebinarScriptController::class, 'update'])->name('scripts.update');
-        Route::post('/{webinar}/scripts/generate', [\App\Http\Controllers\AutoWebinarScriptController::class, 'generateRandom'])->name('scripts.generate');
+        Route::post('/{webinar}/scripts', [\App\Http\Controllers\AutoWebinarScriptController::class, 'store'])->name('scripts.store')->middleware('licensed:auto_webinars');
+        Route::put('/{webinar}/scripts/{script}', [\App\Http\Controllers\AutoWebinarScriptController::class, 'update'])->name('scripts.update')->middleware('licensed:auto_webinars');
+        Route::post('/{webinar}/scripts/generate', [\App\Http\Controllers\AutoWebinarScriptController::class, 'generateRandom'])->name('scripts.generate')->middleware('licensed:auto_webinars');
         Route::delete('/{webinar}/scripts/clear', [\App\Http\Controllers\AutoWebinarScriptController::class, 'clear'])->name('scripts.clear');
         Route::delete('/{webinar}/scripts/{script}', [\App\Http\Controllers\AutoWebinarScriptController::class, 'destroy'])->name('scripts.destroy');
     });
 
-    // A/B Testing
+    // A/B Testing (GOLD): creating, editing and starting tests needs the licence; reading
+    // results, pausing, picking the winner and deleting stay open after a GOLD ends
     Route::prefix('ab-tests')->name('ab-tests.')->group(function () {
         Route::get('/', [\App\Http\Controllers\AbTestController::class, 'index'])->name('index');
-        Route::post('/', [\App\Http\Controllers\AbTestController::class, 'store'])->name('store');
+        Route::post('/', [\App\Http\Controllers\AbTestController::class, 'store'])->name('store')->middleware('licensed:ab_tests');
         Route::get('/{abTest}', [\App\Http\Controllers\AbTestController::class, 'show'])->name('show');
-        Route::put('/{abTest}', [\App\Http\Controllers\AbTestController::class, 'update'])->name('update');
+        Route::put('/{abTest}', [\App\Http\Controllers\AbTestController::class, 'update'])->name('update')->middleware('licensed:ab_tests');
         Route::delete('/{abTest}', [\App\Http\Controllers\AbTestController::class, 'destroy'])->name('destroy');
-        Route::post('/{abTest}/start', [\App\Http\Controllers\AbTestController::class, 'start'])->name('start');
+        Route::post('/{abTest}/start', [\App\Http\Controllers\AbTestController::class, 'start'])->name('start')->middleware('licensed:ab_tests');
         Route::post('/{abTest}/pause', [\App\Http\Controllers\AbTestController::class, 'pause'])->name('pause');
-        Route::post('/{abTest}/resume', [\App\Http\Controllers\AbTestController::class, 'resume'])->name('resume');
+        Route::post('/{abTest}/resume', [\App\Http\Controllers\AbTestController::class, 'resume'])->name('resume')->middleware('licensed:ab_tests');
         Route::post('/{abTest}/select-winner', [\App\Http\Controllers\AbTestController::class, 'selectWinner'])->name('select-winner');
         Route::get('/{abTest}/results', [\App\Http\Controllers\AbTestController::class, 'getResults'])->name('results');
-        Route::post('/{abTest}/variants', [\App\Http\Controllers\AbTestController::class, 'addVariant'])->name('variants.add');
-        Route::put('/{abTest}/variants/{variant}', [\App\Http\Controllers\AbTestController::class, 'updateVariant'])->name('variants.update');
+        Route::post('/{abTest}/variants', [\App\Http\Controllers\AbTestController::class, 'addVariant'])->name('variants.add')->middleware('licensed:ab_tests');
+        Route::put('/{abTest}/variants/{variant}', [\App\Http\Controllers\AbTestController::class, 'updateVariant'])->name('variants.update')->middleware('licensed:ab_tests');
         Route::delete('/{abTest}/variants/{variant}', [\App\Http\Controllers\AbTestController::class, 'deleteVariant'])->name('variants.delete');
     });
 
@@ -875,6 +899,8 @@ Route::middleware(['auth', '2fa'])->group(function () {
     });
 
     // ==================== DELIVERABILITY SHIELD (GOLD) ====================
+    // Without GOLD the dashboard shows the offer; domains and simulations stay readable and
+    // removable, everything that checks, generates or simulates needs the licence
 
     // Deliverability Shield - DMARC Wiz & InboxPassport AI
     Route::prefix('deliverability')->name('deliverability.')->group(function () {
@@ -882,28 +908,31 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/', [\App\Http\Controllers\DeliverabilityController::class, 'index'])->name('index');
 
         // DMARC Wiz - Domain Management
-        Route::get('/domains/add', [\App\Http\Controllers\DeliverabilityController::class, 'createDomain'])->name('domains.create');
-        Route::post('/domains', [\App\Http\Controllers\DeliverabilityController::class, 'addDomain'])->name('domains.store');
+        Route::get('/domains/add', [\App\Http\Controllers\DeliverabilityController::class, 'createDomain'])->name('domains.create')->middleware('licensed:deliverability_shield');
+        Route::post('/domains', [\App\Http\Controllers\DeliverabilityController::class, 'addDomain'])->name('domains.store')->middleware('licensed:deliverability_shield');
         Route::get('/domains/{domain}', [\App\Http\Controllers\DeliverabilityController::class, 'showDomain'])->name('domains.show');
-        Route::post('/domains/{domain}/verify', [\App\Http\Controllers\DeliverabilityController::class, 'verifyCname'])->name('domains.verify');
-        Route::post('/domains/{domain}/refresh', [\App\Http\Controllers\DeliverabilityController::class, 'refreshStatus'])->name('domains.refresh');
-        Route::post('/domains/{domain}/alerts', [\App\Http\Controllers\DeliverabilityController::class, 'toggleAlerts'])->name('domains.alerts');
+        Route::post('/domains/{domain}/verify', [\App\Http\Controllers\DeliverabilityController::class, 'verifyCname'])->name('domains.verify')->middleware('licensed:deliverability_shield');
+        Route::post('/domains/{domain}/refresh', [\App\Http\Controllers\DeliverabilityController::class, 'refreshStatus'])->name('domains.refresh')->middleware('licensed:deliverability_shield');
+        Route::post('/domains/{domain}/alerts', [\App\Http\Controllers\DeliverabilityController::class, 'toggleAlerts'])->name('domains.alerts')->middleware('licensed:deliverability_shield');
+        Route::put('/domains/{domain}/dkim-selector', [\App\Http\Controllers\DeliverabilityController::class, 'updateDkimSelector'])->name('domains.dkim-selector')->middleware('licensed:deliverability_shield');
         Route::delete('/domains/{domain}', [\App\Http\Controllers\DeliverabilityController::class, 'removeDomain'])->name('domains.destroy');
 
         // DNS Record Generators (One-Click Fix)
-        Route::get('/domains/{domain}/dmarc-generator', [\App\Http\Controllers\DeliverabilityController::class, 'getDmarcGenerator'])->name('domains.dmarc-generator');
-        Route::get('/domains/{domain}/spf-generator', [\App\Http\Controllers\DeliverabilityController::class, 'getSpfGenerator'])->name('domains.spf-generator');
-        Route::get('/domains/{domain}/dns-generators', [\App\Http\Controllers\DeliverabilityController::class, 'getDnsGenerators'])->name('domains.dns-generators');
+        Route::get('/domains/{domain}/dmarc-generator', [\App\Http\Controllers\DeliverabilityController::class, 'getDmarcGenerator'])->name('domains.dmarc-generator')->middleware('licensed:deliverability_shield');
+        Route::get('/domains/{domain}/spf-generator', [\App\Http\Controllers\DeliverabilityController::class, 'getSpfGenerator'])->name('domains.spf-generator')->middleware('licensed:deliverability_shield');
+        Route::get('/domains/{domain}/dns-generators', [\App\Http\Controllers\DeliverabilityController::class, 'getDnsGenerators'])->name('domains.dns-generators')->middleware('licensed:deliverability_shield');
 
         // InboxPassport AI - Simulation
-        Route::get('/inbox-passport', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulator'])->name('simulator');
-        Route::post('/inbox-passport/simulate', [\App\Http\Controllers\DeliverabilityController::class, 'simulateInbox'])->name('simulate');
-        Route::post('/inbox-passport/quick-simulate', [\App\Http\Controllers\DeliverabilityController::class, 'quickSimulateInbox'])->name('quick-simulate');
+        Route::get('/inbox-passport', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulator'])->name('simulator')->middleware('licensed:deliverability_shield');
+        Route::post('/inbox-passport/simulate', [\App\Http\Controllers\DeliverabilityController::class, 'simulateInbox'])->name('simulate')->middleware('licensed:deliverability_shield');
+        Route::post('/inbox-passport/quick-simulate', [\App\Http\Controllers\DeliverabilityController::class, 'quickSimulateInbox'])->name('quick-simulate')->middleware('licensed:deliverability_shield');
         Route::get('/simulations', [\App\Http\Controllers\DeliverabilityController::class, 'simulationHistory'])->name('simulations.index');
         Route::get('/simulations/{simulation}', [\App\Http\Controllers\DeliverabilityController::class, 'showSimulation'])->name('simulations.show');
     });
 
-    // ==================== NETSENDO MAIL INFRASTRUCTURE (NMI) ====================
+    // ==================== NETSENDO MAIL INFRASTRUCTURE (NMI, GOLD) ====================
+    // Without GOLD the setup stays readable and removable and sending through it continues;
+    // adding pools and IPs, provisioning, warming, DKIM and blacklist checks need the licence
 
     // NetSendo Mail Infrastructure - IP Pool & Dedicated IP Management
     Route::prefix('settings/nmi')->name('settings.nmi.')->group(function () {
@@ -912,29 +941,37 @@ Route::middleware(['auth', '2fa'])->group(function () {
 
         // IP Pools
         Route::get('/pools', [\App\Http\Controllers\NmiController::class, 'listPools'])->name('pools.index');
-        Route::post('/pools', [\App\Http\Controllers\NmiController::class, 'createPool'])->name('pools.store');
+        Route::post('/pools', [\App\Http\Controllers\NmiController::class, 'createPool'])->name('pools.store')->middleware('licensed:mail_infrastructure');
         Route::get('/pools/{pool}', [\App\Http\Controllers\NmiController::class, 'getPool'])->name('pools.show');
         Route::delete('/pools/{pool}', [\App\Http\Controllers\NmiController::class, 'deletePool'])->name('pools.destroy');
 
         // Dedicated IPs
         Route::get('/ips/{ip}', [\App\Http\Controllers\NmiController::class, 'getIp'])->name('ips.show');
-        Route::post('/ips/{ip}/warming/start', [\App\Http\Controllers\NmiController::class, 'startWarming'])->name('ips.warming.start');
-        Route::post('/ips/{ip}/dkim/generate', [\App\Http\Controllers\NmiController::class, 'generateDkim'])->name('ips.dkim.generate');
+        Route::post('/ips/{ip}/warming/start', [\App\Http\Controllers\NmiController::class, 'startWarming'])->name('ips.warming.start')->middleware('licensed:mail_infrastructure');
+        Route::post('/ips/{ip}/dkim/generate', [\App\Http\Controllers\NmiController::class, 'generateDkim'])->name('ips.dkim.generate')->middleware('licensed:mail_infrastructure');
         Route::get('/ips/{ip}/dkim/verify', [\App\Http\Controllers\NmiController::class, 'verifyDkim'])->name('ips.dkim.verify');
-        Route::post('/ips/{ip}/blacklist/check', [\App\Http\Controllers\NmiController::class, 'checkBlacklist'])->name('ips.blacklist.check');
+        Route::post('/ips/{ip}/blacklist/check', [\App\Http\Controllers\NmiController::class, 'checkBlacklist'])->name('ips.blacklist.check')->middleware('licensed:mail_infrastructure');
         Route::delete('/ips/{ip}', [\App\Http\Controllers\NmiController::class, 'deleteIp'])->name('ips.destroy');
+        // Reverse DNS (PTR) of an address: look it up; set it at the provider it was ordered from
+        Route::post('/ips/{ip}/ptr/check', [\App\Http\Controllers\NmiController::class, 'checkPtr'])->name('ips.ptr.check');
+        Route::post('/ips/{ip}/ptr/set', [\App\Http\Controllers\NmiController::class, 'setPtr'])->name('ips.ptr.set')->middleware('licensed:mail_infrastructure');
 
         // Add IP to Pool
-        Route::post('/pools/{pool}/ips', [\App\Http\Controllers\NmiController::class, 'addIpToPool'])->name('pools.ips.store');
+        Route::post('/pools/{pool}/ips', [\App\Http\Controllers\NmiController::class, 'addIpToPool'])->name('pools.ips.store')->middleware('licensed:mail_infrastructure');
 
         // MTA Status
         Route::get('/mta/status', [\App\Http\Controllers\NmiController::class, 'getMtaStatus'])->name('mta.status');
 
+        // DKIM key of a sending domain (signs the mail of its NMI mailboxes)
+        Route::get('/domains/{domain}/dkim', [\App\Http\Controllers\NmiController::class, 'getDomainDkim'])->name('domains.dkim.show');
+        Route::post('/domains/{domain}/dkim/generate', [\App\Http\Controllers\NmiController::class, 'generateDomainDkim'])->name('domains.dkim.generate')->middleware('licensed:mail_infrastructure');
+        Route::post('/domains/{domain}/dkim/verify', [\App\Http\Controllers\NmiController::class, 'verifyDomainDkim'])->name('domains.dkim.verify');
+
         // IP Providers
         Route::get('/providers', [\App\Http\Controllers\NmiController::class, 'getProviderSettings'])->name('providers.index');
-        Route::post('/providers', [\App\Http\Controllers\NmiController::class, 'saveProviderSettings'])->name('providers.store');
-        Route::get('/providers/{provider}/regions', [\App\Http\Controllers\NmiController::class, 'getProviderRegions'])->name('providers.regions');
-        Route::post('/pools/{pool}/provision', [\App\Http\Controllers\NmiController::class, 'provisionIp'])->name('pools.provision');
+        Route::post('/providers', [\App\Http\Controllers\NmiController::class, 'saveProviderSettings'])->name('providers.store')->middleware('licensed:mail_infrastructure');
+        Route::get('/providers/{provider}/servers', [\App\Http\Controllers\NmiController::class, 'getProviderServers'])->name('providers.servers')->middleware('licensed:mail_infrastructure');
+        Route::post('/pools/{pool}/provision', [\App\Http\Controllers\NmiController::class, 'provisionIp'])->name('pools.provision')->middleware('licensed:mail_infrastructure');
     });
 });
 
@@ -948,6 +985,8 @@ Route::prefix('webinar')->name('webinar.')->group(function () {
     Route::get('/{slug}/calendar/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'calendar'])->name('calendar');
     Route::post('/{slug}/leave/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'leave'])->name('leave');
     Route::post('/{slug}/progress/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'trackProgress'])->name('progress');
+    Route::get('/{slug}/chat/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'chatFeed'])->name('chat')->middleware('throttle:webinar-chat');
+    Route::post('/{slug}/chat/{token}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'chatSend'])->name('chat.send')->middleware('throttle:webinar-chat-send');
     Route::get('/{slug}/auto/{subscriberToken}', [\App\Http\Controllers\Public\PublicWebinarController::class, 'autoRegister'])->name('auto-register')->middleware('signed');
 });
 
@@ -989,6 +1028,9 @@ Route::prefix('t/pixel')->name('pixel.')->group(function () {
 
 // Unsubscribe Routes (signed URLs from emails)
 Route::get('/unsubscribe/{subscriber}/process-all', [\App\Http\Controllers\UnsubscribeController::class, 'globalUnsubscribeProcess'])->name('subscriber.unsubscribe.global.process');
+// [[unsubscribe_now]]: a page with one button that unsubscribes at once (list, or every list)
+Route::get('/unsubscribe/{subscriber}/now', [\App\Http\Controllers\UnsubscribeController::class, 'now'])->name('subscriber.unsubscribe.now.global');
+Route::get('/unsubscribe/{subscriber}/{list}/now', [\App\Http\Controllers\UnsubscribeController::class, 'now'])->name('subscriber.unsubscribe.now');
 Route::get('/unsubscribe/{subscriber}/{list}', [\App\Http\Controllers\UnsubscribeController::class, 'confirm'])->name('subscriber.unsubscribe.confirm');
 Route::get('/unsubscribe/{subscriber}/{list}/process', [\App\Http\Controllers\UnsubscribeController::class, 'process'])->name('subscriber.unsubscribe.process');
 Route::get('/unsubscribe/{subscriber}', [\App\Http\Controllers\UnsubscribeController::class, 'globalUnsubscribe'])->name('subscriber.unsubscribe.global');
@@ -1001,6 +1043,7 @@ Route::post('/unsubscribe/{subscriber}', [\App\Http\Controllers\UnsubscribeContr
 Route::get('/preferences/{subscriber}', [\App\Http\Controllers\SubscriberPreferencesController::class, 'show'])->name('subscriber.preferences');
 Route::post('/preferences/{subscriber}', [\App\Http\Controllers\SubscriberPreferencesController::class, 'update'])->name('subscriber.preferences.update');
 Route::get('/preferences/{subscriber}/confirm', [\App\Http\Controllers\SubscriberPreferencesController::class, 'confirm'])->name('subscriber.preferences.confirm');
+Route::post('/preferences/{subscriber}/confirm', [\App\Http\Controllers\SubscriberPreferencesController::class, 'applyConfirmed'])->name('subscriber.preferences.confirm.apply');
 
 // GDPR Data Deletion (Right to be Forgotten)
 Route::post('/preferences/{subscriber}/delete', [\App\Http\Controllers\SubscriberPreferencesController::class, 'requestDeletion'])->name('subscriber.data.delete');
@@ -1023,8 +1066,13 @@ Route::prefix('subscribe')->name('subscribe.')->group(function () {
 });
 
 // Public Sales Funnel Checkout Routes (no auth)
-Route::get('/checkout/{type}/{product}', [\App\Http\Controllers\Public\SalesFunnelCheckoutController::class, 'checkout'])->name('sales-funnel.checkout');
+// The success route comes first and {type} is limited to the payment providers:
+// otherwise /checkout/success/{funnel} matched {type}/{product} and answered 404.
 Route::get('/checkout/success/{funnel}', [\App\Http\Controllers\Public\SalesFunnelCheckoutController::class, 'success'])->name('sales-funnel.success');
+Route::get('/checkout/{type}/{product}', [\App\Http\Controllers\Public\SalesFunnelCheckoutController::class, 'checkout'])
+    ->whereIn('type', ['stripe', 'polar', 'tpay'])
+    ->whereNumber('product')
+    ->name('sales-funnel.checkout');
 
 // CRON Webhook (public, authenticated via token)
 Route::match(['get', 'post'], '/api/cron/webhook', [\App\Http\Controllers\CronSettingsController::class, 'webhookTrigger'])->name('cron.webhook');

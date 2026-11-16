@@ -129,13 +129,17 @@ class SendEmailJob implements ShouldQueue
                 ? $contactLists->first()
                 : null;
 
+            // [[unsubscribe_now]] leaves what the List-Unsubscribe header leaves: the list the
+            // subscriber gets this message from, or every list when that is not one list
+            $links = ['unsubscribe_now' => $placeholderService->generateUnsubscribeNowLink($this->subscriber, $this->resolveListContext())];
+
             // 1. Variable Replacement using PlaceholderService (supports custom fields)
-            $processed = $placeholderService->processEmailContent($content, $subject, $this->subscriber, $unsubscribeList);
+            $processed = $placeholderService->processEmailContent($content, $subject, $this->subscriber, $unsubscribeList, $links);
             $content = $processed['content'];
             $subject = $processed['subject'];
 
             if ($plainText !== null && trim($plainText) !== '') {
-                $plainText = $placeholderService->processEmailContent($plainText, '', $this->subscriber, $unsubscribeList)['content'];
+                $plainText = $placeholderService->processEmailContent($plainText, '', $this->subscriber, $unsubscribeList, $links)['content'];
             }
 
             // Click and open tracking: the message's switch, else its mailbox's
@@ -265,10 +269,12 @@ class SendEmailJob implements ShouldQueue
             if (!$mailbox) {
                 $hasAnyMailbox = Mailbox::forUser($this->message->user_id)->active()->exists();
 
+                // In the account owner's language: the error is shown on the message's queue screen
+                $locale = $this->message->user?->locale;
                 throw new \RuntimeException(
                     $hasAnyMailbox
-                        ? "Żadna aktywna skrzynka pocztowa nie ma włączonego typu wysyłki \"{$messageType}\". Włącz ten typ w ustawieniach skrzynki (Ustawienia > Skrzynki pocztowe > Dozwolone typy)."
-                        : "Brak skonfigurowanej skrzynki pocztowej. Skonfiguruj skrzynkę w ustawieniach przed wysyłką wiadomości."
+                        ? __('mail.errors.no_mailbox_for_type', ['type' => $messageType], $locale)
+                        : __('mail.errors.no_mailbox', [], $locale)
                 );
             }
 
@@ -530,6 +536,7 @@ class SendEmailJob implements ShouldQueue
             'unsubscribe_url' => $oneClickUrl,
             'unsubscribe' => $oneClickUrl,
             'unsubscribe_global' => $placeholderService->generateGlobalUnsubscribeLink($this->subscriber),
+            'unsubscribe_now' => $placeholderService->generateUnsubscribeNowLink($this->subscriber, $list),
             'manage' => $placeholderService->generateManageLink($this->subscriber),
         ];
 

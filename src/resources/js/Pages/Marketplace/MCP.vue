@@ -1,5 +1,6 @@
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import Notice from "@/Components/Ui/Notice.vue";
 import { Head, Link, usePage } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import { ref, computed } from "vue";
@@ -432,6 +433,17 @@ const exampleQueries = [
                     <span>/</span>
                     <span class="text-gray-900 dark:text-white">{{ $t('mcp.title') }}</span>
                 </div>
+
+                <!-- The connector (remote MCP with sign-in) is the shorter way for most hosts -->
+                <Notice tone="info" :title="$t('connector.marketplace_title')" class="mb-8">
+                    {{ $t('connector.marketplace_text') }}
+                    <Link
+                        :href="route('settings.connector.index')"
+                        class="font-semibold underline underline-offset-2"
+                    >
+                        {{ $t('connector.marketplace_link') }}
+                    </Link>
+                </Notice>
 
                 <div class="grid gap-8 lg:grid-cols-3">
                     <!-- Main Content -->

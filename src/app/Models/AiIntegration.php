@@ -2,11 +2,18 @@
 
 namespace App\Models;
 
+use App\Licensing\Feature;
+use App\Services\LicenseService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class AiIntegration extends Model
 {
+    /**
+     * Providers sold with GOLD as "advanced AI": OpenRouter and local Ollama models.
+     */
+    public const GOLD_PROVIDERS = ['openrouter', 'ollama'];
+
     protected $fillable = [
         'provider',
         'name',
@@ -247,5 +254,38 @@ class AiIntegration extends Model
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    /**
+     * Active integrations the licence in effect lets the app call: without GOLD this
+     * leaves out OpenRouter and Ollama. Use it wherever an integration is picked for a call.
+     */
+    public function scopeUsable($query)
+    {
+        $query->where('is_active', true);
+
+        if (!app(LicenseService::class)->allows(Feature::AdvancedAi)) {
+            $query->whereNotIn('provider', self::GOLD_PROVIDERS);
+        }
+
+        return $query;
+    }
+
+    /**
+     * The GOLD feature a provider needs (null for the providers SILVER includes).
+     */
+    public static function featureForProvider(?string $provider): ?Feature
+    {
+        return in_array($provider, self::GOLD_PROVIDERS, true) ? Feature::AdvancedAi : null;
+    }
+
+    /**
+     * Active and covered by the licence in effect (see scopeUsable()).
+     */
+    public function isUsable(): bool
+    {
+        $feature = self::featureForProvider($this->provider);
+
+        return $this->is_active && (!$feature || app(LicenseService::class)->allows($feature));
     }
 }

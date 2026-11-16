@@ -67,8 +67,9 @@ class PurchaseWebhookController extends Controller
         $email = $request->input('subscriber_email');
         $data = $request->input('data');
 
-        // Find subscriber by email
-        $subscriber = Subscriber::where('email', $email)->first();
+        // Find the subscriber in the API key owner's account (the same address can be a
+        // contact of several accounts; any of them was picked before)
+        $subscriber = Subscriber::where('user_id', $request->user()->id)->where('email', $email)->first();
 
         if (!$subscriber) {
             Log::info("Purchase webhook: subscriber not found for email: {$email}");

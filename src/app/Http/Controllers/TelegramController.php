@@ -21,6 +21,22 @@ class TelegramController extends Controller
     {
         $update = $request->all();
 
+        // The URL is public: only the secret token given to Telegram in setWebhook proves an
+        // update is real. A webhook set before the token existed is set again by the scheduler
+        // (brain:secure-telegram-webhooks); Telegram retries refused updates until then.
+        try {
+            $authentic = $this->botService->isAuthenticUpdate($update, $request->header(TelegramBotService::SECRET_HEADER));
+        } catch (\Throwable $e) {
+            Log::error('Telegram webhook check failed', ['error' => $e->getMessage()]);
+            $authentic = false;
+        }
+
+        if (!$authentic) {
+            Log::warning('Telegram webhook refused: missing or wrong secret token', ['update_id' => $update['update_id'] ?? null]);
+
+            return response()->json(['ok' => false], 403);
+        }
+
         Log::debug('Telegram webhook received', ['update_id' => $update['update_id'] ?? null]);
 
         try {

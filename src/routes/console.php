@@ -1,8 +1,14 @@
 <?php
 
+use App\Licensing\Feature;
+use App\Services\LicenseService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
+
+// Scheduled work of a GOLD feature runs only while the licence includes it:
+// ->when($licensed(Feature::CampaignAuditor))
+$licensed = fn (Feature $feature) => fn () => app(LicenseService::class)->allows($feature);
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
@@ -43,6 +49,10 @@ Schedule::command('cron:daily-maintenance')
 Schedule::command('queue:prune-batches --hours=48')
     ->dailyAt('04:30');
 
+// Connector (remote MCP): expired codes, tokens and connections of apps that are gone
+Schedule::command('connector:prune')
+    ->dailyAt('04:40');
+
 // Czyszczenie cache (opcjonalne, raz na tydzień)
 Schedule::command('cache:prune-stale-tags')
     ->weekly()
@@ -70,7 +80,8 @@ Schedule::command('automations:process-date-triggers')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/cron-automations.log'));
 
-// Sprawdzanie dostępnych aktualizacji NetSendo - co godzinę
+// Available NetSendo updates: runs hourly but asks GitHub only when the cached release list
+// has expired (12-18 h) or a failed attempt's pause is over (UpdateCheckService)
 Schedule::command('netsendo:check-updates')
     ->hourly()
     ->withoutOverlapping()
@@ -79,6 +90,19 @@ Schedule::command('netsendo:check-updates')
 // Weryfikacja licencji z serwerem zewnętrznym - raz dziennie o 6:00
 Schedule::command('license:verify --deactivate')
     ->dailyAt('06:00')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/license-verify.log'));
+
+// Opt-in, anonymous usage report (docs/TELEMETRY.md): checked hourly, sent once a day in this
+// installation's own hour, only when the administrator has switched telemetry on
+Schedule::command('netsendo:telemetry')
+    ->hourlyAt(17)
+    ->withoutOverlapping()
+    ->runInBackground();
+
+// GOLD kupiony na stronie Licencja: aktywacja klucza po potwierdzeniu płatności (gdy jest rozpoczęty zakup)
+Schedule::command('license:claim-gold')
+    ->everyFiveMinutes()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/license-verify.log'));
 
@@ -91,6 +115,7 @@ Schedule::command('mcp:test-connection --silent')
 // AI Campaign Audit - raz dziennie o 5:00
 // Automatyczna analiza kampanii dla wszystkich użytkowników
 Schedule::command('audit:run --all')
+    ->when($licensed(Feature::CampaignAuditor))
     ->dailyAt('05:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/campaign-audit.log'));
@@ -164,12 +189,14 @@ Schedule::command('calendar:sync-pending-tasks')
 
 // Sprawdzanie konfiguracji DNS domen - co 6 godzin
 Schedule::command('deliverability:check-domains')
+    ->when($licensed(Feature::DeliverabilityShield))
     ->everySixHours()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/deliverability-dns.log'));
 
 // Analiza możliwych upgrade'ów polityki DMARC - raz dziennie o 7:00
 Schedule::command('deliverability:upgrade-dmarc')
+    ->when($licensed(Feature::DeliverabilityShield))
     ->dailyAt('07:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/deliverability-dmarc.log'));
@@ -187,20 +214,31 @@ Schedule::command('mailbox:check-reputation')
 | These jobs only run when NMI is enabled.
 */
 
+// NMI - MTA login file: saving an NMI mailbox writes it; this restores it after the
+// shared volume was recreated. Sending through an NMI set up earlier needs no GOLD,
+// so neither does this.
+Schedule::command('nmi:sync-mta-auth')
+    ->when(fn () => (bool) config('nmi.features.enabled'))
+    ->everyTenMinutes()
+    ->withoutOverlapping();
+
 // NMI - Procesowanie aktualizacji IP warming - raz dziennie o 6:00
 Schedule::command('nmi:process-warming')
+    ->when($licensed(Feature::MailInfrastructure))
     ->dailyAt('06:00')
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/nmi-warming.log'));
 
 // NMI - Sprawdzanie IP na blacklistach - co 6 godzin
 Schedule::command('nmi:check-blacklists')
+    ->when($licensed(Feature::MailInfrastructure))
     ->everySixHours()
     ->withoutOverlapping()
     ->appendOutputTo(storage_path('logs/nmi-blacklists.log'));
 
 // NMI - Rotacja kluczy DKIM (jeśli auto-rotate włączone) - raz w tygodniu
 Schedule::command('nmi:rotate-dkim')
+    ->when($licensed(Feature::MailInfrastructure))
     ->weekly()
     ->sundays()
     ->at('04:00')
@@ -264,8 +302,36 @@ Schedule::command('pixel:detect-abandoned-carts')
 
 // Brain AI — Automatyczna orkiestracja (sprawdza per-user interwał)
 Schedule::command('brain:run-cron')
+    ->when($licensed(Feature::BrainAutonomy))
     ->everyFiveMinutes()
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/brain-cron.log'));
 
+// Brain plans that stalled or were left waiting are closed, so the Monitor and the activity bar
+// show real work only (every plan, every licence)
+Schedule::command('brain:close-stale-plans')
+    ->hourly()
+    ->withoutOverlapping();
+
+// Telegram bots whose webhook was set before it needed the secret token are set again with it
+// (every licence: without GOLD the bot still answers with a notice). Done once per bot.
+Schedule::command('brain:secure-telegram-webhooks')
+    ->everyFiveMinutes()
+    ->withoutOverlapping();
+
+// Semantic knowledge base (GOLD): embed entries that are missing or outdated — saved while the
+// AI provider was down, before GOLD or before an embedding provider was added
+Schedule::command('brain:index-knowledge')
+    ->when($licensed(Feature::SemanticKnowledge))
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground();
+
+// A sleeping Cloud instance (NETSENDO_DORMANT) runs no scheduled work: nothing is sent,
+// synced or checked until the owner resumes it (App\Http\Middleware\DormantMode)
+if (config('netsendo.dormant')) {
+    foreach (Schedule::events() as $event) {
+        $event->skip(fn () => true);
+    }
+}

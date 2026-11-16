@@ -1,10 +1,10 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import GuestLayout from "@/Layouts/GuestLayout.vue";
+import AuthHeading from "@/Components/Auth/AuthHeading.vue";
+import AuthField from "@/Components/Auth/AuthField.vue";
+import AuthSubmit from "@/Components/Auth/AuthSubmit.vue";
+import AuthNotice from "@/Components/Auth/AuthNotice.vue";
+import { Head, useForm } from "@inertiajs/vue3";
 
 const props = defineProps({
     email: {
@@ -20,13 +20,13 @@ const props = defineProps({
 const form = useForm({
     token: props.token,
     email: props.email,
-    password: '',
-    password_confirmation: '',
+    password: "",
+    password_confirmation: "",
 });
 
 const submit = () => {
-    form.post(route('password.store'), {
-        onFinish: () => form.reset('password', 'password_confirmation'),
+    form.post(route("password.store"), {
+        onFinish: () => form.reset("password", "password_confirmation"),
     });
 };
 </script>
@@ -35,67 +35,43 @@ const submit = () => {
     <GuestLayout>
         <Head :title="$t('auth.reset_password.title')" />
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" :value="$t('auth.email')" />
+        <AuthHeading :title="$t('auth.reset_password.title')" />
 
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
-                    autocomplete="username"
-                />
+        <form class="flex flex-col gap-5" @submit.prevent="submit">
+            <AuthField
+                id="email"
+                v-model="form.email"
+                type="email"
+                :label="$t('auth.email')"
+                :error="form.errors.email"
+                required
+                autocomplete="username"
+            />
 
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
+            <AuthField
+                id="password"
+                v-model="form.password"
+                type="password"
+                :label="$t('auth.password')"
+                :error="form.errors.password"
+                required
+                autofocus
+                autocomplete="new-password"
+            />
 
-            <div class="mt-4">
-                <InputLabel for="password" :value="$t('auth.password')" />
+            <AuthField
+                id="password_confirmation"
+                v-model="form.password_confirmation"
+                type="password"
+                :label="$t('auth.register.password_confirmation_label')"
+                :error="form.errors.password_confirmation"
+                required
+                autocomplete="new-password"
+            />
 
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel
-                    for="password_confirmation"
-                    :value="$t('auth.confirm_password')"
-                />
-
-                <TextInput
-                    id="password_confirmation"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password_confirmation"
-                    required
-                    autocomplete="new-password"
-                />
-
-                <InputError
-                    class="mt-2"
-                    :message="form.errors.password_confirmation"
-                />
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <PrimaryButton
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    {{ $t('auth.reset_password.submit') }}
-                </PrimaryButton>
-            </div>
+            <AuthSubmit :processing="form.processing">
+                {{ $t("auth.reset_password.submit") }}
+            </AuthSubmit>
         </form>
     </GuestLayout>
 </template>

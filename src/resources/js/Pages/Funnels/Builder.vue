@@ -2,7 +2,13 @@
 import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { Head, router, useForm } from '@inertiajs/vue3';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import GoldBadge from '@/Components/License/GoldBadge.vue';
+import { useLicense } from '@/Composables/useLicense';
 import { useI18n } from 'vue-i18n';
+
+// Split A/B steps are GOLD (saving a new one answers with the upgrade dialog)
+const { can: licenceAllows, requireGold } = useLicense();
+const splitLocked = computed(() => !licenceAllows('funnel_ab_split'));
 
 const { t } = useI18n();
 
@@ -144,6 +150,11 @@ onMounted(() => {
 
 // Add node with proper defaults for each type
 const addNode = (type, x = null, y = null) => {
+    if (type === 'split' && splitLocked.value) {
+        requireGold('funnel_ab_split');
+        return;
+    }
+
     saveHistory();
 
     const id = `new-${nextNodeId.value++}`;
@@ -711,6 +722,7 @@ const getNodeValidationStatus = (node) => {
                     >
                         <span class="text-2xl">{{ config.icon }}</span>
                         <span class="font-medium text-gray-700 dark:text-gray-300">{{ t(config.label) }}</span>
+                        <GoldBadge v-if="type === 'split'" :locked="splitLocked" class="ml-auto" />
                     </div>
                 </div>
 

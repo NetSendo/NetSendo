@@ -2,6 +2,8 @@
 
 Model Context Protocol (MCP) server for NetSendo email marketing platform. Enables AI assistants like Claude Desktop, Cursor, and VS Code to interact with your NetSendo installation.
 
+> **No API key, no Node.js on your computer:** a NetSendo installation with the AI connector is itself a remote MCP server with sign-in. Paste `https://<your-netsendo-domain>/mcp` into Claude, Hermes, ChatGPT, Cursor or another MCP host, sign in and choose the permissions. In the panel: **Settings → AI connector**; for self-hosting see [docs/MCP_CONNECTOR.md](https://github.com/NetSendo/NetSendo/blob/main/docs/MCP_CONNECTOR.md). The connector runs the tools of this package, so both ways offer the same tools. Use this package when the host only runs local commands or the installation has no connector.
+
 ## 🚀 Quick Start
 
 ### Generate Configuration Automatically

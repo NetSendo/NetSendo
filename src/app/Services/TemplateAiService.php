@@ -20,8 +20,8 @@ class TemplateAiService
     protected function getIntegration(?int $integrationId = null): ?AiIntegration
     {
         if ($integrationId) {
-            return AiIntegration::where('id', $integrationId)
-                ->where('is_active', true)
+            return AiIntegration::usable()
+                ->where('id', $integrationId)
                 ->first();
         }
 

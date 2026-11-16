@@ -28,6 +28,12 @@ class AgentOrchestrator
 {
     protected array $agents = [];
 
+    /** Intents classified in this request, by conversation and message. */
+    protected array $intentCache = [];
+
+    /** The conversation the last streamConversation() call resolved or opened. */
+    public ?int $streamConversationId = null;
+
     public function __construct(
         protected AiService $aiService,
         protected ConversationManager $conversationManager,
@@ -77,6 +83,20 @@ class AgentOrchestrator
         ?int $conversationId = null,
         bool $forceNew = false,
     ): array {
+        // One message is one task, with its own token limit (TaskTokenBudget)
+        return TaskTokenBudget::run($user, fn () => $this->runMessage($message, $user, $channel, $conversationId, $forceNew));
+    }
+
+    /**
+     * The work of processMessage(), run as one task.
+     */
+    protected function runMessage(
+        string $message,
+        User $user,
+        string $channel,
+        ?int $conversationId,
+        bool $forceNew,
+    ): array {
         $startTime = microtime(true);
         $settings = AiBrainSettings::getForUser($user->id);
 
@@ -85,29 +105,13 @@ class AgentOrchestrator
             'channel' => $channel,
         ]);
 
-        $integration = $this->aiService->getDefaultIntegration();
+        [$integration, $conversationModel] = $this->brainModel($settings, 'conversation');
 
         if (!$integration) {
             return [
                 'type' => 'error',
                 'message' => __('brain.no_ai_integration'),
             ];
-        }
-
-        // Check token limits
-        if ($settings->isTokenLimitReached()) {
-            return [
-                'type' => 'error',
-                'message' => __('brain.token_limit_reached'),
-            ];
-        }
-
-        // Use user-preferred integration if set
-        if ($settings->preferred_integration_id) {
-            $preferredIntegration = AiIntegration::find($settings->preferred_integration_id);
-            if ($preferredIntegration && $preferredIntegration->is_active) {
-                $integration = $preferredIntegration;
-            }
         }
 
         // Resolve conversation: specific ID, force new, or auto-find
@@ -141,7 +145,7 @@ class AgentOrchestrator
                 // Clear pending state
                 $conversation->update(['context' => array_diff_key($context, ['pending_agent' => '', 'pending_intent' => ''])]);
 
-                $knowledgeContext = $this->knowledgeBase->getContext($user, $pendingIntent['task_type'] ?? 'general');
+                $knowledgeContext = $this->knowledgeBase->getContext($user, $pendingIntent['task_type'] ?? 'general', query: trim(($pendingIntent['intent'] ?? '') . "\n" . $message));
                 $intent = $pendingIntent;
                 $intent['requires_agent'] = true;
                 $intent['has_user_details'] = true;
@@ -166,33 +170,18 @@ class AgentOrchestrator
                         $conversation->update(['context' => $ctx]);
                     }
 
-                    $knowledgeContext = $this->knowledgeBase->getContext($user, 'general');
+                    $knowledgeContext = $this->knowledgeBase->getContext($user, 'general', query: $message);
                     $goalsContext = $this->goalPlanner->getActiveGoalsContext($user);
                     if ($goalsContext) {
                         $knowledgeContext .= $goalsContext;
                     }
 
-                    $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $settings->preferred_model);
+                    $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $conversationModel);
                 } else {
                     // Step 0.5: Pre-check for situation_analysis keywords (deterministic, bypasses AI classification)
                     // This ensures well-known analysis requests always go to SituationAnalyzer
                     // instead of being misclassified by AI as general conversation.
-                    $lowerMessage = mb_strtolower($message);
-                    $situationKeywords = [
-                        'przeanalizuj sytuacj', 'przeanalizuj obecn', 'analiza sytuacji',
-                        'obecną sytuacj', 'obecny stan', 'podsumuj stan', 'co jest nie tak',
-                        'analyze situation', 'current state', 'analyze current',
-                        'situation analysis', 'give me an overview', 'marketing audit',
-                        'co poprawi', 'jak wyglada sytuacja', 'jak wygląda sytuacja',
-                        'jaki jest stan', 'podsumuj sytuacj', 'ocen sytuacj', 'oceń sytuacj',
-                    ];
-                    $isSituationAnalysis = false;
-                    foreach ($situationKeywords as $keyword) {
-                        if (mb_strpos($lowerMessage, $keyword) !== false) {
-                            $isSituationAnalysis = true;
-                            break;
-                        }
-                    }
+                    $isSituationAnalysis = $this->isSituationRequest(mb_strtolower($message));
 
                     if ($isSituationAnalysis) {
                         $result = $this->handleSituationAnalysis($user, $conversation, $settings);
@@ -201,7 +190,13 @@ class AgentOrchestrator
                         // Wrapped in try-catch: ai_goals table may not exist if migration hasn't been run
                         $goalData = null;
                         try {
-                            $goalData = $this->goalPlanner->isGoalRequest($message, $user);
+                            // Goals are part of Brain autonomy (GOLD); without it the chat goes
+                            // straight to intent classification. In advisory mode Brain only
+                            // advises, so no goal (with plans to approve) is opened either
+                            $goalData = $settings->autonomyLicensed()
+                                && $settings->effectiveMode() !== ModeController::MODE_MANUAL
+                                ? $this->goalPlanner->isGoalRequest($message, $user)
+                                : null;
                         } catch (\Exception $e) {
                             Log::debug('Goal detection skipped (table may not exist)', ['error' => $e->getMessage()]);
                         }
@@ -225,7 +220,7 @@ class AgentOrchestrator
                                 $result = $this->handleSituationAnalysis($user, $conversation, $settings);
                             } else {
                                 // Step 3: Get knowledge context for this intent
-                                $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general');
+                                $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general', query: $message);
 
                                 // Inject active goal context
                                 $goalsContext = $this->goalPlanner->getActiveGoalsContext($user);
@@ -235,9 +230,9 @@ class AgentOrchestrator
 
                                 // Step 4: Route to appropriate agent or handle as conversation
                                 if ($intent['requires_agent']) {
-                                    $result = $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext);
+                                    $result = $this->handleAgentRequest($this->withUserRequest($intent, $message), $user, $conversation, $channel, $knowledgeContext);
                                 } else {
-                                    $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $settings->preferred_model);
+                                    $result = $this->handleConversation($message, $user, $conversation, $knowledgeContext, $integration, $conversationModel);
                                 }
                             }
                         }
@@ -245,11 +240,14 @@ class AgentOrchestrator
                 }
             }
 
+            // A task stopped by its token limit says so, whichever of its steps hit the limit
+            $result = $this->withTaskLimitNotice($result);
+
             // Step 4: Ensure model label is present for display
             $modelUsed = $result['model'] ?? null;
             if (!$modelUsed && ($result['type'] ?? '') !== 'info_request') {
                 // Agent responses use the preferred model or integration default
-                $modelUsed = $settings->preferred_model ?: ($integration->default_model ?? null);
+                $modelUsed = $conversationModel ?: ($integration->default_model ?? null);
             }
             if (!$modelUsed) {
                 $modelUsed = ($result['type'] ?? '') === 'info_request' ? 'Brain' : 'unknown';
@@ -258,11 +256,12 @@ class AgentOrchestrator
             $this->conversationManager->addAssistantMessage(
                 $conversation,
                 $result['message'],
-                [
+                array_filter([
                     'intent' => $intent['intent'] ?? 'conversation',
                     'agent' => $intent['agent'] ?? null,
                     'work_mode' => $settings->work_mode,
-                ],
+                    'plan_id' => $result['plan_id'] ?? null,
+                ], fn ($value) => $value !== null),
                 $result['tokens_input'] ?? 0,
                 $result['tokens_output'] ?? 0,
                 $modelUsed,
@@ -274,7 +273,9 @@ class AgentOrchestrator
 
             // Step 5: Track token usage
             $totalTokens = ($result['tokens_input'] ?? 0) + ($result['tokens_output'] ?? 0);
-            $settings->addTokensUsed($totalTokens);
+            if (empty($result['tokens_charged'])) {
+                $settings->addTokensUsed($totalTokens);
+            }
 
             // Step 6: Auto-generate title for new conversations
             if (!$conversation->title && $conversation->message_count <= 3) {
@@ -287,22 +288,34 @@ class AgentOrchestrator
                 // $this->tryAutoEnrich($user, $conversation);
             }
 
-            // Log execution
+            // Log execution: a request the agent could not plan or carry out is a failure,
+            // so it does not count towards the agent's success rate in the Monitor
             $durationMs = (int) ((microtime(true) - $startTime) * 1000);
-            AiExecutionLog::logSuccess(
-                $user->id,
-                $intent['agent'] ?? 'orchestrator',
-                'process_message',
-                ['message' => mb_substr($message, 0, 200)],
-                ['response_length' => strlen($result['message'])],
-                $result['tokens_input'] ?? 0,
-                $result['tokens_output'] ?? 0,
-                $modelUsed,
-                $durationMs
-            );
+            $failed = !empty($result['failed']) || ($result['type'] ?? '') === 'error';
+            if ($failed) {
+                AiExecutionLog::logError(
+                    $user->id,
+                    $intent['agent'] ?? 'orchestrator',
+                    'process_message',
+                    mb_substr((string) $result['message'], 0, 500),
+                    ['message' => mb_substr($message, 0, 200)]
+                );
+            } else {
+                AiExecutionLog::logSuccess(
+                    $user->id,
+                    $intent['agent'] ?? 'orchestrator',
+                    'process_message',
+                    ['message' => mb_substr($message, 0, 200)],
+                    ['response_length' => strlen($result['message'])],
+                    $result['tokens_input'] ?? 0,
+                    $result['tokens_output'] ?? 0,
+                    $modelUsed,
+                    $durationMs
+                );
+            }
 
             // Log brain activity stop event
-            AiBrainActivityLog::logEvent($user->id, 'brain_stop', 'completed', $intent['agent'] ?? null, [
+            AiBrainActivityLog::logEvent($user->id, 'brain_stop', $failed ? 'failed' : 'completed', $intent['agent'] ?? null, [
                 'duration_ms' => $durationMs,
             ], $durationMs);
 
@@ -328,7 +341,10 @@ class AgentOrchestrator
                 ['message' => mb_substr($message, 0, 200)]
             );
 
-            $errorMsg = __('brain.processing_error');
+            // A message stopped by its token limit explains the limit (not "skipped")
+            $errorMsg = $e instanceof TaskTokenLimitExceeded
+                ? (TaskTokenBudget::exceededMessage() ?? $e->getMessage())
+                : __('brain.processing_error');
             $this->conversationManager->addAssistantMessage($conversation, $errorMsg);
 
             return [
@@ -344,7 +360,23 @@ class AgentOrchestrator
      */
     public function classifyIntent(string $message, AiConversation $conversation, User $user): array
     {
-        $integration = $this->aiService->getDefaultIntegration();
+        // The web chat asks once while deciding whether to stream and again in processMessage();
+        // the same message in the same conversation gets the same answer without a second AI call
+        $cacheKey = $conversation->id . ':' . sha1($message);
+        if (isset($this->intentCache[$cacheKey])) {
+            return $this->intentCache[$cacheKey];
+        }
+
+        return $this->intentCache[$cacheKey] = $this->classifyIntentWithAi($message, $conversation, $user);
+    }
+
+    protected function classifyIntentWithAi(string $message, AiConversation $conversation, User $user): array
+    {
+        $settings = AiBrainSettings::getForUser($user->id);
+
+        // The model assigned to "Orchestration (intent classification)" in the advanced settings,
+        // else the Brain model — not whichever integration happens to come first
+        [$integration, $model] = $this->brainModel($settings, 'orchestration');
 
         if (!$integration) {
             return [
@@ -369,8 +401,11 @@ class AgentOrchestrator
             return "- {$agent['name']}: {$caps}";
         })->join("\n");
 
+        // Every registered agent can be chosen (the revenue, funnel and deliverability agents
+        // were missing from a hard-coded list, so the chat never reached them)
+        $agentNames = implode('|', array_keys($this->agents));
+
         // Get marketing/sales skill context for richer intent classification
-        $settings = AiBrainSettings::getForUser($user->id);
         $langCode = $settings->resolveLanguage($user);
         $skillContext = MarketingSalesSkill::getSystemPrompt($langCode);
 
@@ -400,14 +435,15 @@ NEW USER MESSAGE:
 Respond in JSON:
 {
   "requires_agent": true/false,
-  "agent": "campaign|list|message|crm|analytics|segmentation|research|null",
+  "agent": "{$agentNames}|null",
   "intent": "short description of intent",
-  "task_type": "campaign|message|list|crm|analytics|segmentation|research|situation_analysis|general",
+  "task_type": "{$agentNames}|situation_analysis|general",
   "confidence": 0.0-1.0,
   "parameters": {}
 }
 
-Set requires_agent=false for general questions, conversations, greetings.
+Set requires_agent=false for general questions, conversations, greetings, and questions about facts in the knowledge base (e.g. "how do we handle returns?", "what does plan X cost?") — those are answered in the conversation.
+Questions about the user's OWN company, products, plans, prices, offer or processes are knowledge-base questions (requires_agent=false), even when research tools are available. Choose the research agent only when the user asks to search the web or to research competitors, markets, trends, news or other companies.
 Set requires_agent=true when the user wants to PERFORM a specific action (e.g. create a campaign, research a topic, analyze competitors, etc.)
 Set task_type="situation_analysis" (and requires_agent=false) when user asks for a holistic situation review, current state analysis, or overall assessment of their marketing/CRM situation (e.g. "przeanalizuj obecną sytuację", "analyze current situation", "co jest nie tak", "what should I do", "podsumuj stan", "give me an overview").
 
@@ -420,15 +456,17 @@ NEVER re-classify a follow-up answer as requiring an agent — the conversation 
 PROMPT;
 
         try {
-            $response = BrainAi::generate($user, 'classify_intent', $prompt, $integration, [
-                'max_tokens' => 500,
-                'temperature' => 0.1,
-            ]);
+            $options = ['max_tokens' => 500, 'temperature' => 0.1];
+            if ($model) {
+                $options['model'] = $model;
+            }
+
+            $response = BrainAi::generate($user, 'classify_intent', $prompt, $integration, $options);
 
             $parsed = $this->parseJson($response);
 
             if ($parsed) {
-                return array_merge([
+                $intent = array_merge([
                     'requires_agent' => false,
                     'agent' => null,
                     'intent' => 'conversation',
@@ -436,13 +474,73 @@ PROMPT;
                     'confidence' => 0.5,
                     'parameters' => [],
                 ], $parsed);
+
+                // An agent name the registry does not know cannot take the request
+                if (!empty($intent['requires_agent']) && !isset($this->agents[$intent['agent'] ?? ''])) {
+                    $intent['requires_agent'] = false;
+                    $intent['agent'] = null;
+                }
+
+                // A plain question sent to the research agent is answered in the conversation
+                // (with the knowledge base) unless it asks for a web search: "what plans do we
+                // have and what does the cheapest cost?" went to research, which in semi-automatic
+                // mode means a research plan to approve for a question
+                if (!empty($intent['requires_agent']) && ($intent['agent'] ?? null) === 'research'
+                    && $this->isPlainQuestion($message) && !$this->asksForWebResearch($message)) {
+                    $intent['requires_agent'] = false;
+                    $intent['agent'] = null;
+                    $intent['task_type'] = 'general';
+                }
+                if (!is_array($intent['parameters'])) {
+                    $intent['parameters'] = [];
+                }
+
+                return $intent;
             }
+
+            Log::warning('Intent classification returned no JSON', [
+                'integration_id' => $integration->id,
+                'model' => $model ?? $integration->default_model,
+                'response' => mb_substr($response, 0, 300),
+            ]);
         } catch (\Exception $e) {
-            Log::warning('Intent classification failed', ['error' => $e->getMessage()]);
+            Log::warning('Intent classification failed', [
+                'integration_id' => $integration->id,
+                'model' => $model ?? $integration->default_model,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         // Fallback: simple keyword matching
         return $this->fallbackIntentClassification($message);
+    }
+
+    /**
+     * The integration and model Brain uses for a kind of work (see AiBrainSettings::aiFor()).
+     *
+     * @return array{0: ?AiIntegration, 1: ?string}
+     */
+    public function brainModel(AiBrainSettings $settings, string $task): array
+    {
+        return $settings->aiFor($task);
+    }
+
+    /**
+     * Give the agent the user's own words next to the classified intent, so a short or generic
+     * intent never replaces what the user actually asked for.
+     */
+    protected function withUserRequest(array $intent, string $message): array
+    {
+        $description = trim((string) ($intent['intent'] ?? ''));
+        $message = trim($message);
+
+        if ($message !== '' && !str_contains($description, $message)) {
+            $intent['intent'] = $description === ''
+                ? $message
+                : $description . "\nUser's request: " . $message;
+        }
+
+        return $intent;
     }
 
     /**
@@ -468,10 +566,13 @@ PROMPT;
         }
 
         $settings = AiBrainSettings::getForUser($user->id);
+        $agent->takeUsage(); // count this request's tokens only
 
-        // In manual mode, just provide advice without creating an action plan
-        if ($settings->work_mode === ModeController::MODE_MANUAL) {
-            return $agent->advise($intent, $user, $knowledgeContext);
+        // In manual (advisory) mode, just provide advice without creating an action plan. The
+        // agent's own mode decides, like it does for approvals: an agent set to "Advisory"
+        // advises even when the global mode is semi-automatic
+        if ($settings->getAgentMode($agentName) === ModeController::MODE_MANUAL) {
+            return $this->withAgentUsage($agent->advise($intent, $user, $knowledgeContext), $agent);
         }
 
         // Check if conversation already has rich campaign/agent context
@@ -500,14 +601,22 @@ PROMPT;
             $conversation->update(['context' => $context]);
 
             $questions = $agent->getInfoQuestions($intent, $user, $knowledgeContext);
-            return [
+            return $this->withAgentUsage([
                 'type' => 'info_request',
                 'message' => $questions,
-            ];
+            ], $agent);
         }
 
         // Create an action plan (with retry on failure)
         $plan = $agent->plan($intent, $user, $knowledgeContext);
+
+        if (!$plan && TaskTokenBudget::exceeded()) {
+            return $this->withAgentUsage([
+                'type' => 'error',
+                'message' => TaskTokenBudget::exceededMessage(),
+                'failed' => true,
+            ], $agent);
+        }
 
         if (!$plan) {
             // Retry once with a simplified prompt approach
@@ -533,30 +642,48 @@ PROMPT;
                     'agent' => $agent->getLabel(),
                     'intent' => mb_substr($intentDesc, 0, 100),
                 ]),
+                'failed' => true,
             ];
         }
 
-        // Link plan to active goal if one exists
-        try {
-            $activeGoal = AiGoal::forUser($user->id)->active()->latest()->first();
-            if ($activeGoal && !$plan->ai_goal_id) {
-                $plan->update(['ai_goal_id' => $activeGoal->id]);
-                $activeGoal->updateProgress();
+        // The plan belongs to the conversation that asked for it: its result is posted there
+        // after an approval, and the chat can show its approve/reject buttons again
+        if (!$plan->ai_conversation_id && $conversation->exists) {
+            $plan->update(['ai_conversation_id' => $conversation->id]);
+        }
+
+        // A plan made for a goal counts towards that goal. Other requests from the chat belong to
+        // no goal: linking them to whichever goal was active moved its progress with unrelated work
+        $goalId = $intent['parameters']['goal_id'] ?? null;
+        if ($goalId && !$plan->ai_goal_id) {
+            try {
+                $goal = AiGoal::forUser($user->id)->find($goalId);
+                if ($goal) {
+                    $goalStep = $intent['parameters']['goal_step'] ?? null;
+                    $plan->update(array_filter([
+                        'ai_goal_id' => $goal->id,
+                        'plan_data' => $goalStep !== null
+                            ? array_merge($plan->plan_data ?? [], ['goal_step' => (int) $goalStep])
+                            : null,
+                    ]));
+                    $goal->updateProgress();
+                }
+            } catch (\Exception $e) {
+                // ai_goals table may not exist yet if migration hasn't been run
             }
-        } catch (\Exception $e) {
-            // ai_goals table may not exist yet if migration hasn't been run
         }
 
         // Check if approval is needed (per-agent mode + destructive-step gate)
         if ($this->modeController->planRequiresApproval($plan, $user)) {
             $approval = $this->modeController->requestApproval($plan, $user, $channel);
 
-            return [
+            return $this->withAgentUsage([
                 'type' => 'approval_request',
                 'message' => $this->formatPlanForApproval($plan),
                 'plan_id' => $plan->id,
                 'approval_id' => $approval->id,
-            ];
+                'plan' => self::planCard($plan),
+            ], $agent);
         }
 
         // Autonomous mode: execute immediately
@@ -567,6 +694,15 @@ PROMPT;
      * Execute an approved action plan.
      */
     public function executePlan(AiActionPlan $plan, User $user): array
+    {
+        // A plan run is one task with its own token limit (inside a chat message: part of it)
+        return TaskTokenBudget::run($user, fn () => $this->runPlan($plan, $user));
+    }
+
+    /**
+     * The work of executePlan(), run as one task.
+     */
+    protected function runPlan(AiActionPlan $plan, User $user): array
     {
         $agentName = $plan->agent_type;
         $agent = $this->agents[$agentName] ?? null;
@@ -587,18 +723,56 @@ PROMPT;
         ]);
 
         try {
-            $result = $agent->execute($plan, $user);
+            // A run stopped by the task's token limit is a failed run and says why
+            $result = $this->withTaskLimitNotice($agent->execute($plan, $user));
 
-            $plan->markCompleted([
+            // A plan whose change or send failed is a failed plan: it used to be "completed"
+            // (and counted as a success) although nothing was sent
+            $plan->refresh();
+            $planFailed = ($result['type'] ?? '') === 'error' || !empty($result['failed']) || $this->planOutcomeFailed($plan);
+            $summary = [
                 'result' => $result['message'] ?? 'Completed',
                 'completed_steps' => $plan->completed_steps,
                 'failed_steps' => $plan->failed_steps,
-            ]);
+            ];
+
+            if ($planFailed) {
+                $plan->markFailed($summary);
+            } else {
+                $plan->markCompleted($summary);
+            }
 
             // Log agent completion event
-            AiBrainActivityLog::logEvent($user->id, 'agent_complete', 'completed', $agentName, [
+            AiBrainActivityLog::logEvent($user->id, 'agent_complete', $planFailed ? 'failed' : 'completed', $agentName, [
                 'plan_id' => $plan->id,
             ]);
+
+            if ($planFailed) {
+                // A goal records the failure (and pauses after repeated ones) like a crashed run
+                $failureMessage = '';
+                if ($plan->ai_goal_id) {
+                    try {
+                        $failureResult = $this->goalPlanner->handlePlanFailure($plan, mb_substr((string) ($result['message'] ?? ''), 0, 300), $user);
+                        $failureMessage = "\n\n" . ($failureResult['message'] ?? '');
+
+                        // "Retrying with another approach" — once: a step that fails twice
+                        // waits for the user (GoalPlanner::getNextAction). A step stopped by the
+                        // token limit is not retried: it would use the same tokens again
+                        if (($failureResult['action'] ?? null) === 'retry' && !TaskTokenBudget::exceeded()) {
+                            \App\Jobs\ContinueBrainGoalJob::dispatch($plan->ai_goal_id, $user->id)->afterCommit();
+                        }
+                    } catch (\Exception $e) {
+                        Log::debug('Goal failure handling skipped', ['error' => $e->getMessage()]);
+                    }
+                }
+
+                return [
+                    'type' => 'execution_result',
+                    'message' => ($result['message'] ?? __('brain.plan_execution_error', ['error' => ''])) . $failureMessage,
+                    'plan_id' => $plan->id,
+                    'failed' => true,
+                ];
+            }
 
             // Disabled: AI style extraction to KB removed — only users can add KB entries
             // try {
@@ -648,6 +822,103 @@ PROMPT;
                 'plan_id' => $plan->id,
             ];
         }
+    }
+
+    /**
+     * Tell the user when the running task was stopped by its token limit (TaskTokenBudget):
+     * the explanation is added once, and the result counts as failed.
+     */
+    protected function withTaskLimitNotice(array $result): array
+    {
+        $limitMessage = TaskTokenBudget::exceededMessage();
+        if ($limitMessage === null) {
+            return $result;
+        }
+
+        $message = trim((string) ($result['message'] ?? ''));
+        if (!str_contains($message, $limitMessage)) {
+            $result['message'] = trim($message . "\n\n" . $limitMessage);
+        }
+        $result['failed'] = true;
+
+        return $result;
+    }
+
+    /**
+     * Attach the tokens the agent used to its answer. They are charged already
+     * (BaseAgent::callAi), so processMessage must not charge them again.
+     */
+    protected function withAgentUsage(array $result, BaseAgent $agent): array
+    {
+        $usage = $agent->takeUsage();
+        if (!isset($result['tokens_input']) && !isset($result['tokens_output'])) {
+            $result['tokens_input'] = $usage['tokens_input'];
+            $result['tokens_output'] = $usage['tokens_output'];
+            $result['tokens_charged'] = true;
+        }
+
+        return $result;
+    }
+
+    /** Words that ask for a web search or outside research (PL, EN, DE, ES stems). */
+    protected const WEB_RESEARCH_KEYWORDS = [
+        'zbadaj', 'wyszukaj', 'poszukaj', 'internet', 'w sieci', 'google', 'konkurenc', 'rynk', 'trend', 'branż',
+        'news', 'wiadomości z', 'research', 'search', 'look up', 'competitor', 'industry',
+        'recherch', 'wettbewerb', 'konkurrenz', 'markt', 'investiga', 'busca', 'competencia', 'mercado', 'tendencia',
+    ];
+
+    protected function isPlainQuestion(string $message): bool
+    {
+        $lower = mb_strtolower(trim($message));
+
+        return str_ends_with($lower, '?')
+            || (bool) preg_match('/^(jak|jaki|jaka|jakie|ile|czy|co|kiedy|gdzie|dlaczego|what|how|which|when|where|why|is|are|do|does|wie|was|welche|wann|qué|cómo|cuál|cuánto)\b/u', $lower);
+    }
+
+    protected function asksForWebResearch(string $message): bool
+    {
+        $lower = mb_strtolower($message);
+        foreach (self::WEB_RESEARCH_KEYWORDS as $keyword) {
+            if (str_contains($lower, $keyword)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The plan as the chat shows it with approve/reject buttons.
+     */
+    public static function planCard(AiActionPlan $plan): array
+    {
+        return [
+            'id' => $plan->id,
+            'title' => $plan->title,
+            'steps' => $plan->steps()->orderBy('step_order')->get()->map(fn ($step) => [
+                'action' => $step->action_type,
+                'description' => $step->title,
+                'tier' => \App\Services\Brain\Tools\ToolRegistry::tierOf($step->action_type),
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * Whether a finished plan failed: a failed step that changes or sends something, or every
+     * step failed. A failed read-only step (one statistic missing from a report) does not fail
+     * a plan whose other steps worked.
+     */
+    protected function planOutcomeFailed(AiActionPlan $plan): bool
+    {
+        $steps = $plan->steps()->get();
+        $failed = $steps->where('status', 'failed');
+
+        if ($failed->isEmpty()) {
+            return false;
+        }
+
+        return $failed->count() === $steps->count()
+            || $failed->contains(fn ($step) => \App\Services\Brain\Tools\ToolRegistry::tierOf($step->action_type) !== \App\Services\Brain\Tools\ToolRegistry::TIER_READ);
     }
 
     /**
@@ -706,6 +977,10 @@ PROMPT;
             $nextAction = $this->goalPlanner->getNextAction($goal);
 
             if ($nextAction) {
+                // The next step starts on the queue once this plan is done (the message used
+                // to promise it while only an enabled hourly cron ever did)
+                \App\Jobs\ContinueBrainGoalJob::dispatch($goal->id, $user->id)->afterCommit();
+
                 return [
                     'type' => 'goal_continuation',
                     'message' => __('brain.goals.continued_next_plan', [
@@ -766,10 +1041,10 @@ PROMPT;
                 'intent' => $goalData['description'] ?? $goalData['title'],
                 'task_type' => $goalData['agent'] ?? 'campaign',
                 'confidence' => 0.8,
-                'parameters' => [],
+                'parameters' => ['goal_id' => $goal->id],
             ];
 
-            $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type']);
+            $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'], query: $intent['intent'] ?? null);
             return $this->handleAgentRequest($intent, $user, $conversation, 'web', $knowledgeContext);
         }
 
@@ -799,37 +1074,73 @@ PROMPT;
             }
         }
 
-        // In autonomous mode, start executing the first plan immediately
-        if ($settings->work_mode === ModeController::MODE_AUTONOMOUS) {
-            $firstPlan = $subPlans[0] ?? null;
-            if ($firstPlan) {
-                $message .= "\n⚡ " . __('brain.goals.starting_first_plan', [
-                    'plan' => $firstPlan['title'] ?? '',
-                ]) . "\n";
-
-                // Execute first plan by routing to agent
-                $intent = [
-                    'requires_agent' => true,
-                    'agent' => $firstPlan['agent'] ?? 'campaign',
-                    'intent' => $firstPlan['intent'] ?? $firstPlan['description'] ?? $firstPlan['title'],
-                    'task_type' => $firstPlan['agent'] ?? 'campaign',
-                    'confidence' => 0.9,
-                    'parameters' => [],
-                ];
-
-                $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type']);
-                $planResult = $this->handleAgentRequest($intent, $user, $conversation, 'web', $knowledgeContext);
-                $message .= "\n" . ($planResult['message'] ?? '');
-            }
-        } else {
-            $message .= "\n" . __('brain.goals.awaiting_approval');
-        }
-
-        return [
+        // The first step starts now in every mode: semi-automatic gets its plan to approve (the
+        // chat used to say "approve each step" with nothing to approve), autonomous runs it.
+        // The next steps follow as each plan finishes (ContinueBrainGoalJob)
+        $firstStep = $this->goalPlanner->getNextAction($goal->fresh());
+        $result = [
             'type' => 'goal_created',
-            'message' => $message,
             'goal_id' => $goal->id,
         ];
+
+        if ($firstStep) {
+            $message .= "\n⚡ " . __('brain.goals.starting_first_plan', ['plan' => $firstStep['title'] ?? '']) . "\n";
+            $stepResult = $this->startGoalStep($goal, $firstStep, $user, $conversation, 'web');
+            $message .= "\n" . ($stepResult['message'] ?? '');
+
+            foreach (['type', 'plan_id', 'approval_id', 'plan', 'failed'] as $key) {
+                if (array_key_exists($key, $stepResult)) {
+                    $result[$key] = $stepResult[$key];
+                }
+            }
+        }
+
+        $result['message'] = $message;
+
+        return $result;
+    }
+
+    /**
+     * Start one step of a goal's decomposition: the agent plans it, and the agent's mode decides
+     * what happens next (advice, a plan waiting for approval, or an immediate run).
+     */
+    public function startGoalStep(
+        AiGoal $goal,
+        array $step,
+        User $user,
+        ?AiConversation $conversation = null,
+        string $channel = 'web',
+    ): array {
+        $agentName = $step['agent'] ?? 'campaign';
+        $intentText = $step['intent'] ?? $step['title'] ?? $goal->title;
+        if (!empty($step['description']) && $step['description'] !== $intentText) {
+            $intentText .= "\n" . $step['description'];
+        }
+
+        $intent = [
+            'requires_agent' => true,
+            'agent' => $agentName,
+            'intent' => $intentText,
+            'task_type' => $agentName,
+            'confidence' => 0.9,
+            'channel' => $channel,
+            // The step brief comes from the goal: no "tell me more" round trip
+            'has_user_details' => true,
+            'parameters' => [
+                'goal_id' => $goal->id,
+                'goal_step' => $step['order'] ?? null,
+            ],
+        ];
+
+        $conversation ??= $goal->conversation ?? new AiConversation(['user_id' => $user->id]);
+
+        // A goal step is one task with its own token limit
+        return TaskTokenBudget::run($user, function () use ($intent, $user, $conversation, $channel, $agentName, $intentText) {
+            $knowledgeContext = $this->knowledgeBase->getContext($user, $agentName, query: $intentText);
+            return $this->withTaskLimitNotice(
+                $this->handleAgentRequest($intent, $user, $conversation, $channel, $knowledgeContext),
+            );
+        });
     }
 
     /**
@@ -844,7 +1155,8 @@ PROMPT;
         ?string $preferredModel = null,
     ): array {
         if (!$integration) {
-            $integration = $this->aiService->getDefaultIntegration();
+            [$integration, $routedModel] = $this->brainModel(AiBrainSettings::getForUser($user->id), 'conversation');
+            $preferredModel ??= $routedModel;
         }
 
         if (!$integration) {
@@ -859,6 +1171,8 @@ PROMPT;
             $user,
             $knowledgeContext,
         );
+
+        TaskTokenBudget::ensureAvailable($user->id);
 
         $provider = $this->aiService->getProvider($integration);
         $modelToUse = $preferredModel ?: null;
@@ -897,23 +1211,12 @@ PROMPT;
         ?callable $onComplete = null,
     ): ?\Generator {
         $startTime = microtime(true);
+        $this->streamConversationId = null;
         $settings = AiBrainSettings::getForUser($user->id);
-        $integration = $this->aiService->getDefaultIntegration();
+        [$integration, $conversationModel] = $this->brainModel($settings, 'conversation');
 
         if (!$integration) {
             return null; // Fallback to synchronous
-        }
-
-        if ($settings->isTokenLimitReached()) {
-            return null;
-        }
-
-        // Use user-preferred integration if set
-        if ($settings->preferred_integration_id) {
-            $preferredIntegration = AiIntegration::find($settings->preferred_integration_id);
-            if ($preferredIntegration && $preferredIntegration->is_active) {
-                $integration = $preferredIntegration;
-            }
         }
 
         // Resolve conversation
@@ -927,6 +1230,9 @@ PROMPT;
         } else {
             $conversation = $this->conversationManager->getConversation($user, $channel);
         }
+
+        // When this method returns null the caller continues in this same conversation
+        $this->streamConversationId = $conversation->id;
 
         // DO NOT save user message here!
         // If this method returns null (non-streamable), the caller falls back to processMessage()
@@ -969,19 +1275,8 @@ PROMPT;
             $intent = $this->classifyIntent($message, $conversation, $user);
 
             // Check for situation_analysis keywords (same pre-check as processMessage)
-            $lowerMessage = mb_strtolower($message);
-            $situationKeywords = [
-                'przeanalizuj sytuacj', 'przeanalizuj obecn', 'analiza sytuacji',
-                'obecną sytuacj', 'obecny stan', 'podsumuj stan', 'co jest nie tak',
-                'analyze situation', 'current state', 'analyze current',
-                'situation analysis', 'give me an overview', 'marketing audit',
-                'co poprawi', 'jak wyglada sytuacja', 'jak wygląda sytuacja',
-                'jaki jest stan', 'podsumuj sytuacj', 'ocen sytuacj', 'oceń sytuacj',
-            ];
-            foreach ($situationKeywords as $keyword) {
-                if (mb_strpos($lowerMessage, $keyword) !== false) {
-                    return null; // Situation analysis — not streamable, processMessage will handle
-                }
+            if ($this->isSituationRequest(mb_strtolower($message))) {
+                return null; // Situation analysis — not streamable, processMessage will handle
             }
 
             if ($intent['requires_agent']) {
@@ -993,10 +1288,10 @@ PROMPT;
         // NOW save the user message (only for successful streaming path)
         $this->conversationManager->addUserMessage($conversation, $message);
 
-        $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general');
+        $knowledgeContext = $this->knowledgeBase->getContext($user, $intent['task_type'] ?? 'general', query: $message);
         $messages = $this->conversationManager->buildAiPayload($conversation, $user, $knowledgeContext);
         $provider = $this->aiService->getProvider($integration);
-        $modelToUse = $settings->preferred_model ?: null;
+        $modelToUse = $conversationModel;
         $actualModel = $modelToUse ?: ($integration->default_model ?: 'unknown');
 
         // Return a generator that yields chunks and persists on completion
@@ -1160,7 +1455,7 @@ PROMPT;
             }
         }
 
-        $text .= "\n" . __('brain.mode_label', ['mode' => $this->modeController->getModeLabel($plan->work_mode)]);
+        $text .= "\n" . __('brain.mode_label', ['mode' => __($this->modeController->getModeLabel($plan->work_mode))]);
         $text .= "\n\n" . __('brain.approve_reject');
 
         return $text;
@@ -1183,47 +1478,76 @@ PROMPT;
     }
 
     /**
-     * Fallback intent classification using keyword matching.
+     * Phrases that ask for a review of the whole situation (handled by SituationAnalyzer).
+     */
+    protected const SITUATION_KEYWORDS = [
+        'przeanalizuj sytuacj', 'przeanalizuj obecn', 'analiza sytuacji',
+        'obecną sytuacj', 'obecny stan', 'podsumuj stan', 'co jest nie tak',
+        'analyze situation', 'current state', 'analyze current',
+        'situation analysis', 'give me an overview', 'marketing audit',
+        'co poprawi', 'jak wyglada sytuacja', 'jak wygląda sytuacja',
+        'jaki jest stan', 'podsumuj sytuacj', 'ocen sytuacj', 'oceń sytuacj',
+    ];
+
+    /**
+     * Fallback intent classification using keyword matching, used only when the AI classifier
+     * fails. A message goes to an agent only when it asks for something to be done (an action
+     * verb) and names that agent's area; questions stay in the conversation, where the knowledge
+     * base answers them. The agent always gets the user's own words as the intent.
      */
     protected function fallbackIntentClassification(string $message): array
     {
         $lower = mb_strtolower($message);
 
-        // Situation analysis keywords — check first (higher priority)
-        $situationKeywords = [
-            'przeanalizuj sytuacj', 'obecn', 'stan', 'podsumuj', 'co jest nie tak',
-            'analyze situation', 'current state', 'overview', 'audit', 'przeanalizuj obecn',
-        ];
-        foreach ($situationKeywords as $keyword) {
-            if (mb_strpos($lower, $keyword) !== false) {
-                return [
-                    'requires_agent' => false,
-                    'agent' => null,
-                    'intent' => 'situation_analysis',
-                    'task_type' => 'situation_analysis',
-                    'confidence' => 0.7,
-                    'parameters' => [],
-                ];
-            }
+        if ($this->isSituationRequest($lower)) {
+            return [
+                'requires_agent' => false,
+                'agent' => null,
+                'intent' => 'situation_analysis',
+                'task_type' => 'situation_analysis',
+                'confidence' => 0.7,
+                'parameters' => [],
+            ];
         }
 
-        $patterns = [
-            'campaign' => ['kampani', 'newsletter', 'wyślij mail', 'wysyłk', 'email blast', 'mailing'],
-            'list' => ['list', 'subskryb', 'kontakt', 'grupa'],
-            'message' => ['napisz', 'treść', 'temat', 'subject', 'szablon', 'template', 'wiadomoś'],
-            'crm' => ['crm', 'deal', 'lead', 'pipeline', 'scoring', 'zadani', 'firma', 'prospekt', 'klient'],
-            'analytics' => ['statystyk', 'analiz', 'raport', 'wynik', 'open rate', 'click', 'trend'],
-            'segmentation' => ['segment', 'tag', 'automat', 'reguł', 'scoring', 'filtr'],
-            'research' => ['research', 'szukaj', 'wyszukaj', 'find out', 'look up', 'investigate', 'competitor', 'konkuren', 'zbadaj', 'sprawdź w internecie', 'google', 'search online'],
+        $conversation = [
+            'requires_agent' => false,
+            'agent' => null,
+            'intent' => 'conversation',
+            'task_type' => 'general',
+            'confidence' => 0.5,
+            'parameters' => [],
         ];
 
-        foreach ($patterns as $agent => $keywords) {
-            foreach ($keywords as $keyword) {
-                if (mb_strpos($lower, $keyword) !== false) {
+        $actionVerbs = '(?:przygotuj|utw[oó]rz|stw[oó]rz|wy[sś]lij|zaplanuj|dodaj|usu[nń]|zbuduj|napisz|wygeneruj|uruchom|zaprojektuj|przeanalizuj|wyczy[sś][cć]|oczy[sś][cć]|otaguj|zbadaj|wyszukaj|poszukaj|zr[oó]b|ustaw|aktywuj|wstrzymaj|create|send|schedule|build|write|generate|add|remove|delete|run|launch|analy[sz]e|clean|research|find|set up)';
+        if (!preg_match('/(?<!\p{L})' . $actionVerbs . '(?!\p{L})/u', $lower)) {
+            return $conversation;
+        }
+
+        // Stems matched at the start of a word ("list" no longer matches "listopad")
+        $patterns = [
+            'funnel' => ['lejek', 'lejk', 'funnel', 'porzucon', 'win-back', 'winback', 'playbook'],
+            'campaign' => ['kampani', 'newsletter', 'mailing', 'wysyłk', 'campaign', 'test a/b', 'a/b test'],
+            'message' => ['treść', 'treści', 'temat', 'tematy', 'szablon', 'template', 'wiadomoś', 'sms', 'subject'],
+            'list' => ['listę', 'listy', 'lista', 'list ', 'subskryben', 'subscriber', 'kontakty'],
+            'crm' => ['crm', 'deal', 'lead', 'pipeline', 'zadani', 'prospekt', 'kontrahent'],
+            'segmentation' => ['segment', 'tag', 'automatyzacj', 'automation', 'reguł'],
+            'analytics' => ['statystyk', 'raport', 'report', 'open rate', 'wynik', 'trend'],
+            'revenue' => ['przychód', 'przychod', 'revenue', 'rpm', 'ltv', 'zarobi'],
+            'deliverability' => ['dostarczaln', 'deliverab', 'spf', 'dkim', 'dmarc', 'odbić', 'bounce', 'spam'],
+            'research' => ['internet', 'konkuren', 'competitor', 'google', 'online', 'rynk', 'market'],
+        ];
+
+        foreach ($patterns as $agent => $stems) {
+            if (!isset($this->agents[$agent])) {
+                continue;
+            }
+            foreach ($stems as $stem) {
+                if (preg_match('/(?<!\p{L})' . preg_quote($stem, '/') . '/u', $lower)) {
                     return [
                         'requires_agent' => true,
                         'agent' => $agent,
-                        'intent' => 'keyword_match',
+                        'intent' => trim($message),
                         'task_type' => $agent,
                         'confidence' => 0.4,
                         'parameters' => [],
@@ -1232,13 +1556,21 @@ PROMPT;
             }
         }
 
-        return [
-            'requires_agent' => false,
-            'intent' => 'conversation',
-            'task_type' => 'general',
-            'confidence' => 0.5,
-            'parameters' => [],
-        ];
+        return $conversation;
+    }
+
+    /**
+     * Whether a (lower-case) message asks for a review of the whole situation.
+     */
+    protected function isSituationRequest(string $lowerMessage): bool
+    {
+        foreach (self::SITUATION_KEYWORDS as $keyword) {
+            if (mb_strpos($lowerMessage, $keyword) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -1349,6 +1681,15 @@ PROMPT;
      */
     public function executeCronTask(array $task, User $user): array
     {
+        // Each cron task is one task with its own token limit
+        return TaskTokenBudget::run($user, fn () => $this->runCronTask($task, $user));
+    }
+
+    /**
+     * The work of executeCronTask(), run as one task.
+     */
+    protected function runCronTask(array $task, User $user): array
+    {
         $startTime = microtime(true);
         $agentName = $task['agent'] ?? null;
         $agent = $this->agents[$agentName] ?? null;
@@ -1389,7 +1730,7 @@ PROMPT;
         ];
 
         // Get knowledge context
-        $knowledgeContext = $this->knowledgeBase->getContext($user, $agentName);
+        $knowledgeContext = $this->knowledgeBase->getContext($user, $agentName, query: $intent['intent'] ?? null);
 
         // Enrich knowledge context with auto-gathered data
         if (!empty($autoContext)) {
@@ -1602,6 +1943,15 @@ PROMPT;
         }
 
         $data = json_decode($response, true);
+        if (!is_array($data)) {
+            // Some models put a sentence before or after the JSON object
+            $start = strpos($response, '{');
+            $end = strrpos($response, '}');
+            if ($start !== false && $end > $start) {
+                $data = json_decode(substr($response, $start, $end - $start + 1), true);
+            }
+        }
+
         return is_array($data) ? $data : null;
     }
 

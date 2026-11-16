@@ -43,11 +43,6 @@ const links = computed(() => [
     },
     { label: t("help_menu.api_reference"), href: "/docs/api", icon: "code" },
     {
-        label: t("help_menu.community_forum"),
-        href: "https://forum.netsendo.com",
-        icon: "users",
-    },
-    {
         label: t("help_menu.telegram", "Oficjalny kanał Telegram"),
         href: "https://t.me/netsendo_official",
         icon: "telegram",

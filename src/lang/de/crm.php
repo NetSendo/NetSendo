@@ -156,4 +156,117 @@ return [
             'edit' => 'Bearbeiten',
         ],
     ],
+
+    // Default lead scoring rules (LeadScoringRule::getDefaultRules())
+    'scoring' => [
+        'defaults' => [
+            'email_opened' => [
+                'name' => 'E-Mail geöffnet',
+                'description' => 'Punkte für das Öffnen einer E-Mail',
+            ],
+            'email_clicked' => [
+                'name' => 'Link angeklickt',
+                'description' => 'Punkte für das Klicken auf einen Link in einer E-Mail',
+            ],
+            'email_replied' => [
+                'name' => 'E-Mail beantwortet',
+                'description' => 'Bonus für das Antworten auf eine Nachricht',
+            ],
+            'contact_created' => [
+                'name' => 'Kontakt erstellt',
+                'description' => 'Startpunkte bei Erstellung eines CRM-Kontakts',
+            ],
+            'form_submitted' => [
+                'name' => 'Formular gesendet',
+                'description' => 'Punkte für das Absenden eines beliebigen Formulars',
+            ],
+            'page_visited' => [
+                'name' => 'Seite besucht',
+                'description' => 'Punkte für den Besuch einer Seite',
+            ],
+            'page_visited_pricing' => [
+                'name' => 'Preisseite besucht',
+                'description' => 'Bonus für den Besuch der Preisseite',
+            ],
+            'product_viewed' => [
+                'name' => 'Produkt angesehen',
+                'description' => 'Punkte für das Ansehen einer Produktseite',
+            ],
+            'add_to_cart' => [
+                'name' => 'In den Warenkorb',
+                'description' => 'Punkte für das Hinzufügen eines Produkts zum Warenkorb',
+            ],
+            'checkout_started' => [
+                'name' => 'Kasse gestartet',
+                'description' => 'Bonus für den Start des Kaufvorgangs',
+            ],
+            'tag_added_hot' => [
+                'name' => 'Tag "hot"',
+                'description' => 'Bonus für den Erhalt des Tags \'hot\'',
+            ],
+            'tag_added_vip' => [
+                'name' => 'Tag "vip"',
+                'description' => 'Bonus für den Erhalt des Tags \'vip\'',
+            ],
+            'decay_7_days' => [
+                'name' => 'Inaktivität 7 Tage',
+                'description' => 'Automatischer Punkteverfall nach 7 Tagen Inaktivität',
+            ],
+            'decay_30_days' => [
+                'name' => 'Inaktivität 30 Tage',
+                'description' => 'Großer Punkteverfall nach 30 Tagen Inaktivität',
+            ],
+        ],
+    ],
+
+    'cardintel' => [
+        'settings' => [
+            'saved' => 'Gespeichert',
+        ],
+    ],
+    'companies' => [
+        'lookup' => [
+            'invalid_nip' => 'Ungültiges NIP-Format',
+            'invalid_regon' => 'Ungültiges REGON-Format',
+            'missing_identifier' => 'NIP oder REGON eingeben',
+            'not_found' => 'Firma mit dieser NIP/REGON nicht gefunden',
+        ],
+    ],
+    'activities' => [
+        'log' => [
+            'email_sent' => 'E-Mail gesendet: :subject',
+            'task_completed' => 'Aufgabe erledigt: :title',
+        ],
+    ],
+    'notifications' => [
+        'contact_replied' => [
+            'subject' => 'Neue Antwort von :name',
+            'greeting' => 'Hallo!',
+            'intro' => ':name hat auf Ihre Nachricht geantwortet (Kanal: :channel).',
+            'action' => 'Kontakt ansehen',
+            'outro' => 'Antworten Sie, solange das Gespräch noch frisch ist.',
+        ],
+        'deal_won' => [
+            'subject' => 'Verkaufschance gewonnen: :name',
+            'intro' => 'Glückwunsch! Die Verkaufschance „:name“ im Wert von :value wurde gewonnen.',
+        ],
+        'deal_lost' => [
+            'subject' => 'Verkaufschance verloren: :name',
+            'intro' => 'Die Verkaufschance „:name“ wurde als verloren markiert.',
+        ],
+        'deal_stage_changed' => [
+            'subject' => 'Neue Phase der Verkaufschance: :name',
+            'intro' => 'Die Verkaufschance „:name“ ist in eine andere Phase gewechselt.',
+            'greeting' => 'Hallo!',
+            'action' => 'Verkaufschance ansehen',
+        ],
+        'task_overdue' => [
+            'subject' => 'Überfällige Aufgabe: :title',
+            'greeting' => 'Hallo!',
+            'intro' => 'Die Aufgabe „:title“ ist überfällig.',
+            'due_date' => 'Fällig: :date',
+            'action' => 'Aufgabe ansehen',
+            'outro' => 'Erledigen Sie sie oder legen Sie einen neuen Termin fest.',
+        ],
+    ],
 ];

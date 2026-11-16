@@ -4,7 +4,7 @@ Tags: newsletter, subscription, email marketing, content gating, paywall
 Requires at least: 5.8
 Tested up to: 6.4
 Requires PHP: 7.4
-Stable tag: 1.0.0
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -79,6 +79,10 @@ Yes! NetSendo for WordPress is designed to work with any properly coded WordPres
 
 == Changelog ==
 
+= 1.1.2 =
+* Fix: signups and content-gate unlocks reach the NetSendo list again (the API expects the list as contact_list_id)
+* Fix: "subscribers only" content gates recognise subscribers of the chosen list
+
 = 1.0.0 =
 * Initial release
 * Subscription form shortcode and widget
@@ -89,6 +93,9 @@ Yes! NetSendo for WordPress is designed to work with any properly coded WordPres
 * GDPR consent support
 
 == Upgrade Notice ==
+
+= 1.1.2 =
+Signup forms and content gates did not add subscribers with NetSendo 2.x. Update to fix them.
 
 = 1.0.0 =
 Initial release of NetSendo for WordPress.

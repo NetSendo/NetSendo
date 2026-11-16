@@ -18,7 +18,7 @@ Przypominamy, że już za godzinę rozpoczyna się webinar **{{ $webinar->name }
 
 Przygotuj się i dołącz punktualnie!
 @else
-Jutro o godzinie **{{ $webinar->scheduled_at->format('H:i') }}** rozpoczyna się webinar:
+Jutro o godzinie **{{ $registration->localStart()?->format('H:i') }}** ({{ $registration->displayTimezone() }}) rozpoczyna się webinar:
 
 **{{ $webinar->name }}**
 

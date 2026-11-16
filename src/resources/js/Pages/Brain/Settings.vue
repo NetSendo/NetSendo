@@ -1,11 +1,17 @@
 <script setup>
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, onMounted, onBeforeUnmount } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
+import GoldBadge from "@/Components/License/GoldBadge.vue";
+import GoldNotice from "@/Components/License/GoldNotice.vue";
+import { useLicense } from "@/Composables/useLicense";
 
 const { t } = useI18n();
+// Brain working on its own is GOLD; the chat in manual mode is SILVER
+const { can, requireGold } = useLicense();
+const autonomyLocked = computed(() => !can("brain_autonomy"));
 
 const props = defineProps({
     settings: Object,
@@ -18,6 +24,8 @@ const props = defineProps({
     agents: Array,
     agent_modes: Object,
     strategy_settings: Object,
+    taskTokenLimit: Number,
+    tokensUsedToday: Number,
 });
 
 // --- Strategy Settings ---
@@ -146,12 +154,20 @@ const isSavingMode = ref(false);
 const modeSaved = ref(false);
 
 const saveMode = async (mode) => {
+    if (mode !== "manual" && autonomyLocked.value) {
+        requireGold("brain_autonomy");
+        return;
+    }
     currentMode.value = mode;
     isSavingMode.value = true;
     modeSaved.value = false;
 
     try {
         await axios.put("/brain/api/settings", { work_mode: mode });
+        // The global mode applies to every agent: the server cleared per-agent modes
+        for (const agent of agentList) {
+            agentModesLocal[agent] = mode;
+        }
         modeSaved.value = true;
         setTimeout(() => (modeSaved.value = false), 2000);
     } catch (error) {
@@ -239,6 +255,38 @@ const saveLanguage = async () => {
         // Error
     } finally {
         isSavingLanguage.value = false;
+    }
+};
+
+// --- Token limit per task ---
+// One task (a chat message, a plan run, a goal step, a cron task) stops when it uses this many
+// tokens; other tasks keep working. 0 = no limit
+const taskTokenLimit = ref(props.taskTokenLimit ?? 100000);
+const isSavingTaskLimit = ref(false);
+const taskLimitSaved = ref(false);
+const taskLimitError = ref("");
+
+const saveTaskTokenLimit = async () => {
+    isSavingTaskLimit.value = true;
+    taskLimitSaved.value = false;
+    taskLimitError.value = "";
+    try {
+        await axios.put("/brain/api/settings", {
+            // An empty field restores the default limit; 0 is "no limit"
+            task_token_limit:
+                taskTokenLimit.value === "" || taskTokenLimit.value === null
+                    ? null
+                    : Number(taskTokenLimit.value),
+        });
+        taskLimitSaved.value = true;
+        setTimeout(() => (taskLimitSaved.value = false), 2000);
+    } catch (error) {
+        taskLimitError.value =
+            error.response?.data?.errors?.task_token_limit?.[0] ||
+            error.response?.data?.message ||
+            t("brain.task_limit.save_failed");
+    } finally {
+        isSavingTaskLimit.value = false;
     }
 };
 
@@ -374,11 +422,13 @@ const isSavingToken = ref(false);
 const tokenSaved = ref(false);
 const webhookStatus = ref(null);
 const isSettingWebhook = ref(false);
-const existingTokenMask = ref(
-    props.settings?.telegram_bot_token
-        ? "••••••••" + props.settings.telegram_bot_token.slice(-4)
-        : "",
-);
+// Saved secrets never reach the page: the server sends only their last four characters
+const secretMask = (name) => {
+    const hint = props.settings?.secret_hints?.[name];
+    return hint === null || hint === undefined ? "" : "••••••••" + hint;
+};
+
+const existingTokenMask = ref(secretMask("telegram_bot_token"));
 
 const saveBotToken = async () => {
     if (!botToken.value.trim()) return;
@@ -509,17 +559,9 @@ const serpApiTestResult = ref(null);
 const isTestingPerplexity = ref(false);
 const isTestingSerpApi = ref(false);
 
-const existingPerplexityMask = ref(
-    props.settings?.perplexity_api_key
-        ? "••••••••" + props.settings.perplexity_api_key.slice(-4)
-        : "",
-);
+const existingPerplexityMask = ref(secretMask("perplexity_api_key"));
 
-const existingSerpApiMask = ref(
-    props.settings?.serpapi_api_key
-        ? "••••••••" + props.settings.serpapi_api_key.slice(-4)
-        : "",
-);
+const existingSerpApiMask = ref(secretMask("serpapi_api_key"));
 
 const savePerplexityKey = async () => {
     if (!perplexityApiKey.value.trim()) return;
@@ -561,8 +603,9 @@ const saveSerpApiKey = async () => {
 };
 
 const testPerplexityApi = async () => {
-    const key = perplexityApiKey.value || props.settings?.perplexity_api_key;
-    if (!key) return;
+    // Without a typed key the server tests the saved one
+    const key = perplexityApiKey.value || null;
+    if (!key && !existingPerplexityMask.value) return;
     isTestingPerplexity.value = true;
     perplexityTestResult.value = null;
     try {
@@ -582,8 +625,9 @@ const testPerplexityApi = async () => {
 };
 
 const testSerpApi = async () => {
-    const key = serpApiKey.value || props.settings?.serpapi_api_key;
-    if (!key) return;
+    // Without a typed key the server tests the saved one
+    const key = serpApiKey.value || null;
+    if (!key && !existingSerpApiMask.value) return;
     isTestingSerpApi.value = true;
     serpApiTestResult.value = null;
     try {
@@ -602,15 +646,140 @@ const testSerpApi = async () => {
     }
 };
 
+// --- Semantic knowledge base (GOLD) ---
+const semanticLocked = computed(() => !can("semantic_knowledge"));
+const semantic = ref(null);
+const semanticForm = reactive({ integration_id: null, model: "" });
+const isSavingSemantic = ref(false);
+const isReindexing = ref(false);
+const semanticMessage = ref("");
+const semanticError = ref("");
+let semanticTimer = null;
+let semanticPolls = 0;
+// Set once this page started indexing (save, re-index, a changed entry): only then is
+// "indexing in the background" true, and only then is the state followed
+const semanticWatching = ref(false);
+
+const semanticIntegration = computed(() =>
+    (semantic.value?.integrations || []).find(
+        (i) => i.id === semanticForm.integration_id,
+    ) || null,
+);
+const semanticModelOptions = computed(
+    () => semanticIntegration.value?.models || [],
+);
+const semanticAutoName = computed(() => {
+    const first = semantic.value?.integrations?.[0];
+    return first ? `${first.name} (${first.provider})` : null;
+});
+const semanticIndexing = computed(() => {
+    const state = semantic.value;
+    return (
+        semanticWatching.value &&
+        !!state?.licensed &&
+        !!state?.active &&
+        state.status.indexed < state.status.entries
+    );
+});
+
+const loadSemantic = async (resetForm = false) => {
+    try {
+        const { data } = await axios.get("/brain/api/knowledge/semantic");
+        semantic.value = data;
+        if (resetForm) {
+            semanticForm.integration_id = data.integration_id ?? null;
+            semanticForm.model = data.model || "";
+        }
+    } catch (error) {
+        // The panel stays hidden without the state
+    }
+
+    // Follow background indexing for a few minutes
+    clearTimeout(semanticTimer);
+    if (semanticIndexing.value && semanticPolls < 60) {
+        semanticPolls++;
+        semanticTimer = setTimeout(() => loadSemantic(), 5000);
+    }
+};
+
+const refreshSemanticSoon = () => {
+    if (semanticLocked.value) return;
+    semanticWatching.value = true;
+    semanticPolls = 0;
+    clearTimeout(semanticTimer);
+    semanticTimer = setTimeout(() => loadSemantic(), 1500);
+};
+
+const onSemanticIntegrationChange = () => {
+    semanticForm.model = "";
+};
+
+const saveSemantic = async () => {
+    if (semanticLocked.value) {
+        requireGold("semantic_knowledge");
+        return;
+    }
+    isSavingSemantic.value = true;
+    semanticMessage.value = "";
+    semanticError.value = "";
+    try {
+        const { data } = await axios.put("/brain/api/knowledge/semantic", {
+            embedding_integration_id: semanticForm.integration_id,
+            embedding_model: semanticForm.integration_id
+                ? semanticForm.model || null
+                : null,
+        });
+        semantic.value = data;
+        semanticMessage.value = t("brain.knowledge.semantic.saved");
+        setTimeout(() => (semanticMessage.value = ""), 4000);
+        refreshSemanticSoon();
+    } catch (error) {
+        semanticError.value =
+            error.response?.data?.message || error.message || "";
+    } finally {
+        isSavingSemantic.value = false;
+    }
+};
+
+const reindexSemantic = async () => {
+    if (semanticLocked.value) {
+        requireGold("semantic_knowledge");
+        return;
+    }
+    isReindexing.value = true;
+    semanticMessage.value = "";
+    semanticError.value = "";
+    try {
+        const { data } = await axios.post(
+            "/brain/api/knowledge/semantic/reindex",
+        );
+        semantic.value = data;
+        semanticMessage.value = t("brain.knowledge.semantic.reindex_queued");
+        setTimeout(() => (semanticMessage.value = ""), 4000);
+        refreshSemanticSoon();
+    } catch (error) {
+        semanticError.value =
+            error.response?.data?.message || error.message || "";
+    } finally {
+        isReindexing.value = false;
+    }
+};
+
+onMounted(() => loadSemantic(true));
+onBeforeUnmount(() => clearTimeout(semanticTimer));
+
 // --- Knowledge Base ---
 const entries = ref(props.knowledgeEntries || []);
 const showAddForm = ref(false);
 const newEntry = reactive({
-    category: "general",
+    category: "company",
     title: "",
     content: "",
 });
-const CONTENT_MAX_LENGTH = 10000;
+// Longer entries come with the semantic knowledge base (GOLD), which sends only matching chunks
+const CONTENT_MAX_LENGTH = computed(() =>
+    can("semantic_knowledge") ? 100000 : 10000,
+);
 const TITLE_MAX_LENGTH = 255;
 const isSavingEntry = ref(false);
 
@@ -688,6 +857,7 @@ const saveEdit = async () => {
         );
         const idx = entries.value.findIndex((e) => e.id === editingEntry.id);
         if (idx !== -1) entries.value[idx] = response.data;
+        refreshSemanticSoon();
         cancelEdit();
     } catch (error) {
         // Error
@@ -707,7 +877,8 @@ const addEntry = async () => {
             content: newEntry.content,
         });
         entries.value.unshift(response.data);
-        newEntry.category = "general";
+        refreshSemanticSoon();
+        newEntry.category = "company";
         newEntry.title = "";
         newEntry.content = "";
         showAddForm.value = false;
@@ -722,6 +893,7 @@ const deleteEntry = async (id) => {
     try {
         await axios.delete(`/brain/api/knowledge/${id}`);
         entries.value = entries.value.filter((e) => e.id !== id);
+        refreshSemanticSoon();
         selectedIds.value.delete(id);
     } catch (error) {
         // Error
@@ -746,6 +918,7 @@ const confirmBulkDelete = async () => {
     try {
         await axios.post('/brain/api/knowledge/bulk-delete', { ids });
         entries.value = entries.value.filter((e) => !selectedIds.value.has(e.id));
+        refreshSemanticSoon();
         selectedIds.value = new Set();
     } catch (error) {
         // Error
@@ -847,6 +1020,10 @@ const getCategoryColor = (key) => {
             </div>
         </template>
 
+        <div v-if="autonomyLocked" class="mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+            <GoldNotice feature="brain_autonomy" :message="t('license.gating.brain_locked')" />
+        </div>
+
         <div class="space-y-6">
             <!-- Work Mode Card -->
             <div
@@ -900,6 +1077,10 @@ const getCategoryColor = (key) => {
                                 class="text-sm font-semibold text-slate-900 dark:text-white"
                                 >{{ t(mode.label) }}</span
                             >
+                            <GoldBadge
+                                v-if="mode.value !== 'manual'"
+                                :locked="autonomyLocked"
+                            />
                         </div>
                         <p class="text-xs text-slate-500 dark:text-slate-400">
                             {{ t(mode.description) }}
@@ -1353,6 +1534,70 @@ const getCategoryColor = (key) => {
                         }}
                     </button>
                 </div>
+            </div>
+
+            <!-- Token Limit per Task Card -->
+            <div
+                class="rounded-xl border border-slate-200 bg-white p-6 dark:border-slate-700 dark:bg-slate-800"
+            >
+                <h3
+                    class="mb-4 flex items-center gap-2 text-lg font-semibold text-slate-900 dark:text-white"
+                >
+                    🧮 {{ t("brain.task_limit.title") }}
+                    <span
+                        v-if="taskLimitSaved"
+                        class="text-xs font-normal text-green-500"
+                        >✓ {{ t("brain.saved", "Zapisano") }}</span
+                    >
+                </h3>
+                <p class="mb-4 text-sm text-slate-500 dark:text-slate-400">
+                    {{ t("brain.task_limit.description") }}
+                </p>
+                <div class="flex flex-wrap items-end gap-3">
+                    <div>
+                        <label
+                            for="brain-task-token-limit"
+                            class="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300"
+                        >
+                            {{ t("brain.task_limit.label") }}
+                        </label>
+                        <input
+                            id="brain-task-token-limit"
+                            v-model.number="taskTokenLimit"
+                            type="number"
+                            min="0"
+                            step="1000"
+                            class="w-48 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                        />
+                    </div>
+                    <button
+                        @click="saveTaskTokenLimit"
+                        :disabled="isSavingTaskLimit"
+                        class="rounded-lg bg-cyan-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        {{
+                            isSavingTaskLimit
+                                ? t("brain.saving", "Zapisywanie...")
+                                : t("brain.task_limit.save")
+                        }}
+                    </button>
+                </div>
+                <p
+                    v-if="taskLimitError"
+                    class="mt-2 text-xs text-red-500"
+                >
+                    {{ taskLimitError }}
+                </p>
+                <p class="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                    {{ t("brain.task_limit.hint") }}
+                </p>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                    {{
+                        t("brain.task_limit.used_today", {
+                            tokens: (tokensUsedToday || 0).toLocaleString(),
+                        })
+                    }}
+                </p>
             </div>
 
             <!-- Per-Task Model Routing Card -->
@@ -2001,6 +2246,170 @@ const getCategoryColor = (key) => {
                                 : t("brain.knowledge.add", "➕ Dodaj wpis")
                         }}
                     </button>
+                </div>
+
+                <!-- Semantic search (GOLD) -->
+                <div
+                    v-if="semantic"
+                    class="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/30"
+                >
+                    <div
+                        class="mb-1 flex flex-wrap items-center justify-between gap-2"
+                    >
+                        <h4
+                            class="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-white"
+                        >
+                            🧭 {{ t("brain.knowledge.semantic.title") }}
+                            <GoldBadge :locked="semanticLocked" />
+                            <span
+                                v-if="!semanticLocked && semantic.active"
+                                class="rounded-full bg-green-100 px-2 py-0.5 text-[10px] font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            >
+                                {{ t("brain.knowledge.semantic.active") }}
+                            </span>
+                        </h4>
+                        <span
+                            v-if="!semanticLocked && semantic.active"
+                            class="text-xs text-slate-500 dark:text-slate-400"
+                        >
+                            {{
+                                t("brain.knowledge.semantic.status", {
+                                    indexed: semantic.status.indexed,
+                                    entries: semantic.status.entries,
+                                    chunks: semantic.status.chunks,
+                                })
+                            }}
+                        </span>
+                    </div>
+                    <p class="mb-3 text-xs text-slate-500 dark:text-slate-400">
+                        {{ t("brain.knowledge.semantic.description") }}
+                    </p>
+
+                    <GoldNotice
+                        v-if="semanticLocked"
+                        feature="semantic_knowledge"
+                        :message="t('license.gating.semantic_knowledge_locked')"
+                    />
+
+                    <template v-else>
+                        <p
+                            v-if="!semantic.integrations.length"
+                            class="text-xs text-amber-700 dark:text-amber-300"
+                        >
+                            {{ t("brain.knowledge.semantic.no_provider") }}
+                        </p>
+                        <template v-else>
+                            <div class="grid gap-3 sm:grid-cols-2">
+                                <div>
+                                    <label
+                                        class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{ t("brain.knowledge.semantic.provider") }}
+                                    </label>
+                                    <select
+                                        v-model="semanticForm.integration_id"
+                                        @change="onSemanticIntegrationChange"
+                                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                    >
+                                        <option :value="null">
+                                            {{
+                                                semanticAutoName
+                                                    ? t(
+                                                          "brain.knowledge.semantic.provider_auto",
+                                                          { name: semanticAutoName },
+                                                      )
+                                                    : t(
+                                                          "brain.knowledge.semantic.provider_auto_none",
+                                                      )
+                                            }}
+                                        </option>
+                                        <option
+                                            v-for="integ in semantic.integrations"
+                                            :key="integ.id"
+                                            :value="integ.id"
+                                        >
+                                            {{ integ.name }} ({{ integ.provider }})
+                                        </option>
+                                    </select>
+                                </div>
+                                <div v-if="semanticForm.integration_id">
+                                    <label
+                                        class="mb-1 block text-xs font-medium text-slate-700 dark:text-slate-300"
+                                    >
+                                        {{ t("brain.knowledge.semantic.model") }}
+                                    </label>
+                                    <input
+                                        v-model="semanticForm.model"
+                                        type="text"
+                                        list="brain-embedding-models"
+                                        maxlength="191"
+                                        :placeholder="semanticModelOptions[0] || ''"
+                                        class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white"
+                                    />
+                                    <datalist id="brain-embedding-models">
+                                        <option
+                                            v-for="model in semanticModelOptions"
+                                            :key="model"
+                                            :value="model"
+                                        />
+                                    </datalist>
+                                </div>
+                            </div>
+                            <p class="mt-2 text-xs text-slate-400">
+                                {{ t("brain.knowledge.semantic.model_help") }}
+                            </p>
+                            <div class="mt-3 flex flex-wrap items-center gap-2">
+                                <button
+                                    type="button"
+                                    @click="saveSemantic"
+                                    :disabled="isSavingSemantic"
+                                    class="rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-3 py-2 text-xs font-medium text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-xl disabled:opacity-50"
+                                >
+                                    {{
+                                        isSavingSemantic
+                                            ? t("brain.knowledge.semantic.saving")
+                                            : t("brain.knowledge.semantic.save")
+                                    }}
+                                </button>
+                                <button
+                                    type="button"
+                                    @click="reindexSemantic"
+                                    :disabled="isReindexing || !semantic.active"
+                                    class="rounded-lg border border-slate-300 px-3 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                                >
+                                    {{ t("brain.knowledge.semantic.reindex") }}
+                                </button>
+                                <span
+                                    v-if="semantic.active"
+                                    class="text-xs text-slate-500 dark:text-slate-400"
+                                >
+                                    {{
+                                        t("brain.knowledge.semantic.status_model", {
+                                            model: semantic.active.model,
+                                        })
+                                    }}
+                                </span>
+                                <span
+                                    v-if="semanticIndexing"
+                                    class="text-xs text-cyan-600 dark:text-cyan-400"
+                                >
+                                    {{ t("brain.knowledge.semantic.indexing") }}
+                                </span>
+                                <span
+                                    v-if="semanticMessage"
+                                    class="text-xs text-green-600 dark:text-green-400"
+                                >
+                                    ✓ {{ semanticMessage }}
+                                </span>
+                                <span
+                                    v-if="semanticError"
+                                    class="text-xs text-red-600 dark:text-red-400"
+                                >
+                                    {{ semanticError }}
+                                </span>
+                            </div>
+                        </template>
+                    </template>
                 </div>
 
                 <!-- Add Entry Form -->

@@ -59,8 +59,8 @@ class ModeController
             throw new \InvalidArgumentException("Invalid work mode: {$mode}");
         }
 
-        $settings = AiBrainSettings::getForUser($user->id);
-        $settings->update(['work_mode' => $mode]);
+        // Every agent follows the new global mode (per-agent modes are cleared)
+        AiBrainSettings::getForUser($user->id)->setWorkMode($mode);
     }
 
     /**
@@ -133,10 +133,17 @@ class ModeController
 
     /**
      * Process an approval decision.
+     *
+     * With $userId only that user's approval still waiting for a decision is found; a decision
+     * coming from outside the panel (Telegram) always passes it.
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
      */
-    public function processApproval(int $approvalId, bool $approved, ?string $reason = null): AiPendingApproval
+    public function processApproval(int $approvalId, bool $approved, ?string $reason = null, ?int $userId = null): AiPendingApproval
     {
-        $approval = AiPendingApproval::findOrFail($approvalId);
+        $approval = $userId === null
+            ? AiPendingApproval::findOrFail($approvalId)
+            : AiPendingApproval::forUser($userId)->where('status', 'pending')->findOrFail($approvalId);
 
         if ($approval->isExpired()) {
             throw new \RuntimeException('Approval has expired.');
@@ -189,7 +196,8 @@ class ModeController
             $summary .= "{$plan->description}\n\n";
         }
 
-        $summary .= "**" . __('brain.steps_to_execute') . "**\n";
+        // The translation is bold already ("**Steps to execute:**")
+        $summary .= __('brain.steps_to_execute') . "\n";
         foreach ($steps as $step) {
             $summary .= "  {$step->step_order}. {$step->title}\n";
         }

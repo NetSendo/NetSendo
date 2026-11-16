@@ -141,9 +141,8 @@ class CampaignArchitectController extends Controller
 
         $plan->load('steps');
 
-        // Get current license plan
-        $licensePlan = \App\Models\Setting::where('key', 'license_plan')->first();
-        $currentPlan = $licensePlan ? $licensePlan->value : 'SILVER';
+        // The plan in effect (an expired GOLD or a missing key works as SILVER)
+        $currentPlan = app(\App\Services\LicenseService::class)->getCurrentPlan();
 
         return Inertia::render('CampaignArchitect/Show', [
             'plan' => $plan,

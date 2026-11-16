@@ -79,7 +79,8 @@ class NetSendo_WP_API {
             'email' => $email,
             'first_name' => $first_name,
             'last_name' => $last_name,
-            'list_id' => $list_id,
+            // The NetSendo API names the list contact_list_id (list_id was rejected with 422)
+            'contact_list_id' => (int) $list_id,
             'status' => 'active',
             'custom_fields' => $custom_fields,
         ];
@@ -213,14 +214,14 @@ class NetSendo_WP_API {
         $body = json_decode(wp_remote_retrieve_body($response), true);
 
         if ($code === 200 && !empty($body['data'])) {
-            if ($list_id) {
-                // Check if subscribed to specific list
-                foreach ($body['data'] as $subscriber) {
-                    if (isset($subscriber['contact_list_id']) && $subscriber['contact_list_id'] == $list_id) {
-                        return $subscriber['status'] === 'active';
-                    }
-                }
+            // The API returns one subscriber object, with the IDs of its lists in contact_list_ids
+            $subscriber = $body['data'];
+            if (($subscriber['status'] ?? '') !== 'active') {
                 return false;
+            }
+            if ($list_id) {
+                $list_ids = array_map('intval', (array) ($subscriber['contact_list_ids'] ?? []));
+                return in_array((int) $list_id, $list_ids, true);
             }
             return true;
         }

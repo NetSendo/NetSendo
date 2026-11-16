@@ -10,26 +10,40 @@ use Symfony\Component\HttpFoundation\Response;
 class ApiKeyAuth
 {
     /**
+     * Request attribute holding the identity of an in-process connector call:
+     * an ApiKey (a stored one, or the unsaved one that stands for a connected
+     * app and its granted permissions).
+     */
+    public const CONNECTOR_ATTRIBUTE = 'netsendo.connector_api_key';
+
+    /**
      * Handle an incoming request.
      */
     public function handle(Request $request, Closure $next, ?string $permission = null): Response
     {
-        $authHeader = $request->header('Authorization');
+        // A connector tool call: the connected app was authenticated on /mcp and its
+        // API requests are dispatched inside the application (ApiDispatcher). The
+        // attribute cannot be set from outside; it carries the permissions to check.
+        $apiKey = $request->attributes->get(self::CONNECTOR_ATTRIBUTE);
 
-        if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
-            return $this->unauthorized('Missing or invalid Authorization header. Use: Bearer <api_key>');
-        }
+        if (! $apiKey instanceof ApiKey) {
+            $authHeader = $request->header('Authorization');
 
-        $plainKey = substr($authHeader, 7); // Remove 'Bearer ' prefix
+            if (!$authHeader || !str_starts_with($authHeader, 'Bearer ')) {
+                return $this->unauthorized('Missing or invalid Authorization header. Use: Bearer <api_key>');
+            }
 
-        if (!str_starts_with($plainKey, 'ns_live_')) {
-            return $this->unauthorized('Invalid API key format. Key should start with ns_live_');
-        }
+            $plainKey = substr($authHeader, 7); // Remove 'Bearer ' prefix
 
-        $apiKey = ApiKey::findByKey($plainKey);
+            if (!str_starts_with($plainKey, 'ns_live_')) {
+                return $this->unauthorized('Invalid API key format. Key should start with ns_live_');
+            }
 
-        if (!$apiKey) {
-            return $this->unauthorized('Invalid API key');
+            $apiKey = ApiKey::findByKey($plainKey);
+
+            if (!$apiKey) {
+                return $this->unauthorized('Invalid API key');
+            }
         }
 
         if ($apiKey->isExpired()) {

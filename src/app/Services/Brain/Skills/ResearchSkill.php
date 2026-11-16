@@ -145,7 +145,7 @@ PROMPT;
         if ($emptyCompanies > 0) {
             $tasks[] = [
                 'id' => 'research_enrich_companies',
-                'title' => __('brain.research.task_enrich_companies', ['count' => $emptyCompanies]),
+                'title' => trans_choice('brain.research.task_enrich_companies', $emptyCompanies, ['count' => $emptyCompanies]),
                 'category' => 'company_research',
                 'priority' => 'medium',
                 'agent' => 'research',

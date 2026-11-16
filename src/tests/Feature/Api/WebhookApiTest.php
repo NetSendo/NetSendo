@@ -96,4 +96,48 @@ class WebhookApiTest extends TestCase
         $this->api('POST', 'webhooks', ['name' => 'x', 'url' => 'https://a.example.com', 'events' => ['sms.sent']], $readOnly)
             ->assertForbidden();
     }
+
+    public function test_switching_a_disabled_webhook_back_on_resets_its_failure_count(): void
+    {
+        // Switched off by NetSendo after 10 failed deliveries
+        $webhook = Webhook::createWithSecret([
+            'user_id' => $this->user->id, 'name' => 'CRM', 'url' => 'https://a.example.com', 'events' => ['sms.sent'],
+            'is_active' => false, 'failure_count' => 10,
+        ]);
+
+        $this->api('PATCH', "webhooks/{$webhook->id}", ['is_active' => true])
+            ->assertOk()
+            ->assertJsonPath('data.is_active', true)
+            ->assertJsonPath('data.failure_count', 0);
+
+        // One more failure must not switch it off again at once
+        $webhook->refresh()->incrementFailure();
+        $this->assertTrue($webhook->fresh()->is_active);
+        $this->assertSame(1, $webhook->fresh()->failure_count);
+    }
+
+    public function test_renaming_an_active_webhook_keeps_its_failure_count(): void
+    {
+        $webhook = Webhook::createWithSecret([
+            'user_id' => $this->user->id, 'name' => 'CRM', 'url' => 'https://a.example.com', 'events' => ['sms.sent'],
+            'is_active' => true, 'failure_count' => 3,
+        ]);
+
+        $this->api('PATCH', "webhooks/{$webhook->id}", ['name' => 'CRM 2', 'is_active' => true])
+            ->assertOk()
+            ->assertJsonPath('data.failure_count', 3);
+    }
+
+    public function test_a_url_of_2048_characters_is_accepted_and_stored_whole(): void
+    {
+        // The column was VARCHAR(255): on MySQL a longer URL ended in a 500 (SQLite ignores the length)
+        $url = 'https://hooks.example.com/netsendo?sig=' . str_repeat('a', 2048 - 39);
+        $this->assertSame(2048, strlen($url));
+
+        $id = $this->api('POST', 'webhooks', ['name' => 'Signed', 'url' => $url, 'events' => ['sms.sent']])
+            ->assertCreated()
+            ->json('data.id');
+
+        $this->assertSame($url, Webhook::find($id)->url);
+    }
 }

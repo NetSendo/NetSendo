@@ -150,6 +150,57 @@ class AbTestController extends Controller
     }
 
     /**
+     * Update a draft A/B test's settings (the campaign and the variants stay as they are)
+     */
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $user = $request->user();
+
+        // Verify permission
+        $apiKey = $request->get('api_key');
+        if (!$apiKey->hasPermission('messages:write')) {
+            return response()->json([
+                'error' => 'Forbidden',
+                'message' => 'API key does not have messages:write permission',
+            ], 403);
+        }
+
+        $test = AbTest::where('user_id', $user->id)->find($id);
+
+        if (!$test) {
+            return response()->json([
+                'error' => 'Not Found',
+                'message' => 'A/B test not found',
+            ], 404);
+        }
+
+        // A running or finished test keeps the settings its results were measured with
+        if ($test->status !== AbTest::STATUS_DRAFT) {
+            return response()->json([
+                'error' => 'Conflict',
+                'message' => 'Only a draft A/B test can be changed',
+            ], 409);
+        }
+
+        $validated = $request->validate([
+            'name' => 'sometimes|string|max:255',
+            'test_type' => 'sometimes|in:subject,content,sender,send_time,full',
+            'winning_metric' => 'sometimes|in:open_rate,click_rate,conversion_rate',
+            'sample_percentage' => 'sometimes|integer|min:10|max:50',
+            'test_duration_hours' => 'sometimes|integer|min:1|max:168',
+            'auto_select_winner' => 'sometimes|boolean',
+            'confidence_threshold' => 'sometimes|integer|min:60|max:99',
+        ]);
+
+        $test->update($validated);
+
+        return response()->json([
+            'data' => $test->fresh(['message', 'variants', 'winnerVariant']),
+            'message' => 'A/B test updated',
+        ]);
+    }
+
+    /**
      * Add a variant to an A/B test
      */
     public function addVariant(Request $request, int $id): JsonResponse

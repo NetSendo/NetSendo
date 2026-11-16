@@ -101,7 +101,7 @@ class AutoWebinarSchedule extends Model
      */
     public function getEffectiveTimezoneAttribute(): string
     {
-        return $this->timezone ?? $this->webinar->effective_timezone ?? 'UTC';
+        return ($this->attributes['timezone'] ?? null) ?: ($this->webinar?->effective_timezone ?? 'UTC');
     }
 
     // =====================================
@@ -109,12 +109,14 @@ class AutoWebinarSchedule extends Model
     // =====================================
 
     /**
-     * Get next available session times.
+     * Get next available session times, in the schedule's effective timezone
+     * (the sign-up page lists them in that zone). Convert to the app timezone
+     * before storing one: Eloquent writes a Carbon's wall-clock digits as they are.
      */
     public function getNextSessionTimes(int $count = 5): array
     {
         $times = [];
-        $now = Carbon::now($this->timezone);
+        $now = Carbon::now($this->effective_timezone);
 
         switch ($this->schedule_type) {
             case self::TYPE_FIXED:
@@ -148,7 +150,7 @@ class AutoWebinarSchedule extends Model
 
         $times = [];
         foreach ($this->fixed_dates as $dateString) {
-            $date = Carbon::parse($dateString, $this->timezone);
+            $date = Carbon::parse($dateString, $this->effective_timezone);
             if ($date->greaterThan($now)) {
                 $times[] = $date;
                 if (count($times) >= $count) {
@@ -239,7 +241,7 @@ class AutoWebinarSchedule extends Model
      */
     public function calculateSessionTimeForRegistration(): Carbon
     {
-        $now = Carbon::now($this->timezone);
+        $now = Carbon::now($this->effective_timezone);
 
         if ($this->schedule_type === self::TYPE_ON_DEMAND) {
             return $now->addMinutes($this->start_delay_minutes ?? 15);

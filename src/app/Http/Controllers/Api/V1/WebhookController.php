@@ -117,6 +117,12 @@ class WebhookController extends Controller
             'is_active' => 'sometimes|boolean',
         ]);
 
+        // Switching a webhook back on (also one NetSendo switched off after 10 failed
+        // deliveries) starts counting failures again, so it is not switched off at the next one
+        if (($validated['is_active'] ?? false) && !$webhook->is_active) {
+            $validated['failure_count'] = 0;
+        }
+
         $webhook->update($validated);
 
         return new WebhookResource($webhook);

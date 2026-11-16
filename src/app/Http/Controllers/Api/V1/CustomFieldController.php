@@ -108,6 +108,7 @@ class CustomFieldController extends Controller
             ['name' => 'phone', 'placeholder' => '[[phone]]', 'label' => 'Phone', 'type' => 'system'],
             ['name' => 'sex', 'placeholder' => '[[sex]]', 'label' => 'Gender', 'type' => 'system'],
             ['name' => 'unsubscribe', 'placeholder' => '[[unsubscribe]]', 'label' => 'Unsubscribe Link', 'type' => 'link'],
+            ['name' => 'unsubscribe_now', 'placeholder' => '[[unsubscribe_now]]', 'label' => 'One-Click Unsubscribe Page Link', 'type' => 'link'],
             ['name' => 'manage', 'placeholder' => '[[manage]]', 'label' => 'Manage Preferences Link', 'type' => 'link'],
         ];
 

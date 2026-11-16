@@ -34,7 +34,8 @@ class GoalPlanner
      */
     public function isGoalRequest(string $message, User $user): ?array
     {
-        $integration = $this->aiService->getDefaultIntegration();
+        // The model assigned to this task in the Brain settings, else the Brain model
+        [$integration, $brainModel] = \App\Models\AiBrainSettings::getForUser($user->id)->aiFor('orchestration');
         if (!$integration) {
             return null;
         }
@@ -75,6 +76,7 @@ PROMPT;
 
         try {
             $response = BrainAi::generate($user, 'goal_detection', $prompt, $integration, [
+                'model' => $brainModel,
                 'max_tokens' => 1000,
                 'temperature' => 0.2,
             ]);
@@ -119,7 +121,8 @@ PROMPT;
      */
     public function decomposeGoal(AiGoal $goal, User $user): array
     {
-        $integration = $this->aiService->getDefaultIntegration();
+        // The model assigned to this task in the Brain settings, else the Brain model
+        [$integration, $brainModel] = \App\Models\AiBrainSettings::getForUser($user->id)->aiFor('orchestration');
         if (!$integration) {
             return [];
         }
@@ -128,7 +131,7 @@ PROMPT;
         $langCode = $settings->resolveLanguage($user);
         $langName = AiBrainSettings::getLanguageName($langCode);
 
-        $knowledgeContext = $this->knowledgeBase->getContext($user, 'general');
+        $knowledgeContext = $this->knowledgeBase->getContext($user, 'general', query: trim($goal->title . "\n" . $goal->description));
 
         // Include completed plan context
         $completedContext = '';
@@ -215,6 +218,7 @@ PROMPT;
 
         try {
             $response = BrainAi::generate($user, 'goal_decomposition', $prompt, $integration, [
+                'model' => $brainModel,
                 'max_tokens' => 4000,
                 'temperature' => 0.3,
             ]);
@@ -239,47 +243,51 @@ PROMPT;
      */
     public function getNextAction(AiGoal $goal): ?array
     {
-        $decomposition = $goal->context['decomposition'] ?? [];
+        $decomposition = array_values((array) (($goal->context ?? [])['decomposition'] ?? []));
 
-        if (empty($decomposition)) {
+        if (empty($decomposition) || $goal->status !== 'active') {
             return null;
         }
 
-        $completedIntents = $goal->plans()
-            ->where('status', 'completed')
-            ->pluck('intent')
-            ->toArray();
+        $plans = $goal->plans()->get();
 
-        // Find first plan that hasn't been completed and whose dependencies are met
-        foreach ($decomposition as $plan) {
-            $alreadyDone = false;
-            foreach ($completedIntents as $ci) {
-                if (str_contains(strtolower($ci), strtolower($plan['intent'] ?? ''))
-                    || str_contains(strtolower($plan['intent'] ?? ''), strtolower($ci))) {
-                    $alreadyDone = true;
-                    break;
-                }
+        // One step at a time: while a plan of this goal waits for approval or runs, nothing new
+        // starts (the chat, the queue and the cron would otherwise each open the same step)
+        if ($plans->whereIn('status', ['draft', 'pending_approval', 'approved', 'executing'])->isNotEmpty()) {
+            return null;
+        }
+
+        $completedPlans = $plans->where('status', 'completed');
+        $failedPlans = $plans->where('status', 'failed');
+        $doneOrders = [];
+        foreach ($decomposition as $index => $step) {
+            if ($completedPlans->contains(fn ($plan) => AiGoal::planCoversStep($plan, (array) $step))) {
+                $doneOrders[] = (int) ($step['order'] ?? $index + 1);
             }
+        }
 
-            if ($alreadyDone) {
+        foreach ($decomposition as $index => $step) {
+            $step = (array) $step;
+            $order = (int) ($step['order'] ?? $index + 1);
+            $step['order'] = $order;
+
+            if (in_array($order, $doneOrders, true)) {
                 continue;
             }
 
-            // Check dependency
-            if (!empty($plan['depends_on'])) {
-                $depCompleted = false;
-                foreach ($completedIntents as $ci) {
-                    if (str_contains(strtolower($ci), strtolower($plan['depends_on']))) {
-                        $depCompleted = true;
-                        break;
-                    }
-                }
-                if (!$depCompleted) {
-                    continue;
-                }
+            // depends_on holds step numbers (one or a list); comparing them with intent texts
+            // matched "1" anywhere in a sentence
+            $dependsOn = array_filter(array_map('intval', (array) ($step['depends_on'] ?? [])));
+            if (array_diff($dependsOn, $doneOrders)) {
+                continue;
             }
 
-            return $plan;
+            // A step that failed twice needs the user, not a third automatic attempt
+            if ($failedPlans->filter(fn ($plan) => AiGoal::planCoversStep($plan, $step))->count() >= 2) {
+                return null;
+            }
+
+            return $step;
         }
 
         return null; // All plans completed
@@ -335,7 +343,11 @@ PROMPT;
     public function getActiveGoalsContext(User $user): string
     {
         try {
-            $goals = AiGoal::forUser($user->id)->active()->get();
+            // Goals nobody touched for a month are not context any more: a July goal with no
+            // plans kept turning up in November answers ("hot leads are waiting")
+            $goals = AiGoal::forUser($user->id)->active()
+                ->where('updated_at', '>=', now()->subDays(30))
+                ->get();
         } catch (\Exception $e) {
             // Table may not exist yet if migration hasn't been run
             return '';
@@ -345,7 +357,8 @@ PROMPT;
             return '';
         }
 
-        $context = "\n\nUSER'S ACTIVE GOALS:\n";
+        // Background only: the user's own request comes first, so an old goal never replaces it
+        $context = "\n\nUSER'S ACTIVE GOALS (background — mention them only when they relate to the current request):\n";
         foreach ($goals as $goal) {
             $context .= "- [{$goal->priority}] {$goal->title} ({$goal->progress_percent}% complete)\n";
             if ($goal->description) {

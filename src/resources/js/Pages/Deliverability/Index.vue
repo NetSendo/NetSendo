@@ -41,6 +41,16 @@ const statusColors = {
 
 const getStatusColor = (status) => statusColors[status] || statusColors.pending;
 
+// SPF/DKIM/DMARC badges: the check stores valid, warning, critical or pending
+const recordBadgeClasses = {
+    valid: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+    warning: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    critical: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400",
+    pending: "bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-gray-400",
+};
+const recordBadgeClass = (status) =>
+    recordBadgeClasses[status] || recordBadgeClasses.pending;
+
 // Format score
 const formatScore = (score) => Math.round(score || 0);
 </script>
@@ -512,31 +522,19 @@ const formatScore = (score) => Math.round(score || 0);
                         <div class="hidden sm:flex items-center gap-2">
                             <span
                                 class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium"
-                                :class="
-                                    domain.spf_status === 'pass'
-                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                        : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                "
+                                :class="recordBadgeClass(domain.spf_status)"
                             >
                                 SPF
                             </span>
                             <span
                                 class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium"
-                                :class="
-                                    domain.dkim_status === 'pass'
-                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                        : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                "
+                                :class="recordBadgeClass(domain.dkim_status)"
                             >
                                 DKIM
                             </span>
                             <span
                                 class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium"
-                                :class="
-                                    domain.dmarc_status === 'pass'
-                                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                                        : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                                "
+                                :class="recordBadgeClass(domain.dmarc_status)"
                             >
                                 DMARC
                             </span>

@@ -42,7 +42,7 @@ class CustomField extends Model
         'ip_address', 'user_agent', 'subscribed_at', 'confirmed_at',
         'last_opened_at', 'last_clicked_at', 'opens_count', 'clicks_count',
         'source', 'tags', 'status', 'id', 'created_at', 'updated_at',
-        'unsubscribe_link', 'unsubscribe_url', 'activate', 'unsubscribe'
+        'unsubscribe_link', 'unsubscribe_url', 'activate', 'unsubscribe', 'unsubscribe_now',
     ];
 
     /**

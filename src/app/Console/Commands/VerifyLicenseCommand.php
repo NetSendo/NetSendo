@@ -64,8 +64,12 @@ class VerifyLicenseCommand extends Command
             $this->warn('⚠️  Serwer oznaczył licencję jako nieaktywną!');
 
             if ($this->option('deactivate')) {
-                $verificationService->deactivateLicense();
-                $this->error('🔴 Licencja została dezaktywowana.');
+                // GOLD falls back to the free SILVER licence; other licences are removed
+                if ($verificationService->endLicense() === 'downgraded') {
+                    $this->warn('🟡 GOLD zakończony: przełączono na licencję SILVER.');
+                } else {
+                    $this->error('🔴 Licencja została dezaktywowana.');
+                }
                 return Command::SUCCESS;
             } else {
                 $this->line('   Użyj --deactivate aby automatycznie dezaktywować.');

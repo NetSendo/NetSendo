@@ -11,7 +11,9 @@ class CheckRegistrationAllowed
 {
     /**
      * Handle an incoming request.
-     * Block registration if an admin user already exists.
+     * Registration creates the first account (the administrator) only: once any user exists,
+     * on a self-hosted install after the first sign-up and on a hosted one right after
+     * netsendo:bootstrap, it is closed and further users are added by the administrator.
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -19,7 +21,7 @@ class CheckRegistrationAllowed
         if (User::exists()) {
             // Admin already registered, block access to registration
             return redirect()->route('login')
-                ->with('error', 'Rejestracja jest zamknięta.');
+                ->with('error', __('auth.registration_closed'));
         }
 
         return $next($request);

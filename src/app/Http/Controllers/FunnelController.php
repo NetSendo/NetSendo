@@ -44,13 +44,28 @@ class FunnelController extends Controller
             $query->where('name', 'like', "%{$request->search}%");
         }
 
+        $perPage = max(1, min((int) $request->input('per_page', 30), 100));
+
         $funnels = $query->orderBy('created_at', 'desc')
-            ->paginate(20)
+            ->paginate($perPage)
             ->withQueryString();
+
+        // How many funnels each status tab holds, whatever the other filters say
+        $byStatus = Funnel::forUser(Auth::id())
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
 
         return Inertia::render('Funnels/Index', [
             'funnels' => $funnels,
-            'filters' => $request->only(['status', 'trigger_type', 'search']),
+            // An object even when empty: an empty JSON list would bring Array's own properties
+            'filters' => (object) $request->only(['status', 'trigger_type', 'search', 'per_page']),
+            'counts' => [
+                'all' => (int) $byStatus->sum(),
+                'active' => (int) ($byStatus[Funnel::STATUS_ACTIVE] ?? 0),
+                'paused' => (int) ($byStatus[Funnel::STATUS_PAUSED] ?? 0),
+                'draft' => (int) ($byStatus[Funnel::STATUS_DRAFT] ?? 0),
+            ],
             'statuses' => Funnel::getStatuses(),
             'triggerTypes' => Funnel::getTriggerTypes(),
         ]);
@@ -97,6 +112,9 @@ class FunnelController extends Controller
             'nodes' => 'nullable|array',
             'edges' => 'nullable|array',
         ]);
+
+        // Split A/B steps are GOLD: refuse before the funnel is created
+        $this->funnelService->ensureSplitStepsAllowed(null, $validated['nodes'] ?? []);
 
         $validated['user_id'] = Auth::id();
 
@@ -161,6 +179,9 @@ class FunnelController extends Controller
             'edges' => 'nullable|array',
         ]);
 
+        // Split A/B steps are GOLD: refuse before anything is saved
+        $this->funnelService->ensureSplitStepsAllowed($funnel, $validated['nodes'] ?? []);
+
         $this->funnelService->update($funnel, $validated);
 
         // Update steps if nodes provided
@@ -198,6 +219,11 @@ class FunnelController extends Controller
     public function duplicate(Funnel $funnel)
     {
         $this->authorize('update', $funnel);
+
+        // A copy of a funnel with split A/B steps adds new ones (GOLD)
+        if ($funnel->steps()->where('type', \App\Models\FunnelStep::TYPE_SPLIT)->exists()) {
+            app(\App\Services\LicenseService::class)->ensureAllows(\App\Licensing\Feature::FunnelAbSplit);
+        }
 
         $newFunnel = $funnel->duplicate();
 

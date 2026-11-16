@@ -78,7 +78,7 @@ class MailingListController extends Controller
 
         return Inertia::render('MailingList/Index', [
             'lists' => $query
-                ->paginate(12)
+                ->paginate(max(1, min((int) $request->input('per_page', 12), 100)))
                 ->through(fn ($list) => [
                     'id' => $list->id,
                     'name' => $list->name,
@@ -86,11 +86,12 @@ class MailingListController extends Controller
                     'group' => $list->group,
                     'tags' => $list->tags,
                     'created_at' => DateHelper::formatDateForUser($list->created_at),
-                    'subscribers_count' => $list->subscribers()->wherePivot('status', 'active')->count(),
+                    // Counted once for the whole page by withCount() above
+                    'subscribers_count' => $list->subscribers_count,
                     'is_public' => (bool)$list->is_public,
                     'permission' => auth()->user()->canEditList($list) ? 'edit' : 'view',
                 ])->withQueryString(),
-            'filters' => $request->only(['search', 'group_id', 'tag_id', 'visibility', 'sort_col', 'sort_dir']),
+            'filters' => (object) $request->only(['search', 'group_id', 'tag_id', 'visibility', 'sort_col', 'sort_dir', 'per_page']),
             'groups' => \App\Models\ContactListGroup::where('user_id', $scopeUser->id)
                 ->with('parent')
                 ->orderBy('name')
@@ -161,8 +162,12 @@ class MailingListController extends Controller
             'settings.subscription.delete_unconfirmed_after_days' => 'nullable|integer|min:1|max:365',
             'settings.subscription.security_options' => 'nullable|array',
 
-            // Sending
-            'settings.sending.mailbox_id' => 'nullable|integer',
+            // Sending (only a mailbox of this account: the list's default mailbox is loaded by ID when sending)
+            'settings.sending.mailbox_id' => [
+                'nullable',
+                'integer',
+                \Illuminate\Validation\Rule::exists('mailboxes', 'id')->where('user_id', $user->getAdminUser()->id),
+            ],
             'settings.sending.sms_settings' => 'nullable|string',
             'settings.sending.from_name' => 'nullable|string|max:255',
             'settings.sending.reply_to' => 'nullable|email',
@@ -189,6 +194,11 @@ class MailingListController extends Controller
             'settings.advanced.soft_bounce_threshold' => 'nullable|integer|min:1|max:10',
         ]);
 
+        // The mailbox picked in the form is the list's default mailbox, as on the edit page
+        if (!empty($validated['settings']['sending']['mailbox_id'])) {
+            $validated['default_mailbox_id'] = $validated['settings']['sending']['mailbox_id'];
+        }
+
         $list = auth()->user()->contactLists()->create($validated);
 
         if (isset($validated['tags'])) {
@@ -196,7 +206,7 @@ class MailingListController extends Controller
         }
 
         return redirect()->route('mailing-lists.index')
-            ->with('success', 'Lista adresowa została utworzona.');
+            ->with('success', __('mailing_lists.flash.created'));
     }
 
     public function show(ContactList $mailingList)
@@ -225,7 +235,7 @@ class MailingListController extends Controller
     public function edit(ContactList $mailingList)
     {
         if (!auth()->user()->canEditList($mailingList)) {
-            abort(403, 'Brak uprawnień do edycji tej listy.');
+            abort(403, __('mailing_lists.flash.no_edit_permission'));
         }
 
         $user = auth()->user();
@@ -285,7 +295,7 @@ class MailingListController extends Controller
     public function update(Request $request, ContactList $mailingList)
     {
         if (!auth()->user()->canEditList($mailingList)) {
-             abort(403, 'Brak uprawnień do edycji tej listy.');
+             abort(403, __('mailing_lists.flash.no_edit_permission'));
         }
 
         $scopeUser = auth()->user()->getAdminUser();
@@ -309,8 +319,12 @@ class MailingListController extends Controller
             'settings.subscription.delete_unconfirmed_after_days' => 'nullable|integer|min:1|max:365',
             'settings.subscription.security_options' => 'nullable|array',
 
-            // Sending
-            'settings.sending.mailbox_id' => 'nullable|integer',
+            // Sending (only a mailbox of this account: the list's default mailbox is loaded by ID when sending)
+            'settings.sending.mailbox_id' => [
+                'nullable',
+                'integer',
+                \Illuminate\Validation\Rule::exists('mailboxes', 'id')->where('user_id', $scopeUser->id),
+            ],
             'settings.sending.sms_settings' => 'nullable|string',
             'settings.sending.from_name' => 'nullable|string|max:255',
             'settings.sending.reply_to' => 'nullable|email',
@@ -360,9 +374,10 @@ class MailingListController extends Controller
             'default_sms_provider_id' => 'nullable|exists:sms_providers,id',
         ]);
 
-        // Assign default_mailbox_id from settings if present
-        if (isset($validated['settings']['sending']['mailbox_id'])) {
-            $validated['default_mailbox_id'] = $validated['settings']['sending']['mailbox_id'];
+        // Assign default_mailbox_id from settings if present ("none" clears it)
+        if (is_array($validated['settings']['sending'] ?? null)
+            && array_key_exists('mailbox_id', $validated['settings']['sending'])) {
+            $validated['default_mailbox_id'] = $validated['settings']['sending']['mailbox_id'] ?: null;
         }
 
         // Assign default_sms_provider_id from settings if present
@@ -388,14 +403,14 @@ class MailingListController extends Controller
         }
 
         return redirect()->route('mailing-lists.index')
-            ->with('success', 'Lista adresowa została zaktualizowana.');
+            ->with('success', __('mailing_lists.flash.updated'));
     }
 
     public function destroy(Request $request, ContactList $mailingList)
     {
         // Only owner can delete list
         if ($mailingList->user_id !== auth()->id()) {
-            abort(403, 'Tylko właściciel listy może ją usunąć.');
+            abort(403, __('mailing_lists.flash.owner_only_delete'));
         }
 
         $subscribersCount = $mailingList->subscribers()->wherePivot('status', 'active')->count();
@@ -408,7 +423,7 @@ class MailingListController extends Controller
                 $targetList = auth()->user()->contactLists()->findOrFail($request->transfer_to_id);
 
                 if ($targetList->id === $mailingList->id) {
-                    return back()->withErrors(['transfer_to_id' => 'Nie można przenieść subskrybentów do tej samej listy.']);
+                    return back()->withErrors(['transfer_to_id' => __('mailing_lists.flash.transfer_same_list')]);
                 }
 
                 // Transfer subscribers to target list (many-to-many: detach from source,
@@ -430,14 +445,14 @@ class MailingListController extends Controller
                 // Delete subscribers
                 $mailingList->subscribers()->delete();
             } else {
-                return back()->withErrors(['general' => 'Ta lista zawiera subskrybentów. Wybierz opcję przeniesienia lub usunięcia ich.']);
+                return back()->withErrors(['general' => __('mailing_lists.flash.has_subscribers')]);
             }
         }
 
         $mailingList->delete();
 
         return redirect()->route('mailing-lists.index')
-            ->with('success', 'Lista adresowa została usunięta.');
+            ->with('success', __('mailing_lists.flash.deleted'));
     }
 
     /**
@@ -446,12 +461,12 @@ class MailingListController extends Controller
     public function generateApiKey(ContactList $mailingList)
     {
         if (!auth()->user()->canEditList($mailingList)) {
-            abort(403, 'Brak uprawnień do edycji tej listy.');
+            abort(403, __('mailing_lists.flash.no_edit_permission'));
         }
 
         $newKey = $mailingList->generateApiKey();
 
-        return back()->with('success', 'Nowy klucz API został wygenerowany.');
+        return back()->with('success', __('mailing_lists.flash.api_key_generated'));
     }
 
     /**
@@ -460,7 +475,7 @@ class MailingListController extends Controller
     public function testWebhook(ContactList $mailingList)
     {
         if (!auth()->user()->canEditList($mailingList)) {
-            abort(403, 'Brak uprawnień do edycji tej listy.');
+            abort(403, __('mailing_lists.flash.no_edit_permission'));
         }
 
         if (empty($mailingList->webhook_url)) {
@@ -483,9 +498,9 @@ class MailingListController extends Controller
         $mailingList->webhook_events = $originalEvents;
 
         if ($success) {
-            return back()->with('success', 'Testowy webhook został wysłany pomyślnie!');
+            return back()->with('success', __('mailing_lists.flash.webhook_test_sent'));
         } else {
-            return back()->with('error', 'Nie udało się wysłać testowego webhooka. Sprawdź URL i logi.');
+            return back()->with('error', __('mailing_lists.flash.webhook_test_failed'));
         }
     }
 
@@ -496,7 +511,7 @@ class MailingListController extends Controller
     {
         // Authorization check
         if (!auth()->user()->canEditList($mailing_list)) {
-            abort(403, 'Brak uprawnień do kopiowania tej listy.');
+            abort(403, __('mailing_lists.flash.no_copy_permission'));
         }
 
         // Validate request
@@ -580,7 +595,7 @@ class MailingListController extends Controller
         ListCronSettingsForm::copy($mailing_list->id, $newList->id);
 
         return redirect()->route('mailing-lists.index')
-            ->with('success', __('mailing_lists.copy_success'));
+            ->with('success', __('mailing_lists.flash.copy_success'));
     }
 
 }

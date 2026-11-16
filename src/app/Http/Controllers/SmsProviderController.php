@@ -89,7 +89,7 @@ class SmsProviderController extends Controller
         }
 
         return redirect()->route('settings.sms-providers.index')
-            ->with('success', 'Dostawca SMS został dodany.');
+            ->with('success', __('sms_providers.notifications.created'));
     }
 
     /**
@@ -113,11 +113,13 @@ class SmsProviderController extends Controller
 
         $smsProvider->fill([
             'name' => $validated['name'],
-            'from_number' => $validated['from_number'] ?? $smsProvider->from_number,
-            'from_name' => $validated['from_name'] ?? $smsProvider->from_name,
+            // A field sent empty is cleared; one the request does not mention stays as it was.
+            // "?? old value" treated both the same, so a daily limit could never be removed.
+            'from_number' => array_key_exists('from_number', $validated) ? $validated['from_number'] : $smsProvider->from_number,
+            'from_name' => array_key_exists('from_name', $validated) ? $validated['from_name'] : $smsProvider->from_name,
             'is_active' => $validated['is_active'] ?? $smsProvider->is_active,
             'is_default' => $validated['is_default'] ?? $smsProvider->is_default,
-            'daily_limit' => $validated['daily_limit'] ?? $smsProvider->daily_limit,
+            'daily_limit' => array_key_exists('daily_limit', $validated) ? $validated['daily_limit'] : $smsProvider->daily_limit,
         ]);
 
         // Only update credentials if provided
@@ -133,7 +135,7 @@ class SmsProviderController extends Controller
         }
 
         return redirect()->route('settings.sms-providers.index')
-            ->with('success', 'Dostawca SMS został zaktualizowany.');
+            ->with('success', __('sms_providers.notifications.updated'));
     }
 
     /**
@@ -148,7 +150,7 @@ class SmsProviderController extends Controller
         $smsProvider->delete();
 
         return redirect()->route('settings.sms-providers.index')
-            ->with('success', 'Dostawca SMS został usunięty.');
+            ->with('success', __('sms_providers.notifications.deleted'));
     }
 
     /**
@@ -172,7 +174,7 @@ class SmsProviderController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Błąd: ' . $e->getMessage(),
+                'message' => __('sms_providers.notifications.test_failed', ['error' => $e->getMessage()]),
             ]);
         }
     }
@@ -190,7 +192,7 @@ class SmsProviderController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Ustawiono jako domyślny dostawca SMS.',
+            'message' => __('sms_providers.notifications.set_default'),
         ]);
     }
 }

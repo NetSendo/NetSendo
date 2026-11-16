@@ -4,6 +4,11 @@ import { Head, Link } from "@inertiajs/vue3";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
+import GoldBadge from "@/Components/License/GoldBadge.vue";
+import { useLicense } from "@/Composables/useLicense";
+
+// The AI analysis is part of Campaign Auditor (GOLD); the statistics are SILVER
+const { can, requireGold } = useLicense();
 
 const { t } = useI18n();
 
@@ -32,6 +37,10 @@ const aiAnalysis = ref(null);
 const analysisError = ref(null);
 
 const generateAiAnalysis = async () => {
+    if (!can("campaign_auditor")) {
+        requireGold("campaign_auditor");
+        return;
+    }
     isLoadingAnalysis.value = true;
     analysisError.value = null;
 
@@ -208,6 +217,7 @@ const exportCsv = () => {
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                                     </svg>
                                     {{ $t("campaign_stats.ai_analysis.generate") }}
+                                    <GoldBadge v-if="!can('campaign_auditor')" locked />
                                 </button>
                             </div>
 
