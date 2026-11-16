@@ -4468,7 +4468,10 @@
                 "field_hint": "Para suscriptores existentes: los campos establecidos al registrarse o importar una dirección nueva no cuentan. El valor se compara sin distinguir mayúsculas.",
                 "min_days_away": "Días mínimos desde la visita anterior",
                 "link_url": "Dirección del enlace",
-                "link_url_hint": "Una dirección exacta, un patrón con * (https://tienda.com/oferta*) o parte de la dirección sin http (p. ej. /precios)."
+                "link_url_hint": "Una dirección exacta, un patrón con * (https://tienda.com/oferta*) o parte de la dirección sin http (p. ej. /precios).",
+                "url_pattern": "Patrón de URL (* sustituye cualquier parte)",
+                "url_pattern_hint": "P. ej. */precios o https://ejemplo.com/gracias",
+                "url_pattern_placeholder": "https://ejemplo.com/oferta/*"
             }
         },
         "logs_page": {

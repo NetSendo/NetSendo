@@ -5428,7 +5428,10 @@
                 "field_hint": "Działa dla istniejących subskrybentów: pola ustawione przy zapisie albo imporcie nowego adresu się nie liczą. Wartość porównywana bez względu na wielkość liter.",
                 "min_days_away": "Minimum dni od poprzedniej wizyty",
                 "link_url": "Adres linku",
-                "link_url_hint": "Dokładny adres, wzorzec z * (https://sklep.pl/oferta*) albo fragment adresu bez http (np. /cennik)."
+                "link_url_hint": "Dokładny adres, wzorzec z * (https://sklep.pl/oferta*) albo fragment adresu bez http (np. /cennik).",
+                "url_pattern": "Wzorzec adresu (* zastępuje dowolny fragment)",
+                "url_pattern_hint": "Np. */cennik albo https://twojastrona.pl/dziekujemy",
+                "url_pattern_placeholder": "https://twojastrona.pl/oferta/*"
             }
         },
         "logs_page": {

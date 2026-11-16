@@ -5206,7 +5206,10 @@
                 "field_hint": "For existing subscribers: fields set when a new address signs up or is imported do not count. The value is compared ignoring case.",
                 "min_days_away": "Minimum days since the previous visit",
                 "link_url": "Link address",
-                "link_url_hint": "An exact address, a pattern with * (https://shop.com/offer*) or part of the address without http (e.g. /pricing)."
+                "link_url_hint": "An exact address, a pattern with * (https://shop.com/offer*) or part of the address without http (e.g. /pricing).",
+                "url_pattern": "URL pattern (* matches any part)",
+                "url_pattern_hint": "E.g. */pricing or https://example.com/thank-you",
+                "url_pattern_placeholder": "https://example.com/offer/*"
             }
         },
         "logs_page": {

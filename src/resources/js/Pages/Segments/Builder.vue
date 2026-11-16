@@ -226,9 +226,9 @@ const submit = () => {
                             <li
                                 v-for="(row, index) in form.conditions"
                                 :key="index"
-                                class="rounded-xl border border-slate-200 p-3 dark:border-slate-700/60"
+                                class="@container rounded-xl border border-slate-200 p-3 dark:border-slate-700/60"
                             >
-                                <div class="flex flex-col gap-3 sm:flex-row sm:items-start">
+                                <div class="flex flex-col gap-3 @md:flex-row @md:items-start">
                                     <span
                                         class="w-10 shrink-0 pt-2 text-xs font-semibold uppercase text-slate-500 dark:text-slate-400"
                                     >
@@ -241,7 +241,7 @@ const submit = () => {
                                         }}
                                     </span>
 
-                                    <div class="grid min-w-0 flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+                                    <div class="grid min-w-0 flex-1 grid-cols-1 gap-2 @xl:grid-cols-2">
                                         <select
                                             :value="row.type"
                                             :aria-label="$t('segments.builder.condition_type')"
@@ -299,7 +299,7 @@ const submit = () => {
                                                 min="1"
                                                 max="3650"
                                                 :aria-label="$t('segments.builder.days')"
-                                                :class="[fieldClass, 'max-w-28 tabular-nums']"
+                                                :class="[fieldClass, 'max-w-24 shrink-0 tabular-nums']"
                                             />
                                             <span class="text-sm text-slate-700 dark:text-slate-300">
                                                 {{ $t("segments.builder.days_unit") }}
@@ -332,7 +332,7 @@ const submit = () => {
                                             </select>
                                             <div
                                                 v-if="row.operator === 'between'"
-                                                class="grid grid-cols-2 gap-2 md:col-span-2"
+                                                class="grid grid-cols-2 gap-2 @xl:col-span-2"
                                             >
                                                 <input
                                                     v-model="row.valueFrom"
@@ -355,14 +355,14 @@ const submit = () => {
                                                 type="text"
                                                 :aria-label="$t('segments.builder.value')"
                                                 :placeholder="$t('segments.builder.value_placeholder')"
-                                                :class="[fieldClass, 'md:col-span-2']"
+                                                :class="[fieldClass, '@xl:col-span-2']"
                                             />
                                         </template>
                                     </div>
 
                                     <button
                                         type="button"
-                                        class="inline-flex min-h-10 shrink-0 items-center self-end rounded-xl px-3 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-rose-700 disabled:opacity-40 sm:self-start dark:text-slate-300 dark:hover:bg-slate-700/60 dark:hover:text-rose-300"
+                                        class="inline-flex min-h-10 shrink-0 items-center self-end rounded-xl px-3 text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-rose-700 disabled:opacity-40 @md:self-start dark:text-slate-300 dark:hover:bg-slate-700/60 dark:hover:text-rose-300"
                                         :disabled="form.conditions.length === 1"
                                         @click="removeCondition(index)"
                                     >

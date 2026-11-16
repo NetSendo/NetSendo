@@ -41,7 +41,13 @@ const form = useForm({
     name: props.rule?.name || "",
     description: props.rule?.description || "",
     trigger_event: props.rule?.trigger_event || "subscriber_signup",
-    trigger_config: props.rule?.trigger_config || {},
+    // "All lists" / "Any field" options need a matching empty value, or the
+    // select shows blank for a new rule.
+    trigger_config: {
+        ...(props.rule?.trigger_config || {}),
+        list_id: props.rule?.trigger_config?.list_id ?? null,
+        field: props.rule?.trigger_config?.field ?? "",
+    },
     conditions: props.rule?.conditions || [],
     condition_logic: props.rule?.condition_logic || "all",
     actions: normalizedActions,
@@ -66,7 +72,17 @@ const icons = {
     subscriber_birthday: "🎂",
     subscription_anniversary: "🎉",
     list_join: "📥",
+    subscriber_unsubscribed: "🚪",
+    email_bounced: "📭",
+    field_updated: "✏️",
+    subscriber_inactive: "😴",
     purchase: "🛒",
+    pixel_page_visited: "🌐",
+    pixel_product_viewed: "👀",
+    pixel_add_to_cart: "🛒",
+    pixel_checkout_started: "💳",
+    pixel_cart_abandoned: "🧺",
+    pixel_return_visit: "🔁",
     // CRM triggers
     crm_deal_stage_changed: "💼",
     crm_deal_won: "🏆",
@@ -293,7 +309,7 @@ const submit = () =>
                                     v-model="form.trigger_config.field"
                                     class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                                 >
-                                    <option :value="null">
+                                    <option value="">
                                         {{
                                             $t("automations.builder.trigger_config.any_field")
                                         }}
@@ -308,7 +324,7 @@ const submit = () =>
                                             :key="field"
                                             :value="field"
                                         >
-                                            {{ field }}
+                                            {{ $t(`subscribers.import.mapping.${field}`) }}
                                         </option>
                                     </optgroup>
                                     <optgroup
@@ -374,17 +390,16 @@ const submit = () =>
                         >
                             <label
                                 class="text-sm text-gray-600 dark:text-gray-400"
-                                >Wzorzec URL (użyj * jako wieloznacznik)</label
+                                >{{ $t("automations.builder.trigger_config.url_pattern") }}</label
                             >
                             <input
                                 v-model="form.trigger_config.url_pattern"
                                 type="text"
-                                placeholder="https://twojastrona.pl/oferta/*"
+                                :placeholder="$t('automations.builder.trigger_config.url_pattern_placeholder')"
                                 class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                             />
                             <p class="text-xs text-gray-500 mt-1">
-                                Przykład: <code>*/cennik</code> lub
-                                <code>https://strona.pl/dziekujemy</code>
+                                {{ $t("automations.builder.trigger_config.url_pattern_hint") }}
                             </p>
                         </div>
 

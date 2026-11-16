@@ -4468,7 +4468,10 @@
                 "field_hint": "Gilt für bestehende Abonnenten: Felder, die bei der Anmeldung oder beim Import einer neuen Adresse gesetzt werden, zählen nicht. Groß-/Kleinschreibung wird ignoriert.",
                 "min_days_away": "Mindestens Tage seit dem letzten Besuch",
                 "link_url": "Link-Adresse",
-                "link_url_hint": "Eine genaue Adresse, ein Muster mit * (https://shop.de/angebot*) oder ein Teil der Adresse ohne http (z. B. /preise)."
+                "link_url_hint": "Eine genaue Adresse, ein Muster mit * (https://shop.de/angebot*) oder ein Teil der Adresse ohne http (z. B. /preise).",
+                "url_pattern": "URL-Muster (* steht für einen beliebigen Teil)",
+                "url_pattern_hint": "Z. B. */preise oder https://beispiel.de/danke",
+                "url_pattern_placeholder": "https://beispiel.de/angebot/*"
             }
         },
         "logs_page": {

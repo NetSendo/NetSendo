@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **URL patterns with `*` never matched** in automation triggers ("page visited", link rules): `https://shop.example.com/offer*` was turned into a pattern that only matched dots.
 - **A list filter on "email opened", "link clicked" or "email bounced" rules never matched.** The events read the message's list from a column removed in December 2025 (a message has several lists now); they now carry all of the message's lists.
 - **"CRM contact created" automations ran twice** for contacts converted from a subscriber by an automation.
+- **Automation builder: the list filter of a new rule showed an empty box** instead of "All lists", and the URL pattern field of "page visited" rules was in Polish only. Triggers without an icon of their own (unsubscribed, bounced, the pixel triggers) now have one.
 
 - **AI apps could not sign in on installations whose nginx file denies hidden paths.** Some installations carry a `docker/nginx/default.conf` with `location ~ /\. { deny all; }`. That rule also blocked `/.well-known/oauth-…`, where AI apps look up how to sign in, so they got `403` and gave up. The same copies served scripts and styles uncompressed. `docker compose pull` never replaces that file, so updates did not help. The current file now refuses hidden files itself (`.git`, `.env`, `.htaccess`) except `/.well-known/`, and keeps PHP requests open for up to 300 seconds like those copies did. The README (*Troubleshooting*) and `docs/MCP_CONNECTOR.md` say how to check a copy and replace it.
 
