@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.12.0] – Automations that run, saved segments - 2026-11-16
+
+**Release date:** 2026-11-16
+
 ### Added
 
 - **Saved segments (Contacts → Segments).** A segment is a named set of conditions that keeps itself up to date, instead of a list filled by hand ("opened, did not click"). Conditions: on a list / not on a list, has a tag / does not, a custom field (the same comparisons as the message audience filters), opened / clicked in the last N days or not for N days, opened / clicked a given message or not, added in the last N days or more than N days ago; all of them or any of them. The builder counts the people as you edit and shows a few example addresses. Available on SILVER.
@@ -31,7 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **A list filter on "email opened", "link clicked" or "email bounced" rules never matched.** The events read the message's list from a column removed in December 2025 (a message has several lists now); they now carry all of the message's lists.
 - **"CRM contact created" automations ran twice** for contacts converted from a subscriber by an automation.
 - **Automation builder: the list filter of a new rule showed an empty box** instead of "All lists", and the URL pattern field of "page visited" rules was in Polish only. Triggers without an icon of their own (unsubscribed, bounced, the pixel triggers) now have one.
-
 - **AI apps could not sign in on installations whose nginx file denies hidden paths.** Some installations carry a `docker/nginx/default.conf` with `location ~ /\. { deny all; }`. That rule also blocked `/.well-known/oauth-…`, where AI apps look up how to sign in, so they got `403` and gave up. The same copies served scripts and styles uncompressed. `docker compose pull` never replaces that file, so updates did not help. The current file now refuses hidden files itself (`.git`, `.env`, `.htaccess`) except `/.well-known/`, and keeps PHP requests open for up to 300 seconds like those copies did. The README (*Troubleshooting*) and `docs/MCP_CONNECTOR.md` say how to check a copy and replace it.
 
 ## [2.11.4] – The webserver reports healthy - 2026-11-13
