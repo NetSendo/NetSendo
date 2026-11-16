@@ -17,7 +17,7 @@ class SidebarNavigationTest extends TestCase
         'dashboard', 'webinars.index',
         'messages.index', 'sms.index', 'settings.system-emails.index', 'settings.system-pages.index',
         'subscribers.index', 'subscribers.import', 'mailing-lists.index', 'sms-lists.index',
-        'groups.index', 'tags.index', 'forms.index', 'settings.fields.index', 'segmentation.index',
+        'groups.index', 'tags.index', 'segments.index', 'forms.index', 'settings.fields.index', 'segmentation.index',
         'crm.dashboard', 'crm.contacts.index', 'crm.companies.index', 'crm.deals.index', 'crm.tasks.index',
         'crm.sequences.index', 'crm.scoring.index', 'crm.cardintel.index', 'crm.import.index', 'crm.guide',
         'brain.index', 'brain.monitor', 'brain.settings', 'brain.guide',

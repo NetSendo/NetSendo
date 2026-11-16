@@ -59,16 +59,6 @@ const tiles = computed(() => {
             }),
         },
         {
-            key: "opens",
-            label: t("dashboard.kpi.open_rate"),
-            value: percent(s.open_rate.value),
-            series: series("opens"),
-            change: pointChange(s.open_rate.trend),
-            caption: t("dashboard.kpi.previously", {
-                value: percent(s.open_rate.previous),
-            }),
-        },
-        {
             key: "clicks",
             label: t("dashboard.kpi.click_rate"),
             value: percent(s.click_rate.value),
@@ -77,6 +67,19 @@ const tiles = computed(() => {
             caption: t("dashboard.kpi.previously", {
                 value: percent(s.click_rate.previous),
             }),
+        },
+        {
+            key: "opens",
+            label: t("dashboard.kpi.open_rate"),
+            value: percent(s.open_rate.value),
+            series: series("opens"),
+            change: pointChange(s.open_rate.trend),
+            caption: t("dashboard.kpi.previously", {
+                value: percent(s.open_rate.previous),
+            }),
+            // Apple Mail Privacy Protection and Gmail's AI summaries open mail
+            // without a reader, so opens overstate interest
+            note: t("dashboard.kpi.open_rate_note"),
         },
     ];
 });
@@ -101,8 +104,9 @@ const tiles = computed(() => {
                 >
                     <div
                         class="text-sm font-medium text-slate-600 dark:text-slate-400"
+                        :title="tile.note || null"
                     >
-                        {{ tile.label }}
+                        {{ tile.label }}<span v-if="tile.note" aria-hidden="true">*</span>
                     </div>
                     <div class="flex items-end justify-between gap-4">
                         <div
@@ -149,6 +153,9 @@ const tiles = computed(() => {
                         </span>
                         <span class="tabular-nums">{{ tile.caption }}</span>
                     </div>
+                    <p v-if="tile.note" class="text-xs text-slate-500 dark:text-slate-400">
+                        * {{ tile.note }}
+                    </p>
                 </div>
             </template>
 

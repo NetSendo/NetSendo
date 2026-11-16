@@ -49,6 +49,9 @@ class CrmContact extends Model
         'client' => 70,    // Prospect -> Client at 70 points
     ];
 
+    /** True while a CRM file import creates contacts (see CrmContactCreated::$bulkImport). */
+    public static bool $creatingInBulk = false;
+
     /**
      * Boot the model.
      */
@@ -57,7 +60,7 @@ class CrmContact extends Model
         parent::boot();
 
         static::created(function (CrmContact $contact) {
-            event(new \App\Events\CrmContactCreated($contact, auth()->id()));
+            event(new \App\Events\CrmContactCreated($contact, auth()->id(), self::$creatingInBulk));
         });
     }
 

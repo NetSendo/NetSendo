@@ -283,6 +283,8 @@ class MessageController extends Controller
 
         return Inertia::render('Message/Create', [
             'preselectedListId' => $preselectedListId,
+            'preselectedSegmentId' => $request->integer('segment_id') ?: null,
+            'segments' => \App\Models\Segment::forUser(auth()->id())->orderBy('name')->get(['id', 'name', 'subscribers_count']),
             'lists' => auth()->user()->accessibleLists()
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
                 ->withCount(['subscribers' => function ($query) {
@@ -357,6 +359,7 @@ class MessageController extends Controller
             'exclude_field_filters.*.values' => 'nullable|array|max:200',
             'exclude_field_filters.*.values.*' => 'nullable|string|max:255',
             'include_field_filter_match' => 'nullable|in:all,any',
+            'segment_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('segments', 'id')->where('user_id', auth()->id())],
             'exclude_field_filter_match' => 'nullable|in:all,any',
             'send_at' => 'nullable|date',
             'time_of_day' => 'nullable|date_format:H:i',
@@ -487,6 +490,7 @@ class MessageController extends Controller
             'trigger_type' => $validated['trigger_type'] ?? null,
             'trigger_config' => $validated['trigger_config'] ?? null,
             'include_field_filter_match' => $validated['include_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
+            'segment_id' => $validated['segment_id'] ?? null,
             'exclude_field_filter_match' => $validated['exclude_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
             // Queue messages: active only when not a draft
             'is_active' => $validated['status'] !== 'draft',
@@ -628,6 +632,7 @@ class MessageController extends Controller
                 'include_field_filters' => $this->formatFieldFilters($message, MessageFieldFilter::MODE_INCLUDE),
                 'exclude_field_filters' => $this->formatFieldFilters($message, MessageFieldFilter::MODE_EXCLUDE),
                 'include_field_filter_match' => $message->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL,
+                'segment_id' => $message->segment_id,
                 'exclude_field_filter_match' => $message->exclude_field_filter_match ?? MessageFieldFilter::MATCH_ALL,
                 // Attachments
                 'attachments' => $message->attachments->map(fn($a) => [
@@ -681,6 +686,7 @@ class MessageController extends Controller
                     'status' => $c->status,
                 ]),
             ],
+            'segments' => \App\Models\Segment::forUser(auth()->id())->orderBy('name')->get(['id', 'name', 'subscribers_count']),
             'lists' => auth()->user()->accessibleLists()
                 ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
                 ->withCount(['subscribers' => function ($query) {
@@ -759,6 +765,7 @@ class MessageController extends Controller
             'exclude_field_filters.*.values' => 'nullable|array|max:200',
             'exclude_field_filters.*.values.*' => 'nullable|string|max:255',
             'include_field_filter_match' => 'nullable|in:all,any',
+            'segment_id' => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('segments', 'id')->where('user_id', auth()->id())],
             'exclude_field_filter_match' => 'nullable|in:all,any',
             'send_at' => 'nullable|date',
             'time_of_day' => 'nullable|date_format:H:i',
@@ -890,6 +897,7 @@ class MessageController extends Controller
             'trigger_type' => $validated['trigger_type'] ?? null,
             'trigger_config' => $validated['trigger_config'] ?? null,
             'include_field_filter_match' => $validated['include_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
+            'segment_id' => $validated['segment_id'] ?? null,
             'exclude_field_filter_match' => $validated['exclude_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
             // Queue messages: active only when not a draft
             'is_active' => $validated['status'] !== 'draft',

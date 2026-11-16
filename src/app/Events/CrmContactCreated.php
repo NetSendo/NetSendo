@@ -11,9 +11,15 @@ class CrmContactCreated
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    /**
+     * @param  bool  $bulkImport  created by a CRM file import: follow-up
+     *                            sequences do not enroll such contacts
+     *                            (one import made thousands of tasks nobody did)
+     */
     public function __construct(
         public CrmContact $contact,
-        public ?int $createdById = null
+        public ?int $createdById = null,
+        public bool $bulkImport = false,
     ) {}
 
     /**

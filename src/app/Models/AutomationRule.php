@@ -316,6 +316,24 @@ class AutomationRule extends Model
     }
 
     /**
+     * Triggers the builder offers: those something in NetSendo raises
+     * (AutomationCatalog `available`), plus the rule's own when editing.
+     */
+    public static function getSelectableTriggerEvents(?string $current = null): array
+    {
+        $available = collect(\App\Services\Automation\AutomationCatalog::triggers())
+            ->filter(fn ($trigger) => $trigger['available'])
+            ->keys()
+            ->all();
+
+        return array_filter(
+            self::TRIGGER_EVENTS,
+            fn ($key) => in_array($key, $available, true) || $key === $current,
+            ARRAY_FILTER_USE_KEY
+        );
+    }
+
+    /**
      * Get all action types for frontend
      */
     public static function getActionTypes(): array

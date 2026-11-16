@@ -302,6 +302,41 @@ class PixelController extends Controller
     }
 
     /**
+     * "pixel_return_visit": the identified visitor's previous pixel event was at
+     * least a day before this page view. Looked up only when the account has
+     * such a rule.
+     */
+    protected function dispatchReturnVisit(SubscriberDevice $device, PixelEvent $event, string $pageUrl): void
+    {
+        if (!$device->subscriber_id) {
+            return;
+        }
+
+        $hasRule = \App\Models\AutomationRule::active()
+            ->forTrigger('pixel_return_visit')
+            ->forUser((int) $device->user_id)
+            ->exists();
+
+        if (!$hasRule) {
+            return;
+        }
+
+        $previous = PixelEvent::where('subscriber_id', $device->subscriber_id)
+            ->where('id', '<', $event->id)
+            ->max('occurred_at');
+
+        if (!$previous) {
+            return;
+        }
+
+        $daysAway = (int) floor(\Carbon\Carbon::parse($previous)->diffInDays($event->occurred_at ?? now(), true));
+
+        if ($daysAway >= 1) {
+            event(new \App\Events\PixelReturnVisit($device->subscriber_id, (int) $device->user_id, $pageUrl, $daysAway));
+        }
+    }
+
+    /**
      * Dispatch automation events based on pixel event type
      */
     protected function dispatchAutomationEvents(
@@ -319,6 +354,7 @@ class PixelController extends Controller
                         $device->user_id,
                         $data['page_title'] ?? null
                     ));
+                    $this->dispatchReturnVisit($device, $event, $data['page_url']);
                     break;
 
                 case PixelEvent::TYPE_PRODUCT_VIEW:

@@ -74,8 +74,8 @@ class AutomationCatalog
                 'list_id' => $list('the list joined'),
                 'form_id' => self::field('integer', false, 'Only signups through this form', 7, 'form'),
             ]],
-            'subscriber_activated' => ['group' => 'subscribers', 'available' => false, 'description' => 'Not emitted by NetSendo yet — use subscriber_signup', 'config' => []],
-            'list_join' => ['group' => 'subscribers', 'available' => false, 'description' => 'Not emitted by NetSendo yet — use subscriber_signup', 'config' => []],
+            'subscriber_activated' => ['group' => 'subscribers', 'available' => false, 'description' => 'Not a separate event — use subscriber_signup (it fires after double opt-in confirmation)', 'config' => []],
+            'list_join' => ['group' => 'subscribers', 'available' => false, 'description' => 'Not a separate event — use subscriber_signup', 'config' => []],
             'subscriber_unsubscribed' => ['group' => 'subscribers', 'description' => 'A subscriber leaves a list', 'config' => [
                 'list_id' => $list('the list left'),
             ]],
@@ -89,8 +89,14 @@ class AutomationCatalog
             'tag_removed' => ['group' => 'subscribers', 'description' => 'A tag is removed from a subscriber', 'config' => [
                 'tag_id' => self::field('integer', false, 'Only this tag', 5, 'tag'),
             ]],
-            'field_updated' => ['group' => 'subscribers', 'available' => false, 'description' => 'Not emitted by NetSendo yet', 'config' => []],
-            'subscriber_inactive' => ['group' => 'subscribers', 'available' => false, 'description' => 'Not emitted by NetSendo yet', 'config' => []],
+            'field_updated' => ['group' => 'subscribers', 'description' => 'A field of an existing subscriber changes value (standard: email, first_name, last_name, phone, gender, language, source; or a custom field). Not raised for fields set while the subscriber is created, nor by an automation\'s own update_field', 'config' => [
+                'field' => self::field('string', false, 'Only this field (standard field or custom field name)', 'city', 'field'),
+                'value' => self::field('string', false, 'Only when the new value is this text (case-insensitive)', 'Warszawa'),
+            ]],
+            'subscriber_inactive' => ['group' => 'subscribers', 'description' => 'A subscriber has neither opened nor clicked for the given days (checked hourly). Runs once per subscriber until they open or click again', 'config' => [
+                'days' => self::field('integer', false, 'Days without an open or a click (default 30)', 30),
+                'list_id' => $list('the list the subscriber is on (the days count from joining it)'),
+            ]],
             'email_opened' => ['group' => 'email', 'description' => 'A subscriber opens an email', 'config' => [
                 'message_id' => $message,
                 'list_id' => $list("the message's list"),
@@ -108,7 +114,11 @@ class AutomationCatalog
                 'read_time_threshold' => self::field('integer', false, 'Minimum read time in seconds', 30),
                 'message_id' => $message,
             ]],
-            'specific_link_clicked' => ['group' => 'email', 'available' => false, 'description' => 'Not emitted by NetSendo yet — use email_clicked', 'config' => []],
+            'specific_link_clicked' => ['group' => 'email', 'description' => 'A subscriber clicks a given link in an email', 'config' => [
+                'link_url' => self::field('url', true, 'The link: exact URL, a pattern with * wildcards, or text the URL contains when it has no http prefix', 'https://shop.example.com/offer*'),
+                'message_id' => $message,
+                'list_id' => $list("the message's list"),
+            ]],
             'page_visited' => ['group' => 'tracking', 'description' => 'A known subscriber visits a tracked page', 'config' => [
                 'url_pattern' => $urlPattern,
             ]],
@@ -137,7 +147,10 @@ class AutomationCatalog
             'pixel_cart_abandoned' => ['group' => 'ecommerce', 'description' => 'NetSendo Pixel: a cart is abandoned', 'config' => [
                 'product_id' => $productId,
             ]],
-            'pixel_return_visit' => ['group' => 'ecommerce', 'available' => false, 'description' => 'Not emitted by NetSendo yet', 'config' => []],
+            'pixel_return_visit' => ['group' => 'ecommerce', 'description' => 'NetSendo Pixel: an identified visitor comes back after at least a day away', 'config' => [
+                'min_days_away' => self::field('integer', false, 'Minimum days since the previous visit (default 1)', 7),
+                'url_pattern' => $urlPattern,
+            ]],
             'crm_deal_stage_changed' => ['group' => 'crm', 'description' => 'A deal moves to another stage', 'config' => [
                 'pipeline_id' => $pipeline,
                 'from_stage_id' => self::field('integer', false, 'Only moves out of this stage', 10, 'crm_stage'),

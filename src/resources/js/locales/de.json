@@ -1509,7 +1509,8 @@
             "up": "gestiegen um",
             "down": "gesunken um",
             "new_subscribers": "neu: {count} · zuvor {previous}",
-            "previously": "zuvor {value}"
+            "previously": "zuvor {value}",
+            "open_rate_note": "Überhöht: Apple Mail und Gmail öffnen Nachrichten automatisch. Klicks sind verlässlicher."
         },
         "attention": {
             "title": "Erfordert Aufmerksamkeit",
@@ -4457,6 +4458,17 @@
                 "activity_type": "Aktivitätstyp",
                 "activity_note": "Notiz",
                 "activity_content": "Aktivitätsinhalt"
+            },
+            "trigger_config": {
+                "inactive_days": "Tage ohne Öffnung und Klick",
+                "inactive_days_hint": "Wird stündlich geprüft. Die Regel läuft einmal pro Abonnent, bis er wieder öffnet oder klickt. Mit gewählter Liste zählen die Tage ab dem Beitritt zu ihr.",
+                "field": "Feld",
+                "any_field": "Beliebiges Feld",
+                "value_optional": "Neuer Wert (optional)",
+                "field_hint": "Gilt für bestehende Abonnenten: Felder, die bei der Anmeldung oder beim Import einer neuen Adresse gesetzt werden, zählen nicht. Groß-/Kleinschreibung wird ignoriert.",
+                "min_days_away": "Mindestens Tage seit dem letzten Besuch",
+                "link_url": "Link-Adresse",
+                "link_url_hint": "Eine genaue Adresse, ein Muster mit * (https://shop.de/angebot*) oder ein Teil der Adresse ohne http (z. B. /preise)."
             }
         },
         "logs_page": {
@@ -7429,7 +7441,11 @@
             "created": "Aufgabe erstellt",
             "updated": "Aufgabe aktualisiert",
             "completed": "Aufgabe erledigt",
-            "empty_contact": "Keine Aufgaben für diesen Kontakt"
+            "empty_contact": "Keine Aufgaben für diesen Kontakt",
+            "stale_title": "{count} Sequenz-Aufgaben warten seit über 14 Tagen",
+            "stale_body": "Automatische Follow-up-Sequenzen haben diese Aufgaben erstellt, und niemand hat sie erledigt. Sie können sie mit einem Klick schließen; ihre Sequenzen werden gestoppt. Von Hand angelegte Aufgaben bleiben.",
+            "stale_action": "Veraltete automatische Aufgaben schließen",
+            "stale_confirm": "{count} Aufgaben schließen und ihre Sequenzen stoppen?"
         },
         "activities": {
             "title": "Aktivitäten",
@@ -10028,6 +10044,92 @@
             "permissions": "Sie kann nur die Berechtigungen nutzen, die auf dem Anmeldebildschirm angehakt wurden. Es sind dieselben Berechtigungen wie bei API-Schlüsseln. Um sie zu ändern, trennen Sie die App und verbinden Sie sie erneut.",
             "tokens": "Das Trennen einer App hier stoppt sie sofort. Eine App, die 90 Tage nicht genutzt wurde, muss sich erneut anmelden. NetSendo speichert nur Fingerabdrücke der Zugriffstoken.",
             "sending": "Mit den Versandberechtigungen kann eine App Kampagnen, E-Mails und SMS an echte Empfänger senden. Vergeben Sie sie nur an Apps, denen Sie vertrauen, und prüfen Sie, was der Assistent senden will."
+        }
+    },
+    "segments": {
+        "title": "Segmente",
+        "subtitle": "Gespeicherte Empfängergruppen, die sich selbst aktualisieren",
+        "create": "Neues Segment",
+        "edit": "Segment bearbeiten",
+        "create_first": "Erstes Segment anlegen",
+        "empty_title": "Noch keine Segmente",
+        "empty_description": "Ein Segment ist ein gespeicherter Satz von Bedingungen, z. B. „in den letzten 30 Tagen geöffnet und ohne Tag Kunde“. Die Mitglieder ändern sich von selbst, ohne Personen zwischen Listen zu verschieben.",
+        "table": {
+            "name": "Segment",
+            "people": "Personen",
+            "conditions": "Bedingungen",
+            "messages": "Nachrichten",
+            "actions": "Aktionen"
+        },
+        "people_count": "{count} Personen",
+        "actions_for": "Aktionen für Segment {name}",
+        "send_message": "Nachricht an das Segment senden",
+        "how_it_works": "Die Personenzahl stammt aus der letzten Zählung (höchstens 10 Minuten alt). Beim Versand wird das Segment immer neu gezählt.",
+        "delete_title": "Segment löschen?",
+        "delete_description": "Nachrichten, die es verwendet haben, gehen an die gesamten gewählten Listen.",
+        "saved": "Segment gespeichert.",
+        "deleted": "Segment gelöscht.",
+        "groups": {
+            "membership": "Listen und Tags",
+            "data": "Abonnentendaten",
+            "engagement": "E-Mail-Aktivität"
+        },
+        "types": {
+            "on_list": "Ist auf Liste",
+            "not_on_list": "Ist nicht auf Liste",
+            "has_tag": "Hat Tag",
+            "not_has_tag": "Hat Tag nicht",
+            "field": "Zusatzfeld",
+            "joined_within": "In den letzten … Tagen hinzugefügt",
+            "joined_before": "Vor mehr als … Tagen hinzugefügt",
+            "opened_within": "In den letzten … Tagen geöffnet",
+            "not_opened_within": "Seit … Tagen nicht geöffnet",
+            "clicked_within": "In den letzten … Tagen geklickt",
+            "not_clicked_within": "Seit … Tagen nicht geklickt",
+            "opened_message": "Nachricht geöffnet",
+            "not_opened_message": "Nachricht nicht geöffnet",
+            "clicked_message": "In Nachricht geklickt",
+            "not_clicked_message": "In Nachricht nicht geklickt"
+        },
+        "builder": {
+            "subtitle": "Beschreiben Sie, wen das Segment umfasst. Die Personenzahl aktualisiert sich laufend.",
+            "details": "Name und Beschreibung",
+            "name": "Name",
+            "name_placeholder": "z. B. Warm, ohne Kauf",
+            "description": "Beschreibung (optional)",
+            "conditions": "Bedingungen",
+            "match_label": "Abgleich der Bedingungen",
+            "match_all": "Alle Bedingungen",
+            "match_any": "Eine Bedingung",
+            "where": "Wenn",
+            "and": "und",
+            "or": "oder",
+            "condition_type": "Art der Bedingung",
+            "list": "Liste",
+            "tag": "Tag",
+            "message": "Nachricht",
+            "days": "Anzahl Tage",
+            "days_unit": "Tage",
+            "field": "Feld",
+            "operator": "Vergleich",
+            "value": "Wert",
+            "value_placeholder": "Wert; mehrere mit Komma trennen",
+            "value_from": "Von",
+            "value_to": "Bis",
+            "remove": "Entfernen",
+            "add_condition": "Bedingung hinzufügen",
+            "preview": "Personen im Segment",
+            "of_total": "von {total} aktiven Abonnenten",
+            "sample": "Beispieladressen",
+            "preview_failed": "Die Personen konnten nicht gezählt werden.",
+            "dynamic_note": "Das Segment wird bei jeder Verwendung ausgewertet: Wer morgen die Bedingungen erfüllt, ist morgen darin. Eine Nachricht an ein Segment geht nur an Personen auf den in der Nachricht gewählten Listen.",
+            "save": "Segment speichern",
+            "create": "Segment anlegen"
+        },
+        "message": {
+            "label": "Segment",
+            "none": "Kein Segment — alle auf den gewählten Listen",
+            "help": "Die Nachricht geht nur an Personen auf den gewählten Listen, die im Segment sind. Das Segment wird im Moment des Versands gezählt."
         }
     }
 }

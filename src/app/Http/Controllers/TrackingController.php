@@ -49,6 +49,11 @@ class TrackingController extends Controller
                 'opened_at' => now(),
             ]);
 
+            Subscriber::recordOpen(
+                (int) $subscriberId,
+                EmailOpen::where('message_id', $messageId)->where('subscriber_id', $subscriberId)->count() === 1
+            );
+
             // Dispatch event for automations
             event(new EmailOpened(
                 (int) $messageId,
@@ -104,6 +109,11 @@ class TrackingController extends Controller
                 'user_agent' => $request->userAgent(),
                 'clicked_at' => now(),
             ]);
+
+            Subscriber::recordClick(
+                (int) $subscriberId,
+                EmailClick::where('message_id', $messageId)->where('subscriber_id', $subscriberId)->count() === 1
+            );
 
             // Dispatch event for automations
             event(new EmailClicked(

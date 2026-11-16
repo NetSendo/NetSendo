@@ -449,6 +449,7 @@ class MessageController extends Controller
             'is_active' => false,
             'include_field_filter_match' => $validated['include_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
             'exclude_field_filter_match' => $validated['exclude_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
+            'segment_id' => $validated['segment_id'] ?? null,
         ]);
 
         // Attach contact lists
@@ -571,9 +572,9 @@ class MessageController extends Controller
 
         // The audience changed: refresh the planned count like setLists() does
         $audienceKeys = ['contact_list_ids', 'excluded_list_ids', 'crm_contact_ids', 'excluded_crm_contact_ids',
-            'include_field_filters', 'exclude_field_filters', 'include_field_filter_match', 'exclude_field_filter_match'];
+            'include_field_filters', 'exclude_field_filters', 'include_field_filter_match', 'exclude_field_filter_match', 'segment_id'];
         if (array_intersect($audienceKeys, array_keys($validated))) {
-            $message->load(['contactLists', 'excludedLists', 'crmContacts', 'excludedCrmContacts', 'fieldFilters']);
+            $message->load(['contactLists', 'excludedLists', 'crmContacts', 'excludedCrmContacts', 'fieldFilters', 'segment']);
             $message->update([
                 'planned_recipients_count' => $message->getUniqueRecipients()->count(),
                 'recipients_calculated_at' => now(),
@@ -660,6 +661,8 @@ class MessageController extends Controller
             'exclude_field_filters.*.values.*' => 'nullable|string|max:255',
             'include_field_filter_match' => 'nullable|in:all,any',
             'exclude_field_filter_match' => 'nullable|in:all,any',
+            // A saved segment narrowing the list audience (null removes it)
+            'segment_id' => ['nullable', 'integer', Rule::exists('segments', 'id')->where('user_id', $userId)],
         ];
     }
 

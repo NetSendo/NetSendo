@@ -52,6 +52,7 @@ class Message extends Model
         'trigger_config',
         // Custom-field audience filters (rows live in message_field_filters)
         'include_field_filter_match',
+        'segment_id',
         'exclude_field_filter_match',
         // Queue status
         'is_active',
@@ -165,6 +166,14 @@ class Message extends Model
      * Custom-field conditions narrowing the audience (mode = include) and the
      * exclusions (mode = exclude).
      */
+    /**
+     * Saved segment narrowing the list audience (null: the lists as they are).
+     */
+    public function segment()
+    {
+        return $this->belongsTo(Segment::class);
+    }
+
     public function fieldFilters()
     {
         return $this->hasMany(MessageFieldFilter::class)->orderBy('sort_order');
@@ -487,7 +496,8 @@ class Message extends Model
                 $includedListIds,
                 $excludedEmails,
                 $this->getIncludeFieldFilters(),
-                $this->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL
+                $this->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL,
+                $this->segment
             )
             ->with(['contactLists' => function ($query) use ($includedListIds) {
                 $query->whereIn('contact_lists.id', $includedListIds)
@@ -882,7 +892,8 @@ class Message extends Model
                     $includedListIds,
                     $excludedEmails,
                     $this->getIncludeFieldFilters(),
-                    $this->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL
+                    $this->include_field_filter_match ?? MessageFieldFilter::MATCH_ALL,
+                    $this->segment
                 )
                 ->when(!empty($excludedCrmSubscriberIds), function ($query) use ($excludedCrmSubscriberIds) {
                     // Exclude CRM contacts from list recipients

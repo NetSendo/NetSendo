@@ -80,6 +80,13 @@ Schedule::command('automations:process-date-triggers')
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/cron-automations.log'));
 
+// "subscriber_inactive" rules: subscribers quiet for the rule's days, up to 1000 per rule per run
+Schedule::command('automations:process-inactivity')
+    ->hourlyAt(23)
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->appendOutputTo(storage_path('logs/cron-automations.log'));
+
 // Available NetSendo updates: runs hourly but asks GitHub only when the cached release list
 // has expired (12-18 h) or a failed attempt's pause is over (UpdateCheckService)
 Schedule::command('netsendo:check-updates')

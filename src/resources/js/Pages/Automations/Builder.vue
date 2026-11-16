@@ -4,7 +4,11 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
-const { t } = useI18n();
+const { t, te } = useI18n();
+
+// Trigger names in the interface language; the server's label is the fallback
+const triggerLabel = (key, label) =>
+    te(`automations.triggers.${key}`) ? t(`automations.triggers.${key}`) : label;
 
 const props = defineProps({
     rule: Object,
@@ -83,6 +87,17 @@ const removeAction = (i) => form.actions.splice(i, 1);
 const addCondition = () =>
     form.conditions.push({ type: "tag_exists", value: "" });
 const removeCondition = (i) => form.conditions.splice(i, 1);
+
+// Standard fields whose change raises "field_updated" (FieldChangeNotifier)
+const watchedStandardFields = [
+    "email",
+    "first_name",
+    "last_name",
+    "phone",
+    "gender",
+    "language",
+    "source",
+];
 
 const fieldConditionTypes = [
     "field_equals",
@@ -196,7 +211,7 @@ const submit = () =>
                                 :key="key"
                                 :value="key"
                             >
-                                {{ icons[key] || "⚡" }} {{ label }}
+                                {{ icons[key] || "⚡" }} {{ triggerLabel(key, label) }}
                             </option>
                         </select>
 
@@ -208,6 +223,8 @@ const submit = () =>
                                     'subscriber_unsubscribed',
                                     'email_opened',
                                     'email_clicked',
+                                    'specific_link_clicked',
+                                    'subscriber_inactive',
                                 ].includes(form.trigger_event)
                             "
                             class="mt-3"
@@ -235,9 +252,124 @@ const submit = () =>
                             </select>
                         </div>
 
+                        <!-- Inactivity Config -->
+                        <div
+                            v-if="form.trigger_event === 'subscriber_inactive'"
+                            class="mt-3"
+                        >
+                            <label
+                                class="text-sm text-gray-600 dark:text-gray-400"
+                                >{{
+                                    $t("automations.builder.trigger_config.inactive_days")
+                                }}</label
+                            >
+                            <input
+                                v-model.number="form.trigger_config.days"
+                                type="number"
+                                min="1"
+                                placeholder="30"
+                                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                            />
+                            <p class="mt-1 text-xs text-gray-500">
+                                {{
+                                    $t("automations.builder.trigger_config.inactive_days_hint")
+                                }}
+                            </p>
+                        </div>
+
+                        <!-- Field Updated Config -->
+                        <div
+                            v-if="form.trigger_event === 'field_updated'"
+                            class="mt-3 space-y-3"
+                        >
+                            <div>
+                                <label
+                                    class="text-sm text-gray-600 dark:text-gray-400"
+                                    >{{
+                                        $t("automations.builder.trigger_config.field")
+                                    }}</label
+                                >
+                                <select
+                                    v-model="form.trigger_config.field"
+                                    class="mt-1 w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                                >
+                                    <option :value="null">
+                                        {{
+                                            $t("automations.builder.trigger_config.any_field")
+                                        }}
+                                    </option>
+                                    <optgroup
+                                        :label="
+                                            $t('automations.builder.field_condition.standard_fields_group')
+                                        "
+                                    >
+                                        <option
+                                            v-for="field in watchedStandardFields"
+                                            :key="field"
+                                            :value="field"
+                                        >
+                                            {{ field }}
+                                        </option>
+                                    </optgroup>
+                                    <optgroup
+                                        v-if="(conditionFields?.custom ?? []).length"
+                                        :label="
+                                            $t('automations.builder.field_condition.custom_fields_group')
+                                        "
+                                    >
+                                        <option
+                                            v-for="field in conditionFields.custom"
+                                            :key="field.name"
+                                            :value="field.name"
+                                        >
+                                            {{ field.label || field.name }}
+                                        </option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    class="text-sm text-gray-600 dark:text-gray-400"
+                                    >{{
+                                        $t("automations.builder.trigger_config.value_optional")
+                                    }}</label
+                                >
+                                <input
+                                    v-model="form.trigger_config.value"
+                                    type="text"
+                                    class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                                />
+                                <p class="mt-1 text-xs text-gray-500">
+                                    {{
+                                        $t("automations.builder.trigger_config.field_hint")
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Return Visit Config -->
+                        <div
+                            v-if="form.trigger_event === 'pixel_return_visit'"
+                            class="mt-3"
+                        >
+                            <label
+                                class="text-sm text-gray-600 dark:text-gray-400"
+                                >{{
+                                    $t("automations.builder.trigger_config.min_days_away")
+                                }}</label
+                            >
+                            <input
+                                v-model.number="form.trigger_config.min_days_away"
+                                type="number"
+                                min="1"
+                                placeholder="1"
+                                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                            />
+                        </div>
+
                         <!-- Page Visit Config -->
                         <div
-                            v-if="form.trigger_event === 'page_visited'"
+                            v-if="['page_visited', 'pixel_return_visit'].includes(form.trigger_event)"
                             class="mt-3"
                         >
                             <label
@@ -265,14 +397,22 @@ const submit = () =>
                         >
                             <label
                                 class="text-sm text-gray-600 dark:text-gray-400"
-                                >Link URL</label
+                                >{{
+                                    $t("automations.builder.trigger_config.link_url")
+                                }}</label
                             >
                             <input
                                 v-model="form.trigger_config.link_url"
                                 type="text"
+                                required
                                 placeholder="https://..."
-                                class="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
+                                class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200"
                             />
+                            <p class="mt-1 text-xs text-gray-500">
+                                {{
+                                    $t("automations.builder.trigger_config.link_url_hint")
+                                }}
+                            </p>
                         </div>
 
                         <!-- Read Time Threshold Config -->

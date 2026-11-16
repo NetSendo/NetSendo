@@ -111,6 +111,7 @@ class DefaultFollowUpSequencesService
                 'name' => __('crm.default_sequences.after_meeting.name'),
                 'description' => __('crm.default_sequences.after_meeting.description'),
                 'trigger_type' => 'on_task_completed',
+                'trigger_conditions' => ['task_type' => 'meeting'],
                 'steps' => [
                     [
                         'position' => 0,
@@ -225,6 +226,7 @@ class DefaultFollowUpSequencesService
                     'name' => $definition['name'],
                     'description' => $definition['description'],
                     'trigger_type' => $definition['trigger_type'],
+                    'trigger_conditions' => $definition['trigger_conditions'] ?? null,
                     'is_active' => true,
                     'is_default' => true,
                     'default_key' => $key,
@@ -259,6 +261,7 @@ class DefaultFollowUpSequencesService
                     'name' => $definition['name'],
                     'description' => $definition['description'],
                     'trigger_type' => $definition['trigger_type'],
+                    'trigger_conditions' => $definition['trigger_conditions'] ?? null,
                     'is_active' => true,
                     'is_default' => true,
                     'default_key' => $key,

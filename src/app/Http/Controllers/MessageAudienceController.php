@@ -105,6 +105,7 @@ class MessageAudienceController extends Controller
             'exclude_field_filters' => 'nullable|array',
             'include_field_filter_match' => 'nullable|in:all,any',
             'exclude_field_filter_match' => 'nullable|in:all,any',
+            'segment_id' => 'nullable|integer',
         ]);
 
         $includedListIds = $this->accessibleListIds($validated['contact_list_ids'] ?? []);
@@ -116,7 +117,10 @@ class MessageAudienceController extends Controller
             $this->hydrateFilters($validated['include_field_filters'] ?? []),
             $validated['include_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
             $this->hydrateFilters($validated['exclude_field_filters'] ?? []),
-            $validated['exclude_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL
+            $validated['exclude_field_filter_match'] ?? MessageFieldFilter::MATCH_ALL,
+            !empty($validated['segment_id'])
+                ? \App\Models\Segment::forUser($request->user()->id)->find($validated['segment_id'])
+                : null
         );
 
         return response()->json($estimate);

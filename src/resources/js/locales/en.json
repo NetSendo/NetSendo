@@ -1028,7 +1028,8 @@
             "up": "up",
             "down": "down",
             "new_subscribers": "new: {count} · previously {previous}",
-            "previously": "previously {value}"
+            "previously": "previously {value}",
+            "open_rate_note": "Overstated: Apple Mail and Gmail open messages automatically. Clicks are more reliable."
         },
         "attention": {
             "title": "Needs attention",
@@ -5195,6 +5196,17 @@
                 "activity_type": "Activity type",
                 "activity_note": "Note",
                 "activity_content": "Activity content"
+            },
+            "trigger_config": {
+                "inactive_days": "Days without an open or a click",
+                "inactive_days_hint": "Checked every hour. The rule runs once per subscriber until they open or click again. With a list chosen, the days count from joining it.",
+                "field": "Field",
+                "any_field": "Any field",
+                "value_optional": "New value (optional)",
+                "field_hint": "For existing subscribers: fields set when a new address signs up or is imported do not count. The value is compared ignoring case.",
+                "min_days_away": "Minimum days since the previous visit",
+                "link_url": "Link address",
+                "link_url_hint": "An exact address, a pattern with * (https://shop.com/offer*) or part of the address without http (e.g. /pricing)."
             }
         },
         "logs_page": {
@@ -8187,7 +8199,11 @@
             "deleted": "Task deleted",
             "created": "Task created",
             "updated": "Task updated",
-            "completed": "Task completed"
+            "completed": "Task completed",
+            "stale_title": "{count} sequence tasks have waited over 14 days",
+            "stale_body": "Automatic follow-up sequences created these tasks and nobody did them. You can close them in one click; their sequences will stop. Tasks added by hand stay.",
+            "stale_action": "Close stale automatic tasks",
+            "stale_confirm": "Close {count} tasks and stop their sequences?"
         },
         "activities": {
             "title": "Activities",
@@ -10028,6 +10044,92 @@
             "permissions": "It can use only the permissions ticked on the sign-in screen. They are the same permissions API keys have. To change them, disconnect the app and connect it again.",
             "tokens": "Disconnecting an app here stops it immediately. An app that has not been used for 90 days has to sign in again. NetSendo keeps only fingerprints of the access tokens.",
             "sending": "With the sending permissions an app can send campaigns, emails and SMS to real recipients. Grant them only to apps you trust and check what the assistant is about to send."
+        }
+    },
+    "segments": {
+        "title": "Segments",
+        "subtitle": "Saved groups of recipients that keep themselves up to date",
+        "create": "New segment",
+        "edit": "Edit segment",
+        "create_first": "Create your first segment",
+        "empty_title": "No segments yet",
+        "empty_description": "A segment is a saved set of conditions, such as \"opened in the last 30 days and has no customer tag\". Its members change by themselves, without moving people between lists.",
+        "table": {
+            "name": "Segment",
+            "people": "People",
+            "conditions": "Conditions",
+            "messages": "Messages",
+            "actions": "Actions"
+        },
+        "people_count": "{count} people",
+        "actions_for": "Actions for segment {name}",
+        "send_message": "Send a message to the segment",
+        "how_it_works": "The number of people is from the last count (at most 10 minutes old). Sending always counts the segment again.",
+        "delete_title": "Delete the segment?",
+        "delete_description": "Messages that used it will go to the whole selected lists.",
+        "saved": "Segment saved.",
+        "deleted": "Segment deleted.",
+        "groups": {
+            "membership": "Lists and tags",
+            "data": "Subscriber data",
+            "engagement": "Email activity"
+        },
+        "types": {
+            "on_list": "Is on list",
+            "not_on_list": "Is not on list",
+            "has_tag": "Has tag",
+            "not_has_tag": "Does not have tag",
+            "field": "Custom field",
+            "joined_within": "Added in the last … days",
+            "joined_before": "Added more than … days ago",
+            "opened_within": "Opened in the last … days",
+            "not_opened_within": "Has not opened for … days",
+            "clicked_within": "Clicked in the last … days",
+            "not_clicked_within": "Has not clicked for … days",
+            "opened_message": "Opened message",
+            "not_opened_message": "Did not open message",
+            "clicked_message": "Clicked in message",
+            "not_clicked_message": "Did not click in message"
+        },
+        "builder": {
+            "subtitle": "Describe who the segment includes. The number of people updates as you go.",
+            "details": "Name and description",
+            "name": "Name",
+            "name_placeholder": "e.g. Warm, no purchase",
+            "description": "Description (optional)",
+            "conditions": "Conditions",
+            "match_label": "Condition matching",
+            "match_all": "All conditions",
+            "match_any": "Any condition",
+            "where": "Where",
+            "and": "and",
+            "or": "or",
+            "condition_type": "Condition type",
+            "list": "List",
+            "tag": "Tag",
+            "message": "Message",
+            "days": "Number of days",
+            "days_unit": "days",
+            "field": "Field",
+            "operator": "Comparison",
+            "value": "Value",
+            "value_placeholder": "Value; separate several with commas",
+            "value_from": "From",
+            "value_to": "To",
+            "remove": "Remove",
+            "add_condition": "Add condition",
+            "preview": "People in the segment",
+            "of_total": "of {total} active subscribers",
+            "sample": "Example addresses",
+            "preview_failed": "Could not count the people.",
+            "dynamic_note": "The segment is evaluated every time it is used: whoever meets the conditions tomorrow is in it tomorrow. A message to a segment goes only to people on the lists chosen in the message.",
+            "save": "Save segment",
+            "create": "Create segment"
+        },
+        "message": {
+            "label": "Segment",
+            "none": "No segment — everyone on the selected lists",
+            "help": "The message goes only to people on the selected lists who are in the segment. The segment is counted at the moment of sending."
         }
     }
 }

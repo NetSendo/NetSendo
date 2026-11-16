@@ -8,6 +8,7 @@ import CalendarGrid from "@/Components/Crm/CalendarGrid.vue";
 import Dropdown from "@/Components/Dropdown.vue";
 import ConfirmModal from "@/Components/ConfirmModal.vue";
 import axios from "axios";
+import { useI18n } from "vue-i18n";
 
 const { formatDate: formatDateBase, locale } = useDateTime();
 const props = defineProps({
@@ -21,6 +22,21 @@ const props = defineProps({
     calendars: Array,
     zoomConnection: Object,
 });
+
+const { t } = useI18n();
+
+// Close long-overdue sequence tasks (CrmTaskController::closeStale)
+const closingStale = ref(false);
+const closeStale = () => {
+    if (!window.confirm(t("crm.tasks.stale_confirm", { count: props.counts.stale_automatic }))) return;
+    closingStale.value = true;
+    router.post(route("crm.tasks.close-stale"), {}, {
+        preserveScroll: true,
+        onFinish: () => {
+            closingStale.value = false;
+        },
+    });
+};
 
 const selectedView = ref(props.view || "today");
 
@@ -398,6 +414,29 @@ onMounted(() => {
                 </div>
             </div>
         </template>
+
+        <!-- Long-overdue tasks of follow-up sequences: one click closes them -->
+        <div
+            v-if="counts?.stale_automatic > 0"
+            class="mb-6 flex flex-col gap-3 rounded-xl border border-amber-300 bg-amber-50 p-4 sm:flex-row sm:items-center sm:justify-between dark:border-amber-500/40 dark:bg-amber-500/10"
+        >
+            <div>
+                <p class="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                    {{ $t("crm.tasks.stale_title", { count: counts.stale_automatic }) }}
+                </p>
+                <p class="mt-1 text-sm text-amber-900/80 dark:text-amber-100/80">
+                    {{ $t("crm.tasks.stale_body") }}
+                </p>
+            </div>
+            <button
+                type="button"
+                class="inline-flex min-h-10 shrink-0 items-center justify-center rounded-xl bg-amber-600 px-4 text-sm font-semibold text-white hover:bg-amber-500 disabled:opacity-60"
+                :disabled="closingStale"
+                @click="closeStale"
+            >
+                {{ $t("crm.tasks.stale_action") }}
+            </button>
+        </div>
 
         <!-- View Tabs -->
         <div class="mb-6 flex flex-wrap gap-2">

@@ -42,13 +42,17 @@ class EmailOpened
     {
         $subscriber = $this->getSubscriber();
         $message = $this->getMessage();
+        // Messages go to several lists (contact_list_message); a rule's list
+        // filter matches any of them.
+        $listIds = $message ? $message->contactLists()->pluck('contact_lists.id')->map(fn ($id) => (int) $id)->all() : [];
 
         return [
             'subscriber_id' => $this->subscriberId,
             'subscriber_email' => $subscriber?->email,
             'message_id' => $this->messageId,
             'message_subject' => $message?->subject,
-            'list_id' => $message?->contact_list_id,
+            'list_id' => $listIds[0] ?? null,
+            'list_ids' => $listIds,
             'ip_address' => $this->ipAddress,
         ];
     }

@@ -174,6 +174,7 @@ return [
         ],
     ],
     'tasks' => [
+        'stale_closed' => 'Closed :count stale automatic tasks.',
         'list_view' => 'List',
         'calendar_view' => 'Calendar',
         'month_view' => 'Month',

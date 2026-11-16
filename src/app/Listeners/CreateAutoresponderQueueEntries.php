@@ -97,6 +97,17 @@ class CreateAutoresponderQueueEntries implements ShouldQueue
                 continue;
             }
 
+            // A saved segment narrows who the message goes to.
+            if ($message->segment && !app(\App\Services\Segmentation\SegmentQueryService::class)
+                ->matchesSubscriber($message->segment, $subscriber->id)) {
+                Log::info('CreateAutoresponderQueueEntries: Subscriber not in the message segment', [
+                    'subscriber_id' => $subscriber->id,
+                    'message_id' => $message->id,
+                    'segment_id' => $message->segment_id,
+                ]);
+                continue;
+            }
+
             // Check if subscriber is excluded from this message. Exclude-side
             // field filters narrow the exclusion: with them set, only the people
             // on the excluded lists who ALSO match get dropped. Filters without

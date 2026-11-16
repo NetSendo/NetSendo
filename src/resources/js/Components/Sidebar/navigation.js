@@ -71,6 +71,7 @@ export function buildNavigation(t, { isAdmin = false } = {}) {
                 { label: t("sms_lists.title"), href: route("sms-lists.index"), match: ["sms-lists.*"] },
                 { label: t("navigation.groups_nav"), href: route("groups.index"), match: ["groups.*"] },
                 { label: t("navigation.tags"), href: route("tags.index"), match: ["tags.*"] },
+                { label: t("segments.title"), href: route("segments.index"), match: ["segments.*"] },
                 { label: t("navigation.items.segmentation"), href: route("segmentation.index"), match: ["segmentation.*"], gold: "segmentation_dashboard" },
                 { label: t("navigation.forms"), href: route("forms.index"), match: ["forms.*"] },
                 { label: t("navigation.field_management"), href: route("settings.fields.index"), match: ["settings.fields.*"] },

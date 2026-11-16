@@ -93,6 +93,9 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Groups & Tags
     Route::resource('groups', \App\Http\Controllers\ContactListGroupController::class);
     Route::resource('tags', \App\Http\Controllers\TagController::class)->except(['create', 'edit', 'show']);
+    // Saved dynamic segments
+    Route::post('segments/preview', [\App\Http\Controllers\SegmentController::class, 'preview'])->name('segments.preview');
+    Route::resource('segments', \App\Http\Controllers\SegmentController::class)->except(['show']);
 
     // Templates & Messages
     // Inserts routes must be defined before resource to avoid conflict
@@ -1171,6 +1174,7 @@ Route::middleware(['auth', '2fa'])->prefix('crm')->name('crm.')->group(function 
     // CRM Tasks
     Route::get('tasks', [CrmTaskController::class, 'index'])->name('tasks.index');
     Route::post('tasks', [CrmTaskController::class, 'store'])->name('tasks.store');
+    Route::post('tasks/close-stale', [CrmTaskController::class, 'closeStale'])->name('tasks.close-stale');
     Route::put('tasks/{task}', [CrmTaskController::class, 'update'])->name('tasks.update');
     Route::delete('tasks/{task}', [CrmTaskController::class, 'destroy'])->name('tasks.destroy');
     Route::post('tasks/{task}/complete', [CrmTaskController::class, 'complete'])->name('tasks.complete');
