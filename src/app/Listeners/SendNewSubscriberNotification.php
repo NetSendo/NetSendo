@@ -30,6 +30,17 @@ class SendNewSubscriberNotification implements ShouldQueue
     public function handle(SubscriberSignedUp $event): void
     {
         try {
+            // Bulk operations (imports, bulk add/copy/move) never notify per
+            // contact — a migration of 15 000 rows used to send 15 000 emails.
+            if (!$event->notifyAdmin) {
+                return;
+            }
+
+            // Account-wide switch (Settings → Defaults → Subscription)
+            if (!SystemEmail::newSubscriberNotificationsEnabled($event->list)) {
+                return;
+            }
+
             // Get notification email address with fallback logic
             $notificationEmail = SystemEmail::getNotificationEmail($event->list);
 

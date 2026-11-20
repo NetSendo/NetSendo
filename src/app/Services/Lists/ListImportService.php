@@ -1008,7 +1008,7 @@ class ListImportService
                 $signedUp = $this->attachToList($subscriber, $list, $status, $row['source'] ?? $source);
 
                 if ($signedUp && $triggerAutomations) {
-                    event(new SubscriberSignedUp($subscriber, $list, null, $source));
+                    event(new SubscriberSignedUp($subscriber, $list, null, $source, notifyAdmin: false));
                 }
 
                 $results['subscriber_ids'][] = $subscriber->id;

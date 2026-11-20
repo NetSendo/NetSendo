@@ -91,7 +91,7 @@ class ListMembershipController extends Controller
             if ($triggerAutomations) {
                 // addToList() honours resubscription_behavior and fires
                 // SubscriberSignedUp, which starts sequences and webhooks.
-                $subscriber->addToList($list->id, $source);
+                $subscriber->addToList($list->id, $source, notifyAdmin: false);
             } else {
                 $this->attachQuietly($subscriber, $list, $source);
             }
@@ -211,7 +211,7 @@ class ListMembershipController extends Controller
 
             if ($status === 'active') {
                 $triggerAutomations
-                    ? $subscriber->addToList($list->id, $reason)
+                    ? $subscriber->addToList($list->id, $reason, notifyAdmin: false)
                     : $this->attachQuietly($subscriber, $list, $reason);
             } else {
                 $subscriber->contactLists()->updateExistingPivot($list->id, [
@@ -354,7 +354,7 @@ class ListMembershipController extends Controller
             // SubscriberSignedUp starts sequences and webhooks — fired after
             // the commit, and only for a new or reactivated membership
             if ($outcome === 'transferred' && $triggerAutomations) {
-                event(new SubscriberSignedUp($subscriber, $target, null, $source));
+                event(new SubscriberSignedUp($subscriber, $target, null, $source, notifyAdmin: false));
             }
         }
 

@@ -20,11 +20,19 @@ class SubscriberSignedUp
      */
     public ?\Illuminate\Support\Carbon $occurredAt = null;
 
+    /**
+     * @param  bool  $notifyAdmin  false for bulk operations (file and API
+     *                             imports, bulk add/copy/move, list transfers):
+     *                             they must not send the list owner one
+     *                             "new subscriber" email per contact. Sequences,
+     *                             automations and webhooks still run.
+     */
     public function __construct(
         public Subscriber $subscriber,
         public ContactList $list,
         public ?SubscriptionForm $form = null,
-        public string $source = 'manual'
+        public string $source = 'manual',
+        public bool $notifyAdmin = true,
     ) {
         $this->occurredAt = now();
     }

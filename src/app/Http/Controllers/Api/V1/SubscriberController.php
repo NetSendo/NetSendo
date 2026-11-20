@@ -714,7 +714,7 @@ class SubscriberController extends Controller
 
                 // Dispatch webhooks (async via queue)
                 if ($isNew) {
-                    event(new SubscriberSignedUp($subscriber, $list, null, 'api_batch'));
+                    event(new SubscriberSignedUp($subscriber, $list, null, 'api_batch', notifyAdmin: false));
 
                     $this->webhookDispatcher->dispatch($user->id, 'subscriber.created', [
                         'subscriber' => $subscriberData,
@@ -732,7 +732,7 @@ class SubscriberController extends Controller
                     ]);
                 } elseif (!$wasSubscribed) {
                     // Existing subscriber, new list subscription
-                    event(new SubscriberSignedUp($subscriber, $list, null, 'api_batch'));
+                    event(new SubscriberSignedUp($subscriber, $list, null, 'api_batch', notifyAdmin: false));
 
                     $this->webhookDispatcher->dispatch($user->id, 'subscriber.subscribed', [
                         'subscriber' => $subscriberData,
@@ -742,7 +742,7 @@ class SubscriberController extends Controller
                     ]);
                 } elseif ($wasSubscribed && $previousStatus !== 'active') {
                     // Resubscription (was inactive/unsubscribed)
-                    event(new SubscriberSignedUp($subscriber, $list, null, 'api_batch_resubscribe'));
+                    event(new SubscriberSignedUp($subscriber, $list, null, 'api_batch_resubscribe', notifyAdmin: false));
 
                     $this->webhookDispatcher->dispatch($user->id, 'subscriber.resubscribed', [
                         'subscriber' => $subscriberData,

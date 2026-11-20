@@ -1582,7 +1582,11 @@
             "subscription_section": "Configuración de suscripción",
             "double_optin": "Doble Opt-in",
             "double_optin_desc": "Requerir confirmación de email después de la suscripción",
+            "notify_admin": "Avisarme de nuevos suscriptores",
+            "notify_admin_desc": "Enviar un email por cada nueva suscripción en cualquier lista. Las importaciones y operaciones masivas nunca envían estos avisos.",
             "notification_email": "Email de notificación",
+            "notification_email_help": "Déjalo vacío para usar la dirección de notificación predeterminada o el email de tu cuenta. Para dejar de recibir estos emails en esta lista, desactiva \"New Subscriber Notification\" en Ajustes → Emails del sistema.",
+            "notification_email_defaults_help": "Déjalo vacío para usar el email de tu cuenta. Cada lista puede tener su propia dirección.",
             "notification_email_placeholder": "tu{'@'}email.com",
             "sending_section": "Configuración de envío predeterminada",
             "from_name": "Nombre del remitente",
@@ -2720,6 +2724,7 @@
                     "skip": "No tocar sus datos"
                 },
                 "signup_events": "Autorespondedores y automatizaciones",
+                "signup_events_admin_note": "Las importaciones no envían al administrador la notificación de nuevo suscriptor.",
                 "signup_modes": {
                     "new_only": "Solo para altas nuevas (recomendado)",
                     "all": "Para cada fila — reiniciar las secuencias",

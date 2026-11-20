@@ -745,7 +745,7 @@ class SubscriberFileImportService
         }
 
         foreach ($pendingSignups as $signup) {
-            event(new SubscriberSignedUp($signup['subscriber'], $signup['list'], null, 'import'));
+            event(new SubscriberSignedUp($signup['subscriber'], $signup['list'], null, 'import', notifyAdmin: false));
             $results['signups']++;
         }
 

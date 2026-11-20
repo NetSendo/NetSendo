@@ -52,7 +52,21 @@ class SystemEmail extends Model
     }
 
     /**
+     * Account-wide switch for the "new subscriber" admin notification
+     * (settings.subscription.notify_admin). On unless switched off.
+     */
+    public static function newSubscriberNotificationsEnabled(ContactList $list): bool
+    {
+        $userSettings = $list->user?->settings ?? [];
+
+        return (bool) ($userSettings['subscription']['notify_admin'] ?? true);
+    }
+
+    /**
      * Get notification email address for a given list with fallback logic.
+     * An empty address means the account's own email, not "off" — the
+     * notification is switched off with notify_admin or per list in
+     * Settings → System emails.
      */
     public static function getNotificationEmail(ContactList $list): ?string
     {

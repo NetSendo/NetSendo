@@ -107,6 +107,11 @@ class ListSettingsSchema
             "{$p}.advanced.soft_bounce_threshold" => ['nullable', 'integer', 'min:1', 'max:10'],
         ];
 
+        if (!$forList) {
+            // Account-wide switch for the "new subscriber" admin email
+            $rules["{$p}.subscription.notify_admin"] = ['boolean'];
+        }
+
         if ($forList) {
             $rules += [
                 "{$p}.subscription.security_options" => ['nullable', 'array'],

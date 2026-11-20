@@ -79,6 +79,7 @@ const form = useForm({
         subscription: {
             double_optin: getSetting('subscription.double_optin', false),
             notification_email: getSetting('subscription.notification_email', ''),
+            notify_admin: getSetting('subscription.notify_admin', true) !== false,
             delete_unconfirmed: getSetting('subscription.delete_unconfirmed', false),
             delete_unconfirmed_after_days: getSetting('subscription.delete_unconfirmed_after_days', 7),
         },
@@ -286,16 +287,39 @@ const submit = () => {
                                         </p>
                                     </div>
 
-                                    <div>
-                                        <label class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
+                                    <div class="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800">
+                                        <div>
+                                            <span id="notify-admin-label" class="block text-sm font-medium text-slate-900 dark:text-white">{{ $t('mailing_lists.settings.notify_admin') }}</span>
+                                            <span class="block text-xs text-slate-500 dark:text-slate-400">{{ $t('mailing_lists.settings.notify_admin_desc') }}</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            role="switch"
+                                            aria-labelledby="notify-admin-label"
+                                            :aria-checked="form.settings.subscription.notify_admin ? 'true' : 'false'"
+                                            class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                                            :class="form.settings.subscription.notify_admin ? 'bg-indigo-600' : 'bg-slate-200 dark:bg-slate-700'"
+                                            @click="form.settings.subscription.notify_admin = !form.settings.subscription.notify_admin"
+                                        >
+                                            <span class="pointer-events-none inline-block h-5 w-5 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                                    :class="{ 'translate-x-5': form.settings.subscription.notify_admin }"></span>
+                                        </button>
+                                    </div>
+
+                                    <div v-show="form.settings.subscription.notify_admin">
+                                        <label for="default-notification-email" class="mb-2 block text-sm font-medium text-slate-900 dark:text-white">
                                             {{ $t('mailing_lists.settings.notification_email') }}
                                         </label>
                                         <input
+                                            id="default-notification-email"
                                             v-model="form.settings.subscription.notification_email"
                                             type="email"
                                             class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                                             :placeholder="$t('mailing_lists.settings.notification_email_placeholder')"
                                         >
+                                        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                            {{ $t('mailing_lists.settings.notification_email_defaults_help') }}
+                                        </p>
                                     </div>
                                 </div>
                             </div>

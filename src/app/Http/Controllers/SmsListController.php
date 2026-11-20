@@ -281,7 +281,7 @@ class SmsListController extends Controller
                 $subscribers = $smsList->subscribers()->wherePivot('status', 'active')->get();
                 $smsList->subscribers()->wherePivot('status', 'active')->detach($subscribers->pluck('id')->toArray());
                 foreach ($subscribers as $transferredSubscriber) {
-                    $transferredSubscriber->addToList($targetList->id, 'list_transfer');
+                    $transferredSubscriber->addToList($targetList->id, 'list_transfer', notifyAdmin: false);
                 }
 
             } elseif ($request->boolean('force_delete')) {

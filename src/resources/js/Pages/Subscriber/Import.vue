@@ -663,6 +663,15 @@ const reasonLabel = (reason) => t(`subscribers.import.preview.reasons.${reason}`
                                             }}
                                         </option>
                                     </select>
+                                    <p
+                                        class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                                    >
+                                        {{
+                                            $t(
+                                                "subscribers.import.options.signup_events_admin_note",
+                                            )
+                                        }}
+                                    </p>
                                 </div>
                             </div>
 
