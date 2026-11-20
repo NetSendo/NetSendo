@@ -272,8 +272,11 @@ class Subscriber extends Model
      * The event is fired only for a new attach or a reactivation — an
      * already-active membership is left untouched so automated actions
      * cannot restart sequences on every run.
+     *
+     * Pass $notifyAdmin = false from bulk operations (imports, list transfers,
+     * API batches) — the admin must not get one email per contact.
      */
-    public function addToList(int $listId, string $source = 'system'): bool
+    public function addToList(int $listId, string $source = 'system', bool $notifyAdmin = true): bool
     {
         $list = ContactList::find($listId);
         if (!$list) {
@@ -281,7 +284,7 @@ class Subscriber extends Model
         }
 
         if ($this->activateListMembership($list, $source)) {
-            event(new \App\Events\SubscriberSignedUp($this, $list, null, $source));
+            event(new \App\Events\SubscriberSignedUp($this, $list, null, $source, $notifyAdmin));
         }
 
         return true;

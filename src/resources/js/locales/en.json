@@ -1159,7 +1159,11 @@
             "subscription_section": "Subscription Settings",
             "double_optin": "Double Opt-in",
             "double_optin_desc": "Require email confirmation after signup",
+            "notify_admin": "Notify me about new subscribers",
+            "notify_admin_desc": "Send an email for every new signup on any list. Imports and bulk operations never send these notifications.",
             "notification_email": "Notification Email",
+            "notification_email_help": "Leave empty to use the default notification address, or your account email. To stop these emails for this list, switch off \"New Subscriber Notification\" in Settings → System emails.",
+            "notification_email_defaults_help": "Leave empty to use your account email. A list can set its own address.",
             "notification_email_placeholder": "your{'@'}email.com",
             "sending_section": "Default Sending Settings",
             "from_name": "From Name",
@@ -2246,6 +2250,7 @@
                     "skip": "Leave their data alone"
                 },
                 "signup_events": "Autoresponders and automations",
+                "signup_events_admin_note": "Imports never send the \"new subscriber\" notification to the admin.",
                 "signup_modes": {
                     "new_only": "Only for new signups (recommended)",
                     "all": "For every row — restart sequences",

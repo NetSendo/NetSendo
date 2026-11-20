@@ -302,6 +302,9 @@ const submit = () => {
                                                 class="block w-full rounded-xl border-slate-200 bg-slate-50 px-4 py-3 placeholder-slate-400 focus:border-indigo-500 focus:bg-white focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-500 dark:focus:border-indigo-400 dark:focus:bg-slate-800"
                                                 :placeholder="$t('mailing_lists.settings.notification_email_placeholder')"
                                             >
+                                            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                                {{ $t('mailing_lists.settings.notification_email_help') }}
+                                            </p>
                                         </div>
                                     </div>
                                 </div>

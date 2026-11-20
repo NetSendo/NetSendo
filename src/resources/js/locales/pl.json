@@ -1159,7 +1159,11 @@
             "subscription_section": "Ustawienia subskrypcji",
             "double_optin": "Double Opt-in",
             "double_optin_desc": "Wymagaj potwierdzenia adresu email po zapisie",
+            "notify_admin": "Powiadamiaj o nowych subskrybentach",
+            "notify_admin_desc": "Wysyłaj e-mail o każdym nowym zapisie na dowolną listę. Importy i operacje hurtowe nigdy nie wysyłają tych powiadomień.",
             "notification_email": "Email powiadomień",
+            "notification_email_help": "Puste pole oznacza domyślny adres powiadomień albo e-mail Twojego konta. Aby wyłączyć te maile dla tej listy, wyłącz „New Subscriber Notification” w Ustawienia → Wiadomości systemowe.",
+            "notification_email_defaults_help": "Puste pole oznacza e-mail Twojego konta. Każda lista może mieć własny adres.",
             "notification_email_placeholder": "twoj{'@'}email.pl",
             "sending_section": "Domyślne ustawienia wysyłki",
             "from_name": "Nazwa nadawcy",
@@ -2246,6 +2250,7 @@
                     "skip": "Nie zmieniaj danych"
                 },
                 "signup_events": "Autorespondery i automatyzacje",
+                "signup_events_admin_note": "Import nie wysyła administratorowi powiadomień o nowych subskrybentach.",
                 "signup_modes": {
                     "new_only": "Tylko dla nowych zapisów (zalecane)",
                     "all": "Dla każdego wiersza — restartuj sekwencje",

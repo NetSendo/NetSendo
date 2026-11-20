@@ -888,6 +888,15 @@ const subscribeEndpoint = computed(() => {
                                                     )
                                                 "
                                             />
+                                            <p
+                                                class="mt-1 text-xs text-slate-500 dark:text-slate-400"
+                                            >
+                                                {{
+                                                    $t(
+                                                        "mailing_lists.settings.notification_email_help",
+                                                    )
+                                                }}
+                                            </p>
                                         </div>
 
                                         <!-- Resubscription Behavior -->

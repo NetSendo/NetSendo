@@ -1638,7 +1638,11 @@
             "subscription_section": "Anmelde-Einstellungen",
             "double_optin": "Double Opt-in",
             "double_optin_desc": "E-Mail-Bestätigung nach der Anmeldung anfordern",
+            "notify_admin": "Über neue Abonnenten benachrichtigen",
+            "notify_admin_desc": "Für jede neue Anmeldung auf einer beliebigen Liste eine E-Mail senden. Importe und Massenaktionen senden diese Benachrichtigungen nie.",
             "notification_email": "Benachrichtigungs-E-Mail",
+            "notification_email_help": "Leer lassen, um die Standard-Benachrichtigungsadresse oder die E-Mail Ihres Kontos zu verwenden. Um diese E-Mails für diese Liste abzuschalten, deaktivieren Sie „New Subscriber Notification“ unter Einstellungen → System-E-Mails.",
+            "notification_email_defaults_help": "Leer lassen, um die E-Mail Ihres Kontos zu verwenden. Jede Liste kann eine eigene Adresse haben.",
             "notification_email_placeholder": "ihre{'@'}email.de",
             "sending_section": "Standard-Versand-Einstellungen",
             "from_name": "Absendername",
@@ -2774,6 +2778,7 @@
                     "skip": "Daten unverändert lassen"
                 },
                 "signup_events": "Autoresponder und Automationen",
+                "signup_events_admin_note": "Importe senden dem Administrator keine Benachrichtigung über neue Abonnenten.",
                 "signup_modes": {
                     "new_only": "Nur bei neuen Anmeldungen (empfohlen)",
                     "all": "Bei jeder Zeile — Sequenzen neu starten",

@@ -438,7 +438,7 @@ class MailingListController extends Controller
                 $subscribers = $mailingList->subscribers()->wherePivot('status', 'active')->get();
                 $mailingList->subscribers()->wherePivot('status', 'active')->detach($subscribers->pluck('id')->toArray());
                 foreach ($subscribers as $transferredSubscriber) {
-                    $transferredSubscriber->addToList($targetList->id, 'list_transfer');
+                    $transferredSubscriber->addToList($targetList->id, 'list_transfer', notifyAdmin: false);
                 }
 
             } elseif ($request->boolean('force_delete')) {

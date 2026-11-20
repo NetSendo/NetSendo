@@ -1220,7 +1220,7 @@ class SubscriberController extends Controller
 
         // Dispatch event for automations (after the transaction has committed)
         foreach ($signedUp as $subscriber) {
-            event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_move'));
+            event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_move', notifyAdmin: false));
         }
 
         $skipped = count($subscribers) - $moved;
@@ -1294,7 +1294,7 @@ class SubscriberController extends Controller
             // the event for automations only for a new or reactivated
             // membership — sequences already running must not restart
             if ($subscriber->activateListMembership($targetList)) {
-                event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_copy'));
+                event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_copy', notifyAdmin: false));
             }
         }
 
@@ -1331,7 +1331,7 @@ class SubscriberController extends Controller
             // the event for automations only for a new or reactivated
             // membership — sequences already running must not restart
             if ($subscriber->activateListMembership($targetList)) {
-                event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_add'));
+                event(new SubscriberSignedUp($subscriber, $targetList, null, 'bulk_add', notifyAdmin: false));
             }
         }
 

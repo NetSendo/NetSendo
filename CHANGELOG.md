@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Added
+
+- **Settings → Defaults → Subscription: "Notify me about new subscribers".** One switch turns off the "New subscriber on list" email for every list of the account (`settings.subscription.notify_admin`, also through `PUT /api/v1/settings/list-defaults`). It is on by default, so nothing changes until it is switched off. A single list can still be silenced in *Settings → System emails*.
+
+### Fixed
+
+- **A CSV import sent the list owner one "New subscriber on list" email per imported contact.** A migration of about 15 000 contacts sent as many emails through the account's SMTP, used up its sending limit and got a freshly warmed-up domain greylisted at Gmail. Imports (panel and `POST /api/v1/lists/{id}/import`), bulk add / copy / move, list transfers when a list is deleted, the members endpoints of the API and `POST /api/v1/subscribers/batch` no longer notify the admin. Autoresponders, automations and webhooks still run as the import options say.
+- **An empty "Notification email" field looked like "off" but sent to the account's email.** The field now says so, and says where the notification is switched off.
+
 ## [2.12.0] – Automations that run, saved segments - 2026-11-16
 
 **Release date:** 2026-11-16
