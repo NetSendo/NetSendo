@@ -443,6 +443,20 @@ class MessageController extends Controller
             if (!$mailbox) {
                 return back()->withErrors(['mailbox_id' => __('messages.campaign.invalid_mailbox')]);
             }
+
+            // A campaign goes out only from a mailbox allowed to send campaigns
+            // (Gmail mailboxes never are); a draft may keep it until it is sent.
+            if (($validated['type'] ?? null) === Mailbox::TYPE_BROADCAST
+                && ($validated['channel'] ?? 'email') === 'email'
+                && $validated['status'] !== 'draft'
+                && (($message ?? null)?->status !== 'sent') // editing a campaign already sent sends nothing
+                && !$mailbox->canSendType(Mailbox::TYPE_BROADCAST)
+            ) {
+                return back()->withErrors(['mailbox_id' => __('messages.campaign.mailbox_cannot_broadcast', [
+                    'mailbox' => $mailbox->name,
+                    'email' => $mailbox->from_email,
+                ])]);
+            }
         }
 
         // Determine scheduled_at for CRON processing
@@ -850,6 +864,20 @@ class MessageController extends Controller
             $mailbox = auth()->user()->mailboxes()->find($validated['mailbox_id']);
             if (!$mailbox) {
                 return back()->withErrors(['mailbox_id' => __('messages.campaign.invalid_mailbox')]);
+            }
+
+            // A campaign goes out only from a mailbox allowed to send campaigns
+            // (Gmail mailboxes never are); a draft may keep it until it is sent.
+            if (($validated['type'] ?? null) === Mailbox::TYPE_BROADCAST
+                && ($validated['channel'] ?? 'email') === 'email'
+                && $validated['status'] !== 'draft'
+                && (($message ?? null)?->status !== 'sent') // editing a campaign already sent sends nothing
+                && !$mailbox->canSendType(Mailbox::TYPE_BROADCAST)
+            ) {
+                return back()->withErrors(['mailbox_id' => __('messages.campaign.mailbox_cannot_broadcast', [
+                    'mailbox' => $mailbox->name,
+                    'email' => $mailbox->from_email,
+                ])]);
             }
         }
 

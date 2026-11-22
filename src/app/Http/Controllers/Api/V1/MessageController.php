@@ -366,6 +366,35 @@ class MessageController extends Controller
         return $payload;
     }
 
+    /**
+     * A campaign whose own mailbox cannot send broadcasts (Gmail mailboxes never
+     * can) is refused here: SendEmailJob would fail every recipient, and before
+     * 2.12.2 it sent the campaign from the first mailbox allowed to instead.
+     */
+    protected function mailboxRefusesCampaign(Message $message): ?JsonResponse
+    {
+        $mailbox = $message->mailbox_id ? $message->mailbox : null;
+
+        if ($message->channel !== 'email'
+            || $message->type !== Mailbox::TYPE_BROADCAST
+            || !$mailbox
+            || $mailbox->canSendType(Mailbox::TYPE_BROADCAST)
+        ) {
+            return null;
+        }
+
+        return response()->json([
+            'error' => 'Mailbox Not Allowed',
+            'message' => "The campaign's mailbox \"{$mailbox->name}\" ({$mailbox->from_email}) does not allow broadcast messages (Gmail mailboxes never do), so it cannot send this campaign. Set another mailbox_id on the campaign. To one person use POST /api/v1/email/send (MCP send_email), which this mailbox can send; to preview the campaign use its test send (MCP send_campaign_test).",
+            'mailbox' => [
+                'id' => $mailbox->id,
+                'name' => $mailbox->name,
+                'from_email' => $mailbox->from_email,
+                'allowed_types' => $mailbox->allowed_types,
+            ],
+        ], 422);
+    }
+
     protected function notFound(): JsonResponse
     {
         return response()->json([
@@ -826,6 +855,10 @@ class MessageController extends Controller
             ], 422);
         }
 
+        if ($refused = $this->mailboxRefusesCampaign($message)) {
+            return $refused;
+        }
+
         $validated = $request->validate([
             'scheduled_at' => 'required|date|after:now',
             'timezone' => 'nullable|timezone',
@@ -896,6 +929,10 @@ class MessageController extends Controller
                 'error' => 'Validation Error',
                 'message' => 'Campaign must have a mailbox configured',
             ], 422);
+        }
+
+        if ($refused = $this->mailboxRefusesCampaign($message)) {
+            return $refused;
         }
 
         if (empty($message->content)) {

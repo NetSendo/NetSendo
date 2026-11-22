@@ -226,7 +226,8 @@ class EmailSenderMailboxTest extends TestCase
 
     public function test_a_broadcast_still_falls_back_when_no_one_named_its_mailbox(): void
     {
-        // Autoresponder queues depend on this fallback (see SendEmailJob::handle)
+        // Autoresponder queues depend on this fallback (see SendEmailJob::handle).
+        // Gmail is only the account default here, not the message's own mailbox.
         $subscriber = Subscriber::create([
             'user_id' => $this->user->id,
             'email' => 'a@example.com',
@@ -239,7 +240,6 @@ class EmailSenderMailboxTest extends TestCase
             'channel' => 'email',
             'subject' => 'Hello',
             'content' => '<p>Body</p>',
-            'mailbox_id' => $this->gmail->id,
             'status' => 'scheduled',
         ]);
 

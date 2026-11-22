@@ -262,6 +262,8 @@ without restarting the target list's welcome sequence.
 | `get_campaign_stats`      | Get sending statistics            |
 | `delete_campaign`         | Delete a campaign                 |
 
+**Which mailbox sends.** A campaign (`broadcast`) goes out only from a mailbox that allows *One-time (Broadcast)* messages. Gmail mailboxes never do: Google limits a personal account to a few hundred recipients a day and NetSendo cannot handle its bounces. `send_campaign` and `schedule_campaign` on a campaign whose own mailbox cannot send it return `422 Mailbox Not Allowed`; nothing is sent from another mailbox. To reach one person through Gmail use `send_email` (an individual email, no subject prefix); to preview a campaign in one inbox use `send_campaign_test` (subject prefixed with `[TEST]`).
+
 ### A/B Testing
 
 | Tool                  | Description                |

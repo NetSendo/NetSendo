@@ -60,6 +60,25 @@ class SendEmailJob implements ShouldQueue
             if ($this->message->is_individual) {
                 $mailbox = $this->individualSender($mailbox, $providerService);
             } elseif ($mailbox && !$providerService->validateMailboxForType($mailbox, $messageType)) {
+                // A campaign whose own mailbox can never send campaigns (Gmail, or
+                // "One-time" switched off) is refused, not rerouted: the fallback put
+                // it on the first mailbox that allows broadcasts, an address nobody
+                // chose. A full mailbox or another mailbox source still falls back.
+                if ($messageType === Mailbox::TYPE_BROADCAST
+                    && $mailbox->id === $this->message->mailbox_id
+                    && !$mailbox->canSendType(Mailbox::TYPE_BROADCAST)
+                ) {
+                    Log::warning("Campaign {$this->message->id} not sent: its mailbox {$mailbox->id} cannot send broadcasts", [
+                        'mailbox_allowed_types' => $mailbox->allowed_types,
+                    ]);
+
+                    // The text avoids SMTP wording, or the bounce detection would take it for a bounce
+                    throw new \RuntimeException(__('mail.errors.campaign_sender_type', [
+                        'mailbox' => $mailbox->name,
+                        'email' => $mailbox->from_email,
+                    ], $this->message->user?->locale));
+                }
+
                 Log::warning("Mailbox {$mailbox->id} cannot send message type: {$messageType}", [
                     'mailbox_allowed_types' => $mailbox->allowed_types,
                     'message_id' => $this->message->id,
