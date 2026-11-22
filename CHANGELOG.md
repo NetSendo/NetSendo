@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.12.1] – Imports stay quiet, emails keep their sender - 2026-11-22
+
+**Release date:** 2026-11-22
+
 ### Added
 
 - **Settings → Defaults → Subscription: "Notify me about new subscribers".** One switch turns off the "New subscriber on list" email for every list of the account (`settings.subscription.notify_admin`, also through `PUT /api/v1/settings/list-defaults`). It is on by default, so nothing changes until it is switched off. A single list can still be silenced in *Settings → System emails*.
