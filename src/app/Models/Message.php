@@ -29,6 +29,7 @@ class Message extends Model
         'webinar_id',
         'webinar_auto_register',
         'type', // broadcast, autoresponder
+        'is_individual', // one recipient through POST /api/v1/email/send, see Mailbox::canSendMessage()
         'day', // day offset
         'subject',
         'preheader',
@@ -77,6 +78,7 @@ class Message extends Model
         'recipients_calculated_at' => 'datetime',
         'recipients_snapshot' => 'boolean',
         'webinar_auto_register' => 'boolean',
+        'is_individual' => 'boolean',
     ];
 
     public function scopeEmail($query)

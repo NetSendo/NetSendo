@@ -52,7 +52,14 @@ class SendEmailJob implements ShouldQueue
             // with a misleading "no mailbox configured" error, which silently
             // blocked entire autoresponder queues while broadcasts kept working.
             $messageType = $this->message->type ?? 'broadcast';
-            if ($mailbox && !$providerService->validateMailboxForType($mailbox, $messageType)) {
+
+            // An individual email (POST /api/v1/email/send) names its sender, so
+            // the fallback below must not touch it: it used to go out from the
+            // first mailbox allowed to send broadcasts — a shop's address on a
+            // personal email — while the API had answered with the chosen one.
+            if ($this->message->is_individual) {
+                $mailbox = $this->individualSender($mailbox, $providerService);
+            } elseif ($mailbox && !$providerService->validateMailboxForType($mailbox, $messageType)) {
                 Log::warning("Mailbox {$mailbox->id} cannot send message type: {$messageType}", [
                     'mailbox_allowed_types' => $mailbox->allowed_types,
                     'message_id' => $this->message->id,
@@ -373,6 +380,46 @@ class SendEmailJob implements ShouldQueue
 
             $this->fail($e);
         }
+    }
+
+    /**
+     * The mailbox an individual email goes from: the one it was queued with, or
+     * none — the entry then fails with the reason and nothing is sent. A message
+     * queued without a mailbox takes the account's best individual mailbox.
+     *
+     * @throws \RuntimeException when the queued mailbox cannot send it now
+     */
+    private function individualSender(?Mailbox $resolved, MailProviderService $providerService): ?Mailbox
+    {
+        if (!$this->message->mailbox_id) {
+            return $resolved && $providerService->validateMailboxForMessage($resolved, $this->message)
+                ? $resolved
+                : $providerService->getBestIndividualMailbox($this->message->user_id);
+        }
+
+        $queued = Mailbox::where('user_id', $this->message->user_id)->find($this->message->mailbox_id);
+
+        $reason = match (true) {
+            !$queued || !$queued->is_active || $resolved?->id !== $queued->id => 'inactive',
+            !$queued->canSendIndividual() => 'type',
+            $queued->hasReachedDailyLimit() => 'limit',
+            default => null,
+        };
+
+        if ($reason === null) {
+            return $queued;
+        }
+
+        Log::warning("Individual email {$this->message->id} not sent: mailbox {$this->message->mailbox_id} cannot send it ({$reason})", [
+            'mailbox_allowed_types' => $queued?->allowed_types,
+        ]);
+
+        // In the account owner's language: the error is shown on the message's queue screen.
+        // The texts avoid SMTP wording, or the bounce detection would take them for a bounce.
+        throw new \RuntimeException(__("mail.errors.individual_sender.{$reason}", [
+            'mailbox' => $queued?->name ?? "#{$this->message->mailbox_id}",
+            'email' => $queued?->from_email ?? '-',
+        ], $this->message->user?->locale));
     }
 
     /**
