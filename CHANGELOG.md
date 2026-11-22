@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.12.2] – Campaigns keep their sender too - 2026-11-22
+
+**Release date:** 2026-11-22
+
+### Fixed
+
+- **A campaign whose mailbox cannot send campaigns went out from another address.** 2.12.1 stopped this for `POST /api/v1/email/send` and `/email/batch`, but a campaign (`broadcast`) with a Gmail mailbox, or a mailbox with *One-time (Broadcast)* switched off, still went out from the first mailbox allowed to send broadcasts, whether it was sent with `send_campaign`, `schedule_campaign` or from the panel. On one account three campaigns to a one-person list went from a shop's address. Such a campaign is now refused before it is queued: the API answers `422 Mailbox Not Allowed` with the mailbox and a pointer to `send_email` (one person) and `send_campaign_test` (preview), and the panel shows the error on the mailbox field when the campaign is sent or scheduled (a draft may keep the mailbox). If the mailbox loses the type after queueing, the send job fails the entry with the reason instead of rerouting it. A campaign without its own mailbox (taken from its list or the account default), a full mailbox and autoresponders still fall back as before.
+
 ## [2.12.1] – Imports stay quiet, emails keep their sender - 2026-11-22
 
 **Release date:** 2026-11-22
