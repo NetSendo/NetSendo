@@ -1779,7 +1779,13 @@
             "resubscription_behavior": "Verhalten bei erneuter Anmeldung",
             "resubscription_behavior_desc": "Legt fest, was mit dem Anmeldedatum passiert, wenn sich ein aktiver Abonnent erneut anzumelden versucht. Bei ehemaligen Abonnenten (abgemeldet/gelöscht) wird das Datum immer zurückgesetzt.",
             "resubscription_keep_date": "Ursprüngliches Anmeldedatum beibehalten",
-            "resubscription_reset_date": "Anmeldedatum zurücksetzen (Autoresponder-Warteschlange startet von vorn)"
+            "resubscription_reset_date": "Anmeldedatum zurücksetzen (Autoresponder-Warteschlange startet von vorn)",
+            "broadcast_mailbox_label": "Massenversand-Postfach (Kampagnen)",
+            "broadcast_mailbox_desc_gmail": "Das Postfach „{name}“ ({email}) sendet keine Kampagnen, denn Gmail-Postfächer tun das nie. Kampagnen an diese Liste gehen von dem hier gewählten Postfach aus. Autoresponder, Systemnachrichten und Einzel-E-Mails gehen weiter von {email} aus.",
+            "broadcast_mailbox_desc": "Kampagnen an diese Liste gehen nur dann von diesem Postfach aus, wenn das Standard-Postfach sie nicht senden kann (z. B. Gmail).",
+            "broadcast_mailbox_none": "-- Keines --",
+            "broadcast_mailbox_missing": "Ohne dieses Postfach können Kampagnen an diese Liste nicht gesendet werden. Autoresponder funktionieren unverändert.",
+            "broadcast_mailbox_no_options": "Sie haben kein Postfach, das Kampagnen senden darf. Fügen Sie unter Einstellungen → Postfächer ein SMTP-Postfach Ihrer Domain hinzu."
         },
         "create_message": "Nachricht erstellen",
         "default_settings_subtitle": "Konfigurieren Sie die Standardeinstellungen für neue Mailinglisten"
@@ -2258,7 +2264,10 @@
             "selected_for_message": "Für diese Nachricht ausgewählt",
             "none_configured": "Kein Postfach konfiguriert",
             "change_in_settings": "In den Einstellungen ändern",
-            "help": "Wählen Sie ein Absender-Postfach oder verwenden Sie die automatische Erkennung (Priorität: Nachricht → Liste → Global)"
+            "help": "Wählen Sie ein Absender-Postfach oder verwenden Sie die automatische Erkennung (Priorität: Nachricht → Liste → Global)",
+            "broadcast_takeover": "Die Kampagne geht von „{name}“ ({email}) aus, dem Massenversand-Postfach der Liste „{list}“, weil „{primary}“ keine Kampagnen sendet.",
+            "broadcast_blocked": "Das Postfach „{primary}“ sendet keine Kampagnen. Legen Sie in den Einstellungen der Liste „{list}“ ein Massenversand-Postfach fest oder wählen Sie hier ein anderes Postfach.",
+            "open_list_settings": "Listeneinstellungen öffnen"
         },
         "ai_assistant": {
             "title": "KI-Assistent",

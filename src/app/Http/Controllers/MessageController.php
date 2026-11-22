@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\DateHelper;
 use App\Models\AutomationRule;
+use App\Models\ContactList;
 use App\Models\CrmContact;
 use App\Models\EmailClick;
 use App\Models\EmailOpen;
@@ -15,6 +16,7 @@ use App\Models\MessageFieldFilter;
 use App\Models\MessageQueueEntry;
 use App\Models\MessageTrackedLink;
 use App\Models\Template;
+use App\Services\Mail\CampaignSender;
 use App\Services\Messages\MessageEditorService;
 use App\Services\Segmentation\SubscriberFieldFilterService;
 use Illuminate\Http\Request;
@@ -286,11 +288,16 @@ class MessageController extends Controller
             'preselectedSegmentId' => $request->integer('segment_id') ?: null,
             'segments' => \App\Models\Segment::forUser(auth()->id())->orderBy('name')->get(['id', 'name', 'subscribers_count']),
             'lists' => auth()->user()->accessibleLists()
-                ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
+                ->select('id', 'name', 'type', 'default_mailbox_id', 'broadcast_mailbox_id', 'contact_list_group_id')
                 ->withCount(['subscribers' => function ($query) {
                     $query->where('contact_list_subscriber.status', 'active');
                 }])
-                ->with(['defaultMailbox:id,name,provider', 'group:id,name', 'tags:id,name'])
+                ->with([
+                    'defaultMailbox:id,name,provider,from_email,allowed_types',
+                    'broadcastMailbox:id,name,provider,from_email,allowed_types,is_active',
+                    'group:id,name',
+                    'tags:id,name',
+                ])
                 ->get(),
             'groups' => auth()->user()->contactListGroups()
                 ->with('parent')
@@ -305,7 +312,7 @@ class MessageController extends Controller
             'timezones' => \DateTimeZone::listIdentifiers(),
             'mailboxes' => auth()->user()->mailboxes()
                 ->active()
-                ->select('id', 'name', 'provider', 'from_email', 'is_default')
+                ->select('id', 'name', 'provider', 'from_email', 'is_default', 'allowed_types')
                 ->get(),
             'templates' => Template::where('user_id', auth()->id())
                 ->orWhere(fn($q) => $q->whereNull('user_id')->where('is_public', true))
@@ -317,6 +324,7 @@ class MessageController extends Controller
                 'name' => $defaultMailbox->name,
                 'provider' => $defaultMailbox->provider,
                 'from_email' => $defaultMailbox->from_email,
+                'allowed_types' => $defaultMailbox->allowed_types,
             ] : null,
             // Insert snippets data
             'inserts' => Template::where('user_id', auth()->id())->inserts()->orderBy('name')->get(),
@@ -443,20 +451,13 @@ class MessageController extends Controller
             if (!$mailbox) {
                 return back()->withErrors(['mailbox_id' => __('messages.campaign.invalid_mailbox')]);
             }
+        }
 
-            // A campaign goes out only from a mailbox allowed to send campaigns
-            // (Gmail mailboxes never are); a draft may keep it until it is sent.
-            if (($validated['type'] ?? null) === Mailbox::TYPE_BROADCAST
-                && ($validated['channel'] ?? 'email') === 'email'
-                && $validated['status'] !== 'draft'
-                && (($message ?? null)?->status !== 'sent') // editing a campaign already sent sends nothing
-                && !$mailbox->canSendType(Mailbox::TYPE_BROADCAST)
-            ) {
-                return back()->withErrors(['mailbox_id' => __('messages.campaign.mailbox_cannot_broadcast', [
-                    'mailbox' => $mailbox->name,
-                    'email' => $mailbox->from_email,
-                ])]);
-            }
+        if ($blocking = $this->mailboxBlockingCampaign($validated, $message ?? null)) {
+            return back()->withErrors(['mailbox_id' => __('messages.campaign.mailbox_cannot_broadcast', [
+                'mailbox' => $blocking->name,
+                'email' => $blocking->from_email,
+            ])]);
         }
 
         // Determine scheduled_at for CRON processing
@@ -702,11 +703,16 @@ class MessageController extends Controller
             ],
             'segments' => \App\Models\Segment::forUser(auth()->id())->orderBy('name')->get(['id', 'name', 'subscribers_count']),
             'lists' => auth()->user()->accessibleLists()
-                ->select('id', 'name', 'type', 'default_mailbox_id', 'contact_list_group_id')
+                ->select('id', 'name', 'type', 'default_mailbox_id', 'broadcast_mailbox_id', 'contact_list_group_id')
                 ->withCount(['subscribers' => function ($query) {
                     $query->where('contact_list_subscriber.status', 'active');
                 }])
-                ->with(['defaultMailbox:id,name,provider', 'group:id,name', 'tags:id,name'])
+                ->with([
+                    'defaultMailbox:id,name,provider,from_email,allowed_types',
+                    'broadcastMailbox:id,name,provider,from_email,allowed_types,is_active',
+                    'group:id,name',
+                    'tags:id,name',
+                ])
                 ->get(),
             'groups' => auth()->user()->contactListGroups()
                 ->with('parent')
@@ -721,7 +727,7 @@ class MessageController extends Controller
             'timezones' => \DateTimeZone::listIdentifiers(),
             'mailboxes' => auth()->user()->mailboxes()
                 ->active()
-                ->select('id', 'name', 'provider', 'from_email', 'is_default')
+                ->select('id', 'name', 'provider', 'from_email', 'is_default', 'allowed_types')
                 ->get(),
             'templates' => Template::where('user_id', auth()->id())
                 ->orWhere(fn($q) => $q->whereNull('user_id')->where('is_public', true))
@@ -733,6 +739,7 @@ class MessageController extends Controller
                 'name' => $defaultMailbox->name,
                 'provider' => $defaultMailbox->provider,
                 'from_email' => $defaultMailbox->from_email,
+                'allowed_types' => $defaultMailbox->allowed_types,
             ] : null,
             // Insert snippets data
             'inserts' => Template::where('user_id', auth()->id())->inserts()->orderBy('name')->get(),
@@ -865,20 +872,13 @@ class MessageController extends Controller
             if (!$mailbox) {
                 return back()->withErrors(['mailbox_id' => __('messages.campaign.invalid_mailbox')]);
             }
+        }
 
-            // A campaign goes out only from a mailbox allowed to send campaigns
-            // (Gmail mailboxes never are); a draft may keep it until it is sent.
-            if (($validated['type'] ?? null) === Mailbox::TYPE_BROADCAST
-                && ($validated['channel'] ?? 'email') === 'email'
-                && $validated['status'] !== 'draft'
-                && (($message ?? null)?->status !== 'sent') // editing a campaign already sent sends nothing
-                && !$mailbox->canSendType(Mailbox::TYPE_BROADCAST)
-            ) {
-                return back()->withErrors(['mailbox_id' => __('messages.campaign.mailbox_cannot_broadcast', [
-                    'mailbox' => $mailbox->name,
-                    'email' => $mailbox->from_email,
-                ])]);
-            }
+        if ($blocking = $this->mailboxBlockingCampaign($validated, $message ?? null)) {
+            return back()->withErrors(['mailbox_id' => __('messages.campaign.mailbox_cannot_broadcast', [
+                'mailbox' => $blocking->name,
+                'email' => $blocking->from_email,
+            ])]);
         }
 
         // Determine scheduled_at for CRON processing
@@ -1978,5 +1978,35 @@ class MessageController extends Controller
 
         return response()->json(['contacts' => $contacts]);
     }
-}
 
+    /**
+     * The mailbox that keeps this campaign from being sent or scheduled: the
+     * one named for it (its own, else its first list's default) when it cannot
+     * send campaigns — Gmail mailboxes never can — and none of its lists names
+     * a broadcast mailbox to send them instead. A draft may keep such a mailbox
+     * until it is sent; editing a campaign already sent sends nothing.
+     */
+    private function mailboxBlockingCampaign(array $validated, ?Message $message): ?Mailbox
+    {
+        if (($validated['type'] ?? null) !== Mailbox::TYPE_BROADCAST
+            || ($validated['channel'] ?? 'email') !== 'email'
+            || ($validated['status'] ?? null) === 'draft'
+            || $message?->status === 'sent'
+        ) {
+            return null;
+        }
+
+        $own = !empty($validated['mailbox_id'])
+            ? auth()->user()->mailboxes()->find($validated['mailbox_id'])
+            : null;
+
+        $ids = array_map('intval', $validated['contact_list_ids'] ?? []);
+        $lists = ContactList::with(['defaultMailbox', 'broadcastMailbox'])
+            ->whereIn('id', $ids)
+            ->get()
+            ->sortBy(fn ($list) => array_search((int) $list->id, $ids, true))
+            ->values();
+
+        return CampaignSender::blockingMailbox($own, $lists);
+    }
+}

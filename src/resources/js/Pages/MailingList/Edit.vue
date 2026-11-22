@@ -2,6 +2,7 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head, Link, useForm, router } from "@inertiajs/vue3";
 import { contrastTextColor } from "@/Composables/useColorContrast";
+import BroadcastMailboxSelect from "@/Components/BroadcastMailboxSelect.vue";
 
 import { ref, watch, computed } from "vue";
 
@@ -146,6 +147,8 @@ const form = useForm({
                 "mailbox_id",
                 props.list.default_mailbox_id,
             ),
+            // The column is what sending reads, so it is the source of truth
+            broadcast_mailbox_id: props.list.broadcast_mailbox_id ?? null,
             sms_settings: getSetting("sending", "sms_settings", null),
             from_name: getSetting("sending", "from_name", ""),
             reply_to: getSetting("sending", "reply_to", ""),
@@ -1055,6 +1058,17 @@ const subscribeEndpoint = computed(() => {
                                                 </option>
                                             </select>
                                         </div>
+
+                                        <BroadcastMailboxSelect
+                                            v-model="
+                                                form.settings.sending
+                                                    .broadcast_mailbox_id
+                                            "
+                                            :mailboxes="mailboxes"
+                                            :primary-mailbox-id="
+                                                form.settings.sending.mailbox_id
+                                            "
+                                        />
 
                                         <div class="grid gap-6 md:grid-cols-2">
                                             <div>

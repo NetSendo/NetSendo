@@ -19,4 +19,7 @@ return [
         'no_copy_permission' => 'Sie haben keine Berechtigung, diese Liste zu kopieren.',
         'copy_success' => 'Liste erfolgreich kopiert!',
     ],
+    'validation' => [
+        'broadcast_mailbox_type' => 'Das Postfach „:mailbox“ (:email) erlaubt keine Einmalig-Nachrichten (Broadcast) (Gmail-Postfächer nie) und kann die Kampagnen der Liste daher nicht senden. Wählen Sie ein Postfach, das sie senden darf, in der Regel ein SMTP-Postfach Ihrer Domain.',
+    ],
 ];

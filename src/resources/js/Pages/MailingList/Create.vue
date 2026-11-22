@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { contrastTextColor } from '@/Composables/useColorContrast';
+import BroadcastMailboxSelect from '@/Components/BroadcastMailboxSelect.vue';
 import { ref } from 'vue';
 
 const props = defineProps({
@@ -40,6 +41,7 @@ const form = useForm({
         },
         sending: {
             mailbox_id: getDefault('sending', 'mailbox_id', null),
+            broadcast_mailbox_id: getDefault('sending', 'broadcast_mailbox_id', null),
             from_name: getDefault('sending', 'from_name', ''),
             reply_to: getDefault('sending', 'reply_to', ''),
             company_name: getDefault('sending', 'company_name', ''),
@@ -332,6 +334,12 @@ const submit = () => {
                                                 </option>
                                             </select>
                                         </div>
+
+                                        <BroadcastMailboxSelect
+                                            v-model="form.settings.sending.broadcast_mailbox_id"
+                                            :mailboxes="mailboxes"
+                                            :primary-mailbox-id="form.settings.sending.mailbox_id"
+                                        />
 
                                         <div class="grid gap-6 md:grid-cols-2">
                                             <div>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Api\V1\Concerns\ManagesContactLists;
 use App\Http\Controllers\Controller;
 use App\Models\Mailbox;
+use App\Services\Mail\CampaignSender;
 use App\Models\Message;
 use App\Models\ContactList;
 use App\Models\MessageFieldFilter;
@@ -367,32 +368,68 @@ class MessageController extends Controller
     }
 
     /**
-     * A campaign whose own mailbox cannot send broadcasts (Gmail mailboxes never
-     * can) is refused here: SendEmailJob would fail every recipient, and before
-     * 2.12.2 it sent the campaign from the first mailbox allowed to instead.
+     * A campaign whose mailbox cannot send broadcasts (Gmail mailboxes never
+     * can) goes out from the broadcast mailbox of its list. Without one it is
+     * refused here: SendEmailJob would fail every recipient, and before 2.12.2
+     * it sent the campaign from the first mailbox allowed to instead.
      */
     protected function mailboxRefusesCampaign(Message $message): ?JsonResponse
     {
-        $mailbox = $message->mailbox_id ? $message->mailbox : null;
+        if ($message->channel !== 'email' || $message->type !== Mailbox::TYPE_BROADCAST) {
+            return null;
+        }
 
-        if ($message->channel !== 'email'
-            || $message->type !== Mailbox::TYPE_BROADCAST
-            || !$mailbox
-            || $mailbox->canSendType(Mailbox::TYPE_BROADCAST)
-        ) {
+        $lists = $message->contactLists()->with(['defaultMailbox', 'broadcastMailbox'])->get();
+        $mailbox = CampaignSender::blockingMailbox($message->mailbox_id ? $message->mailbox : null, $lists);
+
+        if (!$mailbox) {
             return null;
         }
 
         return response()->json([
             'error' => 'Mailbox Not Allowed',
-            'message' => "The campaign's mailbox \"{$mailbox->name}\" ({$mailbox->from_email}) does not allow broadcast messages (Gmail mailboxes never do), so it cannot send this campaign. Set another mailbox_id on the campaign. To one person use POST /api/v1/email/send (MCP send_email), which this mailbox can send; to preview the campaign use its test send (MCP send_campaign_test).",
+            'message' => "The campaign's mailbox \"{$mailbox->name}\" ({$mailbox->from_email}) does not allow broadcast messages (Gmail mailboxes never do), and none of the campaign's lists has a broadcast mailbox, so it cannot send this campaign. Set broadcast_mailbox_id on the list (PUT /api/v1/lists/{id}, MCP update_contact_list) to a mailbox that allows broadcasts: the list's campaigns go out from it, while autoresponders and system emails keep using {$mailbox->from_email}. Or set another mailbox_id on the campaign. To one person use POST /api/v1/email/send (MCP send_email), which this mailbox can send; to preview the campaign use its test send (MCP send_campaign_test).",
             'mailbox' => [
                 'id' => $mailbox->id,
                 'name' => $mailbox->name,
                 'from_email' => $mailbox->from_email,
                 'allowed_types' => $mailbox->allowed_types,
             ],
+            'lists' => $lists->map(fn ($list) => [
+                'id' => $list->id,
+                'name' => $list->name,
+                'broadcast_mailbox_id' => $list->broadcast_mailbox_id,
+            ])->values(),
         ], 422);
+    }
+
+    /**
+     * The mailbox the campaign goes out from — its own or its list's default,
+     * or the list's broadcast mailbox when that one cannot send campaigns.
+     * Null when nothing names one: the account's best mailbox is used then.
+     */
+    protected function campaignSender(Message $message): ?array
+    {
+        if ($message->channel !== 'email') {
+            return null;
+        }
+
+        $own = $message->mailbox_id ? $message->mailbox : null;
+        $lists = $message->contactLists()->with(['defaultMailbox', 'broadcastMailbox'])->get();
+        $mailbox = CampaignSender::sender($own, $lists);
+
+        if (!$mailbox) {
+            return null;
+        }
+
+        $named = CampaignSender::namedMailbox($own, $lists);
+
+        return [
+            'mailbox_id' => $mailbox->id,
+            'name' => $mailbox->name,
+            'from_email' => $mailbox->from_email,
+            'list_broadcast_mailbox' => $named !== null && $named->id !== $mailbox->id,
+        ];
     }
 
     protected function notFound(): JsonResponse
@@ -888,6 +925,7 @@ class MessageController extends Controller
             'message' => 'Campaign scheduled successfully',
             'scheduled_at' => $message->scheduled_at->toIso8601String(),
             'timezone_used' => $timezone,
+            'sender' => $this->campaignSender($message),
         ]);
     }
 
@@ -986,6 +1024,7 @@ class MessageController extends Controller
             'data' => $message->fresh(['mailbox', 'contactLists', 'excludedLists']),
             'message' => 'Campaign queued for sending',
             'recipients_added' => $syncResult['added'],
+            'sender' => $this->campaignSender($message),
         ]);
     }
 

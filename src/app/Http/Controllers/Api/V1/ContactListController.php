@@ -200,6 +200,8 @@ class ContactListController extends Controller
                 'nullable', 'integer',
                 Rule::exists('mailboxes', 'id')->where('user_id', $userId),
             ],
+            // Sends the list's campaigns when the default mailbox cannot (Gmail)
+            'broadcast_mailbox_id' => ListSettingsSchema::broadcastMailboxRule($userId),
             'default_sms_provider_id' => [
                 'nullable', 'integer',
                 Rule::exists('sms_providers', 'id')->where('user_id', $userId),
@@ -245,7 +247,7 @@ class ContactListController extends Controller
     private function configurationAttributes(array $validated, array $storedSettings, ?ContactList $list = null): array
     {
         $columns = [
-            'description', 'contact_list_group_id', 'default_mailbox_id', 'default_sms_provider_id',
+            'description', 'contact_list_group_id', 'default_mailbox_id', 'broadcast_mailbox_id', 'default_sms_provider_id',
             'is_public', 'timezone', 'resubscription_behavior', 'reset_autoresponders_on_resubscription',
             'max_subscribers', 'signups_blocked', 'required_fields', 'webhook_url', 'webhook_events',
             'parent_list_id',
@@ -273,6 +275,7 @@ class ContactListController extends Controller
         $touchesSettings = array_key_exists('settings', $validated)
             || array_key_exists('double_opt_in', $validated)
             || array_key_exists('default_mailbox_id', $validated)
+            || array_key_exists('broadcast_mailbox_id', $validated)
             || array_key_exists('default_sms_provider_id', $validated);
 
         if (!$touchesSettings) {
@@ -286,7 +289,7 @@ class ContactListController extends Controller
             $settings['subscription']['double_optin'] = (bool) $validated['double_opt_in'];
         }
 
-        foreach (['mailbox_id' => 'default_mailbox_id', 'sms_provider_id' => 'default_sms_provider_id'] as $settingKey => $column) {
+        foreach (['mailbox_id' => 'default_mailbox_id', 'broadcast_mailbox_id' => 'broadcast_mailbox_id', 'sms_provider_id' => 'default_sms_provider_id'] as $settingKey => $column) {
             if (is_array($patch['sending'] ?? null) && array_key_exists($settingKey, $patch['sending'])) {
                 $attributes[$column] = $patch['sending'][$settingKey];
             } elseif (array_key_exists($column, $validated)) {
@@ -316,6 +319,7 @@ class ContactListController extends Controller
             'double_opt_in' => (bool) ($list->settings['subscription']['double_optin'] ?? false),
             'contact_list_group_id' => $list->contact_list_group_id,
             'default_mailbox_id' => $list->default_mailbox_id,
+            'broadcast_mailbox_id' => $list->broadcast_mailbox_id,
             'default_sms_provider_id' => $list->default_sms_provider_id,
             'tags' => $list->tags->map(fn ($tag) => ['id' => $tag->id, 'name' => $tag->name])->values(),
             'settings' => (object) ($list->settings ?? []),

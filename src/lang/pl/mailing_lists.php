@@ -19,4 +19,7 @@ return [
         'no_copy_permission' => 'Brak uprawnień do kopiowania tej listy.',
         'copy_success' => 'Lista została skopiowana!',
     ],
+    'validation' => [
+        'broadcast_mailbox_type' => 'Skrzynka ":mailbox" (:email) nie ma włączonego typu Jednorazowe (Broadcast) (skrzynki Gmail nigdy go nie mają), więc nie wyśle kampanii tej listy. Wybierz skrzynkę, która może je wysyłać, zwykle skrzynkę SMTP na Twojej domenie.',
+    ],
 ];

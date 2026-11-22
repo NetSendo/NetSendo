@@ -26,6 +26,7 @@ class ContactList extends Model
         'description',
         'contact_list_group_id',
         'default_mailbox_id',
+        'broadcast_mailbox_id', // campaigns, when the default mailbox cannot send them (Gmail)
         'default_sms_provider_id',
         'is_public',
         'timezone',
@@ -137,6 +138,36 @@ class ContactList extends Model
     public function defaultMailbox()
     {
         return $this->belongsTo(Mailbox::class, 'default_mailbox_id');
+    }
+
+    /**
+     * The mailbox this list's campaigns go out from when the campaign's own
+     * mailbox cannot send campaigns — a Gmail mailbox never can. Autoresponders,
+     * system emails and individual emails keep using the default mailbox.
+     */
+    public function broadcastMailbox()
+    {
+        return $this->belongsTo(Mailbox::class, 'broadcast_mailbox_id');
+    }
+
+    /**
+     * The broadcast mailbox, if it can send a campaign now: it exists, belongs
+     * to the list's owner, is active and allows broadcasts.
+     */
+    public function usableBroadcastMailbox(): ?Mailbox
+    {
+        if (!$this->broadcast_mailbox_id) {
+            return null;
+        }
+
+        $mailbox = $this->broadcastMailbox;
+
+        return $mailbox
+            && (int) $mailbox->user_id === (int) $this->user_id
+            && $mailbox->is_active
+            && $mailbox->canSendType(Mailbox::TYPE_BROADCAST)
+            ? $mailbox
+            : null;
     }
 
     /**

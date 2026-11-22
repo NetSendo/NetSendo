@@ -19,4 +19,7 @@ return [
         'no_copy_permission' => 'No tiene permiso para copiar esta lista.',
         'copy_success' => '¡Lista copiada con éxito!',
     ],
+    'validation' => [
+        'broadcast_mailbox_type' => 'El buzón ":mailbox" (:email) no permite mensajes Única vez (Broadcast) (los buzones de Gmail nunca lo permiten), así que no puede enviar las campañas de la lista. Elija un buzón que pueda enviarlas, normalmente un buzón SMTP de su dominio.',
+    ],
 ];

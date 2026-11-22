@@ -127,6 +127,7 @@ Before creating an email campaign, determine the correct mailbox_id:
 2. If list has default_mailbox: use that mailbox_id
 3. If no list default: call list_mailboxes and use default_mailbox_id from response
 4. If no default: ask user which mailbox to use
+Gmail mailboxes never send campaigns. A list whose default mailbox is Gmail sends its campaigns from its broadcast_mailbox_id (set it with update_contact_list to a mailbox that allows broadcasts); the send_campaign/schedule_campaign response names the actual sender in "sender". Without one, send_campaign answers 422 — do not swap the list's default mailbox for that.
 
 AUTO-SELECTION (if mailbox_id not provided):
 The system will try to auto-select in this order:

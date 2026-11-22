@@ -41,6 +41,28 @@ class ListSettingsSchema
     public const DEFAULT_SECTIONS = ['subscription', 'sending', 'pages', 'advanced'];
 
     /**
+     * A list's broadcast mailbox: a mailbox of the account that allows
+     * broadcasts. It sends the list's campaigns when the list's default
+     * mailbox cannot (Gmail), so a Gmail mailbox makes no sense here.
+     */
+    public static function broadcastMailboxRule(int $userId): array
+    {
+        return [
+            'nullable', 'integer',
+            Rule::exists('mailboxes', 'id')->where('user_id', $userId),
+            function (string $attribute, mixed $value, \Closure $fail) use ($userId) {
+                $mailbox = $value ? \App\Models\Mailbox::where('user_id', $userId)->find($value) : null;
+                if ($mailbox && !$mailbox->canSendType(\App\Models\Mailbox::TYPE_BROADCAST)) {
+                    $fail(__('mailing_lists.validation.broadcast_mailbox_type', [
+                        'mailbox' => $mailbox->name,
+                        'email' => $mailbox->from_email,
+                    ]));
+                }
+            },
+        ];
+    }
+
+    /**
      * Validation rules for a settings document under $prefix. Ownership of
      * referenced mailboxes, SMS providers and external pages is enforced, which
      * the browser form leaves to the UI.
@@ -68,6 +90,7 @@ class ListSettingsSchema
                 'nullable', 'integer',
                 Rule::exists('mailboxes', 'id')->where('user_id', $userId),
             ],
+            "{$p}.sending.broadcast_mailbox_id" => self::broadcastMailboxRule($userId),
             "{$p}.sending.from_name" => ['nullable', 'string', 'max:255'],
             "{$p}.sending.reply_to" => ['nullable', 'email'],
             "{$p}.sending.company_name" => ['nullable', 'string', 'max:255'],

@@ -127,7 +127,7 @@ class MailingListController extends Controller
                     'full_path' => $g->full_path,
                 ]),
             'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
-            'mailboxes' => \App\Models\Mailbox::where('user_id', $scopeUser->id)->active()->get(['id', 'name', 'from_email']),
+            'mailboxes' => \App\Models\Mailbox::where('user_id', $scopeUser->id)->active()->get(['id', 'name', 'from_email', 'provider', 'allowed_types']),
             'smsProviders' => \App\Models\SmsProvider::forUser($scopeUser->id)->active()->get(['id', 'name', 'from_name', 'from_number']),
             'externalPages' => \App\Models\ExternalPage::where('user_id', $scopeUser->id)->get(['id', 'name']),
         ]);
@@ -168,6 +168,7 @@ class MailingListController extends Controller
                 'integer',
                 \Illuminate\Validation\Rule::exists('mailboxes', 'id')->where('user_id', $user->getAdminUser()->id),
             ],
+            'settings.sending.broadcast_mailbox_id' => \App\Services\Lists\ListSettingsSchema::broadcastMailboxRule($user->getAdminUser()->id),
             'settings.sending.sms_settings' => 'nullable|string',
             'settings.sending.from_name' => 'nullable|string|max:255',
             'settings.sending.reply_to' => 'nullable|email',
@@ -197,6 +198,11 @@ class MailingListController extends Controller
         // The mailbox picked in the form is the list's default mailbox, as on the edit page
         if (!empty($validated['settings']['sending']['mailbox_id'])) {
             $validated['default_mailbox_id'] = $validated['settings']['sending']['mailbox_id'];
+        }
+
+        // ...and the one picked for campaigns, when that one cannot send them (Gmail)
+        if (!empty($validated['settings']['sending']['broadcast_mailbox_id'])) {
+            $validated['broadcast_mailbox_id'] = $validated['settings']['sending']['broadcast_mailbox_id'];
         }
 
         $list = auth()->user()->contactLists()->create($validated);
@@ -256,6 +262,7 @@ class MailingListController extends Controller
                 'tags' => $mailingList->tags->pluck('id'),
                 'settings' => $mailingList->settings ?? [],
                 'default_mailbox_id' => $mailingList->default_mailbox_id,
+                'broadcast_mailbox_id' => $mailingList->broadcast_mailbox_id,
                 'default_sms_provider_id' => $mailingList->default_sms_provider_id,
                 // Per-list sending schedule from contact_list_cron_settings (what the dispatcher reads)
                 'cron_settings' => app(ListCronSettingsForm::class)->forPage($mailingList->id),
@@ -284,7 +291,7 @@ class MailingListController extends Controller
                     'full_path' => $g->full_path,
                 ]),
             'tags' => \App\Models\Tag::where('user_id', $scopeUser->id)->get(),
-            'mailboxes' => \App\Models\Mailbox::where('user_id', $scopeUser->id)->active()->get(['id', 'name', 'from_email']),
+            'mailboxes' => \App\Models\Mailbox::where('user_id', $scopeUser->id)->active()->get(['id', 'name', 'from_email', 'provider', 'allowed_types']),
             'smsProviders' => \App\Models\SmsProvider::forUser($scopeUser->id)->active()->get(['id', 'name', 'from_name', 'from_number']),
             'externalPages' => \App\Models\ExternalPage::where('user_id', $scopeUser->id)->get(['id', 'name']),
             'globalCronSettings' => \App\Models\CronSetting::getGlobalSchedule(),
@@ -325,6 +332,7 @@ class MailingListController extends Controller
                 'integer',
                 \Illuminate\Validation\Rule::exists('mailboxes', 'id')->where('user_id', $scopeUser->id),
             ],
+            'settings.sending.broadcast_mailbox_id' => \App\Services\Lists\ListSettingsSchema::broadcastMailboxRule($scopeUser->id),
             'settings.sending.sms_settings' => 'nullable|string',
             'settings.sending.from_name' => 'nullable|string|max:255',
             'settings.sending.reply_to' => 'nullable|email',
@@ -378,6 +386,12 @@ class MailingListController extends Controller
         if (is_array($validated['settings']['sending'] ?? null)
             && array_key_exists('mailbox_id', $validated['settings']['sending'])) {
             $validated['default_mailbox_id'] = $validated['settings']['sending']['mailbox_id'] ?: null;
+        }
+
+        // The broadcast mailbox sends the list's campaigns when the default one cannot (Gmail)
+        if (is_array($validated['settings']['sending'] ?? null)
+            && array_key_exists('broadcast_mailbox_id', $validated['settings']['sending'])) {
+            $validated['broadcast_mailbox_id'] = $validated['settings']['sending']['broadcast_mailbox_id'] ?: null;
         }
 
         // Assign default_sms_provider_id from settings if present

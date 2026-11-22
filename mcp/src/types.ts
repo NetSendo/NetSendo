@@ -980,6 +980,7 @@ export interface ContactListCreateInput {
   description?: string;
   contact_list_group_id?: number;
   default_mailbox_id?: number;
+  broadcast_mailbox_id?: number | null;
   default_sms_provider_id?: number;
   is_public?: boolean;
   timezone?: string;

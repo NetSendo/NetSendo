@@ -19,4 +19,7 @@ return [
         'no_copy_permission' => 'You do not have permission to copy this list.',
         'copy_success' => 'List copied successfully!',
     ],
+    'validation' => [
+        'broadcast_mailbox_type' => 'The mailbox ":mailbox" (:email) does not allow One-time (Broadcast) messages (Gmail mailboxes never do), so it cannot send the list\'s campaigns. Choose a mailbox that allows them, usually an SMTP mailbox on your domain.',
+    ],
 ];

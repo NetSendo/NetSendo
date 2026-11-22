@@ -1300,7 +1300,13 @@
                 "test_webhook": "Wyślij testowy webhook",
                 "endpoint_section": "Endpoint Subskrypcji",
                 "endpoint_desc": "Użyj tego URL aby dodawać subskrybentów z zewnętrznych źródeł"
-            }
+            },
+            "broadcast_mailbox_label": "Skrzynka do wysyłki masowej (kampanie)",
+            "broadcast_mailbox_desc_gmail": "Skrzynka „{name}” ({email}) nie wysyła kampanii, bo skrzynki Gmail nigdy tego nie robią. Kampanie do tej listy wyjdą ze skrzynki wybranej tutaj. Autorespondery, wiadomości systemowe i e-maile do jednej osoby nadal wychodzą z {email}.",
+            "broadcast_mailbox_desc": "Kampanie do tej listy wychodzą z tej skrzynki tylko wtedy, gdy skrzynka domyślna nie może ich wysyłać (np. Gmail).",
+            "broadcast_mailbox_none": "-- Brak --",
+            "broadcast_mailbox_missing": "Bez tej skrzynki kampanii do tej listy nie da się wysłać. Autorespondery działają bez zmian.",
+            "broadcast_mailbox_no_options": "Nie masz skrzynki, która może wysyłać kampanie. Dodaj skrzynkę SMTP na swojej domenie w Ustawienia → Skrzynki pocztowe."
         }
     },
     "sms_lists": {
@@ -1798,7 +1804,10 @@
             "selected_for_message": "Wybrana dla tej wiadomości",
             "none_configured": "Brak skonfigurowanej skrzynki",
             "change_in_settings": "Zmień w ustawieniach",
-            "help": "Wybierz skrzynkę nadawczą lub użyj automatycznego rozpoznawania (priorytet: wiadomość → lista → globalna)"
+            "help": "Wybierz skrzynkę nadawczą lub użyj automatycznego rozpoznawania (priorytet: wiadomość → lista → globalna)",
+            "broadcast_takeover": "Kampania wyjdzie ze skrzynki „{name}” ({email}), czyli skrzynki do wysyłki masowej listy „{list}”, bo „{primary}” nie wysyła kampanii.",
+            "broadcast_blocked": "Skrzynka „{primary}” nie wysyła kampanii. Ustaw skrzynkę do wysyłki masowej w ustawieniach listy „{list}” albo wybierz tu inną skrzynkę.",
+            "open_list_settings": "Otwórz ustawienia listy"
         },
         "ai_assistant": {
             "title": "Asystent AI",
