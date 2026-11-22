@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.12.3] – A broadcast mailbox for lists sending from Gmail - 2026-11-22
+
+**Release date:** 2026-11-22
+
+### Added
+
+- **A list can name a broadcast mailbox for its campaigns.** Gmail mailboxes never send campaigns (Google limits a personal account and NetSendo cannot handle its bounces), yet a Gmail mailbox is a sensible default for a list's autoresponders, system emails and individual emails. Since 2.12.2 a campaign to such a list was refused, which left the list with no way to send a campaign at all. A list now has a second mailbox, *Broadcast mailbox (campaigns)* in *List → Settings → Sending* (shown when the default mailbox cannot send campaigns) and `broadcast_mailbox_id` in the API and MCP (`update_contact_list`). A campaign whose mailbox — its own or its list's default — cannot send campaigns goes out from the broadcast mailbox of its first list that has one; autoresponders, system emails and `send_email` keep using the default mailbox. The broadcast mailbox must belong to the account and allow *One-time (Broadcast)* messages, so a Gmail mailbox cannot be chosen.
+- The campaign editor shows which mailbox the campaign goes out from, or why it cannot be sent, with a link to the list settings. `send_campaign` and `schedule_campaign` return the actual sender in `sender`.
+
+### Changed
+
+- A campaign that inherits a Gmail mailbox from its list, with no broadcast mailbox on the list, is refused like one whose own mailbox is Gmail, instead of going out from the first mailbox allowed to send broadcasts. The `422 Mailbox Not Allowed` response lists the campaign's lists and points to `broadcast_mailbox_id`. A campaign with no mailbox named anywhere, a full mailbox and autoresponders still fall back as before.
+
+### Fixed
+
+- A campaign whose mailbox was the account default showed *Automatic* in the mailbox field, though the campaign kept that mailbox.
+
 ## [2.12.2] – Campaigns keep their sender too - 2026-11-22
 
 **Release date:** 2026-11-22

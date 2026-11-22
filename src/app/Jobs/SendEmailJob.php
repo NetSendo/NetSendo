@@ -11,6 +11,7 @@ use App\Models\MessageQueueEntry;
 use App\Models\MessageTrackedLink;
 use App\Models\Subscriber;
 use App\Services\Mail\BounceProcessingService;
+use App\Services\Mail\CampaignSender;
 use App\Services\Mail\MailProviderService;
 use App\Services\PlaceholderService;
 use App\Services\EmailImageService;
@@ -60,40 +61,57 @@ class SendEmailJob implements ShouldQueue
             if ($this->message->is_individual) {
                 $mailbox = $this->individualSender($mailbox, $providerService);
             } elseif ($mailbox && !$providerService->validateMailboxForType($mailbox, $messageType)) {
-                // A campaign whose own mailbox can never send campaigns (Gmail, or
-                // "One-time" switched off) is refused, not rerouted: the fallback put
-                // it on the first mailbox that allows broadcasts, an address nobody
-                // chose. A full mailbox or another mailbox source still falls back.
-                if ($messageType === Mailbox::TYPE_BROADCAST
-                    && $mailbox->id === $this->message->mailbox_id
-                    && !$mailbox->canSendType(Mailbox::TYPE_BROADCAST)
-                ) {
-                    Log::warning("Campaign {$this->message->id} not sent: its mailbox {$mailbox->id} cannot send broadcasts", [
+                // A campaign whose mailbox can never send campaigns (Gmail, or
+                // "One-time" switched off) goes out from the broadcast mailbox its
+                // list names for that. With none, a mailbox named for the campaign
+                // (its own, or its list's default) refuses it rather than being
+                // rerouted: the fallback below put it on the first mailbox allowed
+                // to send broadcasts, an address nobody chose. A full mailbox, or
+                // one nobody named, still falls back.
+                if ($messageType === Mailbox::TYPE_BROADCAST && !$mailbox->canSendType(Mailbox::TYPE_BROADCAST)) {
+                    $lists = $this->message->contactLists;
+
+                    if ($takeover = CampaignSender::listTakeover($lists)) {
+                        [$list, $broadcastMailbox] = $takeover;
+
+                        Log::info("Campaign {$this->message->id} sent from the broadcast mailbox of list {$list->id}", [
+                            'mailbox_id' => $mailbox->id,
+                            'broadcast_mailbox_id' => $broadcastMailbox->id,
+                        ]);
+
+                        $mailbox = $broadcastMailbox;
+                    } elseif ((int) $mailbox->id === (int) $this->message->mailbox_id
+                        || $lists->contains(fn ($list) => (int) $list->default_mailbox_id === (int) $mailbox->id)
+                    ) {
+                        Log::warning("Campaign {$this->message->id} not sent: its mailbox {$mailbox->id} cannot send broadcasts and no list names a broadcast mailbox", [
+                            'mailbox_allowed_types' => $mailbox->allowed_types,
+                        ]);
+
+                        // The text avoids SMTP wording, or the bounce detection would take it for a bounce
+                        throw new \RuntimeException(__('mail.errors.campaign_sender_type', [
+                            'mailbox' => $mailbox->name,
+                            'email' => $mailbox->from_email,
+                        ], $this->message->user?->locale));
+                    }
+                }
+
+                if (!$providerService->validateMailboxForType($mailbox, $messageType)) {
+                    Log::warning("Mailbox {$mailbox->id} cannot send message type: {$messageType}", [
                         'mailbox_allowed_types' => $mailbox->allowed_types,
+                        'message_id' => $this->message->id,
                     ]);
 
-                    // The text avoids SMTP wording, or the bounce detection would take it for a bounce
-                    throw new \RuntimeException(__('mail.errors.campaign_sender_type', [
-                        'mailbox' => $mailbox->name,
-                        'email' => $mailbox->from_email,
-                    ], $this->message->user?->locale));
+                    $fallback = $providerService->getBestMailbox($this->message->user_id, $messageType);
+
+                    if ($fallback) {
+                        Log::info("Falling back to mailbox allowed for type {$messageType}", [
+                            'from_mailbox_id' => $mailbox->id,
+                            'to_mailbox_id' => $fallback->id,
+                        ]);
+                    }
+
+                    $mailbox = $fallback;
                 }
-
-                Log::warning("Mailbox {$mailbox->id} cannot send message type: {$messageType}", [
-                    'mailbox_allowed_types' => $mailbox->allowed_types,
-                    'message_id' => $this->message->id,
-                ]);
-
-                $fallback = $providerService->getBestMailbox($this->message->user_id, $messageType);
-
-                if ($fallback) {
-                    Log::info("Falling back to mailbox allowed for type {$messageType}", [
-                        'from_mailbox_id' => $mailbox->id,
-                        'to_mailbox_id' => $fallback->id,
-                    ]);
-                }
-
-                $mailbox = $fallback;
             }
 
             $content = $this->message->content;

@@ -5,7 +5,7 @@ return [
     'errors' => [
         'no_mailbox_for_type' => 'Ningún buzón activo puede enviar mensajes de tipo ":type". Permita este tipo en la configuración del buzón (Configuración > Buzones de envío > Tipos permitidos).',
         'no_mailbox' => 'No hay ningún buzón configurado. Configure uno en los ajustes antes de enviar mensajes.',
-        'campaign_sender_type' => 'El buzón ":mailbox" (:email) de la campaña no permite mensajes Única vez (Broadcast) (los buzones de Gmail nunca lo permiten), así que no puede enviar esta campaña. No se ha enviado desde otro buzón. Elija un buzón que pueda enviar campañas, o envíe a una persona como correo individual o de prueba.',
+        'campaign_sender_type' => 'El buzón ":mailbox" (:email) de la campaña no permite mensajes Única vez (Broadcast) (los buzones de Gmail nunca lo permiten) y ninguna lista de la campaña tiene un buzón de envío masivo, así que la campaña no pudo salir. No se ha enviado desde otro buzón. Configure un buzón de envío masivo en los ajustes de la lista (Envío): las campañas de la lista salen desde él. O elija un buzón que pueda enviar campañas.',
         'individual_sender' => [
             'inactive' => 'Este correo individual debía salir del buzón ":mailbox" (:email), que ahora está desactivado o eliminado. No se ha enviado desde otro buzón. Active el buzón y vuelva a enviar el correo.',
             'type' => 'El buzón ":mailbox" (:email) no permite Única vez (Broadcast) ni Autorespondedor, así que no puede enviar este correo individual. No se ha enviado desde otro buzón. Permita uno de estos tipos en la configuración del buzón (Configuración > Buzones de envío > Tipos permitidos).',

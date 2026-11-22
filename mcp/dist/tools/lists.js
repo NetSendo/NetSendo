@@ -27,6 +27,7 @@ const subscriptionShape = {
 };
 const sendingShape = {
     mailbox_id: z.number().int().nullable().optional().describe('Sender mailbox (see list_mailboxes). Same as default_mailbox_id; both are kept in sync'),
+    broadcast_mailbox_id: z.number().int().nullable().optional().describe('Mailbox that sends this list\'s campaigns when mailbox_id cannot send campaigns (a Gmail mailbox never can). Must allow broadcasts (see list_mailboxes). Same as broadcast_mailbox_id on the list; both are kept in sync'),
     from_name: z.string().max(255).nullable().optional().describe('Sender name'),
     reply_to: z.string().email().nullable().optional().describe('Reply-To address'),
     company_name: z.string().max(255).nullable().optional().describe('Company name for the footer / legal block'),
@@ -78,6 +79,7 @@ const listConfigShape = {
     description: z.string().max(1000).optional().describe('What this audience is'),
     contact_list_group_id: z.number().nullable().optional().describe('Group to file the list under'),
     default_mailbox_id: z.number().nullable().optional().describe('Default sender mailbox for email campaigns (see list_mailboxes)'),
+    broadcast_mailbox_id: z.number().nullable().optional().describe('Mailbox that sends this list\'s campaigns when default_mailbox_id cannot send campaigns: a Gmail mailbox never can. Must allow broadcasts (see list_mailboxes). Autoresponders, system emails and send_email keep using default_mailbox_id; null clears it'),
     default_sms_provider_id: z.number().nullable().optional().describe('Default SMS provider (see list_sms_providers)'),
     tags: z.array(z.number()).optional().describe('IDs of the account\'s tags to label the list with (replaces the current set; see list_tags)'),
     double_opt_in: z.boolean().optional().describe('Shortcut for settings.subscription.double_optin'),

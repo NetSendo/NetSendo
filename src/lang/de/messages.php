@@ -27,7 +27,7 @@ return [
         'invalid_lists' => 'Ungültige Empfängerliste.',
         'invalid_excluded_lists' => 'Ungültige Ausschlussliste.',
         'invalid_mailbox' => 'Ungültiges Absenderpostfach.',
-        'mailbox_cannot_broadcast' => 'Das Postfach „:mailbox“ (:email) erlaubt keine Einmalig-Nachrichten (Broadcast) (Gmail-Postfächer nie) und kann diese Kampagne daher nicht senden. Wählen Sie ein anderes Postfach. Um die Kampagne in einem Posteingang zu prüfen, senden Sie einen Test.',
+        'mailbox_cannot_broadcast' => 'Das Postfach „:mailbox“ (:email) erlaubt keine Einmalig-Nachrichten (Broadcast) (Gmail-Postfächer nie) und kann diese Kampagne daher nicht senden. Legen Sie in den Listeneinstellungen (Versand) ein Massenversand-Postfach fest: Die Kampagnen der Liste gehen von dort aus, Autoresponder weiter von :email. Oder wählen Sie hier ein anderes Postfach. Um die Kampagne in einem Posteingang zu prüfen, senden Sie einen Test.',
         'scheduled' => 'Die Nachricht wurde geplant.',
         'queued' => 'Die Nachricht wurde in die Versandwarteschlange gestellt.',
         'saved_draft' => 'Die Nachricht wurde als Entwurf gespeichert.',

@@ -404,16 +404,70 @@ const listDefaultMailbox = computed(() => {
     return null;
 });
 
-// Get other mailboxes (excluding global default and list default)
+// Get other mailboxes (excluding global default and list default). The global
+// default stays listed when the message names it: otherwise the select had no
+// option for it and showed "Automatic" while the message kept that mailbox.
 const otherMailboxes = computed(() => {
     const excludeIds = [];
-    if (props.defaultMailbox) {
+    if (props.defaultMailbox && form.mailbox_id !== props.defaultMailbox.id) {
         excludeIds.push(props.defaultMailbox.id);
     }
     if (listDefaultMailbox.value) {
         excludeIds.push(listDefaultMailbox.value.mailbox.id);
     }
     return props.mailboxes.filter((m) => !excludeIds.includes(m.id));
+});
+
+// Who sends a campaign whose mailbox cannot send campaigns (Gmail mailboxes
+// never can): the broadcast mailbox of its list, or nobody. Mirrors
+// CampaignSender (PHP), which decides it when the campaign is sent.
+const canSendCampaigns = (mailbox) =>
+    (mailbox?.allowed_types || []).includes("broadcast");
+
+const selectedLists = computed(() =>
+    form.contact_list_ids
+        .map((id) => props.lists.find((l) => l.id === id))
+        .filter(Boolean),
+);
+
+const campaignSender = computed(() => {
+    if (form.type !== "broadcast") return null;
+
+    let named = form.mailbox_id
+        ? props.mailboxes.find((m) => m.id === form.mailbox_id)
+        : null;
+    if (!named) {
+        named =
+            selectedLists.value.find((l) => l.default_mailbox)
+                ?.default_mailbox || null;
+    }
+    if (!named || canSendCampaigns(named)) return null;
+
+    const takeover = selectedLists.value.find(
+        (l) =>
+            l.broadcast_mailbox &&
+            l.broadcast_mailbox.is_active !== false &&
+            canSendCampaigns(l.broadcast_mailbox),
+    );
+    if (takeover) {
+        return {
+            kind: "takeover",
+            primary: named,
+            mailbox: takeover.broadcast_mailbox,
+            list: takeover,
+        };
+    }
+
+    return {
+        kind: "blocked",
+        primary: named,
+        list:
+            selectedLists.value.find(
+                (l) => l.default_mailbox?.id === named.id,
+            ) ||
+            selectedLists.value[0] ||
+            null,
+    };
 });
 
 // UI State for Broadcast Scheduling
@@ -3861,6 +3915,42 @@ watch(
                                 <p class="mt-1 text-xs text-slate-500">
                                     {{ $t("messages.mailbox.help") }}
                                 </p>
+                                <div
+                                    v-if="campaignSender?.kind === 'takeover'"
+                                    class="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300"
+                                >
+                                    {{
+                                        $t("messages.mailbox.broadcast_takeover", {
+                                            name: campaignSender.mailbox.name,
+                                            email: campaignSender.mailbox.from_email,
+                                            list: campaignSender.list.name,
+                                            primary: campaignSender.primary.name,
+                                        })
+                                    }}
+                                </div>
+                                <div
+                                    v-else-if="campaignSender?.kind === 'blocked'"
+                                    class="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+                                >
+                                    {{
+                                        $t("messages.mailbox.broadcast_blocked", {
+                                            primary: campaignSender.primary.name,
+                                            list: campaignSender.list?.name || "",
+                                        })
+                                    }}
+                                    <Link
+                                        v-if="campaignSender.list"
+                                        :href="
+                                            route(
+                                                'mailing-lists.edit',
+                                                campaignSender.list.id,
+                                            )
+                                        "
+                                        class="ml-1 font-medium underline"
+                                    >
+                                        {{ $t("messages.mailbox.open_list_settings") }}
+                                    </Link>
+                                </div>
                                 <InputError
                                     class="mt-2"
                                     :message="form.errors.mailbox_id"

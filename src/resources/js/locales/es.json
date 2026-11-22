@@ -1723,7 +1723,13 @@
             "resubscription_behavior": "Comportamiento al volver a suscribirse",
             "resubscription_behavior_desc": "Determina qué ocurre con la fecha de suscripción cuando un suscriptor activo intenta suscribirse de nuevo. A los antiguos suscriptores (dados de baja/eliminados) siempre se les reinicia la fecha.",
             "resubscription_keep_date": "Mantener la fecha de alta original",
-            "resubscription_reset_date": "Reiniciar la fecha de alta (la cola del autoresponder comienza de nuevo)"
+            "resubscription_reset_date": "Reiniciar la fecha de alta (la cola del autoresponder comienza de nuevo)",
+            "broadcast_mailbox_label": "Buzón de envío masivo (campañas)",
+            "broadcast_mailbox_desc_gmail": "El buzón «{name}» ({email}) no envía campañas, porque los buzones de Gmail nunca lo hacen. Las campañas a esta lista salen del buzón elegido aquí. Los autorrespondedores, los correos del sistema y los correos individuales siguen saliendo de {email}.",
+            "broadcast_mailbox_desc": "Las campañas a esta lista salen de este buzón solo cuando el buzón predeterminado no puede enviarlas (p. ej., Gmail).",
+            "broadcast_mailbox_none": "-- Ninguno --",
+            "broadcast_mailbox_missing": "Sin él, las campañas a esta lista no se pueden enviar. Los autorrespondedores funcionan igual.",
+            "broadcast_mailbox_no_options": "No tiene ningún buzón que pueda enviar campañas. Añada un buzón SMTP de su dominio en Ajustes → Buzones."
         },
         "create_message": "Crear mensaje",
         "default_settings_subtitle": "Configure los ajustes predeterminados para las nuevas listas de correo",
@@ -2203,7 +2209,10 @@
             "selected_for_message": "Seleccionado para este mensaje",
             "none_configured": "Ningún buzón configurado",
             "change_in_settings": "Cambiar en configuración",
-            "help": "Elija un buzón remitente o use la detección automática (prioridad: mensaje → lista → global)"
+            "help": "Elija un buzón remitente o use la detección automática (prioridad: mensaje → lista → global)",
+            "broadcast_takeover": "La campaña sale de «{name}» ({email}), el buzón de envío masivo de la lista «{list}», porque «{primary}» no envía campañas.",
+            "broadcast_blocked": "El buzón «{primary}» no envía campañas. Configure un buzón de envío masivo en los ajustes de la lista «{list}» o elija aquí otro buzón.",
+            "open_list_settings": "Abrir ajustes de la lista"
         },
         "ai_assistant": {
             "title": "Asistente de IA",

@@ -1300,7 +1300,13 @@
                 "test_webhook": "Send test webhook",
                 "endpoint_section": "Subscription Endpoint",
                 "endpoint_desc": "Use this URL to add subscribers from external sources"
-            }
+            },
+            "broadcast_mailbox_label": "Broadcast mailbox (campaigns)",
+            "broadcast_mailbox_desc_gmail": "The mailbox “{name}” ({email}) does not send campaigns, as Gmail mailboxes never do. Campaigns to this list go out from the mailbox chosen here. Autoresponders, system emails and individual emails still go out from {email}.",
+            "broadcast_mailbox_desc": "Campaigns to this list go out from this mailbox only when the default mailbox cannot send them (e.g. Gmail).",
+            "broadcast_mailbox_none": "-- None --",
+            "broadcast_mailbox_missing": "Without it, campaigns to this list cannot be sent. Autoresponders work as before.",
+            "broadcast_mailbox_no_options": "You have no mailbox that can send campaigns. Add an SMTP mailbox on your domain in Settings → Mailboxes."
         }
     },
     "sms_lists": {
@@ -1797,7 +1803,10 @@
             "selected_for_message": "Selected for this message",
             "none_configured": "No mailbox configured",
             "change_in_settings": "Change in settings",
-            "help": "Select a sending mailbox or use auto-detection (priority: message → list → global)"
+            "help": "Select a sending mailbox or use auto-detection (priority: message → list → global)",
+            "broadcast_takeover": "The campaign goes out from “{name}” ({email}), the broadcast mailbox of the list “{list}”, because “{primary}” does not send campaigns.",
+            "broadcast_blocked": "The mailbox “{primary}” does not send campaigns. Set a broadcast mailbox in the settings of the list “{list}”, or choose another mailbox here.",
+            "open_list_settings": "Open list settings"
         },
         "ai_assistant": {
             "title": "AI Assistant",
