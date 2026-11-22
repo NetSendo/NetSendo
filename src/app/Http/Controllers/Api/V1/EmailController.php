@@ -59,7 +59,9 @@ class EmailController extends Controller
             $validated['mailbox_id'] = $validated['sending_server_id'];
         }
 
-        // Get mailbox
+        // Get mailbox. This is an individual email: it goes from the mailbox chosen
+        // here or not at all (SendEmailJob never swaps it), and a mailbox allowed to
+        // send broadcasts or autoresponders may send it — Gmail mailboxes included.
         $mailbox = null;
         if (!empty($validated['mailbox_id'])) {
             $mailbox = Mailbox::where('user_id', $user->id)
@@ -71,8 +73,15 @@ class EmailController extends Controller
                     'message' => 'Mailbox not found or inactive',
                 ], 404);
             }
+            if (!$mailbox->canSendIndividual()) {
+                return response()->json([
+                    'error' => 'Mailbox Not Allowed',
+                    'message' => "Mailbox \"{$mailbox->name}\" ({$mailbox->from_email}) allows neither broadcast nor autoresponder messages, so it cannot send this email. Allow one of these types in Settings > Mailboxes, or pass another mailbox_id.",
+                    'allowed_types' => $mailbox->allowed_types,
+                ], 422);
+            }
         } else {
-            $mailbox = Mailbox::getDefaultFor($user->id);
+            $mailbox = app(MailProviderService::class)->getBestIndividualMailbox($user->id);
         }
 
         if (!$mailbox) {
@@ -111,6 +120,7 @@ class EmailController extends Controller
         $message = Message::create([
             'user_id' => $user->id,
             'type' => 'broadcast',
+            'is_individual' => true,
             'channel' => 'email',
             'subject' => $validated['subject'],
             'content' => $validated['content'],
@@ -148,6 +158,8 @@ class EmailController extends Controller
                 'subject' => $validated['subject'],
                 'status' => 'queued',
                 'mailbox' => $mailbox->name,
+                'mailbox_id' => $mailbox->id,
+                'from_email' => $mailbox->from_email,
                 'scheduled_at' => $validated['schedule_at'] ?? null,
             ],
             'message' => 'Email queued successfully',
@@ -215,12 +227,21 @@ class EmailController extends Controller
             ], 422);
         }
 
-        // Get mailbox
+        // Get mailbox. A batch is a broadcast: a mailbox the caller names must allow
+        // broadcasts — the send job would otherwise swap it for the first mailbox
+        // that does, and the batch would go out from an address nobody chose.
         $mailbox = null;
         if (!empty($validated['mailbox_id'])) {
             $mailbox = Mailbox::where('user_id', $user->id)->active()->find($validated['mailbox_id']);
+            if ($mailbox && !$mailbox->canSendType(Mailbox::TYPE_BROADCAST)) {
+                return response()->json([
+                    'error' => 'Mailbox Not Allowed',
+                    'message' => "Mailbox \"{$mailbox->name}\" ({$mailbox->from_email}) does not allow broadcast messages (Gmail mailboxes never do), so it cannot send a batch. Pass another mailbox_id, or send to one person at a time with POST /api/v1/email/send, which this mailbox can send.",
+                    'allowed_types' => $mailbox->allowed_types,
+                ], 422);
+            }
         } else {
-            $mailbox = Mailbox::getDefaultFor($user->id);
+            $mailbox = app(MailProviderService::class)->getBestMailbox($user->id, Mailbox::TYPE_BROADCAST);
         }
 
         if (!$mailbox) {
@@ -357,6 +378,8 @@ class EmailController extends Controller
                 'subject' => $validated['subject'],
                 'status' => 'queued',
                 'mailbox' => $mailbox->name,
+                'mailbox_id' => $mailbox->id,
+                'from_email' => $mailbox->from_email,
                 'scheduled_at' => $validated['schedule_at'] ?? null,
             ],
             'message' => "Batch email queued for {$queuedCount} recipients",

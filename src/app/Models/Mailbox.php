@@ -381,6 +381,28 @@ class Mailbox extends Model
     }
 
     /**
+     * Can this mailbox send an individual email — one recipient, through
+     * POST /api/v1/email/send? It goes to one person, as an autoresponder does,
+     * so a mailbox that allows autoresponders may send it as well as one that
+     * allows broadcasts. Gmail mailboxes never allow broadcasts; without this
+     * an individual email could not go from Gmail at all.
+     */
+    public function canSendIndividual(): bool
+    {
+        return $this->canSendType(self::TYPE_BROADCAST) || $this->canSendType(self::TYPE_AUTORESPONDER);
+    }
+
+    /**
+     * Can this mailbox send the given message, by the message's type?
+     */
+    public function canSendMessage(Message $message): bool
+    {
+        return $message->is_individual
+            ? $this->canSendIndividual()
+            : $this->canSendType($message->type ?? self::TYPE_BROADCAST);
+    }
+
+    /**
      * Check if mailbox has reached daily limit
      */
     public function hasReachedDailyLimit(): bool
@@ -462,6 +484,16 @@ class Mailbox extends Model
     public function scopeCanSend($query, string $type)
     {
         return $query->whereJsonContains('allowed_types', $type);
+    }
+
+    /**
+     * Scope: That can send an individual email (see canSendIndividual())
+     */
+    public function scopeCanSendIndividual($query)
+    {
+        return $query->where(fn ($q) => $q
+            ->whereJsonContains('allowed_types', self::TYPE_BROADCAST)
+            ->orWhereJsonContains('allowed_types', self::TYPE_AUTORESPONDER));
     }
 
     /**

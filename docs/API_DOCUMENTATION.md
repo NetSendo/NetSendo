@@ -951,9 +951,15 @@ POST /api/v1/email/send
 | `subject`       | string   | ✅       | Temat wiadomości           |
 | `content`       | string   | ✅       | Treść HTML wiadomości      |
 | `preheader`     | string   | ❌       | Preheader (max 500 znaków) |
-| `mailbox_id`    | integer  | ❌       | ID skrzynki nadawczej      |
+| `mailbox_id`    | integer  | ❌       | ID skrzynki nadawczej (alias n8n: `sending_server_id`) |
 | `schedule_at`   | datetime | ❌       | Zaplanuj wysyłkę           |
 | `subscriber_id` | integer  | ❌       | Powiąż z subskrybentem     |
+
+**Skrzynka nadawcy.** To e-mail indywidualny: jeden odbiorca, jedna skrzynka. Wysyła go skrzynka, która ma włączony typ *Jednorazowe (Broadcast)* albo *Autoresponder*, więc także skrzynka Gmail (Gmail nie wysyła broadcastów). Wiadomość wychodzi ze skrzynki z odpowiedzi albo wcale: NetSendo nie zamienia jej na inną.
+
+- Bez `mailbox_id` wysyła skrzynka domyślna, a gdy ona nie może — pierwsza aktywna, która może. Którą wybrano, mówią `mailbox_id` i `from_email` w odpowiedzi.
+- Skrzynka z `mailbox_id`, która nie ma żadnego z tych typów, daje od razu `422` (`"error": "Mailbox Not Allowed"`, z polem `allowed_types`) i nic nie trafia do kolejki.
+- Jeśli do chwili wysyłki skrzynka zostanie wyłączona, straci te typy albo wyczerpie dzienny limit, wpis kolejki kończy się błędem z powodem (`GET /api/v1/email/status/{id}` → `stats.failed`), a wiadomość nie wychodzi z innej skrzynki.
 
 **Odpowiedź (202):**
 
@@ -965,6 +971,8 @@ POST /api/v1/email/send
     "subject": "Witaj!",
     "status": "queued",
     "mailbox": "Główna skrzynka",
+    "mailbox_id": 1,
+    "from_email": "kontakt@example.com",
     "scheduled_at": "2025-12-25T10:00:00Z"
   },
   "message": "Email queued successfully"
@@ -1006,6 +1014,8 @@ POST /api/v1/email/batch
 
 \* Wymagane jest jedno z: `list_id`, `tag_ids` lub `subscriber_ids`
 
+**Skrzynka nadawcy.** Batch to broadcast. Skrzynka z `mailbox_id` musi mieć włączony typ *Jednorazowe (Broadcast)*; skrzynka bez niego (np. Gmail) daje `422` (`"error": "Mailbox Not Allowed"`), a nie wysyłkę z innego adresu. Do jednej osoby przez Gmail służy `POST /api/v1/email/send`. Bez `mailbox_id` wysyła skrzynka domyślna albo, gdy ta nie może wysyłać broadcastów, pierwsza aktywna, która może — wskazują ją `mailbox_id` i `from_email` w odpowiedzi.
+
 **Odpowiedź (202):**
 
 ```json
@@ -1016,6 +1026,8 @@ POST /api/v1/email/batch
     "subject": "Newsletter grudzień",
     "status": "queued",
     "mailbox": "Główna skrzynka",
+    "mailbox_id": 1,
+    "from_email": "kontakt@example.com",
     "scheduled_at": "2025-12-25T10:00:00Z"
   },
   "message": "Batch email queued for 150 recipients"

@@ -4,6 +4,7 @@ namespace App\Services\Mail;
 
 use App\Models\ContactList;
 use App\Models\Mailbox;
+use App\Models\Message;
 use App\Models\Webinar;
 use App\Services\Mail\Providers\GmailProvider;
 use App\Services\Mail\Providers\NmiProvider;
@@ -104,6 +105,36 @@ class MailProviderService
         }
 
         return true;
+    }
+
+    /**
+     * Validate that a mailbox can send this message now: active, allowed to send
+     * its type (an individual email: broadcast or autoresponder), under its limit.
+     */
+    public function validateMailboxForMessage(Mailbox $mailbox, Message $message): bool
+    {
+        return $mailbox->is_active
+            && $mailbox->canSendMessage($message)
+            && !$mailbox->hasReachedDailyLimit();
+    }
+
+    /**
+     * The mailbox an individual email goes from when the caller named none: the
+     * default one, else any active one allowed to send it and under its limit.
+     */
+    public function getBestIndividualMailbox(int $userId): ?Mailbox
+    {
+        $defaultMailbox = Mailbox::getDefaultFor($userId);
+
+        if ($defaultMailbox && $defaultMailbox->canSendIndividual() && !$defaultMailbox->hasReachedDailyLimit()) {
+            return $defaultMailbox;
+        }
+
+        return Mailbox::forUser($userId)
+            ->active()
+            ->canSendIndividual()
+            ->whereRaw('(daily_limit IS NULL OR sent_today < daily_limit)')
+            ->first();
     }
 
     /**
