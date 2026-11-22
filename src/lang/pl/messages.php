@@ -36,6 +36,7 @@ return [
         'invalid_lists' => 'Nieprawidłowa lista odbiorców.',
         'invalid_excluded_lists' => 'Nieprawidłowa lista wykluczeń.',
         'invalid_mailbox' => 'Nieprawidłowa skrzynka nadawcza.',
+        'mailbox_cannot_broadcast' => 'Skrzynka ":mailbox" (:email) nie ma włączonego typu Jednorazowe (Broadcast) (skrzynki Gmail nigdy go nie mają), więc nie może wysłać tej kampanii. Wybierz inną skrzynkę. Żeby sprawdzić kampanię w jednej skrzynce odbiorczej, wyślij test.',
         'scheduled' => 'Wiadomość została zaplanowana.',
         'queued' => 'Wiadomość została wysłana do kolejki.',
         'saved_draft' => 'Wiadomość została zapisana jako szkic.',

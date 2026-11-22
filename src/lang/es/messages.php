@@ -27,6 +27,7 @@ return [
         'invalid_lists' => 'Lista de destinatarios no válida.',
         'invalid_excluded_lists' => 'Lista de exclusión no válida.',
         'invalid_mailbox' => 'Buzón de envío no válido.',
+        'mailbox_cannot_broadcast' => 'El buzón ":mailbox" (:email) no permite mensajes Única vez (Broadcast) (los buzones de Gmail nunca lo permiten), así que no puede enviar esta campaña. Elija otro buzón. Para revisar la campaña en una bandeja de entrada, envíe una prueba.',
         'scheduled' => 'El mensaje se ha programado.',
         'queued' => 'El mensaje se ha puesto en la cola de envío.',
         'saved_draft' => 'El mensaje se ha guardado como borrador.',

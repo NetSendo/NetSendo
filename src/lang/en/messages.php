@@ -36,6 +36,7 @@ return [
         'invalid_lists' => 'Invalid recipient list.',
         'invalid_excluded_lists' => 'Invalid exclusion list.',
         'invalid_mailbox' => 'Invalid sending mailbox.',
+        'mailbox_cannot_broadcast' => 'The mailbox ":mailbox" (:email) does not allow One-time (Broadcast) messages (Gmail mailboxes never do), so it cannot send this campaign. Choose another mailbox. To check the campaign in one inbox, send a test.',
         'scheduled' => 'The message has been scheduled.',
         'queued' => 'The message has been queued for sending.',
         'saved_draft' => 'The message has been saved as a draft.',
