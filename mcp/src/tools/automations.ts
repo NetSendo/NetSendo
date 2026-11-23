@@ -233,7 +233,7 @@ export function registerAutomationTools(server: McpServer, api: NetSendoApiClien
     'Delete an automation rule permanently, with its execution log. Consider set_automation_active(false) instead. NetSendo default automations (is_system) need confirm=true once the user has approved; read_only rules (synced from a message trigger) cannot be deleted here.',
     {
       automation_id: z.number().describe('Automation rule ID'),
-      confirm: z.boolean().optional().describe('Required (true) to delete a default automation (is_system: true)'),
+      confirm: z.boolean().optional().describe('Required (true) to delete a default automation (one with is_system = true)'),
     },
     async ({ automation_id, confirm }) => {
       try {

@@ -22,7 +22,7 @@ export function registerSuppressionTools(server, api) {
     });
     server.tool('suppress_emails', `Add addresses to the account-wide do-not-mail list and, by default, unsubscribe them from every list they are on.
 
-Use this for people who asked to be forgotten, complained, or must not be contacted again for legal reasons. Suppression is the strongest guarantee in the system: these addresses are also skipped by future imports.
+Use this for people who asked to be forgotten, complained, or must not be contacted again for legal reasons. Suppression is the strongest guarantee NetSendo offers, because these addresses are also skipped by future imports.
 
 Only suppress addresses when the user has asked for it or the person clearly requested it — it is a deliberate, account-wide block, not a clean-up shortcut.`, {
         emails: z.array(z.string().email()).min(1).max(1000).describe('Addresses to suppress'),
