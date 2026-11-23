@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+## [2.12.4] – Dependency updates, AI connector kept working - 2026-11-23
+
+**Release date:** 2026-11-23
+
+### Changed
+
+- PHP dependencies updated within their minor versions: Laravel 13.43, laravel/mcp 1.2.1, Reverb 1.14, Sanctum 4.5, Tinker 3.2, spatie/laravel-backup 10.5, Ziggy 2.7, Scramble 0.13.55, and the development tools Pail, Pint, Sail and Collision.
+
+### Fixed
+
+- **The AI connector (`/mcp`) kept working with laravel/mcp 1.2.1.** The new version reads a tool's input schema as an array when the tool is called, so without this change every tool call through the connector failed with an internal error. The list of tools that clients see is unchanged.
+
 ## [2.12.3] – A broadcast mailbox for lists sending from Gmail - 2026-11-22
 
 **Release date:** 2026-11-22
