@@ -58,7 +58,11 @@ class BridgeTool extends Tool
             'name' => $this->name(),
             'title' => $this->title(),
             'description' => $this->description(),
-            'inputSchema' => $schema,
+            // laravel/mcp (1.2.1+) reads the input schema as an array when a tool
+            // is called. Only the top level becomes an array: the nested values
+            // stay objects, so an empty "properties" is still sent as {} and the
+            // JSON the clients get does not change.
+            'inputSchema' => (array) $schema,
             'annotations' => $this->definition->annotations ?? new stdClass,
         ];
     }
