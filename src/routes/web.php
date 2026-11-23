@@ -1023,7 +1023,7 @@ Route::post('/t/link-visitor', [\App\Http\Controllers\PageVisitController::class
 
 // NetSendo Pixel Tracking
 Route::prefix('t/pixel')->name('pixel.')->group(function () {
-    Route::get('/{userId}', [\App\Http\Controllers\PixelController::class, 'script'])->name('script');
+    Route::get('/{userId}', [\App\Http\Controllers\PixelController::class, 'script'])->name('script')->whereNumber('userId');
     Route::post('/event', [\App\Http\Controllers\PixelController::class, 'trackEvent'])->name('event')->middleware('throttle:pixel');
     Route::post('/identify', [\App\Http\Controllers\PixelController::class, 'identify'])->name('identify')->middleware('throttle:pixel');
     Route::post('/batch', [\App\Http\Controllers\PixelController::class, 'batchEvents'])->name('batch')->middleware('throttle:pixel');
