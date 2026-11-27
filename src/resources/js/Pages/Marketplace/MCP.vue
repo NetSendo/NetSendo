@@ -358,6 +358,18 @@ const toolCategories = [
         ]
     },
     {
+        name: "mcp.tool_categories.brain",
+        tools: [
+            { name: "list_brain_conversations", description: "mcp.tools.list_brain_conversations" },
+            { name: "get_brain_conversation", description: "mcp.tools.get_brain_conversation" },
+            { name: "create_brain_conversation", description: "mcp.tools.create_brain_conversation" },
+            { name: "send_brain_message", description: "mcp.tools.send_brain_message" },
+            { name: "update_brain_conversation", description: "mcp.tools.update_brain_conversation" },
+            { name: "delete_brain_conversation", description: "mcp.tools.delete_brain_conversation" },
+            { name: "decide_brain_plan", description: "mcp.tools.decide_brain_plan" },
+        ]
+    },
+    {
         name: "mcp.tool_categories.account",
         tools: [
             { name: "test_connection", description: "mcp.tools.test_connection" },
@@ -686,7 +698,7 @@ const exampleQueries = [
                                 🛠️ {{ $t('mcp.tools_title') }}
                             </h2>
                             <p class="text-sm text-gray-600 dark:text-slate-400 mb-6">
-                                {{ $t('mcp.tools_count', { count: 140 }) }}
+                                {{ $t('mcp.tools_count', { count: 147 }) }}
                             </p>
                             <div class="space-y-6">
                                 <div

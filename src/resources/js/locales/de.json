@@ -9013,7 +9013,11 @@
             "topics_label": "Bevorzugte Themen (kommagetrennt)",
             "topics_placeholder": "z. B. Produktneuheiten, Branchentipps, Case Studies"
         },
-        "edit_title": "Titel bearbeiten"
+        "edit_title": "Titel bearbeiten",
+        "delete_conversation": "Konversation löschen",
+        "delete_conversation_title": "Diese Konversation löschen?",
+        "delete_conversation_confirm": "Die Konversation und alle ihre Nachrichten werden gelöscht. Das lässt sich nicht rückgängig machen. Darin begonnene Pläne und Ziele bleiben erhalten.",
+        "delete_conversation_failed": "Die Konversation konnte nicht gelöscht werden. Bitte erneut versuchen."
     },
     "mailboxes": {
         "add_first": "Erstes Postfach hinzufügen",
@@ -9367,7 +9371,7 @@
         }
     },
     "mcp": {
-        "agent_prompt_content": "Sie sind ein KI-Assistent mit Zugriff auf NetSendo — eine E-Mail/SMS-Marketing-Plattform.\n\nVERFÜGBARE TOOLS:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)\n- list_templates, get_template, create_template, update_template\n- list_system_emails, update_system_email, list_system_pages, update_system_page\n- get_automation_options, list_automations, create_automation, update_automation\n- list_forms, get_form, create_form, update_form\n- create_tag, create_custom_field, list_webhooks, create_webhook\n- list_placeholders, test_connection, get_account_info\n\nPLATZHALTER IM INHALT:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - Abonnentendaten\n- [[!fname]] - Vorname im Vokativ (Polnisch)\n- [[unsubscribe_link]] - ERFORDERLICH in jeder E-Mail\n- [[manage]] - Link zur Verwaltung der Einstellungen\n- {'{'}{'{'}männlich|weiblich{'}'}{'}'}  - geschlechtsabhängige Form, z. B. {'{'}{'{'}Lieber|Liebe{'}'}{'}'} \n\nKAMPAGNEN-WORKFLOW:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nWICHTIG:\n- Verwenden Sie zu Beginn immer list_placeholders, um die verfügbaren Platzhalter zu kennen\n- Jede E-Mail MUSS [[unsubscribe_link]] enthalten\n- Vor dem Versand einer Kampagne MÜSSEN Sie Listen zuweisen (set_campaign_lists)",
+        "agent_prompt_content": "Sie sind ein KI-Assistent mit Zugriff auf NetSendo — eine E-Mail/SMS-Marketing-Plattform.\n\nVERFÜGBARE TOOLS:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)\n- list_templates, get_template, create_template, update_template\n- list_system_emails, update_system_email, list_system_pages, update_system_page\n- get_automation_options, list_automations, create_automation, update_automation\n- list_forms, get_form, create_form, update_form\n- create_tag, create_custom_field, list_webhooks, create_webhook\n- list_brain_conversations, get_brain_conversation, create_brain_conversation, send_brain_message, update_brain_conversation, delete_brain_conversation, decide_brain_plan (NetSendo Brain)\n- list_placeholders, test_connection, get_account_info\n\nPLATZHALTER IM INHALT:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - Abonnentendaten\n- [[!fname]] - Vorname im Vokativ (Polnisch)\n- [[unsubscribe_link]] - ERFORDERLICH in jeder E-Mail\n- [[manage]] - Link zur Verwaltung der Einstellungen\n- {'{'}{'{'}männlich|weiblich{'}'}{'}'}  - geschlechtsabhängige Form, z. B. {'{'}{'{'}Lieber|Liebe{'}'}{'}'} \n\nKAMPAGNEN-WORKFLOW:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nWICHTIG:\n- Verwenden Sie zu Beginn immer list_placeholders, um die verfügbaren Platzhalter zu kennen\n- Jede E-Mail MUSS [[unsubscribe_link]] enthalten\n- Vor dem Versand einer Kampagne MÜSSEN Sie Listen zuweisen (set_campaign_lists)",
         "agent_prompt_description": "Kopieren Sie diesen Prompt in Ihren KI-Agenten, damit er NetSendo MCP effektiv nutzen kann. Der Prompt enthält Bedienungsanweisungen, eine Liste der verfügbaren Tools und Anwendungsbeispiele.",
         "agent_prompt_label": "Technischer Prompt",
         "agent_prompt_title": "Prompt für KI-Agenten",
@@ -9512,7 +9516,8 @@
             "system_content": "System-E-Mails und -Seiten",
             "forms": "Anmeldeformulare",
             "automations": "Automatisierungsregeln",
-            "webhooks": "Webhooks"
+            "webhooks": "Webhooks",
+            "brain": "NetSendo Brain"
         },
         "tools": {
             "activate_funnel": "Funnel aktivieren",
@@ -9618,7 +9623,14 @@
             "update_webhook": "Webhook bearbeiten",
             "delete_webhook": "Webhook löschen",
             "test_webhook": "Testzustellung senden",
-            "regenerate_webhook_secret": "Signaturschlüssel neu erzeugen"
+            "regenerate_webhook_secret": "Signaturschlüssel neu erzeugen",
+            "list_brain_conversations": "Konversationen mit Brain auflisten (Filter nach Kanal oder Titel)",
+            "get_brain_conversation": "Eine Brain-Konversation mit Nachrichten und offenen Plänen lesen",
+            "create_brain_conversation": "Neue Brain-Konversation starten, optional mit Titel und erster Nachricht",
+            "send_brain_message": "Nachricht an Brain senden und Antwort erhalten",
+            "update_brain_conversation": "Brain-Konversation umbenennen",
+            "delete_brain_conversation": "Brain-Konversation mit ihren Nachrichten löschen",
+            "decide_brain_plan": "Von Brain vorgeschlagenen Plan genehmigen oder ablehnen (nur mit Entscheidung des Nutzers)"
         },
         "tools_count": "{count} Tools über KI verfügbar",
         "tools_title": "Verfügbare Tools"

@@ -9364,10 +9364,14 @@
             "topics_label": "Temas preferidos (separados por comas)",
             "topics_placeholder": "p. ej. novedades de producto, consejos del sector, casos de éxito"
         },
-        "edit_title": "Editar título"
+        "edit_title": "Editar título",
+        "delete_conversation": "Eliminar conversación",
+        "delete_conversation_title": "¿Eliminar esta conversación?",
+        "delete_conversation_confirm": "Se eliminarán la conversación y todos sus mensajes. No se puede deshacer. Los planes y objetivos iniciados en ella se conservan.",
+        "delete_conversation_failed": "No se pudo eliminar la conversación. Inténtalo de nuevo."
     },
     "mcp": {
-        "agent_prompt_content": "Eres un asistente de IA con acceso a NetSendo — una plataforma de marketing por email/SMS.\n\nHERRAMIENTAS DISPONIBLES:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)\n- list_templates, get_template, create_template, update_template\n- list_system_emails, update_system_email, list_system_pages, update_system_page\n- get_automation_options, list_automations, create_automation, update_automation\n- list_forms, get_form, create_form, update_form\n- create_tag, create_custom_field, list_webhooks, create_webhook\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERS EN EL CONTENIDO:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - datos del suscriptor\n- [[!fname]] - nombre en vocativo (polaco)\n- [[unsubscribe_link]] - OBLIGATORIO en cada email\n- [[manage]] - enlace de gestión de preferencias\n- {'{'}{'{'}masculino|femenino{'}'}{'}'}  - flexión por género, p. ej. {'{'}{'{'}Estimado|Estimada{'}'}{'}'} \n\nFLUJO DE CAMPAÑA:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nIMPORTANTE:\n- Usa siempre list_placeholders al principio para conocer los placeholders disponibles\n- Cada email DEBE contener [[unsubscribe_link]]\n- Antes de enviar una campaña DEBES asignar las listas (set_campaign_lists)",
+        "agent_prompt_content": "Eres un asistente de IA con acceso a NetSendo — una plataforma de marketing por email/SMS.\n\nHERRAMIENTAS DISPONIBLES:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)\n- list_templates, get_template, create_template, update_template\n- list_system_emails, update_system_email, list_system_pages, update_system_page\n- get_automation_options, list_automations, create_automation, update_automation\n- list_forms, get_form, create_form, update_form\n- create_tag, create_custom_field, list_webhooks, create_webhook\n- list_brain_conversations, get_brain_conversation, create_brain_conversation, send_brain_message, update_brain_conversation, delete_brain_conversation, decide_brain_plan (NetSendo Brain)\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERS EN EL CONTENIDO:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - datos del suscriptor\n- [[!fname]] - nombre en vocativo (polaco)\n- [[unsubscribe_link]] - OBLIGATORIO en cada email\n- [[manage]] - enlace de gestión de preferencias\n- {'{'}{'{'}masculino|femenino{'}'}{'}'}  - flexión por género, p. ej. {'{'}{'{'}Estimado|Estimada{'}'}{'}'} \n\nFLUJO DE CAMPAÑA:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nIMPORTANTE:\n- Usa siempre list_placeholders al principio para conocer los placeholders disponibles\n- Cada email DEBE contener [[unsubscribe_link]]\n- Antes de enviar una campaña DEBES asignar las listas (set_campaign_lists)",
         "agent_prompt_description": "Copie este prompt en su agente de IA para que pueda usar NetSendo MCP de forma eficaz. El prompt incluye instrucciones de uso, la lista de herramientas disponibles y ejemplos de uso.",
         "agent_prompt_label": "Prompt técnico",
         "agent_prompt_title": "Prompt para el Agente de IA",
@@ -9512,7 +9516,8 @@
             "system_content": "Correos y páginas del sistema",
             "forms": "Formularios de suscripción",
             "automations": "Reglas de automatización",
-            "webhooks": "Webhooks"
+            "webhooks": "Webhooks",
+            "brain": "NetSendo Brain"
         },
         "tools": {
             "activate_funnel": "Activar embudo",
@@ -9618,7 +9623,14 @@
             "update_webhook": "Editar webhook",
             "delete_webhook": "Eliminar webhook",
             "test_webhook": "Enviar entrega de prueba",
-            "regenerate_webhook_secret": "Regenerar el secreto de firma"
+            "regenerate_webhook_secret": "Regenerar el secreto de firma",
+            "list_brain_conversations": "Listar conversaciones con Brain (filtro por canal o título)",
+            "get_brain_conversation": "Leer una conversación de Brain con sus mensajes y planes pendientes",
+            "create_brain_conversation": "Iniciar una conversación con Brain, opcionalmente con título y primer mensaje",
+            "send_brain_message": "Enviar un mensaje a Brain y recibir su respuesta",
+            "update_brain_conversation": "Renombrar una conversación de Brain",
+            "delete_brain_conversation": "Eliminar una conversación de Brain con sus mensajes",
+            "decide_brain_plan": "Aprobar o rechazar un plan propuesto por Brain (solo con la decisión del usuario)"
         },
         "tools_count": "{count} herramientas disponibles a través de IA",
         "tools_title": "Herramientas disponibles"

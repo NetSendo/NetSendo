@@ -25,6 +25,7 @@ use App\Services\Brain\Skills\ResearchSkill;
 use App\Services\LicenseService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class BrainController extends Controller
@@ -51,15 +52,35 @@ class BrainController extends Controller
         ]);
 
         $user = $request->user();
+        $conversationId = $request->input('conversation_id');
+        $channel = $this->chatChannel($request);
+
+        // An API client that names a conversation means that one: a deleted or foreign
+        // conversation is an error, not a silent new one (the panel keeps the fallback,
+        // e.g. for a conversation deleted in another tab)
+        if ($conversationId && $channel === 'api'
+            && !AiConversation::forUser($user->id)->whereKey($conversationId)->exists()) {
+            return response()->json(['message' => __('brain.conversation_not_found')], 404);
+        }
+
         $result = $this->orchestrator->processMessage(
             $request->input('message'),
             $user,
-            'web',
-            $request->input('conversation_id'),
+            $channel,
+            $conversationId,
             $request->boolean('force_new', false),
         );
 
         return response()->json($result);
+    }
+
+    /**
+     * Conversations started over the API key routes (agents, MCP) are marked 'api', so
+     * they do not mix with the panel's active web conversation.
+     */
+    protected function chatChannel(Request $request): string
+    {
+        return $request->routeIs('api.v1.*') ? 'api' : 'web';
     }
 
     /**
@@ -205,14 +226,21 @@ class BrainController extends Controller
      */
     public function conversations(Request $request): JsonResponse
     {
+        $request->validate([
+            'channel' => 'nullable|string|in:web,telegram,api',
+            'search' => 'nullable|string|max:120',
+        ]);
+
         $user = $request->user();
 
         // Conversations without a single message are not listed
         $conversations = AiConversation::forUser($user->id)
             ->whereHas('messages')
+            ->when($request->query('channel'), fn ($q, $channel) => $q->forChannel($channel))
+            ->when($request->query('search'), fn ($q, $search) => $q->where('title', 'like', '%' . addcslashes($search, '%_\\') . '%'))
             ->orderByDesc('last_activity_at')
             ->with(['messages' => function ($q) {
-                $q->orderByDesc('created_at')->limit(1);
+                $q->reorder()->orderByDesc('created_at')->orderByDesc('id')->limit(1);
             }])
             ->paginate(20);
 
@@ -263,6 +291,53 @@ class BrainController extends Controller
         $conversation->update(['title' => $request->input('title')]);
 
         return response()->json($conversation);
+    }
+
+    /**
+     * Start an empty conversation, optionally with a title. The first message goes
+     * through the chat endpoint with the returned id.
+     * POST /api/v1/brain/conversations
+     */
+    public function storeConversation(Request $request): JsonResponse
+    {
+        $request->validate([
+            'title' => 'nullable|string|max:120',
+        ]);
+
+        $conversation = AiConversation::create([
+            'user_id' => $request->user()->id,
+            'channel' => $this->chatChannel($request),
+            'title' => $request->input('title'),
+            'status' => 'active',
+            'last_activity_at' => now(),
+        ]);
+
+        return response()->json($conversation->fresh(), 201);
+    }
+
+    /**
+     * Delete a conversation with its messages. Plans and goals started in it stay;
+     * they only lose the link to the conversation.
+     * DELETE /api/brain/conversations/{id}
+     */
+    public function destroyConversation(Request $request, int $id): JsonResponse
+    {
+        $conversation = AiConversation::forUser($request->user()->id)->findOrFail($id);
+
+        DB::transaction(function () use ($conversation) {
+            // The foreign keys do the same on MySQL; done here too so it does not depend
+            // on the database enforcing them
+            AiActionPlan::where('ai_conversation_id', $conversation->id)->update(['ai_conversation_id' => null]);
+            AiGoal::where('ai_conversation_id', $conversation->id)->update(['ai_conversation_id' => null]);
+            $conversation->messages()->delete();
+            $conversation->delete();
+        });
+
+        return response()->json([
+            'deleted' => true,
+            'id' => $id,
+            'message' => __('brain.conversation_deleted'),
+        ]);
     }
 
     /**

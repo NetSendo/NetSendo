@@ -44,7 +44,7 @@ class ConnectorDiscoveryTest extends TestCase
                 ->assertJsonPath('authorization_servers', ['http://localhost'])
                 ->assertJsonPath('bearer_methods_supported', ['header'])
                 ->assertJsonFragment(['lists:read'])
-                ->assertJsonMissing(['brain:write']);
+                ->assertJsonFragment(['brain:write']);
         }
     }
 

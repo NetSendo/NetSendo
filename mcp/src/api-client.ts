@@ -752,13 +752,15 @@ export class NetSendoApiClient {
   async request<T = unknown>(
     method: 'get' | 'post' | 'put' | 'patch' | 'delete',
     path: string,
-    options: { data?: unknown; params?: Record<string, unknown> } = {}
+    options: { data?: unknown; params?: Record<string, unknown>; timeout?: number } = {}
   ): Promise<T> {
     const response = await this.client.request<T>({
       method,
       url: path,
       data: options.data,
       params: options.params,
+      // Most calls answer within the 30 s default; a Brain reply waits for an AI model
+      ...(options.timeout ? { timeout: options.timeout } : {}),
     });
     return response.data;
   }

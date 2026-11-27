@@ -38,7 +38,7 @@ Authorization: Bearer ns_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 | `sms:read`          | Odczyt statusu SMS i providerów         |
 | `sms:write`         | Wysyłanie SMS                           |
 | `brain:read`        | NetSendo Brain: odczyt rozmów, bazy wiedzy, planów i ustawień (bez zapisanych sekretów) |
-| `brain:write`       | NetSendo Brain: czat, zmiany bazy wiedzy i ustawień, akceptacja planów, Telegram (obejmuje `brain:read`) |
+| `brain:write`       | NetSendo Brain: czat, tworzenie, zmiana nazwy i usuwanie rozmów, zmiany bazy wiedzy i ustawień, akceptacja planów, Telegram (obejmuje `brain:read`) |
 
 > **Uwaga:** Uprawnienie `subscribers:write` automatycznie obejmuje `subscribers:read`.
 

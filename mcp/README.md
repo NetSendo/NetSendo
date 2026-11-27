@@ -414,6 +414,20 @@ conditions, ordered actions). Call `get_automation_options` before building one.
 | `test_webhook`              | Send a `webhook.test` delivery and report whether the endpoint answered 2xx |
 | `regenerate_webhook_secret` | Issue a new signing secret; the old one stops working immediately           |
 
+### NetSendo Brain
+
+Hold conversations with NetSendo Brain, the account's AI marketing assistant. Brain works in the account's Brain mode: in semi-automatic mode it proposes plans and waits for approval, in autonomous mode it may carry them out at once (create and send campaigns). Conversations started here are marked with the `api` channel and appear in the Brain panel next to the user's own.
+
+| Tool                        | Description                                                                                         |
+| --------------------------- | --------------------------------------------------------------------------------------------------- |
+| `list_brain_conversations`  | Conversations, most recently active first; filter by `channel` (`web`, `api`, `telegram`) or title   |
+| `get_brain_conversation`    | One conversation with its messages (optionally only the `last` N) and plans awaiting a decision      |
+| `create_brain_conversation` | Start a conversation, optionally with a `title` and a first `message` (Brain's reply is returned)    |
+| `send_brain_message`        | Send a message (continue with `conversation_id`, or `new_conversation: true`) and get Brain's reply |
+| `update_brain_conversation` | Rename a conversation                                                                               |
+| `delete_brain_conversation` | Delete a conversation and its messages (plans and goals started in it are kept)                     |
+| `decide_brain_plan`         | Approve or reject a plan Brain proposed — only with the user's explicit decision                     |
+
 ### Account
 
 | Tool               | Description             |
@@ -485,6 +499,8 @@ CLI arguments take priority over environment variables.
 | `messages:read/write` | Campaigns, autoresponders, test sends, previews, email templates     |
 | `funnels:read/write`  | Funnels and automation rules                                        |
 | `webhooks:read/write` | Webhook tools                                                       |
+| `brain:read`          | `list_brain_conversations`, `get_brain_conversation`                |
+| `brain:write`         | Starting, renaming and deleting Brain conversations, chatting, plan decisions (includes `brain:read`) |
 
 `lists:write` and `notifications:write` were added in 1.4.0. Keys created before the
 upgrade are migrated automatically **if** they already held `subscribers:write`;

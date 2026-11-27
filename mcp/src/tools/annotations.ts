@@ -21,8 +21,11 @@ const READ_ONLY_NAMES = new Set(['test_connection', 'export_list']);
 
 const DESTRUCTIVE_PREFIXES = ['delete_', 'remove_', 'clean_', 'dedupe_', 'reset_', 'regenerate_', 'end_'];
 
-/** Tools that send something to people outside the account. */
-const OPEN_WORLD_PREFIXES = ['send_', 'schedule_', 'resend_', 'test_webhook'];
+/**
+ * Tools that send something to people outside the account. Approving a Brain
+ * plan lets Brain carry it out, sends included.
+ */
+const OPEN_WORLD_PREFIXES = ['send_', 'schedule_', 'resend_', 'test_webhook', 'decide_brain_plan'];
 
 export function toolAnnotations(name: string): ToolAnnotations {
   const readOnly = READ_ONLY_NAMES.has(name) || READ_ONLY_PREFIXES.some((prefix) => name.startsWith(prefix));

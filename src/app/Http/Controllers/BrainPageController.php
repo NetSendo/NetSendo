@@ -33,7 +33,7 @@ class BrainPageController extends Controller
             ->whereHas('messages')
             ->orderByDesc('last_activity_at')
             ->with(['messages' => function ($q) {
-                $q->orderByDesc('created_at')->limit(1);
+                $q->reorder()->orderByDesc('created_at')->orderByDesc('id')->limit(1);
             }])
             ->limit(30)
             ->get();

@@ -29,6 +29,7 @@ import { registerSystemContentTools } from './system-content.js';
 import { registerFormTools } from './forms.js';
 import { registerAutomationTools } from './automations.js';
 import { registerCampaignExtraTools } from './campaign-extras.js';
+import { registerBrainTools } from './brain.js';
 
 /**
  * Register all tools with the MCP server
@@ -84,6 +85,9 @@ export function registerAllTools(server: McpServer, api: NetSendoApiClient) {
   registerFormTools(server, api);
   registerAutomationTools(server, api);
   registerCampaignExtraTools(server, api);
+
+  // NetSendo Brain: conversations, chat and plan decisions
+  registerBrainTools(server, api);
 
   // Account / Connection test tool
   server.tool(

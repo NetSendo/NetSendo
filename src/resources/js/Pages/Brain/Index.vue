@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick, watch } from "vue";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
+import ConfirmModal from "@/Components/ConfirmModal.vue";
 import { Head } from "@inertiajs/vue3";
 import { useI18n } from "vue-i18n";
 import axios from "axios";
@@ -74,6 +75,48 @@ const saveTitle = async (conv) => {
 
 const cancelEditTitle = () => {
     editingTitleId.value = null;
+};
+
+// --- Deleting conversations ---
+const conversationToDelete = ref(null);
+const deletingConversation = ref(false);
+const deleteConversationError = ref("");
+
+const askDeleteConversation = (conv) => {
+    deleteConversationError.value = "";
+    conversationToDelete.value = conv;
+};
+
+const closeDeleteConversation = () => {
+    if (deletingConversation.value) return;
+    conversationToDelete.value = null;
+};
+
+const deleteConversation = async () => {
+    const conv = conversationToDelete.value;
+    if (!conv) return;
+    deletingConversation.value = true;
+    deleteConversationError.value = "";
+    try {
+        await axios.delete(`/brain/api/conversations/${conv.id}`);
+    } catch (error) {
+        // Already gone (e.g. deleted in another tab or by an agent): just drop it from the list
+        if (error.response?.status !== 404) {
+            deleteConversationError.value =
+                error.response?.data?.message ||
+                t("brain.delete_conversation_failed");
+            deletingConversation.value = false;
+            return;
+        }
+    }
+    conversationList.value = conversationList.value.filter(
+        (c) => c.id !== conv.id,
+    );
+    if (activeConversationId.value === conv.id) {
+        startNewConversation();
+    }
+    deletingConversation.value = false;
+    conversationToDelete.value = null;
 };
 
 // --- Computed ---
@@ -768,7 +811,7 @@ const getLastMessage = (conversation) => {
                                     <button
                                         v-if="editingTitleId !== conv.id"
                                         @click.stop="startEditTitle(conv)"
-                                        class="hidden rounded p-0.5 text-slate-400 hover:text-cyan-500 group-hover:inline-block"
+                                        class="inline-block rounded p-0.5 text-slate-400 hover:text-cyan-500 focus-visible:inline-block lg:hidden lg:group-hover:inline-block"
                                         :title="
                                             t(
                                                 'brain.edit_title',
@@ -787,6 +830,28 @@ const getLastMessage = (conversation) => {
                                                 stroke-linejoin="round"
                                                 stroke-width="2"
                                                 d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                                            />
+                                        </svg>
+                                    </button>
+                                    <!-- Delete button (visible on hover) -->
+                                    <button
+                                        v-if="editingTitleId !== conv.id"
+                                        @click.stop="askDeleteConversation(conv)"
+                                        class="inline-block rounded p-0.5 text-slate-400 hover:text-rose-500 focus-visible:inline-block lg:hidden lg:group-hover:inline-block"
+                                        :title="t('brain.delete_conversation')"
+                                        :aria-label="t('brain.delete_conversation')"
+                                    >
+                                        <svg
+                                            class="h-3 w-3"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                stroke-linecap="round"
+                                                stroke-linejoin="round"
+                                                stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                                             />
                                         </svg>
                                     </button>
@@ -1226,6 +1291,21 @@ const getLastMessage = (conversation) => {
                 </div>
             </div>
         </div>
+
+        <ConfirmModal
+            :show="!!conversationToDelete"
+            type="danger"
+            :title="t('brain.delete_conversation_title')"
+            :message="
+                deleteConversationError || t('brain.delete_conversation_confirm')
+            "
+            :confirm-text="t('common.delete')"
+            :processing="deletingConversation"
+            @close="closeDeleteConversation"
+            @confirm="deleteConversation"
+        >
+            {{ conversationToDelete?.title || t("brain.untitled", "Bez tytułu") }}
+        </ConfirmModal>
     </AuthenticatedLayout>
 </template>
 

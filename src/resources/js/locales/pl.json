@@ -3352,7 +3352,8 @@
             "system_content": "E-maile i strony systemowe",
             "forms": "Formularze zapisu",
             "automations": "Automatyzacje",
-            "webhooks": "Webhooki"
+            "webhooks": "Webhooki",
+            "brain": "NetSendo Brain"
         },
         "tools": {
             "list_subscribers": "Listuj subskrybentów",
@@ -3458,7 +3459,14 @@
             "update_webhook": "Edytuj webhook",
             "delete_webhook": "Usuń webhook",
             "test_webhook": "Wyślij testowe zdarzenie",
-            "regenerate_webhook_secret": "Wygeneruj nowy sekret"
+            "regenerate_webhook_secret": "Wygeneruj nowy sekret",
+            "list_brain_conversations": "Lista rozmów z Brain (filtr po kanale lub tytule)",
+            "get_brain_conversation": "Odczyt rozmowy z Brain z wiadomościami i planami czekającymi na decyzję",
+            "create_brain_conversation": "Nowa rozmowa z Brain, opcjonalnie z tytułem i pierwszą wiadomością",
+            "send_brain_message": "Wysłanie wiadomości do Brain i odbiór odpowiedzi",
+            "update_brain_conversation": "Zmiana nazwy rozmowy z Brain",
+            "delete_brain_conversation": "Usunięcie rozmowy z Brain razem z wiadomościami",
+            "decide_brain_plan": "Akceptacja lub odrzucenie planu zaproponowanego przez Brain (tylko z decyzją użytkownika)"
         },
         "examples_title": "Przykładowe komendy",
         "examples": {
@@ -3510,7 +3518,7 @@
         "agent_prompt_title": "Prompt dla Agenta AI",
         "agent_prompt_description": "Skopiuj ten prompt do swojego agenta AI, aby mógł efektywnie korzystać z NetSendo MCP. Prompt zawiera instrukcje obsługi, listę dostępnych narzędzi i przykłady użycia.",
         "agent_prompt_label": "Prompt techniczny",
-        "agent_prompt_content": "Jesteś asystentem AI z dostępem do NetSendo — platformy email/SMS marketingu.\n\nDOSTĘPNE NARZĘDZIA:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)\n- list_templates, get_template, create_template, update_template\n- list_system_emails, update_system_email, list_system_pages, update_system_page\n- get_automation_options, list_automations, create_automation, update_automation\n- list_forms, get_form, create_form, update_form\n- create_tag, create_custom_field, list_webhooks, create_webhook\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERY W TREŚCI:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - dane subskrybenta\n- [[!fname]] - imię w wołaczu (polski)\n- [[unsubscribe_link]] - WYMAGANY w każdym emailu\n- [[manage]] - link zarządzania preferencjami\n- {'{'}{'{'}męska|żeńska{'}'}{'}'}  - odmiana przez płeć, np. {'{'}{'{'}Drogi|Droga{'}'}{'}'} \n\nWORKFLOW KAMPANII:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nWAŻNE:\n- Zawsze używaj list_placeholders na początku, aby poznać dostępne placeholdery\n- Każdy email MUSI zawierać [[unsubscribe_link]]\n- Przed wysłaniem kampanii MUSISZ przypisać listy (set_campaign_lists)"
+        "agent_prompt_content": "Jesteś asystentem AI z dostępem do NetSendo — platformy email/SMS marketingu.\n\nDOSTĘPNE NARZĘDZIA:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)\n- list_templates, get_template, create_template, update_template\n- list_system_emails, update_system_email, list_system_pages, update_system_page\n- get_automation_options, list_automations, create_automation, update_automation\n- list_forms, get_form, create_form, update_form\n- create_tag, create_custom_field, list_webhooks, create_webhook\n- list_brain_conversations, get_brain_conversation, create_brain_conversation, send_brain_message, update_brain_conversation, delete_brain_conversation, decide_brain_plan (NetSendo Brain)\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERY W TREŚCI:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - dane subskrybenta\n- [[!fname]] - imię w wołaczu (polski)\n- [[unsubscribe_link]] - WYMAGANY w każdym emailu\n- [[manage]] - link zarządzania preferencjami\n- {'{'}{'{'}męska|żeńska{'}'}{'}'}  - odmiana przez płeć, np. {'{'}{'{'}Drogi|Droga{'}'}{'}'} \n\nWORKFLOW KAMPANII:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nWAŻNE:\n- Zawsze używaj list_placeholders na początku, aby poznać dostępne placeholdery\n- Każdy email MUSI zawierać [[unsubscribe_link]]\n- Przed wysłaniem kampanii MUSISZ przypisać listy (set_campaign_lists)"
     },
     "mcp_status": {
         "title": "Status serwera MCP",
@@ -9766,7 +9774,11 @@
             "topics_label": "Preferowane tematy (oddziel przecinkami)",
             "topics_placeholder": "np. nowości produktowe, porady branżowe, case studies"
         },
-        "edit_title": "Edytuj tytuł"
+        "edit_title": "Edytuj tytuł",
+        "delete_conversation": "Usuń konwersację",
+        "delete_conversation_title": "Usunąć tę konwersację?",
+        "delete_conversation_confirm": "Konwersacja i wszystkie jej wiadomości zostaną usunięte. Tego nie da się cofnąć. Plany i cele rozpoczęte w tej konwersacji zostaną zachowane.",
+        "delete_conversation_failed": "Nie udało się usunąć konwersacji. Spróbuj ponownie."
     },
     "Pole o tej nazwie już istnieje.": "Pole o tej nazwie już istnieje.",
     "Pole zostało usunięte.": "Pole zostało usunięte.",

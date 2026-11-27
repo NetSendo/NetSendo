@@ -72,8 +72,9 @@ return [
     ))))),
 
     // API-key permissions that no connector tool uses; they are not offered
-    // on the consent screen.
-    'excluded_scopes' => ['brain:read', 'brain:write'],
+    // on the consent screen. Empty since the Brain conversation tools use
+    // brain:read / brain:write.
+    'excluded_scopes' => [],
 
     // Requests per minute for one connected app.
     'rate_limit' => (int) env('MCP_CONNECTOR_RATE_LIMIT', 120),

@@ -15,6 +15,8 @@ return [
     'plan_executed' => '✅ Plan wykonany pomyślnie.',
     'plan_execution_error' => '❌ Błąd wykonania planu: :error',
     'no_ai_integration' => '⚠️ Brak skonfigurowanej integracji AI. Przejdź do Ustawienia → AI aby skonfigurować dostawcę AI.',
+    'conversation_not_found' => 'Nie znaleziono konwersacji.',
+    'conversation_deleted' => 'Konwersacja usunięta.',
     'user_wants' => 'Użytkownik chce: :intent',
     'info_request' => 'Potrzebuję więcej szczegółów, aby wykonać to zadanie. Podaj dodatkowe informacje.',
 

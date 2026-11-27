@@ -4051,7 +4051,8 @@
             "system_content": "System Emails & Pages",
             "forms": "Subscription Forms",
             "automations": "Automation Rules",
-            "webhooks": "Webhooks"
+            "webhooks": "Webhooks",
+            "brain": "NetSendo Brain"
         },
         "tools": {
             "list_subscribers": "List subscribers",
@@ -4157,7 +4158,14 @@
             "update_webhook": "Update a webhook",
             "delete_webhook": "Delete a webhook",
             "test_webhook": "Send a test delivery",
-            "regenerate_webhook_secret": "Regenerate the signing secret"
+            "regenerate_webhook_secret": "Regenerate the signing secret",
+            "list_brain_conversations": "List conversations with Brain (filter by channel or title)",
+            "get_brain_conversation": "Read a Brain conversation with its messages and plans awaiting a decision",
+            "create_brain_conversation": "Start a new Brain conversation, optionally with a title and first message",
+            "send_brain_message": "Send a message to Brain and get its reply",
+            "update_brain_conversation": "Rename a Brain conversation",
+            "delete_brain_conversation": "Delete a Brain conversation with its messages",
+            "decide_brain_plan": "Approve or reject a plan Brain proposed (only with the user's decision)"
         },
         "examples_title": "Example commands",
         "examples": {
@@ -4209,7 +4217,7 @@
         "agent_prompt_title": "AI Agent Prompt",
         "agent_prompt_description": "Copy this prompt to your AI agent so it can effectively use NetSendo MCP. The prompt contains usage instructions, available tools list, and examples.",
         "agent_prompt_label": "Technical Prompt",
-        "agent_prompt_content": "You are an AI assistant with access to NetSendo — an email/SMS marketing platform.\n\nAVAILABLE TOOLS:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)\n- list_templates, get_template, create_template, update_template\n- list_system_emails, update_system_email, list_system_pages, update_system_page\n- get_automation_options, list_automations, create_automation, update_automation\n- list_forms, get_form, create_form, update_form\n- create_tag, create_custom_field, list_webhooks, create_webhook\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERS IN CONTENT:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - subscriber data\n- [[!fname]] - first name in vocative case (Polish)\n- [[unsubscribe_link]] - REQUIRED in every email\n- [[manage]] - manage preferences link\n- {'{'}{'{'}male|female{'}'}{'}'} - gender variation\n\nCAMPAIGN WORKFLOW:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nIMPORTANT:\n- Always use list_placeholders first to learn available placeholders\n- Every email MUST contain [[unsubscribe_link]]\n- Before sending a campaign you MUST assign lists (set_campaign_lists)"
+        "agent_prompt_content": "You are an AI assistant with access to NetSendo — an email/SMS marketing platform.\n\nAVAILABLE TOOLS:\n- list_subscribers, get_subscriber, create_subscriber, update_subscriber, delete_subscriber\n- list_contact_lists, list_tags, sync_subscriber_tags\n- list_campaigns, get_campaign, create_campaign, update_campaign, send_campaign\n- set_campaign_lists, set_campaign_exclusions, schedule_campaign, get_campaign_stats\n- list_ab_tests, create_ab_test, add_ab_variant, start_ab_test, end_ab_test\n- list_funnels, get_funnel, create_funnel, add_funnel_step, update_funnel_step, enroll_subscriber_in_funnel, activate_funnel\n- send_email, send_sms\n- send_campaign_test, preview_campaign, duplicate_campaign, set_campaign_active (autoresponders)\n- list_templates, get_template, create_template, update_template\n- list_system_emails, update_system_email, list_system_pages, update_system_page\n- get_automation_options, list_automations, create_automation, update_automation\n- list_forms, get_form, create_form, update_form\n- create_tag, create_custom_field, list_webhooks, create_webhook\n- list_brain_conversations, get_brain_conversation, create_brain_conversation, send_brain_message, update_brain_conversation, delete_brain_conversation, decide_brain_plan (NetSendo Brain)\n- list_placeholders, test_connection, get_account_info\n\nPLACEHOLDERS IN CONTENT:\n- [[first_name]], [[last_name]], [[email]], [[phone]] - subscriber data\n- [[!fname]] - first name in vocative case (Polish)\n- [[unsubscribe_link]] - REQUIRED in every email\n- [[manage]] - manage preferences link\n- {'{'}{'{'}male|female{'}'}{'}'} - gender variation\n\nCAMPAIGN WORKFLOW:\n1. create_campaign → 2. set_campaign_lists → 3. send_campaign\n\nIMPORTANT:\n- Always use list_placeholders first to learn available placeholders\n- Every email MUST contain [[unsubscribe_link]]\n- Before sending a campaign you MUST assign lists (set_campaign_lists)"
     },
     "mcp_status": {
         "title": "MCP Server Status",
@@ -9771,7 +9779,11 @@
             "topics_label": "Preferred topics (comma-separated)",
             "topics_placeholder": "e.g. product news, industry tips, case studies"
         },
-        "edit_title": "Edit title"
+        "edit_title": "Edit title",
+        "delete_conversation": "Delete conversation",
+        "delete_conversation_title": "Delete this conversation?",
+        "delete_conversation_confirm": "The conversation and all its messages will be deleted. This cannot be undone. Plans and goals started in it are kept.",
+        "delete_conversation_failed": "The conversation could not be deleted. Try again."
     },
     "telemetry": {
         "title": "Telemetry",

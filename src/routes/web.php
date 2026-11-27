@@ -277,6 +277,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/api/conversations', [\App\Http\Controllers\BrainController::class, 'conversations'])->name('api.conversations');
         Route::get('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'conversation'])->name('api.conversations.show');
         Route::put('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'updateConversation'])->name('api.conversations.update');
+        Route::delete('/api/conversations/{id}', [\App\Http\Controllers\BrainController::class, 'destroyConversation'])->name('api.conversations.destroy');
 
         // Action Plans
         Route::get('/api/plans', [\App\Http\Controllers\BrainController::class, 'plans'])->name('api.plans.index');

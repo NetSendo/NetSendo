@@ -519,6 +519,14 @@ Route::prefix('v1/brain')->middleware(['api.key:brain:write', 'throttle:api'])->
     Route::post('chat', [\App\Http\Controllers\BrainController::class, 'chat'])
         ->name('api.v1.brain.chat');
 
+    // Conversations
+    Route::post('conversations', [\App\Http\Controllers\BrainController::class, 'storeConversation'])
+        ->name('api.v1.brain.conversations.store');
+    Route::put('conversations/{id}', [\App\Http\Controllers\BrainController::class, 'updateConversation'])
+        ->name('api.v1.brain.conversations.update');
+    Route::delete('conversations/{id}', [\App\Http\Controllers\BrainController::class, 'destroyConversation'])
+        ->name('api.v1.brain.conversations.destroy');
+
     // Knowledge Base
     Route::post('knowledge', [\App\Http\Controllers\BrainController::class, 'storeKnowledge'])
         ->name('api.v1.brain.knowledge.store');

@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 <!-- [AI_unreleased_notes] -->
 
+### Added
+
+- **Brain conversations can be deleted.** The conversation list in *NetSendo Brain → AI Chat* has a delete button next to the rename button (shown on hover on a computer, always on a phone), with a confirmation. The conversation and its messages are deleted; plans and goals started in it are kept and only lose the link to it. Deleting the open conversation returns the chat to an empty one. Also in the API: `DELETE /api/v1/brain/conversations/{id}` (`brain:write`).
+- **Agents can hold conversations with Brain over the API and MCP.** New endpoints `POST /api/v1/brain/conversations` (start one, optional `title`) and `PUT /api/v1/brain/conversations/{id}` (rename), both `brain:write`; `GET /api/v1/brain/conversations` takes `channel` and `search` filters. Seven new MCP tools: `list_brain_conversations`, `get_brain_conversation`, `create_brain_conversation`, `send_brain_message`, `update_brain_conversation`, `delete_brain_conversation` and `decide_brain_plan` (approve or reject a plan Brain proposed; its description tells the agent to act only on the user's decision). The MCP client now has 147 tools. The AI connector (`/mcp`) offers the `brain:read` and `brain:write` permissions on its consent screen, so apps connected through it can use these tools once the user grants them.
+
+### Changed
+
+- **Brain chat over the API runs in its own `api` channel.** `POST /api/v1/brain/chat` without `conversation_id` used to continue the panel's active web conversation; it now continues the latest agent conversation (active in the last two hours) or starts a new one, and those conversations are marked `api` in the conversation list. A `conversation_id` that does not exist or belongs to another user now answers 404 instead of silently starting a new conversation. The panel chat is unchanged.
+
+### Fixed
+
+- **The Brain conversation list previews the last message**, not the first one: the newest-first ordering of the preview was added after the relation's own oldest-first ordering, so every conversation showed its opening message.
+
 ## [2.12.4] – Dependency updates, AI connector kept working - 2026-11-23
 
 **Release date:** 2026-11-23
